@@ -140,7 +140,8 @@ public class PdfFormService
         Dictionary<int, int> pageRotations,
         IEnumerable<FreeTextAnnotation> freeTextAnnotations,
         IEnumerable<PlacedSignature>? placedSignatures = null,
-        bool flatten = false)
+        bool flatten = false,
+        IEnumerable<string>? deletedFieldNames = null)
     {
         using var reader = new PdfReader(sourcePath);
         using var writer = new PdfWriter(destPath);
@@ -150,6 +151,16 @@ public class PdfFormService
         var form = PdfAcroForm.GetAcroForm(doc, false);
         if (form != null)
         {
+            // Remove fields the user deleted (and their widgets) before writing values.
+            if (deletedFieldNames != null)
+            {
+                foreach (var name in deletedFieldNames)
+                {
+                    if (form.GetField(name) != null)
+                        form.RemoveField(name);
+                }
+            }
+
             foreach (var (name, value) in fieldValues)
             {
                 var field = form.GetField(name);

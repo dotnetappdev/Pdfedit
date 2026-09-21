@@ -442,6 +442,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<FormFieldInfo> CurrentPageFields { get; } = new();
     public ObservableCollection<FormFieldInfo> AllFields { get; } = new();
 
+    // Names of existing fields the user has deleted; stripped from the PDF on save.
+    public HashSet<string> DeletedFieldNames { get; } = new();
+
     // ── Commands ─────────────────────────────────────────────────────────────
 
     public ICommand OpenCommand { get; }
@@ -458,6 +461,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ZoomFitCommand { get; }
     public ICommand ZoomActualCommand { get; }
     public ICommand ClearAllFieldsCommand { get; }
+    public ICommand DeleteSelectedFieldCommand { get; }
     public ICommand ExportDataCommand { get; }
     public ICommand ImportDataCommand { get; }
     public ICommand SetToolCommand { get; }
@@ -521,6 +525,7 @@ public class MainViewModel : INotifyPropertyChanged
         ZoomFitCommand = new RelayCommand(() => Zoom = 1.0, () => HasDocument);
         ZoomActualCommand = new RelayCommand(() => Zoom = 1.0, () => HasDocument);
         ClearAllFieldsCommand = new RelayCommand(ClearAllFields, () => HasDocument);
+        DeleteSelectedFieldCommand = new RelayCommand(() => DeleteField(SelectedField), () => SelectedField != null);
         ExportDataCommand = new AsyncRelayCommand(ExportDataAsync, () => HasDocument);
         ImportDataCommand = new AsyncRelayCommand(ImportDataAsync, () => HasDocument);
         SetToolCommand = new RelayCommand(p =>
@@ -690,6 +695,7 @@ public class MainViewModel : INotifyPropertyChanged
 
             FieldValues.Clear();
             AllFields.Clear();
+            DeletedFieldNames.Clear();
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
@@ -750,7 +756,8 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath, tmp, FieldValues,
-                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
+                deletedFieldNames: DeletedFieldNames);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -784,7 +791,8 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
-                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
+                deletedFieldNames: DeletedFieldNames);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             ToastService.Instance.Success($"Saved as {System.IO.Path.GetFileName(dlg.FileName)}");
@@ -810,7 +818,8 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
-                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
+                deletedFieldNames: DeletedFieldNames);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             ToastService.Instance.Success("Flattened PDF saved.");
         }
@@ -866,6 +875,25 @@ public class MainViewModel : INotifyPropertyChanged
         PageChanged?.Invoke();
         StatusText = "All fields cleared.";
         ToastService.Instance.Info("All fields cleared.");
+    }
+
+    /// <summary>
+    /// Removes an existing AcroForm field from the document. The field disappears
+    /// from the UI immediately and is stripped from the PDF when it is next saved.
+    /// </summary>
+    public void DeleteField(FormFieldInfo? field)
+    {
+        if (field == null) return;
+
+        DeletedFieldNames.Add(field.Name);
+        AllFields.Remove(field);
+        CurrentPageFields.Remove(field);
+        FieldValues.Remove(field.Name);
+        if (ReferenceEquals(SelectedField, field)) SelectedField = null;
+
+        PageChanged?.Invoke();
+        StatusText = $"Deleted field \"{field.Name}\". Save to make it permanent.";
+        ToastService.Instance.Info($"Deleted field \"{field.Name}\".");
     }
 
     private async Task ExportDataAsync()

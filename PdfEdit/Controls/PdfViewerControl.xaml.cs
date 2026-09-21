@@ -452,6 +452,17 @@ public partial class PdfViewerControl : UserControl
         };
 
         if (ctrl == null) return;
+
+        // Right-click a field to delete it (like removing a field in Acrobat).
+        if (ctrl is FrameworkElement fe)
+        {
+            var menu = new ContextMenu();
+            var del = new MenuItem { Header = $"Delete field \"{field.Name}\"" };
+            del.Click += (_, _) => _vm?.DeleteField(field);
+            menu.Items.Add(del);
+            fe.ContextMenu = menu;
+        }
+
         Canvas.SetLeft(ctrl, x);
         Canvas.SetTop(ctrl, y);
         FieldOverlayCanvas.Children.Add(ctrl);
