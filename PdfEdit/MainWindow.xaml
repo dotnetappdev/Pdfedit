@@ -1152,18 +1152,6 @@
                 <avalonDock:LayoutRoot>
                     <avalonDock:LayoutPanel Orientation="Horizontal">
 
-                        <!-- ── Toolbox (dockable / floatable) ──────────────── -->
-                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="72">
-                            <avalonDock:LayoutAnchorablePane>
-                                <avalonDock:LayoutAnchorable Title="Tools" ContentId="tools"
-                                                             CanClose="False" CanHide="False">
-                                    <controls:ToolboxPanel DataContext="{Binding}"
-                                                           FontSize="{DynamicResource PanelFontSize}"
-                                                           AutomationProperties.Name="Tool palette"/>
-                                </avalonDock:LayoutAnchorable>
-                            </avalonDock:LayoutAnchorablePane>
-                        </avalonDock:LayoutAnchorablePaneGroup>
-
                         <!-- ── Page thumbnails (dockable / floatable) ──────── -->
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="120">
                             <avalonDock:LayoutAnchorablePane>
@@ -1336,6 +1324,18 @@
                         </TabItem>
 
                                     </TabControl>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
+
+                        <!-- ── Fill & Sign Toolbox — right side, Adobe-style ─ -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="185">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Fill &amp; Sign" ContentId="tools"
+                                                             CanClose="False" CanHide="False">
+                                    <controls:ToolboxPanel DataContext="{Binding}"
+                                                           FontSize="{DynamicResource PanelFontSize}"
+                                                           AutomationProperties.Name="Fill and Sign tool palette"/>
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>

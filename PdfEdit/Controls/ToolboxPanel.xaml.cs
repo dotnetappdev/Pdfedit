@@ -62,23 +62,37 @@ public partial class ToolboxPanel : UserControl
         var img = new Image
         {
             Source = bmp,
-            Width = 40,
-            Height = 20,
+            Width = 136,
+            Height = 38,
             Stretch = Stretch.Uniform,
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        // Name label below the signature image
+        var nameLabel = new TextBlock
+        {
+            Text = sig.Name,
+            FontSize = 10,
+            FontFamily = new System.Windows.Media.FontFamily("Segoe UI, Arial"),
+            Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
+            Margin = new Thickness(2, 3, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        var inner = new StackPanel { Margin = new Thickness(6, 5, 6, 5) };
+        inner.Children.Add(img);
+        inner.Children.Add(nameLabel);
 
         var border = new Border
         {
-            Width = 44,
-            Height = 28,
-            Margin = new Thickness(4, 2, 4, 2),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+            Margin = new Thickness(8, 3, 8, 3),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(3),
-            Background = Brushes.White,
-            ToolTip = $"{sig.Name}\nAdded {sig.CreatedAt}\nLeft-click to place · Right-click to delete",
+            CornerRadius = new CornerRadius(6),
+            Background = new SolidColorBrush(Color.FromRgb(30, 30, 30)),
+            ToolTip = $"{sig.Name}\nAdded {sig.CreatedAt}\nLeft-click to place  ·  Right-click to delete",
             Cursor = System.Windows.Input.Cursors.Hand,
-            Child = img
+            Child = inner
         };
         System.Windows.Automation.AutomationProperties.SetName(border, $"Saved signature: {sig.Name}");
 
@@ -89,22 +103,21 @@ public partial class ToolboxPanel : UserControl
                 vm.PendingLibrarySignature = sig.ImageBytes;
                 vm.ActiveTool = ActiveTool.Signature;
                 ToastService.Instance.Info($"'{sig.Name}' selected — click on the page to place.");
-                // Highlight selected state
-                border.BorderBrush = new SolidColorBrush(Color.FromRgb(14, 99, 156));
+                border.BorderBrush = new SolidColorBrush(Color.FromRgb(10, 132, 255));
                 border.BorderThickness = new Thickness(2);
             }
             e.Handled = true;
         };
 
         border.MouseEnter += (_, _) =>
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(100, 160, 220));
+            border.BorderBrush = new SolidColorBrush(Color.FromRgb(64, 156, 255));
 
         border.MouseLeave += (_, _) =>
         {
             if (DataContext is MainViewModel vm && vm.PendingLibrarySignature == sig.ImageBytes)
-                border.BorderBrush = new SolidColorBrush(Color.FromRgb(14, 99, 156));
+                border.BorderBrush = new SolidColorBrush(Color.FromRgb(10, 132, 255));
             else
-                border.BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70));
+                border.BorderBrush = new SolidColorBrush(Color.FromRgb(55, 55, 55));
         };
 
         var cm = new ContextMenu();
