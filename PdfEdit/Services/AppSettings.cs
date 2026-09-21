@@ -40,6 +40,10 @@ public class AppSettings
     public string AiProvider { get; set; } = "Claude";
     public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
 
+    // ── Floating toolbox position ────────────────────────────────────────────
+    public double ToolboxLeft { get; set; } = double.NaN;
+    public double ToolboxTop  { get; set; } = double.NaN;
+
     // ── Accessibility ────────────────────────────────────────────────────────
     public bool HighContrastFocusIndicators { get; set; }
 

@@ -56,6 +56,13 @@ public partial class PdfViewerControl : UserControl
     private Point _panStart;
     private double _scrollHStart, _scrollVStart;
 
+    // Adobe-style field selection chrome
+    private Border?    _fieldChromeBorder;
+    private TextBlock? _fieldChromeLabel;
+    private Button?    _fieldChromeClear;
+    private TextBox?   _activeTb;
+    private FormFieldInfo? _activeFieldInfo;
+
     public PdfViewerControl()
     {
         InitializeComponent();
@@ -393,6 +400,12 @@ public partial class PdfViewerControl : UserControl
 
     private void BuildFieldOverlay(IEnumerable<FormFieldInfo> fields, bool highlight)
     {
+        _fieldChromeBorder = null;
+        _fieldChromeLabel = null;
+        _fieldChromeClear = null;
+        _activeTb = null;
+        _activeFieldInfo = null;
+
         FieldOverlayCanvas.Children.Clear();
         HighlightCanvas.Children.Clear();
 
@@ -478,6 +491,21 @@ public partial class PdfViewerControl : UserControl
         Canvas.SetLeft(ctrl, x);
         Canvas.SetTop(ctrl, y);
         FieldOverlayCanvas.Children.Add(ctrl);
+
+        // Wire up Adobe-style chrome for every focusable field control
+        if (ctrl is TextBox tb)
+        {
+            tb.GotFocus  += (_, _) => ShowFieldChrome(field, x, y, w, h, tb);
+            tb.LostFocus += (_, _) => HideFieldChrome(tb);
+        }
+        else if (ctrl is CheckBox cb)
+            cb.GotFocus += (_, _) => { _vm!.SelectedField = field; };
+        else if (ctrl is RadioButton rb)
+            rb.GotFocus += (_, _) => { _vm!.SelectedField = field; };
+        else if (ctrl is ComboBox cbb)
+            cbb.GotFocus += (_, _) => { _vm!.SelectedField = field; };
+        else if (ctrl is ListBox lb)
+            lb.GotFocus += (_, _) => { _vm!.SelectedField = field; };
     }
 
     private TextBox BuildTextBox(FormFieldInfo field, double w, double h, bool vertical)
@@ -509,17 +537,11 @@ public partial class PdfViewerControl : UserControl
             tb.LayoutTransform = new RotateTransform(-90);
 
         tb.TextChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, tb.Text);
-        tb.GotFocus += (_, _) =>
-        {
-            _vm!.SelectedField = field;
-            tb.Background = FieldFocusBrush;
-            tb.BorderBrush = FieldFocusBorderBrush;
-            HighlightActiveField(tb);
-        };
         tb.LostFocus += (_, _) =>
         {
             tb.Background = FieldFillBrush;
             tb.BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush;
+            tb.BorderThickness = new Thickness(1);
         };
         return tb;
     }
@@ -641,17 +663,99 @@ public partial class PdfViewerControl : UserControl
         return border;
     }
 
-    private void HighlightActiveField(TextBox tb)
+    private static readonly SolidColorBrush AdobeBlue = new(Color.FromRgb(0, 120, 215));
+
+    private void ShowFieldChrome(FormFieldInfo field, double x, double y, double w, double h, TextBox tb)
     {
-        tb.Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 100));
-        tb.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 120, 215));
-        tb.BorderThickness = new Thickness(1);
-        tb.LostFocus += (_, _) =>
+        _vm!.SelectedField = field;
+        _activeTb = tb;
+        _activeFieldInfo = field;
+
+        // Apply 2px blue border + light blue tint to the TextBox
+        tb.BorderBrush = AdobeBlue;
+        tb.BorderThickness = new Thickness(2);
+        tb.Background = new SolidColorBrush(Color.FromArgb(20, 0, 120, 215));
+
+        EnsureFieldChrome();
+
+        // Label: field name above the selected field
+        _fieldChromeLabel!.Text = field.Name;
+
+        double labelY = Math.Max(0, y - 18);
+        Canvas.SetLeft(_fieldChromeBorder!, x);
+        Canvas.SetTop(_fieldChromeBorder!, labelY);
+        _fieldChromeBorder!.Width = Math.Max(80, w);
+        _fieldChromeBorder.Visibility = Visibility.Visible;
+
+        // Wire clear button
+        _fieldChromeClear!.Tag = (tb, field);
+    }
+
+    private void HideFieldChrome(TextBox tb)
+    {
+        if (_fieldChromeBorder != null)
+            _fieldChromeBorder.Visibility = Visibility.Collapsed;
+        _activeTb = null;
+        _activeFieldInfo = null;
+    }
+
+    private void EnsureFieldChrome()
+    {
+        if (_fieldChromeBorder != null) return;
+
+        _fieldChromeLabel = new TextBlock
         {
-            tb.Background = Brushes.Transparent;
-            tb.BorderBrush = Brushes.Transparent;
-            tb.BorderThickness = new Thickness(0);
+            FontSize = 10,
+            Foreground = AdobeBlue,
+            FontWeight = FontWeights.SemiBold,
+            Padding = new Thickness(2, 0, 4, 0),
         };
+
+        _fieldChromeClear = new Button
+        {
+            Content = "✕",
+            FontSize = 9,
+            Padding = new Thickness(3, 0, 3, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = AdobeBlue,
+            Cursor = Cursors.Hand,
+            VerticalAlignment = VerticalAlignment.Center,
+            ToolTip = "Clear field",
+        };
+        _fieldChromeClear.Click += (_, _) =>
+        {
+            if (_activeTb != null)
+            {
+                _activeTb.Text = string.Empty;
+                if (_activeFieldInfo != null)
+                    _vm?.UpdateFieldValue(_activeFieldInfo.Name, string.Empty);
+            }
+        };
+
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        row.Children.Add(_fieldChromeLabel);
+        row.Children.Add(_fieldChromeClear);
+
+        _fieldChromeBorder = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(220, 30, 30, 30)),
+            BorderBrush = AdobeBlue,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(3),
+            Height = 16,
+            Padding = new Thickness(2, 0, 2, 0),
+            Child = row,
+            IsHitTestVisible = true,
+            Visibility = Visibility.Collapsed,
+        };
+
+        Panel.SetZIndex(_fieldChromeBorder, 999);
+        FieldOverlayCanvas.Children.Add(_fieldChromeBorder);
     }
 
     // ── Free-text annotation overlay ──────────────────────────────────────────
