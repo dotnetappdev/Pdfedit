@@ -139,6 +139,10 @@ public partial class App : Application
 
         // Keep the Fluent ribbon in sync with the app theme.
         ApplyRibbonTheme(themeName);
+
+        // Keep the AvalonDock docking chrome in sync (main window may not exist yet
+        // during the very first theme application at startup).
+        (Current.MainWindow as MainWindow)?.ApplyDockTheme(themeName);
     }
 
     /// <summary>

@@ -7,6 +7,7 @@
         xmlns:controls="clr-namespace:PdfEdit.Controls"
         xmlns:vm="clr-namespace:PdfEdit.ViewModels"
         xmlns:models="clr-namespace:PdfEdit.Models"
+        xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="PdfEdit — PDF Form Filler"
         Height="780" Width="1280"
@@ -960,64 +961,55 @@
         <Grid Grid.Row="1">
 
             <!-- Scaled inner layout (toolbox + viewer + properties) -->
-            <Grid x:Name="ScaledContent">
-                <Grid.LayoutTransform>
+            <avalonDock:DockingManager x:Name="DockManager"
+                                       AllowMixedOrientation="True"
+                                       Background="{DynamicResource PanelBgBrush}">
+                <avalonDock:DockingManager.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
-                </Grid.LayoutTransform>
+                </avalonDock:DockingManager.LayoutTransform>
+                <avalonDock:LayoutRoot>
+                    <avalonDock:LayoutPanel Orientation="Horizontal">
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="56"/>            <!-- Toolbox -->
-                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
-                    <ColumnDefinition Width="*"/>              <!-- PDF Viewer -->
-                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
-                    <ColumnDefinition Width="220" MinWidth="180" MaxWidth="380"/> <!-- Properties -->
-                </Grid.ColumnDefinitions>
+                        <!-- ── Toolbox (dockable / floatable) ──────────────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="72">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Tools" ContentId="tools"
+                                                             CanClose="False" CanHide="False">
+                                    <controls:ToolboxPanel DataContext="{Binding}"
+                                                           FontSize="{DynamicResource PanelFontSize}"
+                                                           AutomationProperties.Name="Tool palette"/>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
 
-                <!-- ── Toolbox ─────────────────────────────────────────────── -->
-                <Border Grid.Column="0"
-                        Background="{DynamicResource SidebarBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="0,0,1,0">
-                    <controls:ToolboxPanel DataContext="{Binding}"
-                                           FontSize="{DynamicResource PanelFontSize}"
-                                           AutomationProperties.Name="Tool palette"/>
-                </Border>
+                        <!-- ── Page thumbnails (dockable / floatable) ──────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="120">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Thumbnails" ContentId="thumbnails">
+                                    <controls:PageThumbnailsPanel
+                                        DataContext="{Binding}"
+                                        FontSize="{DynamicResource PanelFontSize}"
+                                        AutomationProperties.Name="Page thumbnails"/>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
 
-                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"
-                              AutomationProperties.Name="Resize toolbox"/>
+                        <!-- ── PDF Viewer (document) ───────────────────────── -->
+                        <avalonDock:LayoutDocumentPaneGroup>
+                            <avalonDock:LayoutDocumentPane>
+                                <avalonDock:LayoutDocument Title="Document" ContentId="document" CanClose="False">
+                                    <controls:PdfViewerControl x:Name="PdfViewer"
+                                                               DataContext="{Binding}"
+                                                               AutomationProperties.Name="PDF document viewer"/>
+                                </avalonDock:LayoutDocument>
+                            </avalonDock:LayoutDocumentPane>
+                        </avalonDock:LayoutDocumentPaneGroup>
 
-                <!-- ── PDF Viewer ───────────────────────────────────────────── -->
-                <!-- PDF Viewer + collapsible thumbnails strip -->
-                <Grid Grid.Column="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <controls:PageThumbnailsPanel
-                        Grid.Column="0"
-                        FontSize="{DynamicResource PanelFontSize}"
-                        Width="106"
-                        DataContext="{Binding}"
-                        Visibility="{Binding ShowThumbnails,
-                            Converter={StaticResource BoolToVisibilityConverter}}"
-                        AutomationProperties.Name="Page thumbnails"/>
-
-                    <controls:PdfViewerControl Grid.Column="1"
-                                               x:Name="PdfViewer"
-                                               DataContext="{Binding}"
-                                               AutomationProperties.Name="PDF document viewer"/>
-                </Grid>
-
-                <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"
-                              AutomationProperties.Name="Resize properties panel"/>
-
-                <!-- ── Properties Panel ─────────────────────────────────────── -->
-                <Border Grid.Column="4"
-                        Background="{DynamicResource SidebarBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1,0,0,0">
-                    <TabControl AutomationProperties.Name="Properties panel">
+                        <!-- ── Properties (dockable / floatable) ───────────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="240">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Properties" ContentId="properties">
+                                    <TabControl AutomationProperties.Name="Properties panel">
 
                         <!-- Field Properties tab -->
                         <TabItem Header="Properties"
@@ -1161,11 +1153,15 @@
                                                   FontSize="{DynamicResource ChatFontSize}"/>
                         </TabItem>
 
-                    </TabControl>
-                </Border>
+                                    </TabControl>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
 
-            </Grid>
-            <!-- End of ScaledContent Grid -->
+                    </avalonDock:LayoutPanel>
+                </avalonDock:LayoutRoot>
+            </avalonDock:DockingManager>
+            <!-- End of docking manager -->
 
             <!-- ── Global Search Overlay ────────────────────────────────────── -->
             <Grid Panel.ZIndex="100"

@@ -14,7 +14,19 @@ public partial class MainWindow : RibbonWindow
         // Value converters are registered application-wide in App.xaml so that
         // every control (including stand-alone UserControls) can resolve them.
         InitializeComponent();
+        ApplyDockTheme(AppSettings.Current.Theme);
         Loaded += OnWindowLoaded;
+    }
+
+    /// <summary>Matches the AvalonDock docking chrome to the current app theme.</summary>
+    public void ApplyDockTheme(string themeName)
+    {
+        DockManager.Theme = themeName switch
+        {
+            "Light" => new AvalonDock.Themes.Vs2013LightTheme(),
+            "HighContrast" => new AvalonDock.Themes.Vs2013DarkTheme(),
+            _ => new AvalonDock.Themes.Vs2013DarkTheme()
+        };
     }
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
