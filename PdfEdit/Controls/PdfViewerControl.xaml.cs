@@ -28,8 +28,14 @@ public partial class PdfViewerControl : UserControl
     private FreeTextAnnotation? _focusedAnnotation;
     private TextBox? _focusedAnnotationTb;
 
-    // Floating delete toolbar popup
-    private Popup? _floatingToolbar;
+    // Canvas-based annotation toolbar (replaces floating Popup)
+    private Border? _annotToolbar;
+    private const double ToolbarH = 26;
+
+    // Annotation drag state
+    private bool _isDraggingAnnotation;
+    private Point _dragStartPos;
+    private double _dragStartLeft, _dragStartTop;
 
     // Pan state
     private bool _isPanning;
@@ -48,7 +54,7 @@ public partial class PdfViewerControl : UserControl
         AllowDrop = true;
         Focusable = true;
 
-        _floatingToolbar = BuildFloatingToolbar();
+        _annotToolbar = BuildAnnotationToolbar();
     }
 
     // ── Setup ────────────────────────────────────────────────────────────────
@@ -87,6 +93,7 @@ public partial class PdfViewerControl : UserControl
         {
             case nameof(MainViewModel.CurrentFontSize):
                 _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / PdfRenderService.PointsToDips;
+                _focusedAnnotation.FontSize = _vm.CurrentFontSize;
                 break;
             case nameof(MainViewModel.CurrentFontFamily):
                 _focusedAnnotationTb.FontFamily = new FontFamily(_vm.CurrentFontFamily);
@@ -115,75 +122,212 @@ public partial class PdfViewerControl : UserControl
         ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb);
     }
 
-    // ── Floating delete toolbar ───────────────────────────────────────────────
+    // ── Annotation Toolbar (canvas-based) ────────────────────────────────────
 
-    private Popup BuildFloatingToolbar()
+    private Border BuildAnnotationToolbar()
     {
-        var popup = new Popup
-        {
-            StaysOpen = true,
-            AllowsTransparency = true,
-            Placement = PlacementMode.Top,
-        };
+        var panel = new StackPanel { Orientation = Orientation.Horizontal };
 
-        var panel = new StackPanel
+        // Drag grip
+        var grip = new Border
         {
-            Orientation = Orientation.Horizontal,
-            Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
-        };
-
-        var deleteBtn = new Button
-        {
-            Content = "✕ Delete",
-            Background = new SolidColorBrush(Color.FromRgb(196, 43, 28)),
-            Foreground = Brushes.White,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 4, 8, 4),
-            FontSize = 12,
-            Focusable = false,
-            Cursor = Cursors.Hand,
-            ToolTip = "Delete this annotation",
-        };
-        deleteBtn.PreviewMouseDown += (_, e) =>
-        {
-            if (_focusedAnnotation != null && _focusedAnnotationTb != null)
+            Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(90, 90, 90)),
+            BorderThickness = new Thickness(0, 0, 1, 0),
+            Padding = new Thickness(5, 0, 5, 0),
+            Cursor = Cursors.SizeAll,
+            ToolTip = "Drag to move",
+            Child = new TextBlock
             {
-                var ann = _focusedAnnotation;
-                var tb = _focusedAnnotationTb;
-                _focusedAnnotation = null;
-                _focusedAnnotationTb = null;
-                _vm?.RemoveFreeTextAnnotation(ann);
-                AnnotationCanvas.Children.Remove(tb);
-                popup.IsOpen = false;
-                Services.ToastService.Instance.Info("Annotation deleted.");
+                Text = "⠿",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                VerticalAlignment = VerticalAlignment.Center,
             }
+        };
+        grip.MouseLeftButtonDown += OnDragGripMouseDown;
+        grip.MouseMove += OnDragGripMouseMove;
+        grip.MouseLeftButtonUp += OnDragGripMouseUp;
+        panel.Children.Add(grip);
+
+        // Font size: small a (decrease 1pt)
+        panel.Children.Add(MakeToolbarBtn("a", "Decrease font size by 1pt", () =>
+        {
+            if (_vm != null) _vm.CurrentFontSize = Math.Max(6, _vm.CurrentFontSize - 1);
+        }, fontSize: 10));
+
+        // Font size: big A (increase 1pt)
+        panel.Children.Add(MakeToolbarBtn("A", "Increase font size by 1pt", () =>
+        {
+            if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 1);
+        }, fontSize: 14));
+
+        // Font size: − (decrease 2pt)
+        panel.Children.Add(MakeToolbarBtn("−", "Decrease font size by 2pt", () =>
+        {
+            if (_vm != null) _vm.CurrentFontSize = Math.Max(6, _vm.CurrentFontSize - 2);
+        }));
+
+        // Font size: + (increase 2pt)
+        panel.Children.Add(MakeToolbarBtn("+", "Increase font size by 2pt", () =>
+        {
+            if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 2);
+        }));
+
+        // Delete button
+        var deleteBtn = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(160, 35, 25)),
+            Padding = new Thickness(7, 0, 7, 0),
+            Cursor = Cursors.Hand,
+            ToolTip = "Delete annotation (Del)",
+            Margin = new Thickness(3, 0, 0, 0),
+            Child = new TextBlock
+            {
+                Text = "✕",
+                FontSize = 12,
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        };
+        deleteBtn.MouseLeftButtonDown += (_, e) =>
+        {
+            DeleteFocusedAnnotation();
             e.Handled = true;
         };
         panel.Children.Add(deleteBtn);
 
-        popup.Child = new Border
+        var toolbar = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
             Child = panel,
+            Background = new SolidColorBrush(Color.FromRgb(35, 35, 35)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4, 4, 0, 0),
+            Height = ToolbarH,
+            Visibility = Visibility.Collapsed,
         };
-
-        return popup;
+        Panel.SetZIndex(toolbar, 9999);
+        return toolbar;
     }
 
-    private void ShowFloatingToolbar(TextBox tb)
+    private static Border MakeToolbarBtn(string label, string tip, Action onClick, double fontSize = 12)
     {
-        if (_floatingToolbar == null) return;
-        _floatingToolbar.PlacementTarget = tb;
-        _floatingToolbar.IsOpen = true;
+        var border = new Border
+        {
+            Padding = new Thickness(6, 0, 6, 0),
+            Cursor = Cursors.Hand,
+            ToolTip = tip,
+            Background = Brushes.Transparent,
+            Child = new TextBlock
+            {
+                Text = label,
+                FontSize = fontSize,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        };
+        border.MouseEnter += (_, _) =>
+            border.Background = new SolidColorBrush(Color.FromRgb(60, 60, 60));
+        border.MouseLeave += (_, _) =>
+            border.Background = Brushes.Transparent;
+        border.MouseLeftButtonDown += (_, e) =>
+        {
+            onClick();
+            e.Handled = true;
+        };
+        return border;
     }
 
-    private void HideFloatingToolbar()
+    // Drag grip handlers
+    private void OnDragGripMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (_floatingToolbar != null)
-            _floatingToolbar.IsOpen = false;
+        if (_focusedAnnotationTb == null) return;
+        _isDraggingAnnotation = true;
+        _dragStartPos = e.GetPosition(AnnotationCanvas);
+        _dragStartLeft = Canvas.GetLeft(_focusedAnnotationTb);
+        _dragStartTop = Canvas.GetTop(_focusedAnnotationTb);
+        ((UIElement)sender).CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void OnDragGripMouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_isDraggingAnnotation || _focusedAnnotationTb == null) return;
+        var pos = e.GetPosition(AnnotationCanvas);
+        double newLeft = _dragStartLeft + (pos.X - _dragStartPos.X);
+        double newTop = _dragStartTop + (pos.Y - _dragStartPos.Y);
+        // Clamp to canvas bounds
+        newLeft = Math.Clamp(newLeft, 0, Math.Max(0, AnnotationCanvas.Width - _focusedAnnotationTb.Width));
+        newTop = Math.Clamp(newTop, 0, Math.Max(0, AnnotationCanvas.Height - _focusedAnnotationTb.Height));
+        Canvas.SetLeft(_focusedAnnotationTb, newLeft);
+        Canvas.SetTop(_focusedAnnotationTb, newTop);
+        PositionAnnotationToolbar(newLeft, newTop, _focusedAnnotationTb.Width);
+        e.Handled = true;
+    }
+
+    private void OnDragGripMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_isDraggingAnnotation) return;
+        _isDraggingAnnotation = false;
+        ((UIElement)sender).ReleaseMouseCapture();
+
+        // Update PDF coordinates
+        if (_focusedAnnotation != null && _focusedAnnotationTb != null && _vm?.Document != null)
+        {
+            int pageNum = _vm.CurrentPageIndex + 1;
+            if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+            {
+                double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                double newLeft = Canvas.GetLeft(_focusedAnnotationTb);
+                double newTop = Canvas.GetTop(_focusedAnnotationTb);
+                _focusedAnnotation.Left = newLeft / Scale;
+                _focusedAnnotation.Bottom = pageH - (newTop / Scale) - _focusedAnnotation.Height;
+            }
+        }
+        e.Handled = true;
+    }
+
+    private void ShowAnnotationToolbar(TextBox tb)
+    {
+        if (_annotToolbar == null) return;
+
+        // Ensure toolbar is in the annotation canvas and on top
+        if (!AnnotationCanvas.Children.Contains(_annotToolbar))
+            AnnotationCanvas.Children.Add(_annotToolbar);
+        Panel.SetZIndex(_annotToolbar, 9999);
+
+        double left = Canvas.GetLeft(tb);
+        double top = Canvas.GetTop(tb);
+        PositionAnnotationToolbar(left, top, tb.Width);
+        _annotToolbar.Visibility = Visibility.Visible;
+    }
+
+    private void HideAnnotationToolbar()
+    {
+        if (_annotToolbar != null)
+            _annotToolbar.Visibility = Visibility.Collapsed;
+        _isDraggingAnnotation = false;
+    }
+
+    private void PositionAnnotationToolbar(double tbLeft, double tbTop, double tbWidth)
+    {
+        if (_annotToolbar == null) return;
+        Canvas.SetLeft(_annotToolbar, tbLeft);
+        Canvas.SetTop(_annotToolbar, Math.Max(0, tbTop - ToolbarH - 1));
+    }
+
+    private void DeleteFocusedAnnotation()
+    {
+        if (_focusedAnnotation == null) return;
+        var ann = _focusedAnnotation;
+        var tb = _focusedAnnotationTb;
+        _focusedAnnotation = null;
+        _focusedAnnotationTb = null;
+        HideAnnotationToolbar();
+        _vm?.RemoveFreeTextAnnotation(ann);
+        if (tb != null) AnnotationCanvas.Children.Remove(tb);
+        ToastService.Instance.Info("Annotation deleted.");
     }
 
     // ── Page rendering ───────────────────────────────────────────────────────
@@ -193,7 +337,9 @@ public partial class PdfViewerControl : UserControl
         if (_vm?.Document == null) return;
 
         FinalizeAnnotationBox();
-        HideFloatingToolbar();
+        HideAnnotationToolbar();
+        _focusedAnnotation = null;
+        _focusedAnnotationTb = null;
         ShowLoading(true);
         try
         {
@@ -468,6 +614,13 @@ public partial class PdfViewerControl : UserControl
 
         foreach (var ann in annotations)
             PlaceAnnotationVisual(ann, pageHeightPts);
+
+        // Ensure toolbar is always on top in the canvas
+        if (_annotToolbar != null)
+        {
+            _annotToolbar.Visibility = Visibility.Collapsed;
+            AnnotationCanvas.Children.Add(_annotToolbar);
+        }
     }
 
     private void PlaceAnnotationVisual(FreeTextAnnotation ann, double pageHeightPts)
@@ -485,10 +638,10 @@ public partial class PdfViewerControl : UserControl
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 200)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(180, 70, 130, 180)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(120, 70, 130, 180)),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(2),
-            ToolTip = "Annotation — right-click to delete",
+            ToolTip = "Annotation — drag the toolbar to move · right-click to delete",
             AutomationProperties = { Name = "Text annotation" }
         };
 
@@ -514,23 +667,27 @@ public partial class PdfViewerControl : UserControl
             _focusedAnnotation = ann;
             _focusedAnnotationTb = tb;
             if (_vm != null) _vm.SelectedAnnotation = ann;
-            tb.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 120, 215));
+            // Adobe-style black selection outline
+            tb.BorderBrush = new SolidColorBrush(Colors.Black);
             tb.BorderThickness = new Thickness(2);
-            ShowFloatingToolbar(tb);
+            tb.Background = new SolidColorBrush(Color.FromArgb(35, 255, 255, 200));
+            ShowAnnotationToolbar(tb);
         };
+
         tb.LostFocus += (_, _) =>
         {
-            // Small delay so clicking the floating toolbar doesn't trigger LostFocus
+            // Slight delay so clicking toolbar buttons doesn't lose focus and hide them
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
             {
-                if (_focusedAnnotationTb == tb)
+                if (_focusedAnnotationTb == tb && !_isDraggingAnnotation)
                 {
                     _focusedAnnotation = null;
                     _focusedAnnotationTb = null;
-                    HideFloatingToolbar();
+                    HideAnnotationToolbar();
                 }
-                tb.BorderBrush = new SolidColorBrush(Color.FromArgb(180, 70, 130, 180));
+                tb.BorderBrush = new SolidColorBrush(Color.FromArgb(120, 70, 130, 180));
                 tb.BorderThickness = new Thickness(1);
+                tb.Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 200));
             });
         };
 
@@ -541,7 +698,7 @@ public partial class PdfViewerControl : UserControl
         {
             _vm!.RemoveFreeTextAnnotation(ann);
             AnnotationCanvas.Children.Remove(tb);
-            HideFloatingToolbar();
+            HideAnnotationToolbar();
         };
         cm.Items.Add(deleteItem);
         tb.ContextMenu = cm;
@@ -648,7 +805,7 @@ public partial class PdfViewerControl : UserControl
 
             if (tool == ActiveTool.DateStamp)
             {
-                string dateText = DateTime.Now.ToString("MMMM d, yyyy");
+                string dateText = DateTime.Now.ToString(AppSettings.Current.DateFormat);
                 PlaceNewAnnotationBox(posOnPage, false, dateText);
             }
             else
@@ -717,18 +874,12 @@ public partial class PdfViewerControl : UserControl
         if (e.Key == Key.Escape)
         {
             FinalizeAnnotationBox();
-            HideFloatingToolbar();
+            HideAnnotationToolbar();
         }
 
         if (e.Key == Key.Delete && _focusedAnnotation != null)
         {
-            var ann = _focusedAnnotation;
-            var tb = _focusedAnnotationTb;
-            _focusedAnnotation = null;
-            _focusedAnnotationTb = null;
-            _vm!.RemoveFreeTextAnnotation(ann);
-            if (tb != null) AnnotationCanvas.Children.Remove(tb);
-            HideFloatingToolbar();
+            DeleteFocusedAnnotation();
             e.Handled = true;
         }
     }
@@ -743,7 +894,7 @@ public partial class PdfViewerControl : UserControl
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        double fontSize = _vm.CurrentFontSize * 2; // stamps are bigger
+        double fontSize = _vm.CurrentFontSize * 2;
         double displayFontSize = fontSize * Scale / PdfRenderService.PointsToDips;
         double defaultW = 32 * Scale;
         double defaultH = 32 * Scale;
@@ -769,7 +920,6 @@ public partial class PdfViewerControl : UserControl
         };
         _vm.FreeTextAnnotations.Add(ann);
 
-        // Create visual directly
         var tb = new TextBox
         {
             Width = defaultW,
@@ -800,7 +950,7 @@ public partial class PdfViewerControl : UserControl
         AnnotationCanvas.Children.Add(tb);
 
         _vm.StatusText = $"Stamp '{stampText}' placed.";
-        Services.ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
+        ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
     }
 
     // ── Free-text TextBox placement ───────────────────────────────────────────
@@ -927,8 +1077,18 @@ public partial class PdfViewerControl : UserControl
     {
         if (_vm?.Document == null) return;
 
-        var sigData = OpenSignatureDialog();
-        if (sigData?.ImageBytes == null || sigData.ImageBytes.Length == 0) return;
+        // Use library signature if one was pre-selected
+        byte[]? bytes = _vm.PendingLibrarySignature;
+        if (bytes != null)
+        {
+            _vm.PendingLibrarySignature = null; // consume it
+        }
+        else
+        {
+            var sigData = OpenSignatureDialog();
+            if (sigData?.ImageBytes == null || sigData.ImageBytes.Length == 0) return;
+            bytes = sigData.ImageBytes;
+        }
 
         int pageNum = _vm.CurrentPageIndex + 1;
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
@@ -949,7 +1109,7 @@ public partial class PdfViewerControl : UserControl
             Bottom = pdfY,
             Width = pdfW,
             Height = pdfH,
-            ImageBytes = sigData.ImageBytes,
+            ImageBytes = bytes,
         };
 
         _vm.AddPlacedSignature(sig);
@@ -960,7 +1120,29 @@ public partial class PdfViewerControl : UserControl
     private SignatureData? OpenSignatureDialog()
     {
         var dlg = new SignatureDialog { Owner = Window.GetWindow(this) };
-        return dlg.ShowDialog() == true ? dlg.Result : null;
+        if (dlg.ShowDialog() == true)
+        {
+            // Refresh the toolbox signatures in case the user saved to library
+            if (Window.GetWindow(this) is Window win)
+            {
+                var toolbox = FindChild<ToolboxPanel>(win);
+                toolbox?.RefreshSignatures();
+            }
+            return dlg.Result;
+        }
+        return null;
+    }
+
+    private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            var result = FindChild<T>(child);
+            if (result != null) return result;
+        }
+        return null;
     }
 
     // ── Drag & Drop ───────────────────────────────────────────────────────────

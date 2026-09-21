@@ -123,6 +123,12 @@
                                      AutomationProperties.HelpText="Enter a hex color code like #000000"/>
                         </Grid>
 
+                        <TextBlock Style="{StaticResource SectionHead}" Text="DATE STAMP FORMAT"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="12"
+                                   TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Choose how dates appear when using the Date Stamp tool. Preview shows today's date in each format."/>
+                        <StackPanel x:Name="DateFormatPanel" Margin="0,0,0,4"/>
+
                         <TextBlock Style="{StaticResource SectionHead}" Text="BEHAVIOUR"/>
                         <CheckBox x:Name="ForceUpperCaseCb"
                                   Content="Force uppercase text by default"

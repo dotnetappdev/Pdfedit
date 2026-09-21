@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using PdfEdit.Services;
 
 namespace PdfEdit.Dialogs;
@@ -10,6 +11,19 @@ public partial class SettingsWindow : Window
     {
         "Arial", "Times New Roman", "Courier New", "Georgia", "Verdana",
         "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
+    };
+
+    // (label, format string) pairs shown with a live preview
+    private static readonly (string Label, string Format)[] DateFormats =
+    {
+        ("Long date",        "MMMM d, yyyy"),
+        ("US date",          "MM/dd/yyyy"),
+        ("EU date",          "dd/MM/yyyy"),
+        ("Dashed (EU)",      "dd-MM-yyyy"),
+        ("ISO 8601",         "yyyy-MM-dd"),
+        ("Short date",       "d MMM yyyy"),
+        ("Full weekday",     "dddd, MMMM d, yyyy"),
+        ("Short US",         "M/d/yy"),
     };
 
     public SettingsWindow()
@@ -39,11 +53,87 @@ public partial class SettingsWindow : Window
         DefaultColorTb.Text = s.DefaultFontColor;
         ForceUpperCaseCb.IsChecked = s.ForceUpperCaseDefault;
 
+        // Date formats
+        BuildDateFormatPanel(s.DateFormat);
+
         // AI
         ApiKeyBox.Password = s.ClaudeApiKey;
 
         // Accessibility
         HighContrastFocusCb.IsChecked = s.HighContrastFocusIndicators;
+    }
+
+    private void BuildDateFormatPanel(string currentFormat)
+    {
+        DateFormatPanel.Children.Clear();
+        var today = DateTime.Today;
+        var fg = (Brush)(TryFindResource("ForegroundBrush") ?? Brushes.White);
+        var dim = (Brush)(TryFindResource("DimForegroundBrush") ?? Brushes.Gray);
+
+        foreach (var (label, fmt) in DateFormats)
+        {
+            var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var rb = new RadioButton
+            {
+                GroupName = "DateFormat",
+                Tag = fmt,
+                IsChecked = fmt == currentFormat,
+                Foreground = fg,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                AutomationProperties = { Name = $"Date format: {label}" }
+            };
+
+            var labelSp = new StackPanel { Orientation = Orientation.Horizontal };
+            labelSp.Children.Add(new TextBlock
+            {
+                Text = label,
+                Foreground = fg,
+                FontSize = 13,
+                Width = 120,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            labelSp.Children.Add(new TextBlock
+            {
+                Text = $"({fmt})",
+                Foreground = dim,
+                FontSize = 11,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 16, 0)
+            });
+            rb.Content = labelSp;
+            Grid.SetColumn(rb, 0);
+
+            var preview = new TextBlock
+            {
+                Text = today.ToString(fmt),
+                Foreground = new SolidColorBrush(Color.FromRgb(100, 200, 120)),
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Right,
+                MinWidth = 180,
+                AutomationProperties = { HelpText = $"Preview: {today.ToString(fmt)}" }
+            };
+            Grid.SetColumn(preview, 1);
+
+            row.Children.Add(rb);
+            row.Children.Add(preview);
+            DateFormatPanel.Children.Add(row);
+        }
+    }
+
+    private string GetSelectedDateFormat()
+    {
+        foreach (Grid row in DateFormatPanel.Children)
+        {
+            if (row.Children[0] is RadioButton rb && rb.IsChecked == true && rb.Tag is string fmt)
+                return fmt;
+        }
+        return "MMMM d, yyyy";
     }
 
     private void Theme_Checked(object sender, RoutedEventArgs e)
@@ -73,6 +163,7 @@ public partial class SettingsWindow : Window
 
         s.ClaudeApiKey = ApiKeyBox.Password;
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
+        s.DateFormat = GetSelectedDateFormat();
 
         s.Save();
         DialogResult = true;

@@ -19,6 +19,7 @@ public class AppSettings
     public string DefaultFontColor { get; set; } = "#000000";
     public bool ForceUpperCaseDefault { get; set; }
     public bool HighContrastFocusIndicators { get; set; }
+    public string DateFormat { get; set; } = "MMMM d, yyyy";
 
     [JsonIgnore]
     public static AppSettings Current { get; private set; } = new();

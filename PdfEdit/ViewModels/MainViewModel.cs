@@ -45,6 +45,14 @@ public class MainViewModel : INotifyPropertyChanged
     // Page rotation: pageIndex → cumulative degrees
     private readonly Dictionary<int, int> _pageRotations = new();
 
+    // Library signature pending placement
+    private byte[]? _pendingLibrarySignature;
+    public byte[]? PendingLibrarySignature
+    {
+        get => _pendingLibrarySignature;
+        set { _pendingLibrarySignature = value; OnPropertyChanged(); }
+    }
+
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();

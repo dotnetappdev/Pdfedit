@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using PdfEdit.Models;
+using PdfEdit.Services;
 
 namespace PdfEdit.Dialogs;
 
@@ -123,6 +124,17 @@ public partial class SignatureDialog : Window
                 Mode = (SignatureMode)TabCtrl.SelectedIndex,
                 ImageBytes = bytes
             };
+
+            // Save to library if requested
+            if (SaveToLibraryCb.IsChecked == true && !string.IsNullOrWhiteSpace(LibraryNameTb.Text))
+            {
+                SignatureStore.Add(new SavedSignature
+                {
+                    Name = LibraryNameTb.Text.Trim(),
+                    ImageBytes = bytes!
+                });
+            }
+
             DialogResult = true;
         }
         catch (Exception ex)

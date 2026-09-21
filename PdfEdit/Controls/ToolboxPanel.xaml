@@ -203,6 +203,31 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </RadioButton>
 
+            <Separator Style="{StaticResource ToolSep}"/>
+
+            <!-- My Signatures section -->
+            <TextBlock Text="SIGS" Foreground="#888888" FontSize="9"
+                       HorizontalAlignment="Center" Margin="0,2,0,2"
+                       AutomationProperties.Name="My Signatures section"/>
+
+            <!-- Add signature to library button -->
+            <Button x:Name="AddSigBtn"
+                    Width="44" Height="24"
+                    Margin="4,2"
+                    ToolTip="Save a new signature to the library"
+                    Click="AddSig_Click"
+                    Focusable="False"
+                    Cursor="Hand"
+                    AutomationProperties.Name="Add signature to library"
+                    Background="#2D5A8E"
+                    Foreground="White"
+                    BorderThickness="0">
+                <TextBlock Text="+" FontSize="14" FontWeight="Bold"/>
+            </Button>
+
+            <!-- Dynamic saved signatures list -->
+            <StackPanel x:Name="SavedSigPanel"/>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
