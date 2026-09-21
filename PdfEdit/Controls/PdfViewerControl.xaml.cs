@@ -20,6 +20,19 @@ public partial class PdfViewerControl : UserControl
 
     private double Scale => PdfRenderService.PointsToDips * (_vm?.Zoom ?? 1.0);
 
+    // Acrobat-style form-field appearance brushes (frozen for reuse across fields).
+    private static readonly Brush FieldFillBrush = Freeze(Color.FromArgb(60, 90, 160, 255));
+    private static readonly Brush FieldBorderBrush = Freeze(Color.FromArgb(150, 70, 130, 200));
+    private static readonly Brush FieldFocusBrush = Freeze(Color.FromArgb(90, 120, 180, 255));
+    private static readonly Brush FieldFocusBorderBrush = Freeze(Color.FromArgb(230, 30, 120, 220));
+
+    private static Brush Freeze(Color c)
+    {
+        var b = new SolidColorBrush(c);
+        b.Freeze();
+        return b;
+    }
+
     // Active annotation TextBox being placed
     private TextBox? _activeAnnotationBox;
     private FreeTextAnnotation? _pendingAnnotation;
@@ -451,9 +464,13 @@ public partial class PdfViewerControl : UserControl
             Width = vertical ? h : w,
             Height = vertical ? w : h,
             Text = _vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value,
-            Background = Brushes.Transparent,
-            BorderBrush = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
+            // Acrobat-style fillable field: faint blue fill + subtle border so the
+            // user can clearly see where the fields are and that they are editable.
+            Background = FieldFillBrush,
+            Foreground = Brushes.Black,
+            CaretBrush = Brushes.Black,
+            BorderBrush = FieldBorderBrush,
+            BorderThickness = new Thickness(1),
             FontSize = Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
             AcceptsReturn = field.IsMultiline,
@@ -467,7 +484,18 @@ public partial class PdfViewerControl : UserControl
             tb.LayoutTransform = new RotateTransform(-90);
 
         tb.TextChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, tb.Text);
-        tb.GotFocus += (_, _) => { _vm!.SelectedField = field; HighlightActiveField(tb); };
+        tb.GotFocus += (_, _) =>
+        {
+            _vm!.SelectedField = field;
+            tb.Background = FieldFocusBrush;
+            tb.BorderBrush = FieldFocusBorderBrush;
+            HighlightActiveField(tb);
+        };
+        tb.LostFocus += (_, _) =>
+        {
+            tb.Background = FieldFillBrush;
+            tb.BorderBrush = FieldBorderBrush;
+        };
         return tb;
     }
 
