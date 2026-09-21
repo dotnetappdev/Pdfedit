@@ -62,23 +62,36 @@ public partial class ToolboxPanel : UserControl
         var img = new Image
         {
             Source = bmp,
-            Width = 40,
-            Height = 20,
+            Width = 130,
+            Height = 36,
             Stretch = Stretch.Uniform,
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        // Name label below the signature image
+        var nameLabel = new TextBlock
+        {
+            Text = sig.Name,
+            FontSize = 10,
+            Foreground = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+            Margin = new Thickness(4, 2, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        var inner = new StackPanel { Margin = new Thickness(4, 4, 4, 4) };
+        inner.Children.Add(img);
+        inner.Children.Add(nameLabel);
 
         var border = new Border
         {
-            Width = 44,
-            Height = 28,
-            Margin = new Thickness(4, 2, 4, 2),
+            Margin = new Thickness(4, 3, 4, 3),
             BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(4),
             Background = Brushes.White,
-            ToolTip = $"{sig.Name}\nAdded {sig.CreatedAt}\nLeft-click to place · Right-click to delete",
+            ToolTip = $"{sig.Name}\nAdded {sig.CreatedAt}\nLeft-click to place  ·  Right-click to delete",
             Cursor = System.Windows.Input.Cursors.Hand,
-            Child = img
+            Child = inner
         };
         System.Windows.Automation.AutomationProperties.SetName(border, $"Saved signature: {sig.Name}");
 

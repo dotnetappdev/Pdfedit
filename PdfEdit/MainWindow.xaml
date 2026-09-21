@@ -7,6 +7,7 @@
         xmlns:controls="clr-namespace:PdfEdit.Controls"
         xmlns:vm="clr-namespace:PdfEdit.ViewModels"
         xmlns:models="clr-namespace:PdfEdit.Models"
+        xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="PdfEdit — PDF Form Filler"
         Height="780" Width="1280"
@@ -32,8 +33,8 @@
         <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}"/>
         <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ZoomOutCommand}"/>
         <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
-        <KeyBinding Key="BracketRight" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
-        <KeyBinding Key="BracketLeft" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
+        <KeyBinding Key="OemCloseBrackets" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
+        <KeyBinding Key="OemOpenBrackets" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
         <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
@@ -58,6 +59,7 @@
              RIBBON TOOLBAR
              ════════════════════════════════════════════════════════════════ -->
         <Fluent:Ribbon Grid.Row="0" x:Name="MainRibbon"
+                       FontSize="{DynamicResource RibbonFontSize}"
                        AutomationProperties.Name="Main ribbon toolbar">
 
             <!-- Application Menu (File menu) -->
@@ -103,6 +105,13 @@
                                                 Command="{Binding CloseCommand}"
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Close document"/>
+
+                    <Separator/>
+
+                    <Fluent:MenuItem Header="About PdfEdit…"
+                                                KeyTip="B"
+                                                Command="{Binding ShowAboutCommand}"
+                                                AutomationProperties.Name="About PdfEdit"/>
 
                     <Fluent:ApplicationMenu.RightPaneContent>
                         <StackPanel Margin="4,8" Width="230">
@@ -205,7 +214,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Save as a new file (Ctrl+Shift+S)"
-                                   AutomationProperties.Name="Save as new file"/>
+                                   AutomationProperties.Name="Save as new file">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Print"
                                    Command="{Binding PrintCommand}"
@@ -213,7 +226,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Print document (Ctrl+P)"
-                                   AutomationProperties.Name="Print document"/>
+                                   AutomationProperties.Name="Print document">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Close"
                                    Command="{Binding CloseCommand}"
@@ -221,7 +238,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Close the current document (Ctrl+W)"
-                                   AutomationProperties.Name="Close document"/>
+                                   AutomationProperties.Name="Close document">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Settings"
                                    Command="{Binding OpenSettingsCommand}"
@@ -244,28 +265,44 @@
                                    KeyTip="F"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Go to first page"
-                                   AutomationProperties.Name="Go to first page"/>
+                                   AutomationProperties.Name="Go to first page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE892;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Previous"
                                    Command="{Binding PreviousPageCommand}"
                                    Size="Middle"
                                    KeyTip="R"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Previous page (Ctrl+Left)"
-                                   AutomationProperties.Name="Previous page"/>
+                                   AutomationProperties.Name="Previous page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Next"
                                    Command="{Binding NextPageCommand}"
                                    Size="Middle"
                                    KeyTip="N"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Next page (Ctrl+Right)"
-                                   AutomationProperties.Name="Next page"/>
+                                   AutomationProperties.Name="Next page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Last"
                                    Command="{Binding LastPageCommand}"
                                    Size="Middle"
                                    KeyTip="L"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Go to last page"
-                                   AutomationProperties.Name="Go to last page"/>
+                                   AutomationProperties.Name="Go to last page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE893;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Spinner Header="Page"
                                     Value="{Binding CurrentPageIndex, Converter={StaticResource ZeroToOneConverter}, Mode=TwoWay}"
@@ -291,6 +328,196 @@
                             <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Pages group -->
+                <Fluent:RibbonGroupBox Header="Pages"
+                                        AutomationProperties.Name="Page operations group">
+                    <Fluent:Button Header="Delete Page"
+                                   Command="{Binding DeleteCurrentPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="DP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Delete the current page from the document"
+                                   AutomationProperties.Name="Delete current page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Insert Blank"
+                                   Command="{Binding InsertBlankPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="IB"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Insert a blank page after the current page"
+                                   AutomationProperties.Name="Insert blank page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Extract Page"
+                                   Command="{Binding ExtractCurrentPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="XP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save the current page as a separate PDF"
+                                   AutomationProperties.Name="Extract current page to PDF">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Merge PDFs"
+                                   Command="{Binding MergePdfCommand}"
+                                   KeyTip="MP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Combine this PDF with other PDFs into one document"
+                                   AutomationProperties.Name="Merge PDFs">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Thumbnails"
+                                   Command="{Binding ToggleThumbnailsCommand}"
+                                   Size="Middle"
+                                   KeyTip="TH"
+                                   ToolTip="Show/hide page thumbnails panel"
+                                   AutomationProperties.Name="Toggle page thumbnails">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── FILL & SIGN TAB (Adobe-style) ─────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Fill &amp; Sign"
+                                   AutomationProperties.Name="Fill and Sign tab">
+
+                <!-- Add content -->
+                <Fluent:RibbonGroupBox Header="Add Content"
+                                        AutomationProperties.Name="Add content group">
+                    <Fluent:ToggleButton Header="Add Text"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Text — click anywhere on the page to type, then use the floating toolbar to resize, recolour or move it (Adobe Fill &amp; Sign style)"
+                                         AutomationProperties.Name="Add text anywhere">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="Ab" FontWeight="Bold" FontSize="18"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Date"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DateStamp, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DateStamp"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Date — click the page to stamp today's date (D)"
+                                         AutomationProperties.Name="Add date">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Marks (check / cross / dot / line / circle) -->
+                <Fluent:RibbonGroupBox Header="Marks"
+                                        AutomationProperties.Name="Marks group">
+                    <Fluent:ToggleButton Header="Check" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Checkmark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Checkmark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Checkmark — click a checkbox or the page to place ✓ (K)"
+                                         AutomationProperties.Name="Checkmark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="✓" Foreground="#4CAF50" FontWeight="Bold" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Cross" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=XMark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="XMark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Cross — click the page to place ✕"
+                                         AutomationProperties.Name="Cross mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="✕" Foreground="#F44336" FontWeight="Bold" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Dot" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Dot, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Dot"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Dot — click the page to place a filled dot ●"
+                                         AutomationProperties.Name="Dot mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="●" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Line" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Line, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Line"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Line — click the page to place a short line —"
+                                         AutomationProperties.Name="Line mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="—" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Circle" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Circle, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Circle"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Circle — click the page to place a circle ○"
+                                         AutomationProperties.Name="Circle mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="○" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Sign -->
+                <Fluent:RibbonGroupBox Header="Sign"
+                                        AutomationProperties.Name="Sign group">
+                    <Fluent:ToggleButton Header="Sign"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Signature"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Sign — click a signature field or the page to place your signature (S)"
+                                         AutomationProperties.Name="Sign document">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Fields -->
+                <Fluent:RibbonGroupBox Header="Fields"
+                                        AutomationProperties.Name="Fields group">
+                    <Fluent:ToggleButton Header="Highlight Fields"
+                                         IsChecked="{Binding HighlightFields, Mode=TwoWay}"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Show a coloured highlight over all fillable form fields (Adobe 'Highlight Existing Fields')"
+                                         AutomationProperties.Name="Highlight existing fields">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Clear All"
+                                   Command="{Binding ClearAllFieldsCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Clear the values of all form fields"
+                                   AutomationProperties.Name="Clear all fields"/>
+                    <Fluent:Button Header="Delete Field"
+                                   Command="{Binding DeleteSelectedFieldCommand}"
+                                   Size="Middle"
+                                   ToolTip="Delete the selected form field (or right-click a field on the page)"
+                                   AutomationProperties.Name="Delete selected field"/>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -409,21 +636,33 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Zoom in (Ctrl++)"
-                                   AutomationProperties.Name="Zoom in"/>
+                                   AutomationProperties.Name="Zoom in">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"
                                    Command="{Binding ZoomOutCommand}"
                                    KeyTip="O"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Zoom out (Ctrl+-)"
-                                   AutomationProperties.Name="Zoom out"/>
+                                   AutomationProperties.Name="Zoom out">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Fit Page"
                                    Command="{Binding ZoomFitCommand}"
                                    KeyTip="F"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Fit page (Ctrl+0)"
-                                   AutomationProperties.Name="Fit page to window"/>
+                                   AutomationProperties.Name="Fit page to window">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="100%"
                                    Command="{Binding ZoomActualCommand}"
                                    KeyTip="A"
@@ -760,16 +999,26 @@
             <Fluent:RibbonTabItem Header="Forms"
                                    AutomationProperties.Name="Forms tab">
 
-                <Fluent:RibbonGroupBox Header="Fill"
-                                        AutomationProperties.Name="Form fill group">
+                <Fluent:RibbonGroupBox Header="Fields"
+                                        AutomationProperties.Name="Form fields group">
                     <Fluent:Button Header="Clear All"
                                    Command="{Binding ClearAllFieldsCommand}"
                                    KeyTip="C"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Clear all form fields"
+                                   ToolTip="Clear the values of all form fields"
                                    AutomationProperties.Name="Clear all form fields">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Delete Field"
+                                   Command="{Binding DeleteSelectedFieldCommand}"
+                                   KeyTip="D"
+                                   ToolTip="Delete the selected form field (or right-click a field on the page)"
+                                   AutomationProperties.Name="Delete selected field"
+                                   AutomationProperties.HelpText="Removes the currently selected form field from the document">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#D24040"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import Data"
@@ -812,30 +1061,77 @@
             <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
             <Fluent:RibbonTabItem Header="AI Assistant"
                                    AutomationProperties.Name="AI assistant tab">
-                <Fluent:RibbonGroupBox Header="Claude AI"
-                                        AutomationProperties.Name="Claude AI group">
-                    <Fluent:Button Header="AI Panel"
+                <Fluent:RibbonGroupBox Header="Chat"
+                                        AutomationProperties.Name="AI chat group">
+                    <Fluent:Button Header="Open Chat"
                                    Command="{Binding ToggleAiPanelCommand}"
-                                   ToolTip="Show/hide the AI assistant panel in Properties"
-                                   AutomationProperties.Name="Toggle AI assistant panel">
+                                   ToolTip="Show AI Chat panel (right sidebar → AI Chat tab)"
+                                   AutomationProperties.Name="Open AI chat panel">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Clear Chat"
+                                   Command="{Binding ClearAiChatCommand}"
+                                   Size="Middle"
+                                   ToolTip="Clear the AI chat history"
+                                   AutomationProperties.Name="Clear AI chat history"/>
                     <Fluent:Button Header="Fill Fields"
                                    Command="{Binding RunAiFillCommand}"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Ask Claude AI to fill form fields based on your prompt"
+                                   ToolTip="Use AI to auto-fill form fields (uses the AI Fill tab prompt)"
                                    AutomationProperties.Name="Run AI form fill"/>
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Settings"
-                                        AutomationProperties.Name="AI settings group">
-                    <Fluent:Button Header="API Key"
-                                   Command="{Binding OpenSettingsCommand}"
+                <Fluent:RibbonGroupBox Header="Provider"
+                                        AutomationProperties.Name="AI provider group">
+                    <Fluent:ComboBox Header="Provider"
+                                     ItemsSource="{Binding AiProviders}"
+                                     SelectedItem="{Binding AiProvider}"
+                                     Width="90"
+                                     AutomationProperties.Name="AI provider selector"/>
+                    <Fluent:ComboBox Header="Model"
+                                     ItemsSource="{Binding AiModels}"
+                                     SelectedItem="{Binding AiModel}"
+                                     Width="160"
+                                     AutomationProperties.Name="AI model selector"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Profiles"
+                                        AutomationProperties.Name="Personal profiles group">
+                    <Fluent:Button Header="Manage Profiles"
+                                   Command="{Binding ManageProfilesCommand}"
+                                   ToolTip="Store your name, address, NI number and more for auto-fill"
+                                   AutomationProperties.Name="Manage personal profiles">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Quick Fill"
+                                   Command="{Binding QuickFillWithProfileCommand}"
                                    Size="Middle"
-                                   ToolTip="Configure your Claude API key in Settings → AI Assistant"
-                                   AutomationProperties.Name="Configure AI API key"/>
+                                   ToolTip="Fill matching form fields from the selected profile instantly"
+                                   AutomationProperties.Name="Quick fill from profile">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:ComboBox Header="Profile"
+                                     ItemsSource="{Binding Profiles}"
+                                     SelectedItem="{Binding SelectedProfile}"
+                                     DisplayMemberPath="DisplayName"
+                                     Width="110"
+                                     AutomationProperties.Name="Active profile selector"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Setup"
+                                        AutomationProperties.Name="AI setup group">
+                    <Fluent:Button Header="API Keys"
+                                   Command="{Binding OpenSettingsCommand}"
+                                   ToolTip="Add your Claude or OpenAI API key in Settings → AI"
+                                   AutomationProperties.Name="Configure AI API keys">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
 
@@ -847,46 +1143,43 @@
         <Grid Grid.Row="1">
 
             <!-- Scaled inner layout (toolbox + viewer + properties) -->
-            <Grid x:Name="ScaledContent">
-                <Grid.LayoutTransform>
+            <avalonDock:DockingManager x:Name="DockManager"
+                                       AllowMixedOrientation="True"
+                                       Background="{DynamicResource PanelBgBrush}">
+                <avalonDock:DockingManager.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
-                </Grid.LayoutTransform>
+                </avalonDock:DockingManager.LayoutTransform>
+                <avalonDock:LayoutRoot>
+                    <avalonDock:LayoutPanel Orientation="Horizontal">
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="56"/>            <!-- Toolbox -->
-                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
-                    <ColumnDefinition Width="*"/>              <!-- PDF Viewer -->
-                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
-                    <ColumnDefinition Width="220" MinWidth="180" MaxWidth="380"/> <!-- Properties -->
-                </Grid.ColumnDefinitions>
+                        <!-- ── Page thumbnails (dockable / floatable) ──────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="120">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Thumbnails" ContentId="thumbnails">
+                                    <controls:PageThumbnailsPanel
+                                        DataContext="{Binding}"
+                                        FontSize="{DynamicResource PanelFontSize}"
+                                        AutomationProperties.Name="Page thumbnails"/>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
 
-                <!-- ── Toolbox ─────────────────────────────────────────────── -->
-                <Border Grid.Column="0"
-                        Background="{DynamicResource SidebarBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="0,0,1,0">
-                    <controls:ToolboxPanel DataContext="{Binding}"
-                                           AutomationProperties.Name="Tool palette"/>
-                </Border>
+                        <!-- ── PDF Viewer (document) ───────────────────────── -->
+                        <avalonDock:LayoutDocumentPaneGroup>
+                            <avalonDock:LayoutDocumentPane>
+                                <avalonDock:LayoutDocument Title="Document" ContentId="document" CanClose="False">
+                                    <controls:PdfViewerControl x:Name="PdfViewer"
+                                                               DataContext="{Binding}"
+                                                               AutomationProperties.Name="PDF document viewer"/>
+                                </avalonDock:LayoutDocument>
+                            </avalonDock:LayoutDocumentPane>
+                        </avalonDock:LayoutDocumentPaneGroup>
 
-                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"
-                              AutomationProperties.Name="Resize toolbox"/>
-
-                <!-- ── PDF Viewer ───────────────────────────────────────────── -->
-                <controls:PdfViewerControl Grid.Column="2"
-                                            x:Name="PdfViewer"
-                                            DataContext="{Binding}"
-                                            AutomationProperties.Name="PDF document viewer"/>
-
-                <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"
-                              AutomationProperties.Name="Resize properties panel"/>
-
-                <!-- ── Properties Panel ─────────────────────────────────────── -->
-                <Border Grid.Column="4"
-                        Background="{DynamicResource SidebarBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1,0,0,0">
-                    <TabControl AutomationProperties.Name="Properties panel">
+                        <!-- ── Properties (dockable / floatable) ───────────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="240">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Properties" ContentId="properties">
+                                    <TabControl AutomationProperties.Name="Properties panel">
 
                         <!-- Field Properties tab -->
                         <TabItem Header="Properties"
@@ -1023,63 +1316,34 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <!-- AI Fill tab -->
-                        <TabItem Header="AI Fill"
-                                 AutomationProperties.Name="AI form fill assistant">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                                <StackPanel>
-                                    <TextBlock Text="AI FORM FILL" Style="{StaticResource SectionHeader}"/>
-                                    <TextBlock Text="Describe what to fill and Claude AI will complete the form fields automatically."
-                                               FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
-
-                                    <TextBlock Text="Prompt:" FontSize="11" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding AiPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource PropTextBox}"
-                                             AcceptsReturn="True"
-                                             TextWrapping="Wrap"
-                                             MinHeight="80"
-                                             MaxHeight="160"
-                                             VerticalScrollBarVisibility="Auto"
-                                             Margin="0,0,0,8"
-                                             AutomationProperties.Name="AI prompt"
-                                             AutomationProperties.HelpText="Describe what information to fill in the form"/>
-
-                                    <Button Content="Fill Fields with AI"
-                                            Command="{Binding RunAiFillCommand}"
-                                            Style="{StaticResource ModernButton}"
-                                            Height="32"
-                                            IsEnabled="{Binding HasDocument}"
-                                            Margin="0,0,0,8"
-                                            AutomationProperties.Name="Run AI form fill"
-                                            AutomationProperties.HelpText="Sends your prompt to Claude AI to fill the form fields"/>
-
-                                    <ProgressBar IsIndeterminate="True"
-                                                 Height="4"
-                                                 Margin="0,0,0,8"
-                                                 Visibility="{Binding IsAiRunning, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                 AutomationProperties.Name="AI processing indicator"/>
-
-                                    <TextBlock Text="AI Response:" FontSize="11" Margin="0,4,0,4"/>
-                                    <TextBox Text="{Binding AiResponse, Mode=OneWay}"
-                                             Style="{StaticResource PropTextBox}"
-                                             IsReadOnly="True"
-                                             TextWrapping="Wrap"
-                                             MaxHeight="120"
-                                             VerticalScrollBarVisibility="Auto"
-                                             AutomationProperties.Name="AI response"
-                                             AutomationProperties.HelpText="Shows the Claude AI response"/>
-
-                                    <TextBlock Text="Add your Claude API key in Settings → AI Assistant to enable this feature."
-                                               FontSize="10" TextWrapping="Wrap" Margin="0,12,0,0"/>
-                                </StackPanel>
-                            </ScrollViewer>
+                        <!-- AI Chat tab -->
+                        <TabItem Header="AI Chat"
+                                 AutomationProperties.Name="AI chat assistant">
+                            <controls:AiChatPanel DataContext="{Binding}"
+                                                  FontSize="{DynamicResource ChatFontSize}"/>
                         </TabItem>
 
-                    </TabControl>
-                </Border>
+                                    </TabControl>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
 
-            </Grid>
-            <!-- End of ScaledContent Grid -->
+                        <!-- ── Fill & Sign Toolbox — right side, Adobe-style ─ -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="190">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="Fill &amp; Sign" ContentId="tools"
+                                                             CanClose="False" CanHide="False">
+                                    <controls:ToolboxPanel DataContext="{Binding}"
+                                                           FontSize="{DynamicResource PanelFontSize}"
+                                                           AutomationProperties.Name="Fill and Sign tool palette"/>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
+
+                    </avalonDock:LayoutPanel>
+                </avalonDock:LayoutRoot>
+            </avalonDock:DockingManager>
+            <!-- End of docking manager -->
 
             <!-- ── Global Search Overlay ────────────────────────────────────── -->
             <Grid Panel.ZIndex="100"
@@ -1201,6 +1465,7 @@
              STATUS BAR
              ════════════════════════════════════════════════════════════════ -->
         <StatusBar Grid.Row="2"
+                   FontSize="{DynamicResource StatusBarFontSize}"
                    AutomationProperties.Name="Status bar">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
