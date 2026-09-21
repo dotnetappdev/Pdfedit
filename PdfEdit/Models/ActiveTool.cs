@@ -9,5 +9,7 @@ public enum ActiveTool
     Signature,
     Highlight,
     Zoom,
-    Stamp
+    Stamp,
+    AddText,         // place free-text annotation anywhere on the page
+    VerticalText     // place vertical free-text annotation (rotated 90°)
 }

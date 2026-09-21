@@ -24,6 +24,12 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _highlightFields = true;
     private string? _currentFilePath;
 
+    // Page rotation: pageIndex → cumulative degrees (0/90/180/270)
+    private readonly Dictionary<int, int> _pageRotations = new();
+
+    // Free-text annotations placed by the user
+    public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
+
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? PageChanged;
     public event Action? DocumentLoaded;
@@ -33,7 +39,14 @@ public class MainViewModel : INotifyPropertyChanged
     public PdfDocumentInfo? Document
     {
         get => _document;
-        private set { _document = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasDocument)); OnPropertyChanged(nameof(PageCountDisplay)); OnPropertyChanged(nameof(PageCount)); }
+        private set
+        {
+            _document = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasDocument));
+            OnPropertyChanged(nameof(PageCountDisplay));
+            OnPropertyChanged(nameof(PageCount));
+        }
     }
 
     public bool HasDocument => _document != null;
@@ -49,6 +62,7 @@ public class MainViewModel : INotifyPropertyChanged
             _currentPageIndex = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CurrentPageDisplay));
+            OnPropertyChanged(nameof(CurrentPageRotation));
             PageChanged?.Invoke();
         }
     }
@@ -56,6 +70,9 @@ public class MainViewModel : INotifyPropertyChanged
     public string CurrentPageDisplay => HasDocument ? $"Page {_currentPageIndex + 1} of {_document!.PageCount}" : "—";
     public string PageCountDisplay => HasDocument ? _document!.PageCount.ToString() : "0";
     public int PageCount => _document?.PageCount ?? 1;
+
+    /// <summary>Rotation degrees for the currently displayed page (0/90/180/270).</summary>
+    public int CurrentPageRotation => GetPageRotation(_currentPageIndex);
 
     public double Zoom
     {
@@ -132,6 +149,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ImportDataCommand { get; }
     public ICommand SetToolCommand { get; }
     public ICommand FlattenAndSaveCommand { get; }
+    public ICommand RotatePageCWCommand { get; }
+    public ICommand RotatePageCCWCommand { get; }
+    public ICommand ResetPageRotationCommand { get; }
 
     public MainViewModel()
     {
@@ -140,8 +160,10 @@ public class MainViewModel : INotifyPropertyChanged
         SaveAsCommand = new AsyncRelayCommand(SaveAsAsync, () => HasDocument);
         CloseCommand = new RelayCommand(CloseDocument, () => HasDocument);
         PrintCommand = new RelayCommand(Print, () => HasDocument);
-        NextPageCommand = new RelayCommand(() => CurrentPageIndex++, () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
-        PreviousPageCommand = new RelayCommand(() => CurrentPageIndex--, () => HasDocument && _currentPageIndex > 0);
+        NextPageCommand = new RelayCommand(() => CurrentPageIndex++,
+            () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
+        PreviousPageCommand = new RelayCommand(() => CurrentPageIndex--,
+            () => HasDocument && _currentPageIndex > 0);
         FirstPageCommand = new RelayCommand(() => CurrentPageIndex = 0, () => HasDocument);
         LastPageCommand = new RelayCommand(() => CurrentPageIndex = (_document?.PageCount ?? 1) - 1, () => HasDocument);
         ZoomInCommand = new RelayCommand(() => Zoom += 0.1, () => HasDocument);
@@ -151,18 +173,31 @@ public class MainViewModel : INotifyPropertyChanged
         ClearAllFieldsCommand = new RelayCommand(ClearAllFields, () => HasDocument);
         ExportDataCommand = new AsyncRelayCommand(ExportDataAsync, () => HasDocument);
         ImportDataCommand = new AsyncRelayCommand(ImportDataAsync, () => HasDocument);
-        SetToolCommand = new RelayCommand(p => { if (p is ActiveTool t) ActiveTool = t; else if (p is string s && Enum.TryParse<ActiveTool>(s, out var st)) ActiveTool = st; });
+        SetToolCommand = new RelayCommand(p =>
+        {
+            if (p is ActiveTool t) ActiveTool = t;
+            else if (p is string s && Enum.TryParse<ActiveTool>(s, out var st)) ActiveTool = st;
+        });
         FlattenAndSaveCommand = new AsyncRelayCommand(FlattenAndSaveAsync, () => HasDocument);
+        RotatePageCWCommand = new RelayCommand(() => RotatePage(+90), () => HasDocument);
+        RotatePageCCWCommand = new RelayCommand(() => RotatePage(-90), () => HasDocument);
+        ResetPageRotationCommand = new RelayCommand(() =>
+        {
+            _pageRotations.Remove(_currentPageIndex);
+            OnPropertyChanged(nameof(CurrentPageRotation));
+            PageChanged?.Invoke();
+            StatusText = "Page rotation reset.";
+        }, () => HasDocument);
     }
 
     // ── Public Methods ───────────────────────────────────────────────────────
 
-    public async Task OpenFileAsync(string path)
-    {
-        await LoadDocumentAsync(path);
-    }
+    public async Task OpenFileAsync(string path) => await LoadDocumentAsync(path);
 
     public PdfRenderService RenderService => _renderService;
+
+    public int GetPageRotation(int pageIndex)
+        => _pageRotations.TryGetValue(pageIndex, out var r) ? r : 0;
 
     public void UpdateFieldValue(string fieldName, string value)
     {
@@ -171,6 +206,32 @@ public class MainViewModel : INotifyPropertyChanged
         if (field != null) field.Value = value;
         StatusText = $"Field '{fieldName}' updated.";
     }
+
+    /// <summary>
+    /// Add a free-text annotation placed by the user on the current page.
+    /// pdfX/pdfY/pdfW/pdfH are in PDF points (72pts/inch, Y from bottom-left).
+    /// </summary>
+    public void AddFreeTextAnnotation(double pdfX, double pdfY, double pdfW, double pdfH,
+                                       string text, bool isVertical)
+    {
+        var ann = new FreeTextAnnotation
+        {
+            PageNumber = _currentPageIndex + 1,
+            Left = pdfX,
+            Bottom = pdfY,
+            Width = pdfW,
+            Height = pdfH,
+            Text = text,
+            IsVertical = isVertical,
+        };
+        FreeTextAnnotations.Add(ann);
+    }
+
+    public void RemoveFreeTextAnnotation(FreeTextAnnotation ann)
+        => FreeTextAnnotations.Remove(ann);
+
+    public IEnumerable<FreeTextAnnotation> GetAnnotationsForCurrentPage()
+        => FreeTextAnnotations.Where(a => a.PageNumber == _currentPageIndex + 1);
 
     // ── Private Methods ──────────────────────────────────────────────────────
 
@@ -198,6 +259,9 @@ public class MainViewModel : INotifyPropertyChanged
 
             FieldValues.Clear();
             AllFields.Clear();
+            _pageRotations.Clear();
+            FreeTextAnnotations.Clear();
+
             foreach (var f in Document.FormFields)
             {
                 AllFields.Add(f);
@@ -208,14 +272,17 @@ public class MainViewModel : INotifyPropertyChanged
 
             _currentPageIndex = 0;
             OnPropertyChanged(nameof(CurrentPageIndex));
+            OnPropertyChanged(nameof(CurrentPageRotation));
             RefreshCurrentPageFields();
 
             DocumentLoaded?.Invoke();
-            StatusText = $"Opened: {System.IO.Path.GetFileName(path)} — {Document.PageCount} page(s), {Document.FormFields.Count} form field(s).";
+            StatusText = $"Opened: {System.IO.Path.GetFileName(path)} — " +
+                         $"{Document.PageCount} page(s), {Document.FormFields.Count} form field(s).";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to open PDF:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Failed to open PDF:\n{ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
             StatusText = "Error loading document.";
         }
         finally
@@ -231,14 +298,16 @@ public class MainViewModel : INotifyPropertyChanged
         var tmp = _currentFilePath + ".tmp";
         try
         {
-            _formService.SaveWithFormData(_currentFilePath, tmp, FieldValues, flatten: false);
+            _formService.SaveFull(_currentFilePath, tmp, FieldValues,
+                _pageRotations, FreeTextAnnotations, flatten: false);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Save failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Save failed:\n{ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -253,19 +322,23 @@ public class MainViewModel : INotifyPropertyChanged
             Title = "Save PDF As",
             Filter = "PDF Files (*.pdf)|*.pdf",
             DefaultExt = ".pdf",
-            FileName = _currentFilePath != null ? System.IO.Path.GetFileName(_currentFilePath) : "document.pdf"
+            FileName = _currentFilePath != null
+                ? System.IO.Path.GetFileName(_currentFilePath)
+                : "document.pdf"
         };
         if (dlg.ShowDialog() != true) return;
 
         try
         {
-            _formService.SaveWithFormData(_currentFilePath!, dlg.FileName, FieldValues, flatten: false);
+            _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
+                _pageRotations, FreeTextAnnotations, flatten: false);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Save failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Save failed:\n{ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -282,12 +355,14 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            _formService.SaveWithFormData(_currentFilePath!, dlg.FileName, FieldValues, flatten: true);
+            _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
+                _pageRotations, FreeTextAnnotations, flatten: true);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Flatten & Save failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Flatten & Save failed:\n{ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -298,13 +373,16 @@ public class MainViewModel : INotifyPropertyChanged
         FieldValues.Clear();
         AllFields.Clear();
         CurrentPageFields.Clear();
+        FreeTextAnnotations.Clear();
+        _pageRotations.Clear();
         SelectedField = null;
         StatusText = "Document closed.";
     }
 
     private void Print()
     {
-        MessageBox.Show("Print is not yet implemented.\nSave the filled PDF and print from your PDF viewer.", "Print", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show("Print is not yet implemented.\nSave the filled PDF and print from your PDF viewer.",
+            "Print", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void ClearAllFields()
@@ -327,7 +405,6 @@ public class MainViewModel : INotifyPropertyChanged
             DefaultExt = ".tsv"
         };
         if (dlg.ShowDialog() != true) return;
-
         _formService.ExportFormData(_currentFilePath!, dlg.FileName, FieldValues);
         StatusText = $"Data exported to: {System.IO.Path.GetFileName(dlg.FileName)}";
     }
@@ -352,11 +429,25 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Imported {imported.Count} field values.";
     }
 
+    private void RotatePage(int degrees)
+    {
+        int current = GetPageRotation(_currentPageIndex);
+        int next = (current + degrees + 360) % 360;
+        if (next == 0)
+            _pageRotations.Remove(_currentPageIndex);
+        else
+            _pageRotations[_currentPageIndex] = next;
+
+        OnPropertyChanged(nameof(CurrentPageRotation));
+        PageChanged?.Invoke();
+        StatusText = $"Page {_currentPageIndex + 1} rotated to {next}°.";
+    }
+
     public void RefreshCurrentPageFields()
     {
         CurrentPageFields.Clear();
         if (_document == null) return;
-        int page = _currentPageIndex + 1; // iText7 pages are 1-based
+        int page = _currentPageIndex + 1;
         foreach (var f in AllFields.Where(f => f.PageNumber == page))
             CurrentPageFields.Add(f);
     }

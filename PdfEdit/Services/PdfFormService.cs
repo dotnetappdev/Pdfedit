@@ -1,6 +1,12 @@
+using System.Collections.ObjectModel;
 using iText.Forms;
 using iText.Forms.Fields;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Annot;
+using iText.Kernel.Pdf.Canvas;
 using PdfEdit.Models;
 
 namespace PdfEdit.Services;
@@ -113,35 +119,84 @@ public class PdfFormService
         return info;
     }
 
-    public void SaveWithFormData(string sourcePath, string destPath, Dictionary<string, string> fieldValues, bool flatten = false)
+    public void SaveWithFormData(string sourcePath, string destPath,
+        Dictionary<string, string> fieldValues, bool flatten = false)
+    {
+        SaveFull(sourcePath, destPath, fieldValues,
+            new Dictionary<int, int>(),
+            new System.Collections.ObjectModel.ObservableCollection<FreeTextAnnotation>(),
+            flatten);
+    }
+
+    /// <summary>
+    /// Saves the PDF with filled form fields, page rotations, and free-text annotations.
+    /// </summary>
+    public void SaveFull(string sourcePath, string destPath,
+        Dictionary<string, string> fieldValues,
+        Dictionary<int, int> pageRotations,
+        IEnumerable<FreeTextAnnotation> freeTextAnnotations,
+        bool flatten = false)
     {
         using var reader = new PdfReader(sourcePath);
         using var writer = new PdfWriter(destPath);
         using var doc = new PdfDocument(reader, writer);
 
+        // ── 1. Form fields ────────────────────────────────────────────────
         var form = PdfAcroForm.GetAcroForm(doc, false);
-        if (form == null) return;
-
-        foreach (var (name, value) in fieldValues)
+        if (form != null)
         {
-            var field = form.GetField(name);
-            if (field == null) continue;
-
-            if (field is PdfButtonFormField btn)
+            foreach (var (name, value) in fieldValues)
             {
-                if (btn.IsCheckBox())
-                    field.SetValue(value == "Yes" || value == "true" || value == "On" ? "Yes" : "Off");
+                var field = form.GetField(name);
+                if (field == null) continue;
+
+                if (field is PdfButtonFormField btn && btn.IsCheckBox())
+                    field.SetValue(value is "Yes" or "true" or "On" or "1" ? "Yes" : "Off");
                 else
                     field.SetValue(value);
             }
-            else
-            {
-                field.SetValue(value);
-            }
+
+            if (flatten) form.FlattenFields();
         }
 
-        if (flatten)
-            form.FlattenFields();
+        // ── 2. Page rotations ─────────────────────────────────────────────
+        foreach (var (pageIdx, degrees) in pageRotations)
+        {
+            int pageNum = pageIdx + 1;
+            if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
+            var page = doc.GetPage(pageNum);
+            int existing = page.GetRotation();
+            page.SetRotation((existing + degrees) % 360);
+        }
+
+        // ── 3. Free-text annotations ──────────────────────────────────────
+        var stdFont = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+
+        foreach (var ann in freeTextAnnotations)
+        {
+            int pageNum = ann.PageNumber;
+            if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
+            var page = doc.GetPage(pageNum);
+
+            // Build the annotation rectangle in PDF coordinate space
+            var rect = new Rectangle(
+                (float)ann.Left,
+                (float)ann.Bottom,
+                (float)ann.Width,
+                (float)ann.Height);
+
+            var pdfAnn = new PdfFreeTextAnnotation(rect, new PdfString(ann.Text));
+            pdfAnn.SetContents(ann.Text);
+
+            // Vertical text: set rotation in the annotation's appearance
+            if (ann.IsVertical)
+                pdfAnn.Put(PdfName.Rotate, new PdfNumber(90));
+
+            // Default appearance string (DA): font, size, colour
+            pdfAnn.SetDefaultAppearance($"/Helv {ann.FontSize} Tf 0 0 0 rg");
+
+            page.AddAnnotation(pdfAnn);
+        }
     }
 
     public void ExportFormData(string pdfPath, string outputPath, Dictionary<string, string> fieldValues)

@@ -71,13 +71,17 @@
                                Stretch="None"
                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                        <!-- Form field overlay canvas — controls are placed here at runtime -->
+                        <!-- Field highlight overlay (non-interactive) -->
+                        <Canvas x:Name="HighlightCanvas"
+                                IsHitTestVisible="False"/>
+
+                        <!-- AcroForm field overlay — live WPF controls -->
                         <Canvas x:Name="FieldOverlayCanvas"
                                 IsHitTestVisible="True"/>
 
-                        <!-- Field highlight overlay (semi-transparent rectangles) -->
-                        <Canvas x:Name="HighlightCanvas"
-                                IsHitTestVisible="False"/>
+                        <!-- Free-text annotation overlay — user-placed text -->
+                        <Canvas x:Name="AnnotationCanvas"
+                                IsHitTestVisible="True"/>
 
                     </Grid>
                 </Border>
