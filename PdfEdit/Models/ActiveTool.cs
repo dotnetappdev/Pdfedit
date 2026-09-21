@@ -10,7 +10,9 @@ public enum ActiveTool
     Highlight,
     Zoom,
     Stamp,
-    AddText,         // place free-text annotation anywhere on the page
-    VerticalText,    // place vertical free-text annotation (rotated 90°)
-    DateStamp        // click to place today's date as a text annotation
+    AddText,
+    VerticalText,
+    DateStamp,
+    Checkmark,
+    XMark
 }

@@ -12,18 +12,21 @@
         Height="780" Width="1280"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
-        Background="#1E1E1E">
+        Background="{DynamicResource AppBgBrush}"
+        AllowDrop="True"
+        AutomationProperties.Name="PdfEdit PDF Form Filler">
 
     <Fluent:RibbonWindow.DataContext>
         <vm:MainViewModel/>
     </Fluent:RibbonWindow.DataContext>
 
-    <!-- ── Keyboard shortcuts ──────────────────────────────────────────── -->
+    <!-- ── Keyboard shortcuts ──────────────────────────────────────────────── -->
     <Fluent:RibbonWindow.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
         <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseCommand}"/>
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintCommand}"/>
         <KeyBinding Key="Right" Modifiers="Control" Command="{Binding NextPageCommand}"/>
         <KeyBinding Key="Left" Modifiers="Control" Command="{Binding PreviousPageCommand}"/>
         <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}"/>
@@ -31,8 +34,17 @@
         <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
         <KeyBinding Key="BracketRight" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
         <KeyBinding Key="BracketLeft" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
+        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
+        <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
+        <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
         <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
         <KeyBinding Key="S" Command="{Binding SetToolCommand}" CommandParameter="Signature"/>
+        <KeyBinding Key="K" Command="{Binding SetToolCommand}" CommandParameter="Checkmark"/>
+        <KeyBinding Key="H" Command="{Binding SetToolCommand}" CommandParameter="Hand"/>
+        <KeyBinding Key="V" Command="{Binding SetToolCommand}" CommandParameter="Select"/>
+        <KeyBinding Key="T" Command="{Binding SetToolCommand}" CommandParameter="AddText"/>
+        <KeyBinding Key="Z" Command="{Binding SetToolCommand}" CommandParameter="Zoom"/>
+        <KeyBinding Key="M" Command="{Binding SetToolCommand}" CommandParameter="Stamp"/>
     </Fluent:RibbonWindow.InputBindings>
 
     <Grid>
@@ -45,78 +57,181 @@
         <!-- ════════════════════════════════════════════════════════════════
              RIBBON TOOLBAR
              ════════════════════════════════════════════════════════════════ -->
-        <Fluent:Ribbon Grid.Row="0" x:Name="MainRibbon">
+        <Fluent:Ribbon Grid.Row="0" x:Name="MainRibbon"
+                       AutomationProperties.Name="Main ribbon toolbar">
+
+            <!-- Application Menu (File menu) -->
+            <Fluent:Ribbon.Menu>
+                <Fluent:ApplicationMenu KeyTip="F"
+                                        AutomationProperties.Name="File menu">
+
+                    <Fluent:ApplicationMenuItem Header="Open…"
+                                                KeyTip="O"
+                                                Command="{Binding OpenCommand}"
+                                                AutomationProperties.Name="Open PDF file"/>
+
+                    <Fluent:ApplicationMenuItem Header="Save"
+                                                KeyTip="S"
+                                                Command="{Binding SaveCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Save PDF"/>
+
+                    <Fluent:ApplicationMenuItem Header="Save As…"
+                                                KeyTip="A"
+                                                Command="{Binding SaveAsCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Save as new file"/>
+
+                    <Fluent:ApplicationMenuItem Header="Flatten &amp; Save…"
+                                                KeyTip="L"
+                                                Command="{Binding FlattenAndSaveCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Flatten and save PDF"/>
+
+                    <Separator/>
+
+                    <Fluent:ApplicationMenuItem Header="Print…"
+                                                KeyTip="P"
+                                                Command="{Binding PrintCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Print document"/>
+
+                    <Separator/>
+
+                    <Fluent:ApplicationMenuItem Header="Close"
+                                                KeyTip="C"
+                                                Command="{Binding CloseCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Close document"/>
+
+                    <Fluent:ApplicationMenu.RightContent>
+                        <StackPanel Margin="4,8" Width="200">
+                            <TextBlock Text="QUICK ACTIONS"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Margin="0,0,0,8"/>
+                            <Button Content="⚙ Settings"
+                                    Command="{Binding OpenSettingsCommand}"
+                                    Padding="10,6"
+                                    Margin="0,0,0,4"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Open application settings"/>
+                            <Button Content="🔍 Global Search"
+                                    Command="{Binding ToggleSearchCommand}"
+                                    Padding="10,6"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Open global search"/>
+                        </StackPanel>
+                    </Fluent:ApplicationMenu.RightContent>
+
+                </Fluent:ApplicationMenu>
+            </Fluent:Ribbon.Menu>
 
             <!-- Quick Access Toolbar -->
             <Fluent:Ribbon.QuickAccessItems>
-                <Fluent:QuickAccessMenuItem Command="{Binding OpenCommand}" ToolTip="Open (Ctrl+O)"/>
-                <Fluent:QuickAccessMenuItem Command="{Binding SaveCommand}" ToolTip="Save (Ctrl+S)"/>
+                <Fluent:QuickAccessMenuItem Command="{Binding OpenCommand}"
+                                             ToolTip="Open (Ctrl+O)"
+                                             AutomationProperties.Name="Open file"/>
+                <Fluent:QuickAccessMenuItem Command="{Binding SaveCommand}"
+                                             ToolTip="Save (Ctrl+S)"
+                                             AutomationProperties.Name="Save"/>
             </Fluent:Ribbon.QuickAccessItems>
 
-            <!-- ── HOME TAB ────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Home">
+            <!-- ── HOME TAB ────────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Home"
+                                   AutomationProperties.Name="Home tab">
 
                 <!-- File group -->
-                <Fluent:RibbonGroupBox Header="File">
+                <Fluent:RibbonGroupBox Header="File"
+                                        AutomationProperties.Name="File operations group">
                     <Fluent:Button Header="Open"
                                    Command="{Binding OpenCommand}"
                                    KeyTip="O"
-                                   ToolTip="Open a PDF file (Ctrl+O)"/>
+                                   ToolTip="Open a PDF file (Ctrl+O)"
+                                   AutomationProperties.Name="Open PDF"
+                                   AutomationProperties.HelpText="Opens a file picker to select a PDF">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Save"
                                    Command="{Binding SaveCommand}"
                                    KeyTip="S"
                                    ToolTip="Save filled PDF (Ctrl+S)"
-                                   IsEnabled="{Binding HasDocument}"/>
+                                   IsEnabled="{Binding HasDocument}"
+                                   AutomationProperties.Name="Save PDF">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Save As"
                                    Command="{Binding SaveAsCommand}"
                                    KeyTip="A"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Save as a new file (Ctrl+Shift+S)"/>
-
-                    <Fluent:Button Header="Close"
-                                   Command="{Binding CloseCommand}"
-                                   KeyTip="C"
-                                   Size="Middle"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Close the current document"/>
+                                   ToolTip="Save as a new file (Ctrl+Shift+S)"
+                                   AutomationProperties.Name="Save as new file"/>
 
                     <Fluent:Button Header="Print"
                                    Command="{Binding PrintCommand}"
                                    KeyTip="P"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Print document"/>
+                                   ToolTip="Print document (Ctrl+P)"
+                                   AutomationProperties.Name="Print document"/>
+
+                    <Fluent:Button Header="Close"
+                                   Command="{Binding CloseCommand}"
+                                   KeyTip="W"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Close the current document (Ctrl+W)"
+                                   AutomationProperties.Name="Close document"/>
+
+                    <Fluent:Button Header="Settings"
+                                   Command="{Binding OpenSettingsCommand}"
+                                   KeyTip="E"
+                                   Size="Middle"
+                                   ToolTip="Open settings and preferences"
+                                   AutomationProperties.Name="Open settings">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Navigation group -->
-                <Fluent:RibbonGroupBox Header="Navigation">
+                <Fluent:RibbonGroupBox Header="Navigation"
+                                        AutomationProperties.Name="Page navigation group">
                     <Fluent:Button Header="First"
                                    Command="{Binding FirstPageCommand}"
                                    Size="Middle"
                                    KeyTip="F"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Go to first page"/>
+                                   ToolTip="Go to first page"
+                                   AutomationProperties.Name="Go to first page"/>
                     <Fluent:Button Header="Previous"
                                    Command="{Binding PreviousPageCommand}"
                                    Size="Middle"
                                    KeyTip="R"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Previous page (Ctrl+Left)"/>
+                                   ToolTip="Previous page (Ctrl+Left)"
+                                   AutomationProperties.Name="Previous page"/>
                     <Fluent:Button Header="Next"
                                    Command="{Binding NextPageCommand}"
                                    Size="Middle"
                                    KeyTip="N"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Next page (Ctrl+Right)"/>
+                                   ToolTip="Next page (Ctrl+Right)"
+                                   AutomationProperties.Name="Next page"/>
                     <Fluent:Button Header="Last"
                                    Command="{Binding LastPageCommand}"
                                    Size="Middle"
                                    KeyTip="L"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Go to last page"/>
+                                   ToolTip="Go to last page"
+                                   AutomationProperties.Name="Go to last page"/>
 
                     <Fluent:Spinner Header="Page"
                                     Value="{Binding CurrentPageIndex, Converter={StaticResource ZeroToOneConverter}, Mode=TwoWay}"
@@ -124,262 +239,570 @@
                                     Maximum="{Binding PageCount}"
                                     Format="0"
                                     IsEnabled="{Binding HasDocument}"
-                                    Width="60"/>
+                                    Width="60"
+                                    AutomationProperties.Name="Current page number"
+                                    AutomationProperties.HelpText="Enter a page number to navigate to"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Search group -->
+                <Fluent:RibbonGroupBox Header="Search"
+                                        AutomationProperties.Name="Search group">
+                    <Fluent:Button Header="Search"
+                                   Command="{Binding ToggleSearchCommand}"
+                                   KeyTip="G"
+                                   ToolTip="Global search — search all fields and annotations (Ctrl+Shift+F)"
+                                   AutomationProperties.Name="Open global search"
+                                   AutomationProperties.HelpText="Search all form fields and annotations">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
 
-            <!-- ── VIEW TAB ─────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="View">
+            <!-- ── EDIT TAB ──────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Edit"
+                                   AutomationProperties.Name="Edit tab">
 
-                <Fluent:RibbonGroupBox Header="Zoom">
+                <Fluent:RibbonGroupBox Header="Clipboard"
+                                        AutomationProperties.Name="Clipboard group">
+                    <Fluent:Button Header="Cut"
+                                   Command="{x:Static ApplicationCommands.Cut}"
+                                   KeyTip="X"
+                                   ToolTip="Cut (Ctrl+X)"
+                                   AutomationProperties.Name="Cut selection">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Copy"
+                                   Command="{x:Static ApplicationCommands.Copy}"
+                                   KeyTip="C"
+                                   ToolTip="Copy (Ctrl+C)"
+                                   AutomationProperties.Name="Copy selection">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Paste"
+                                   Command="{x:Static ApplicationCommands.Paste}"
+                                   KeyTip="V"
+                                   ToolTip="Paste (Ctrl+V)"
+                                   AutomationProperties.Name="Paste from clipboard">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="History"
+                                        AutomationProperties.Name="History group">
+                    <Fluent:Button Header="Undo"
+                                   Command="{x:Static ApplicationCommands.Undo}"
+                                   KeyTip="Z"
+                                   ToolTip="Undo (Ctrl+Z)"
+                                   AutomationProperties.Name="Undo last action">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Redo"
+                                   Command="{x:Static ApplicationCommands.Redo}"
+                                   KeyTip="Y"
+                                   ToolTip="Redo (Ctrl+Y)"
+                                   AutomationProperties.Name="Redo last action">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Annotations"
+                                        AutomationProperties.Name="Annotation editing group">
+                    <Fluent:Button Header="Delete"
+                                   Command="{Binding DeleteAnnotationCommand}"
+                                   IsEnabled="{Binding SelectedAnnotation, Converter={StaticResource NullToBoolConverter}}"
+                                   ToolTip="Delete selected annotation (Del)"
+                                   AutomationProperties.Name="Delete selected annotation">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Clear All Fields"
+                                   Command="{Binding ClearAllFieldsCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Clear all form field values"
+                                   AutomationProperties.Name="Clear all form fields"/>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Form Data"
+                                        AutomationProperties.Name="Form data group">
+                    <Fluent:Button Header="Import Data"
+                                   Command="{Binding ImportDataCommand}"
+                                   KeyTip="I"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Import field values from TSV file"
+                                   AutomationProperties.Name="Import form data from TSV"/>
+                    <Fluent:Button Header="Export Data"
+                                   Command="{Binding ExportDataCommand}"
+                                   KeyTip="E"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export field values to TSV file"
+                                   AutomationProperties.Name="Export form data to TSV"/>
+                    <Fluent:Button Header="Flatten &amp; Save"
+                                   Command="{Binding FlattenAndSaveCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save PDF with fields baked in (non-editable)"
+                                   AutomationProperties.Name="Flatten and save PDF"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── VIEW TAB ──────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="View"
+                                   AutomationProperties.Name="View tab">
+
+                <Fluent:RibbonGroupBox Header="Zoom"
+                                        AutomationProperties.Name="Zoom controls group">
                     <Fluent:Button Header="Zoom In"
                                    Command="{Binding ZoomInCommand}"
                                    KeyTip="I"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Zoom in (Ctrl++)"/>
+                                   ToolTip="Zoom in (Ctrl++)"
+                                   AutomationProperties.Name="Zoom in"/>
                     <Fluent:Button Header="Zoom Out"
                                    Command="{Binding ZoomOutCommand}"
                                    KeyTip="O"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Zoom out (Ctrl+-)"/>
+                                   ToolTip="Zoom out (Ctrl+-)"
+                                   AutomationProperties.Name="Zoom out"/>
                     <Fluent:Button Header="Fit Page"
                                    Command="{Binding ZoomFitCommand}"
                                    KeyTip="F"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Fit page (Ctrl+0)"/>
+                                   ToolTip="Fit page (Ctrl+0)"
+                                   AutomationProperties.Name="Fit page to window"/>
                     <Fluent:Button Header="100%"
                                    Command="{Binding ZoomActualCommand}"
                                    KeyTip="A"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Actual size"/>
-
+                                   ToolTip="Actual size"
+                                   AutomationProperties.Name="Zoom to 100 percent"/>
                     <Fluent:Spinner Header="Zoom %"
                                     Value="{Binding Zoom, Converter={StaticResource ZoomPercentConverter}, Mode=TwoWay}"
                                     Minimum="10"
                                     Maximum="500"
                                     Format="0"
                                     IsEnabled="{Binding HasDocument}"
-                                    Width="70"/>
+                                    Width="70"
+                                    AutomationProperties.Name="Zoom percentage"/>
                 </Fluent:RibbonGroupBox>
 
-                <Fluent:RibbonGroupBox Header="Rotate Page">
+                <Fluent:RibbonGroupBox Header="Rotate Page"
+                                        AutomationProperties.Name="Page rotation group">
                     <Fluent:Button Header="Rotate CW"
                                    Command="{Binding RotatePageCWCommand}"
                                    KeyTip="R"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Rotate current page 90° clockwise"/>
+                                   ToolTip="Rotate 90° clockwise"
+                                   AutomationProperties.Name="Rotate page clockwise"/>
                     <Fluent:Button Header="Rotate CCW"
                                    Command="{Binding RotatePageCCWCommand}"
                                    KeyTip="L"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Rotate current page 90° counter-clockwise"/>
+                                   ToolTip="Rotate 90° counter-clockwise"
+                                   AutomationProperties.Name="Rotate page counter-clockwise"/>
                     <Fluent:Button Header="Reset Rotation"
                                    Command="{Binding ResetPageRotationCommand}"
                                    KeyTip="T"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Reset page rotation to original orientation"/>
+                                   ToolTip="Reset page rotation"
+                                   AutomationProperties.Name="Reset page rotation"/>
                 </Fluent:RibbonGroupBox>
 
-                <Fluent:RibbonGroupBox Header="Display">
+                <Fluent:RibbonGroupBox Header="Display"
+                                        AutomationProperties.Name="Display options group">
                     <Fluent:ToggleButton Header="Highlight Fields"
                                          IsChecked="{Binding HighlightFields}"
                                          KeyTip="H"
                                          Size="Middle"
-                                         ToolTip="Show/hide field highlight overlay"/>
+                                         ToolTip="Show/hide form field highlight overlay"
+                                         AutomationProperties.Name="Toggle field highlight overlay"/>
                 </Fluent:RibbonGroupBox>
 
-            </Fluent:RibbonTabItem>
-
-            <!-- ── FORMS TAB ─────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Forms">
-
-                <Fluent:RibbonGroupBox Header="Fill">
-                    <Fluent:Button Header="Clear All"
-                                   Command="{Binding ClearAllFieldsCommand}"
-                                   KeyTip="C"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Clear all form fields"/>
-                    <Fluent:Button Header="Import Data"
-                                   Command="{Binding ImportDataCommand}"
-                                   KeyTip="I"
-                                   Size="Middle"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Import field values from TSV file"/>
-                    <Fluent:Button Header="Export Data"
-                                   Command="{Binding ExportDataCommand}"
-                                   KeyTip="E"
-                                   Size="Middle"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Export field values to TSV file"/>
-                </Fluent:RibbonGroupBox>
-
-                <Fluent:RibbonGroupBox Header="Save Options">
-                    <Fluent:Button Header="Save Filled PDF"
-                                   Command="{Binding SaveCommand}"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Save PDF with form fields editable"/>
-                    <Fluent:Button Header="Flatten &amp; Save"
-                                   Command="{Binding FlattenAndSaveCommand}"
-                                   Size="Middle"
-                                   IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Save PDF with fields baked in (non-editable)"/>
+                <Fluent:RibbonGroupBox Header="UI Scale"
+                                        AutomationProperties.Name="Interface scale group">
+                    <StackPanel Orientation="Vertical" Margin="4,4">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Fluent:Button Header="−" Size="Small"
+                                           Command="{Binding DecreaseUiScaleCommand}"
+                                           Width="28" Margin="0,0,4,0"
+                                           ToolTip="Decrease UI scale (Ctrl+Shift+−)"
+                                           AutomationProperties.Name="Decrease interface scale"/>
+                            <Fluent:Button Header="+" Size="Small"
+                                           Command="{Binding IncreaseUiScaleCommand}"
+                                           Width="28"
+                                           ToolTip="Increase UI scale (Ctrl+Shift+=)"
+                                           AutomationProperties.Name="Increase interface scale"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding UiScale, StringFormat='{}{0:P0}'}"
+                                   FontSize="11" HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Current interface scale"/>
+                    </StackPanel>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Tools">
+            <Fluent:RibbonTabItem Header="Tools"
+                                   AutomationProperties.Name="Tools tab">
 
-                <Fluent:RibbonGroupBox Header="Active Tool">
+                <Fluent:RibbonGroupBox Header="Active Tool"
+                                        AutomationProperties.Name="Active tool selection group">
                     <Fluent:ToggleButton Header="Hand"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Hand, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Hand"
-                                         ToolTip="Hand / Pan tool (H)"/>
+                                         ToolTip="Hand / Pan tool (H)"
+                                         AutomationProperties.Name="Hand pan tool"/>
                     <Fluent:ToggleButton Header="Select"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Select"
-                                         ToolTip="Selection tool (V)"/>
+                                         ToolTip="Selection tool (V)"
+                                         AutomationProperties.Name="Selection tool"/>
                     <Fluent:ToggleButton Header="Text Fill"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TextFill, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="TextFill"
-                                         ToolTip="Text fill tool (T)"/>
+                                         ToolTip="Text fill tool — click a form field to type in it (T)"
+                                         AutomationProperties.Name="Text fill tool"/>
                     <Fluent:ToggleButton Header="Zoom"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Zoom, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Zoom"
-                                         ToolTip="Zoom tool (Z)"/>
+                                         ToolTip="Zoom tool — click to zoom in (Z)"
+                                         AutomationProperties.Name="Zoom tool"/>
+                    <Fluent:ToggleButton Header="Highlight"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Highlight"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Highlight Tool (I)"
+                                         AutomationProperties.Name="Highlight tool"/>
                 </Fluent:RibbonGroupBox>
 
-                <!-- Sign &amp; Date -->
-                <Fluent:RibbonGroupBox Header="Sign &amp; Date">
+                <!-- Sign & Date group -->
+                <Fluent:RibbonGroupBox Header="Sign &amp; Date"
+                                        AutomationProperties.Name="Signature and date group">
                     <Fluent:ToggleButton Header="Signature"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Signature"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Signature Tool — click page to draw, type, or import a signature"/>
+                                         ToolTip="Signature Tool — click a signature field (S)"
+                                         AutomationProperties.Name="Signature tool"/>
                     <Fluent:ToggleButton Header="Date Stamp"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DateStamp, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="DateStamp"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Date Stamp — click page to place today's date"/>
+                                         ToolTip="Date Stamp — click page to place today's date (D)"
+                                         AutomationProperties.Name="Date stamp tool"/>
+                    <Fluent:ToggleButton Header="Stamp"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Stamp, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Stamp"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Stamp Tool (M)"
+                                         AutomationProperties.Name="Stamp tool"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Marks group -->
+                <Fluent:RibbonGroupBox Header="Marks"
+                                        AutomationProperties.Name="Marks and stamps group">
+                    <Fluent:ToggleButton GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Checkmark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Checkmark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Checkmark — click page to stamp ✓ (K)"
+                                         AutomationProperties.Name="Checkmark stamp tool">
+                        <Fluent:ToggleButton.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✓" Foreground="#4CAF50" FontSize="14" FontWeight="Bold" Margin="0,0,4,0"/>
+                                <TextBlock Text="Check"/>
+                            </StackPanel>
+                        </Fluent:ToggleButton.Header>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=XMark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="XMark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="X Mark — click page to stamp ✕"
+                                         AutomationProperties.Name="X mark stamp tool">
+                        <Fluent:ToggleButton.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✕" Foreground="#F44336" FontSize="14" FontWeight="Bold" Margin="0,0,4,0"/>
+                                <TextBlock Text="X Mark"/>
+                            </StackPanel>
+                        </Fluent:ToggleButton.Header>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text annotation tools -->
-                <Fluent:RibbonGroupBox Header="Annotations">
+                <Fluent:RibbonGroupBox Header="Annotations"
+                                        AutomationProperties.Name="Text annotation tools group">
                     <Fluent:ToggleButton Header="Add Text"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddText, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="AddText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Add Text — click anywhere on the page to place horizontal text"/>
+                                         ToolTip="Add Text — click anywhere to place horizontal text"
+                                         AutomationProperties.Name="Add horizontal text annotation"/>
                     <Fluent:ToggleButton Header="Vertical Text"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=VerticalText, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="VerticalText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Vertical Text — click anywhere to place text that reads top-to-bottom"/>
-                    <Fluent:Button Header="Delete Annotation"
+                                         ToolTip="Vertical Text — click anywhere to place text top-to-bottom"
+                                         AutomationProperties.Name="Add vertical text annotation"/>
+                    <Fluent:Button Header="Delete"
                                    Command="{Binding DeleteAnnotationCommand}"
                                    Size="Middle"
                                    IsEnabled="{Binding SelectedAnnotation, Converter={StaticResource NullToBoolConverter}}"
-                                   ToolTip="Delete the selected annotation (or press Delete key)"/>
+                                   ToolTip="Delete selected annotation"
+                                   AutomationProperties.Name="Delete selected annotation"/>
                 </Fluent:RibbonGroupBox>
 
-                <!-- Text Formatting -->
-                <Fluent:RibbonGroupBox Header="Text Format">
-                    <StackPanel Orientation="Vertical" Margin="2,0">
+                <!-- Text Formatting group -->
+                <Fluent:RibbonGroupBox Header="Text Format"
+                                        AutomationProperties.Name="Text formatting group">
+                    <StackPanel Orientation="Vertical" Margin="2,2">
+
+                        <!-- Font family + size row -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
-                            <TextBlock Text="Font:" Foreground="#CCCCCC" FontSize="11"
-                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="Font:" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <ComboBox Width="110"
                                       ItemsSource="{Binding AvailableFonts}"
                                       SelectedItem="{Binding CurrentFontFamily, Mode=TwoWay}"
                                       IsEnabled="{Binding HasDocument}"
-                                      FontSize="11" Height="22"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,2">
-                            <TextBlock Text="Size:" Foreground="#CCCCCC" FontSize="11"
-                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                      FontSize="11" Height="22"
+                                      AutomationProperties.Name="Font family"
+                                      AutomationProperties.HelpText="Select the font for new and selected annotations"/>
+                            <TextBlock Text="  Size:" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <Fluent:Spinner Value="{Binding CurrentFontSize, Mode=TwoWay}"
                                             Minimum="6" Maximum="144" Format="0"
                                             IsEnabled="{Binding HasDocument}"
-                                            Width="60" Height="22"/>
+                                            Width="54" Height="22"
+                                            AutomationProperties.Name="Font size"/>
                             <Fluent:Button Header="A-" Size="Small"
                                            Command="{Binding DecreaseFontSizeCommand}"
                                            IsEnabled="{Binding HasDocument}"
-                                           ToolTip="Decrease font size" Margin="2,0,0,0"/>
+                                           ToolTip="Decrease font size" Margin="2,0,0,0"
+                                           AutomationProperties.Name="Decrease font size"/>
                             <Fluent:Button Header="A+" Size="Small"
                                            Command="{Binding IncreaseFontSizeCommand}"
                                            IsEnabled="{Binding HasDocument}"
-                                           ToolTip="Increase font size" Margin="2,0,0,0"/>
+                                           ToolTip="Increase font size" Margin="2,0,0,0"
+                                           AutomationProperties.Name="Increase font size"/>
                         </StackPanel>
+
+                        <!-- Bold / Italic / Underline row -->
                         <StackPanel Orientation="Horizontal" Margin="0,2">
                             <Fluent:ToggleButton Header="B" Size="Small"
                                                   IsChecked="{Binding CurrentFontBold, Mode=TwoWay}"
                                                   IsEnabled="{Binding HasDocument}"
-                                                  ToolTip="Bold" FontWeight="Bold" Width="28"/>
+                                                  ToolTip="Bold" FontWeight="Bold" Width="28"
+                                                  AutomationProperties.Name="Bold text"/>
                             <Fluent:ToggleButton Header="I" Size="Small"
                                                   IsChecked="{Binding CurrentFontItalic, Mode=TwoWay}"
                                                   IsEnabled="{Binding HasDocument}"
-                                                  ToolTip="Italic" FontStyle="Italic" Width="28" Margin="2,0"/>
+                                                  ToolTip="Italic" FontStyle="Italic" Width="28" Margin="2,0"
+                                                  AutomationProperties.Name="Italic text"/>
                             <Fluent:ToggleButton Header="U" Size="Small"
                                                   IsChecked="{Binding CurrentFontUnderline, Mode=TwoWay}"
                                                   IsEnabled="{Binding HasDocument}"
-                                                  ToolTip="Underline" Width="28" Margin="2,0"/>
+                                                  ToolTip="Underline" Width="28" Margin="2,0"
+                                                  AutomationProperties.Name="Underline text"/>
                         </StackPanel>
+
+                        <!-- Alignment + Force Uppercase row -->
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <!-- Left -->
+                            <Fluent:ToggleButton Size="Small" Width="28"
+                                                  ToolTip="Align text left"
+                                                  Command="{Binding SetAlignmentCommand}"
+                                                  CommandParameter="Left"
+                                                  IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Left}"
+                                                  AutomationProperties.Name="Align text left">
+                                <TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            </Fluent:ToggleButton>
+                            <!-- Center -->
+                            <Fluent:ToggleButton Size="Small" Width="28" Margin="2,0"
+                                                  ToolTip="Center text"
+                                                  Command="{Binding SetAlignmentCommand}"
+                                                  CommandParameter="Center"
+                                                  IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Center}"
+                                                  AutomationProperties.Name="Center text">
+                                <TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            </Fluent:ToggleButton>
+                            <!-- Right -->
+                            <Fluent:ToggleButton Size="Small" Width="28" Margin="2,0"
+                                                  ToolTip="Align text right"
+                                                  Command="{Binding SetAlignmentCommand}"
+                                                  CommandParameter="Right"
+                                                  IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Right}"
+                                                  AutomationProperties.Name="Align text right">
+                                <TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                            </Fluent:ToggleButton>
+                            <!-- Force Uppercase -->
+                            <Fluent:ToggleButton Header="AA" Size="Small" Width="32" Margin="6,0,0,0"
+                                                  IsChecked="{Binding ForceUpperCase, Mode=TwoWay}"
+                                                  IsEnabled="{Binding HasDocument}"
+                                                  ToolTip="Force UPPERCASE text entry"
+                                                  AutomationProperties.Name="Force uppercase text"/>
+                        </StackPanel>
+
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 
-                <!-- Text Color -->
-                <Fluent:RibbonGroupBox Header="Color">
+                <!-- Text Color group -->
+                <Fluent:RibbonGroupBox Header="Color"
+                                        AutomationProperties.Name="Text color group">
                     <WrapPanel Width="80" Margin="2">
                         <Button Width="22" Height="22" Margin="1"
                                 Background="Black" ToolTip="Black"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#000000"/>
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#000000"
+                                AutomationProperties.Name="Black"/>
                         <Button Width="22" Height="22" Margin="1"
                                 Background="#1F3A8A" ToolTip="Dark Blue"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#1F3A8A"/>
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#1F3A8A"
+                                AutomationProperties.Name="Dark blue"/>
                         <Button Width="22" Height="22" Margin="1"
-                                Background="DarkRed" ToolTip="Dark Red"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#8B0000"/>
+                                Background="#8B0000" ToolTip="Dark Red"
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#8B0000"
+                                AutomationProperties.Name="Dark red"/>
                         <Button Width="22" Height="22" Margin="1"
-                                Background="DarkGreen" ToolTip="Dark Green"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#006400"/>
+                                Background="#006400" ToolTip="Dark Green"
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#006400"
+                                AutomationProperties.Name="Dark green"/>
                         <Button Width="22" Height="22" Margin="1"
                                 Background="#555555" ToolTip="Dark Gray"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#555555"/>
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#555555"
+                                AutomationProperties.Name="Dark gray"/>
                         <Button Width="22" Height="22" Margin="1"
-                                Background="Purple" ToolTip="Purple"
-                                Command="{Binding SetFontColorCommand}"
-                                CommandParameter="#800080"/>
+                                Background="#800080" ToolTip="Purple"
+                                Command="{Binding SetFontColorCommand}" CommandParameter="#800080"
+                                AutomationProperties.Name="Purple"/>
                     </WrapPanel>
                 </Fluent:RibbonGroupBox>
 
+            </Fluent:RibbonTabItem>
+
+            <!-- ── FORMS TAB ─────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Forms"
+                                   AutomationProperties.Name="Forms tab">
+
+                <Fluent:RibbonGroupBox Header="Fill"
+                                        AutomationProperties.Name="Form fill group">
+                    <Fluent:Button Header="Clear All"
+                                   Command="{Binding ClearAllFieldsCommand}"
+                                   KeyTip="C"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Clear all form fields"
+                                   AutomationProperties.Name="Clear all form fields">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Import Data"
+                                   Command="{Binding ImportDataCommand}"
+                                   KeyTip="I"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Import field values from TSV file"
+                                   AutomationProperties.Name="Import data from TSV"/>
+                    <Fluent:Button Header="Export Data"
+                                   Command="{Binding ExportDataCommand}"
+                                   KeyTip="E"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export field values to TSV file"
+                                   AutomationProperties.Name="Export data to TSV"/>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Save Options"
+                                        AutomationProperties.Name="Save options group">
+                    <Fluent:Button Header="Save Filled PDF"
+                                   Command="{Binding SaveCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save PDF with form fields editable"
+                                   AutomationProperties.Name="Save filled PDF">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Flatten &amp; Save"
+                                   Command="{Binding FlattenAndSaveCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save PDF with fields baked in (non-editable)"
+                                   AutomationProperties.Name="Flatten and save PDF"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="AI Assistant"
+                                   AutomationProperties.Name="AI assistant tab">
+                <Fluent:RibbonGroupBox Header="Claude AI"
+                                        AutomationProperties.Name="Claude AI group">
+                    <Fluent:Button Header="AI Panel"
+                                   Command="{Binding ToggleAiPanelCommand}"
+                                   ToolTip="Show/hide the AI assistant panel in Properties"
+                                   AutomationProperties.Name="Toggle AI assistant panel">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Fill Fields"
+                                   Command="{Binding RunAiFillCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Ask Claude AI to fill form fields based on your prompt"
+                                   AutomationProperties.Name="Run AI form fill"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Settings"
+                                        AutomationProperties.Name="AI settings group">
+                    <Fluent:Button Header="API Key"
+                                   Command="{Binding OpenSettingsCommand}"
+                                   Size="Middle"
+                                   ToolTip="Configure your Claude API key in Settings → AI Assistant"
+                                   AutomationProperties.Name="Configure AI API key"/>
+                </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
 
         </Fluent:Ribbon>
@@ -388,170 +811,363 @@
              MAIN CONTENT AREA
              ════════════════════════════════════════════════════════════════ -->
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="56"/>           <!-- Toolbox -->
-                <ColumnDefinition Width="4"/>             <!-- Splitter -->
-                <ColumnDefinition Width="*"/>             <!-- PDF Viewer -->
-                <ColumnDefinition Width="4"/>             <!-- Splitter -->
-                <ColumnDefinition Width="220" MinWidth="180" MaxWidth="380"/> <!-- Properties -->
-            </Grid.ColumnDefinitions>
 
-            <!-- ── Toolbox ───────────────────────────────────────────────── -->
-            <Border Grid.Column="0"
-                    Background="#252526"
-                    BorderBrush="#3E3E3E"
-                    BorderThickness="0,0,1,0">
-                <controls:ToolboxPanel DataContext="{Binding}"/>
-            </Border>
+            <!-- Scaled inner layout (toolbox + viewer + properties) -->
+            <Grid x:Name="ScaledContent">
+                <Grid.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
+                </Grid.LayoutTransform>
 
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="56"/>            <!-- Toolbox -->
+                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
+                    <ColumnDefinition Width="*"/>              <!-- PDF Viewer -->
+                    <ColumnDefinition Width="4"/>              <!-- Splitter -->
+                    <ColumnDefinition Width="220" MinWidth="180" MaxWidth="380"/> <!-- Properties -->
+                </Grid.ColumnDefinitions>
 
-            <!-- ── PDF Viewer ─────────────────────────────────────────────── -->
-            <controls:PdfViewerControl Grid.Column="2"
-                                        x:Name="PdfViewer"
-                                        DataContext="{Binding}"/>
+                <!-- ── Toolbox ─────────────────────────────────────────────── -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource SidebarBgBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="0,0,1,0">
+                    <controls:ToolboxPanel DataContext="{Binding}"
+                                           AutomationProperties.Name="Tool palette"/>
+                </Border>
 
-            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"
+                              AutomationProperties.Name="Resize toolbox"/>
 
-            <!-- ── Properties Panel ──────────────────────────────────────── -->
-            <Border Grid.Column="4"
-                    Background="#252526"
-                    BorderBrush="#3E3E3E"
-                    BorderThickness="1,0,0,0">
-                <TabControl>
+                <!-- ── PDF Viewer ───────────────────────────────────────────── -->
+                <controls:PdfViewerControl Grid.Column="2"
+                                            x:Name="PdfViewer"
+                                            DataContext="{Binding}"
+                                            AutomationProperties.Name="PDF document viewer"/>
 
-                    <!-- Field Properties tab -->
-                    <TabItem Header="Properties">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                            <StackPanel>
+                <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"
+                              AutomationProperties.Name="Resize properties panel"/>
 
-                                <!-- Document Info -->
-                                <TextBlock Text="DOCUMENT" Style="{StaticResource SectionHeader}"/>
-                                <TextBlock Text="{Binding Document.Title, FallbackValue='—'}"
-                                           FontSize="12" TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding Document.Title}"/>
-                                <TextBlock Text="{Binding CurrentPageDisplay}"
-                                           FontSize="11" Foreground="#888888"/>
-                                <TextBlock Text="{Binding ZoomPercent}"
-                                           FontSize="11" Foreground="#888888"/>
+                <!-- ── Properties Panel ─────────────────────────────────────── -->
+                <Border Grid.Column="4"
+                        Background="{DynamicResource SidebarBgBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1,0,0,0">
+                    <TabControl AutomationProperties.Name="Properties panel">
 
-                                <Separator Margin="0,8" Background="#3E3E3E"/>
+                        <!-- Field Properties tab -->
+                        <TabItem Header="Properties"
+                                 AutomationProperties.Name="Field properties">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                                <StackPanel>
 
-                                <!-- Selected Field Info -->
-                                <TextBlock Text="SELECTED FIELD" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="DOCUMENT" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="{Binding Document.Title, FallbackValue='—'}"
+                                               FontSize="12" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Document.Title}"
+                                               AutomationProperties.Name="Document title"/>
+                                    <TextBlock Text="{Binding CurrentPageDisplay}"
+                                               FontSize="11"
+                                               AutomationProperties.Name="Page info"/>
+                                    <TextBlock Text="{Binding ZoomPercent}"
+                                               FontSize="11"
+                                               AutomationProperties.Name="Zoom level"/>
 
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="60"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                    <Separator Margin="0,8" Background="{DynamicResource AppBorderBrush}"/>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding SelectedField.Name, FallbackValue='—'}"
-                                               FontSize="11" TextTrimming="CharacterEllipsis"
-                                               ToolTip="{Binding SelectedField.Name}"/>
+                                    <TextBlock Text="SELECTED FIELD" Style="{StaticResource SectionHeader}"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1"
-                                               Text="{Binding SelectedField.FieldType, FallbackValue='—'}"
-                                               FontSize="11" Margin="0,4,0,0"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Page:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1"
-                                               Text="{Binding SelectedField.PageNumber, FallbackValue='—'}"
-                                               FontSize="11" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontSize="11" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                   Text="{Binding SelectedField.Name, FallbackValue='—'}"
+                                                   FontSize="11" TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding SelectedField.Name}"
+                                                   AutomationProperties.Name="Selected field name"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Required:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="1"
-                                               Text="{Binding SelectedField.IsRequired, FallbackValue='—'}"
-                                               FontSize="11" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                                   Text="{Binding SelectedField.FieldType, FallbackValue='—'}"
+                                                   FontSize="11" Margin="0,4,0,0"
+                                                   AutomationProperties.Name="Selected field type"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Value:" FontSize="11" Foreground="#888888" VerticalAlignment="Top" Margin="0,6,0,0"/>
-                                    <TextBox Grid.Row="4" Grid.Column="1"
-                                             Text="{Binding SelectedField.Value, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Page:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1"
+                                                   Text="{Binding SelectedField.PageNumber, FallbackValue='—'}"
+                                                   FontSize="11" Margin="0,4,0,0"
+                                                   AutomationProperties.Name="Selected field page"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Required:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1"
+                                                   Text="{Binding SelectedField.IsRequired, FallbackValue='—'}"
+                                                   FontSize="11" Margin="0,4,0,0"
+                                                   AutomationProperties.Name="Selected field required status"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Value:" FontSize="11" VerticalAlignment="Top" Margin="0,6,0,0"/>
+                                        <TextBox Grid.Row="4" Grid.Column="1"
+                                                 Text="{Binding SelectedField.Value, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource PropTextBox}"
+                                                 Margin="0,4,0,0"
+                                                 IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}"
+                                                 AutomationProperties.Name="Field value editor"
+                                                 AutomationProperties.HelpText="Edit the value of the selected form field"/>
+
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tooltip:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1"
+                                                   Text="{Binding SelectedField.Tooltip, FallbackValue='—'}"
+                                                   FontSize="11" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   AutomationProperties.Name="Selected field tooltip"/>
+                                    </Grid>
+
+                                    <Separator Margin="0,8" Background="{DynamicResource AppBorderBrush}"/>
+
+                                    <TextBlock Text="ALL FIELDS" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="{Binding AllFields.Count, StringFormat='{}{0} fields'}"
+                                               FontSize="11" Margin="0,0,0,4"
+                                               AutomationProperties.Name="Total field count"/>
+
+                                    <ListBox ItemsSource="{Binding AllFields}"
+                                             SelectedItem="{Binding SelectedField}"
+                                             MaxHeight="260"
+                                             Style="{StaticResource DarkListBox}"
+                                             FontSize="11"
+                                             AutomationProperties.Name="All form fields list">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="2,1">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding FieldType}" FontSize="11"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- Page Fields tab -->
+                        <TabItem Header="Page Fields"
+                                 AutomationProperties.Name="Current page fields">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="FIELDS ON THIS PAGE" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="{Binding CurrentPageFields.Count, StringFormat='{}{0} fields'}"
+                                               FontSize="11" Margin="0,0,0,4"
+                                               AutomationProperties.Name="Page field count"/>
+                                    <ListBox ItemsSource="{Binding CurrentPageFields}"
+                                             SelectedItem="{Binding SelectedField}"
+                                             Style="{StaticResource DarkListBox}"
+                                             FontSize="11"
+                                             AutomationProperties.Name="Current page fields">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="2,2">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Value, StringFormat='Value: {0}'}"
+                                                               FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- AI Fill tab -->
+                        <TabItem Header="AI Fill"
+                                 AutomationProperties.Name="AI form fill assistant">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="AI FORM FILL" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="Describe what to fill and Claude AI will complete the form fields automatically."
+                                               FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="Prompt:" FontSize="11" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding AiPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource PropTextBox}"
-                                             Margin="0,4,0,0"
-                                             IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}"/>
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="80"
+                                             MaxHeight="160"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,8"
+                                             AutomationProperties.Name="AI prompt"
+                                             AutomationProperties.HelpText="Describe what information to fill in the form"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Tooltip:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                    <TextBlock Grid.Row="5" Grid.Column="1"
-                                               Text="{Binding SelectedField.Tooltip, FallbackValue='—'}"
-                                               FontSize="11" Margin="0,4,0,0"
-                                               TextTrimming="CharacterEllipsis"/>
-                                </Grid>
+                                    <Button Content="Fill Fields with AI"
+                                            Command="{Binding RunAiFillCommand}"
+                                            Style="{StaticResource ModernButton}"
+                                            Height="32"
+                                            IsEnabled="{Binding HasDocument}"
+                                            Margin="0,0,0,8"
+                                            AutomationProperties.Name="Run AI form fill"
+                                            AutomationProperties.HelpText="Sends your prompt to Claude AI to fill the form fields"/>
 
-                                <Separator Margin="0,8" Background="#3E3E3E"/>
+                                    <ProgressBar IsIndeterminate="True"
+                                                 Height="4"
+                                                 Margin="0,0,0,8"
+                                                 Visibility="{Binding IsAiRunning, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                 AutomationProperties.Name="AI processing indicator"/>
 
-                                <!-- All fields list -->
-                                <TextBlock Text="ALL FIELDS" Style="{StaticResource SectionHeader}"/>
-                                <TextBlock Text="{Binding AllFields.Count, StringFormat='{}{0} fields'}"
-                                           FontSize="11" Foreground="#888888" Margin="0,0,0,4"/>
+                                    <TextBlock Text="AI Response:" FontSize="11" Margin="0,4,0,4"/>
+                                    <TextBox Text="{Binding AiResponse, Mode=OneWay}"
+                                             Style="{StaticResource PropTextBox}"
+                                             IsReadOnly="True"
+                                             TextWrapping="Wrap"
+                                             MaxHeight="120"
+                                             VerticalScrollBarVisibility="Auto"
+                                             AutomationProperties.Name="AI response"
+                                             AutomationProperties.HelpText="Shows the Claude AI response"/>
 
-                                <ListBox ItemsSource="{Binding AllFields}"
-                                         SelectedItem="{Binding SelectedField}"
-                                         MaxHeight="260"
-                                         Background="#2D2D2D"
-                                         BorderBrush="#3E3E3E"
-                                         Foreground="#CCCCCC"
-                                         FontSize="11">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="2,1">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding FieldType}" Foreground="#888888"/>
+                                    <TextBlock Text="Add your Claude API key in Settings → AI Assistant to enable this feature."
+                                               FontSize="10" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                    </TabControl>
+                </Border>
+
+            </Grid>
+            <!-- End of ScaledContent Grid -->
+
+            <!-- ── Global Search Overlay ────────────────────────────────────── -->
+            <Grid Panel.ZIndex="100"
+                  Visibility="{Binding ShowSearchOverlay, Converter={StaticResource BoolToVisibilityConverter}}"
+                  AutomationProperties.Name="Global search overlay">
+                <Grid.Background>
+                    <SolidColorBrush Color="Black" Opacity="0.45"/>
+                </Grid.Background>
+
+                <Border VerticalAlignment="Top"
+                        HorizontalAlignment="Center"
+                        Margin="0,30,0,0"
+                        Width="520"
+                        Background="{DynamicResource SearchBgBrush}"
+                        BorderBrush="{DynamicResource AccentBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="20,16"
+                        AutomationProperties.Name="Search dialog">
+
+                    <StackPanel>
+
+                        <!-- Header row -->
+                        <DockPanel Margin="0,0,0,12">
+                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"
+                                       DockPanel.Dock="Left"/>
+                            <TextBlock Text="Global Search" FontSize="17" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                            <TextBlock Text="Ctrl+Shift+F to close" FontSize="10"
+                                       VerticalAlignment="Center" Margin="8,0,0,0"
+                                       DockPanel.Dock="Left"/>
+                            <Button Content="✕"
+                                    Command="{Binding ToggleSearchCommand}"
+                                    DockPanel.Dock="Right"
+                                    HorizontalAlignment="Right"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    FontSize="16"
+                                    Padding="4"
+                                    ToolTip="Close search"
+                                    AutomationProperties.Name="Close search overlay">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DockPanel>
+
+                        <!-- Search box -->
+                        <TextBox x:Name="SearchBox"
+                                 Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="38"
+                                 FontSize="14"
+                                 Padding="10,6"
+                                 Background="{DynamicResource InputBgBrush}"
+                                 Foreground="{DynamicResource InputForegroundBrush}"
+                                 BorderBrush="{DynamicResource AccentBrush}"
+                                 BorderThickness="2"
+                                 Margin="0,0,0,10"
+                                 AutomationProperties.Name="Search query"
+                                 AutomationProperties.HelpText="Type to search form fields and text annotations"/>
+
+                        <!-- Result count -->
+                        <TextBlock Text="{Binding SearchResults.Count, StringFormat='{}{0} results found'}"
+                                   FontSize="11" Margin="0,0,0,6"
+                                   AutomationProperties.Name="Search result count"/>
+
+                        <!-- Results list -->
+                        <ListBox ItemsSource="{Binding SearchResults}"
+                                 MaxHeight="320"
+                                 Style="{StaticResource DarkListBox}"
+                                 AutomationProperties.Name="Search results">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="4,4"
+                                            Command="{Binding DataContext.NavigateToResultCommand,
+                                                      RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}"
+                                            AutomationProperties.Name="{Binding Label}">
+                                        <StackPanel Margin="0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Background="{DynamicResource AccentBrush}"
+                                                        CornerRadius="2" Padding="4,1" Margin="0,0,6,0">
+                                                    <TextBlock Text="{Binding Kind}" FontSize="9" Foreground="White"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
                                             </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                            <TextBlock Text="{Binding Detail}" FontSize="11" Margin="0,1,0,0"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
 
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
-                    <!-- Fields on current page tab -->
-                    <TabItem Header="Page Fields">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                            <StackPanel>
-                                <TextBlock Text="FIELDS ON THIS PAGE" Style="{StaticResource SectionHeader}"/>
-                                <TextBlock Text="{Binding CurrentPageFields.Count, StringFormat='{}{0} fields'}"
-                                           FontSize="11" Foreground="#888888" Margin="0,0,0,4"/>
-                                <ListBox ItemsSource="{Binding CurrentPageFields}"
-                                         SelectedItem="{Binding SelectedField}"
-                                         Background="#2D2D2D"
-                                         BorderBrush="#3E3E3E"
-                                         Foreground="#CCCCCC"
-                                         FontSize="11">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="2,2">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding Value, StringFormat='Value: {0}'}"
-                                                           Foreground="#AAAAAA" TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
+            <!-- ── Toast Notification Host ──────────────────────────────────── -->
+            <controls:ToastHost Panel.ZIndex="200"
+                                 HorizontalAlignment="Right"
+                                 VerticalAlignment="Bottom"
+                                 Margin="16"
+                                 AutomationProperties.Name="Notification area"
+                                 AutomationProperties.LiveSetting="Polite"/>
 
-                </TabControl>
-            </Border>
         </Grid>
+        <!-- End Grid.Row=1 -->
 
         <!-- ════════════════════════════════════════════════════════════════
              STATUS BAR
              ════════════════════════════════════════════════════════════════ -->
-        <StatusBar Grid.Row="2">
+        <StatusBar Grid.Row="2"
+                   AutomationProperties.Name="Status bar">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid>
@@ -560,28 +1176,36 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
             <StatusBarItem Grid.Column="0">
-                <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="12"/>
+                <TextBlock Text="{Binding StatusText}"
+                           AutomationProperties.Name="Status message"/>
             </StatusBarItem>
             <StatusBarItem Grid.Column="1" Margin="8,0">
-                <TextBlock Text="{Binding CurrentPageDisplay}" Foreground="White" FontSize="12"/>
+                <TextBlock Text="{Binding CurrentPageDisplay}"
+                           AutomationProperties.Name="Page display"/>
             </StatusBarItem>
             <StatusBarItem Grid.Column="2" Margin="8,0">
-                <TextBlock Text="{Binding ZoomPercent}" Foreground="White" FontSize="12"/>
+                <TextBlock Text="{Binding ZoomPercent}"
+                           AutomationProperties.Name="Zoom level"/>
             </StatusBarItem>
             <StatusBarItem Grid.Column="3" Margin="8,0">
-                <TextBlock Foreground="White" FontSize="12">
+                <TextBlock AutomationProperties.Name="Active tool and rotation">
                     <TextBlock.Text>
-                        <MultiBinding StringFormat="Tool: {0}  |  Page rotation: {1}°">
+                        <MultiBinding StringFormat="Tool: {0}  |  Rotation: {1}°">
                             <Binding Path="ActiveTool"/>
                             <Binding Path="CurrentPageRotation"/>
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="4" Margin="8,0">
+                <TextBlock Text="{Binding UiScale, StringFormat='Scale: {0:P0}'}"
+                           AutomationProperties.Name="Interface scale"/>
             </StatusBarItem>
         </StatusBar>
 

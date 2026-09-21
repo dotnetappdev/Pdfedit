@@ -7,6 +7,10 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Fluent;component/Themes/Generic.xaml"/>
+                <!-- Active theme (Dark by default; swapped at runtime by App.xaml.cs) -->
+                <ResourceDictionary x:Name="ThemeDictionary"
+                                    Source="Themes/DarkTheme.xaml"/>
+                <!-- Styles that reference theme tokens via DynamicResource -->
                 <ResourceDictionary Source="Resources/AppTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

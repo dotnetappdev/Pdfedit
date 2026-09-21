@@ -1,3 +1,5 @@
+using System.Windows;
+
 namespace PdfEdit.Models;
 
 /// <summary>
@@ -16,10 +18,12 @@ public class FreeTextAnnotation
 
     public string Text { get; set; } = string.Empty;
     public double FontSize { get; set; } = 12;
-    public bool IsVertical { get; set; }      // true → rotated 90° (top-to-bottom)
+    public bool IsVertical { get; set; }
     public string FontColor { get; set; } = "#000000";
     public string FontFamily { get; set; } = "Arial";
     public bool IsBold { get; set; }
     public bool IsItalic { get; set; }
     public bool IsUnderline { get; set; }
+    public TextAlignment TextAlignment { get; set; } = TextAlignment.Left;
+    public bool ForceUpperCase { get; set; }
 }

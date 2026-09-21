@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,16 +18,18 @@ public partial class PdfViewerControl : UserControl
 {
     private MainViewModel? _vm;
 
-    // Points-to-pixels: pts × Scale = display pixels at current zoom
     private double Scale => PdfRenderService.PointsToDips * (_vm?.Zoom ?? 1.0);
 
-    // Temporary annotation TextBox being placed
+    // Active annotation TextBox being placed
     private TextBox? _activeAnnotationBox;
     private FreeTextAnnotation? _pendingAnnotation;
 
-    // Currently focused/selected annotation (for in-place formatting)
+    // Currently focused/selected annotation
     private FreeTextAnnotation? _focusedAnnotation;
     private TextBox? _focusedAnnotationTb;
+
+    // Floating delete toolbar popup
+    private Popup? _floatingToolbar;
 
     // Pan state
     private bool _isPanning;
@@ -44,6 +47,8 @@ public partial class PdfViewerControl : UserControl
         KeyDown += OnKeyDown;
         AllowDrop = true;
         Focusable = true;
+
+        _floatingToolbar = BuildFloatingToolbar();
     }
 
     // ── Setup ────────────────────────────────────────────────────────────────
@@ -76,44 +81,109 @@ public partial class PdfViewerControl : UserControl
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // When VM font properties change and we have a focused annotation TextBox, update it live
-        if (_focusedAnnotationTb == null || _focusedAnnotation == null) return;
+        if (_focusedAnnotationTb == null || _focusedAnnotation == null || _vm == null) return;
 
         switch (e.PropertyName)
         {
             case nameof(MainViewModel.CurrentFontSize):
-                if (_vm != null)
-                    _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / PdfRenderService.PointsToDips;
+                _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / PdfRenderService.PointsToDips;
                 break;
             case nameof(MainViewModel.CurrentFontFamily):
-                if (_vm != null)
-                    _focusedAnnotationTb.FontFamily = new FontFamily(_vm.CurrentFontFamily);
+                _focusedAnnotationTb.FontFamily = new FontFamily(_vm.CurrentFontFamily);
                 break;
             case nameof(MainViewModel.CurrentFontBold):
-                if (_vm != null)
-                    _focusedAnnotationTb.FontWeight = _vm.CurrentFontBold ? FontWeights.Bold : FontWeights.Normal;
+                _focusedAnnotationTb.FontWeight = _vm.CurrentFontBold ? FontWeights.Bold : FontWeights.Normal;
                 break;
             case nameof(MainViewModel.CurrentFontItalic):
-                if (_vm != null)
-                    _focusedAnnotationTb.FontStyle = _vm.CurrentFontItalic ? FontStyles.Italic : FontStyles.Normal;
+                _focusedAnnotationTb.FontStyle = _vm.CurrentFontItalic ? FontStyles.Italic : FontStyles.Normal;
                 break;
             case nameof(MainViewModel.CurrentFontUnderline):
-                if (_vm != null)
-                    _focusedAnnotationTb.TextDecorations = _vm.CurrentFontUnderline
-                        ? TextDecorations.Underline : null;
+                _focusedAnnotationTb.TextDecorations = _vm.CurrentFontUnderline ? TextDecorations.Underline : null;
                 break;
             case nameof(MainViewModel.CurrentFontColor):
-                if (_vm != null)
-                    _focusedAnnotationTb.Foreground = ParseBrush(_vm.CurrentFontColor);
+                _focusedAnnotationTb.Foreground = ParseBrush(_vm.CurrentFontColor);
+                break;
+            case nameof(MainViewModel.CurrentTextAlignment):
+                _focusedAnnotationTb.TextAlignment = _vm.CurrentTextAlignment;
                 break;
         }
     }
 
     private void OnAnnotationFormattingChanged()
     {
-        // Annotation model updated — refresh the visual TextBox if focused
         if (_focusedAnnotationTb == null || _focusedAnnotation == null || _vm == null) return;
         ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb);
+    }
+
+    // ── Floating delete toolbar ───────────────────────────────────────────────
+
+    private Popup BuildFloatingToolbar()
+    {
+        var popup = new Popup
+        {
+            StaysOpen = true,
+            AllowsTransparency = true,
+            Placement = PlacementMode.Top,
+        };
+
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+        };
+
+        var deleteBtn = new Button
+        {
+            Content = "✕ Delete",
+            Background = new SolidColorBrush(Color.FromRgb(196, 43, 28)),
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(8, 4, 8, 4),
+            FontSize = 12,
+            Focusable = false,
+            Cursor = Cursors.Hand,
+            ToolTip = "Delete this annotation",
+        };
+        deleteBtn.PreviewMouseDown += (_, e) =>
+        {
+            if (_focusedAnnotation != null && _focusedAnnotationTb != null)
+            {
+                var ann = _focusedAnnotation;
+                var tb = _focusedAnnotationTb;
+                _focusedAnnotation = null;
+                _focusedAnnotationTb = null;
+                _vm?.RemoveFreeTextAnnotation(ann);
+                AnnotationCanvas.Children.Remove(tb);
+                popup.IsOpen = false;
+                Services.ToastService.Instance.Info("Annotation deleted.");
+            }
+            e.Handled = true;
+        };
+        panel.Children.Add(deleteBtn);
+
+        popup.Child = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Child = panel,
+        };
+
+        return popup;
+    }
+
+    private void ShowFloatingToolbar(TextBox tb)
+    {
+        if (_floatingToolbar == null) return;
+        _floatingToolbar.PlacementTarget = tb;
+        _floatingToolbar.IsOpen = true;
+    }
+
+    private void HideFloatingToolbar()
+    {
+        if (_floatingToolbar != null)
+            _floatingToolbar.IsOpen = false;
     }
 
     // ── Page rendering ───────────────────────────────────────────────────────
@@ -123,6 +193,7 @@ public partial class PdfViewerControl : UserControl
         if (_vm?.Document == null) return;
 
         FinalizeAnnotationBox();
+        HideFloatingToolbar();
         ShowLoading(true);
         try
         {
@@ -243,6 +314,7 @@ public partial class PdfViewerControl : UserControl
             TextWrapping = field.IsMultiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Padding = new Thickness(2, 0, 2, 0),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
+            AutomationProperties = { Name = $"Form field: {field.Name}" }
         };
 
         if (vertical)
@@ -262,6 +334,7 @@ public partial class PdfViewerControl : UserControl
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             ToolTip = field.Name,
+            AutomationProperties = { Name = $"Checkbox: {field.Name}" }
         };
         cb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
         cb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
@@ -279,6 +352,7 @@ public partial class PdfViewerControl : UserControl
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             ToolTip = field.Name,
+            AutomationProperties = { Name = $"Radio button: {field.Name}" }
         };
         rb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
         rb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
@@ -293,6 +367,7 @@ public partial class PdfViewerControl : UserControl
             Width = w, Height = h,
             FontSize = Math.Max(8, h * 0.55),
             ToolTip = field.Name,
+            AutomationProperties = { Name = $"Dropdown: {field.Name}" }
         };
         foreach (var opt in field.Options) cb.Items.Add(opt);
         var cur = _vm!.FieldValues.TryGetValue(field.Name, out var cv) ? cv : field.Value;
@@ -342,15 +417,12 @@ public partial class PdfViewerControl : UserControl
         border.MouseLeftButtonDown += (_, e) =>
         {
             _vm!.SelectedField = field;
-            // Open signature dialog and place on field bounds
             var sig = OpenSignatureDialog();
             if (sig != null)
             {
                 int pageNum = _vm.CurrentPageIndex + 1;
                 if (pageNum >= 1 && pageNum <= _vm.Document!.PageSizes.Count)
                 {
-                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                    // Convert back to PDF coords — field position
                     var placed = new PlacedSignature
                     {
                         PageNumber = pageNum,
@@ -361,8 +433,7 @@ public partial class PdfViewerControl : UserControl
                         ImageBytes = sig.ImageBytes!,
                     };
                     _vm.AddPlacedSignature(placed);
-                    PlaceSignatureVisual(placed, pageH);
-                    AnnotationCanvas.Children.Add(BuildSignatureImage(placed, pageH));
+                    AnnotationCanvas.Children.Add(BuildSignatureImage(placed, _vm.Document.PageSizes[pageNum - 1].Height));
                     _vm.StatusText = "Signature placed on field.";
                 }
             }
@@ -410,7 +481,7 @@ public partial class PdfViewerControl : UserControl
         {
             Width = ann.IsVertical ? h : w,
             Height = ann.IsVertical ? w : h,
-            Text = ann.Text,
+            Text = ann.ForceUpperCase ? ann.Text.ToUpperInvariant() : ann.Text,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 200)),
@@ -418,6 +489,7 @@ public partial class PdfViewerControl : UserControl
             BorderThickness = new Thickness(1),
             Padding = new Thickness(2),
             ToolTip = "Annotation — right-click to delete",
+            AutomationProperties = { Name = "Text annotation" }
         };
 
         ApplyAnnotationFormatting(ann, tb);
@@ -425,7 +497,17 @@ public partial class PdfViewerControl : UserControl
         if (ann.IsVertical)
             tb.LayoutTransform = new RotateTransform(-90);
 
-        tb.TextChanged += (_, _) => ann.Text = tb.Text;
+        tb.TextChanged += (_, _) =>
+        {
+            string newText = ann.ForceUpperCase ? tb.Text.ToUpperInvariant() : tb.Text;
+            if (ann.ForceUpperCase && tb.Text != newText)
+            {
+                int caretPos = tb.CaretIndex;
+                tb.Text = newText;
+                tb.CaretIndex = Math.Min(caretPos, newText.Length);
+            }
+            ann.Text = tb.Text;
+        };
 
         tb.GotFocus += (_, _) =>
         {
@@ -434,39 +516,35 @@ public partial class PdfViewerControl : UserControl
             if (_vm != null) _vm.SelectedAnnotation = ann;
             tb.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 120, 215));
             tb.BorderThickness = new Thickness(2);
+            ShowFloatingToolbar(tb);
         };
         tb.LostFocus += (_, _) =>
         {
-            if (_focusedAnnotationTb == tb)
+            // Small delay so clicking the floating toolbar doesn't trigger LostFocus
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
             {
-                _focusedAnnotation = null;
-                _focusedAnnotationTb = null;
-            }
-            tb.BorderBrush = new SolidColorBrush(Color.FromArgb(180, 70, 130, 180));
-            tb.BorderThickness = new Thickness(1);
+                if (_focusedAnnotationTb == tb)
+                {
+                    _focusedAnnotation = null;
+                    _focusedAnnotationTb = null;
+                    HideFloatingToolbar();
+                }
+                tb.BorderBrush = new SolidColorBrush(Color.FromArgb(180, 70, 130, 180));
+                tb.BorderThickness = new Thickness(1);
+            });
         };
 
-        // Right-click context menu for deletion
+        // Right-click context menu
         var cm = new ContextMenu();
         var deleteItem = new MenuItem { Header = "Delete Annotation" };
         deleteItem.Click += (_, _) =>
         {
             _vm!.RemoveFreeTextAnnotation(ann);
             AnnotationCanvas.Children.Remove(tb);
+            HideFloatingToolbar();
         };
         cm.Items.Add(deleteItem);
         tb.ContextMenu = cm;
-
-        // Ctrl+double-click also deletes
-        tb.MouseDoubleClick += (_, e) =>
-        {
-            if (Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                _vm!.RemoveFreeTextAnnotation(ann);
-                AnnotationCanvas.Children.Remove(tb);
-                e.Handled = true;
-            }
-        };
 
         Canvas.SetLeft(tb, x);
         Canvas.SetTop(tb, y);
@@ -482,6 +560,7 @@ public partial class PdfViewerControl : UserControl
         tb.FontStyle = ann.IsItalic ? FontStyles.Italic : FontStyles.Normal;
         tb.TextDecorations = ann.IsUnderline ? TextDecorations.Underline : null;
         tb.Foreground = ParseBrush(ann.FontColor);
+        tb.TextAlignment = ann.TextAlignment;
     }
 
     // ── Signature overlay ─────────────────────────────────────────────────────
@@ -494,10 +573,7 @@ public partial class PdfViewerControl : UserControl
         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
 
         foreach (var sig in sigs)
-        {
-            var imgCtrl = BuildSignatureImage(sig, pageH);
-            AnnotationCanvas.Children.Add(imgCtrl);
-        }
+            AnnotationCanvas.Children.Add(BuildSignatureImage(sig, pageH));
     }
 
     private UIElement BuildSignatureImage(PlacedSignature sig, double pageHeightPts)
@@ -518,7 +594,7 @@ public partial class PdfViewerControl : UserControl
             bmp.EndInit();
             bmp.Freeze();
         }
-        catch { /* ignore */ }
+        catch { }
 
         var img = new Image
         {
@@ -544,12 +620,7 @@ public partial class PdfViewerControl : UserControl
         return img;
     }
 
-    private void PlaceSignatureVisual(PlacedSignature sig, double pageHeightPts)
-    {
-        // Already handled by BuildSignatureImage — used for immediate placement after dialog
-    }
-
-    // ── Mouse: annotation placement, date stamp, signature, pan ─────────────
+    // ── Mouse: annotation placement, pan ─────────────────────────────────────
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -571,10 +642,7 @@ public partial class PdfViewerControl : UserControl
         if (tool is ActiveTool.AddText or ActiveTool.VerticalText or ActiveTool.DateStamp)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
-            if (posOnPage.X < 0 || posOnPage.Y < 0 ||
-                posOnPage.X > AnnotationCanvas.Width ||
-                posOnPage.Y > AnnotationCanvas.Height)
-                return;
+            if (!IsOnPage(posOnPage)) return;
 
             FinalizeAnnotationBox();
 
@@ -591,18 +659,29 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        if (tool is ActiveTool.Checkmark or ActiveTool.XMark)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+
+            FinalizeAnnotationBox();
+            PlaceStampAnnotation(posOnPage, tool == ActiveTool.Checkmark ? "✓" : "✕",
+                tool == ActiveTool.Checkmark ? "#2E7D32" : "#C62828");
+            e.Handled = true;
+            return;
+        }
+
         if (tool == ActiveTool.Signature)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
-            if (posOnPage.X < 0 || posOnPage.Y < 0 ||
-                posOnPage.X > AnnotationCanvas.Width ||
-                posOnPage.Y > AnnotationCanvas.Height)
-                return;
-
+            if (!IsOnPage(posOnPage)) return;
             PlaceSignatureAtPoint(posOnPage);
             e.Handled = true;
         }
     }
+
+    private bool IsOnPage(Point p)
+        => p.X >= 0 && p.Y >= 0 && p.X <= AnnotationCanvas.Width && p.Y <= AnnotationCanvas.Height;
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
@@ -635,9 +714,12 @@ public partial class PdfViewerControl : UserControl
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape) FinalizeAnnotationBox();
+        if (e.Key == Key.Escape)
+        {
+            FinalizeAnnotationBox();
+            HideFloatingToolbar();
+        }
 
-        // Delete focused annotation with Delete key
         if (e.Key == Key.Delete && _focusedAnnotation != null)
         {
             var ann = _focusedAnnotation;
@@ -646,8 +728,79 @@ public partial class PdfViewerControl : UserControl
             _focusedAnnotationTb = null;
             _vm!.RemoveFreeTextAnnotation(ann);
             if (tb != null) AnnotationCanvas.Children.Remove(tb);
+            HideFloatingToolbar();
             e.Handled = true;
         }
+    }
+
+    // ── Stamp annotations (Checkmark / XMark) ────────────────────────────────
+
+    private void PlaceStampAnnotation(Point posOnCanvas, string stampText, string colorHex)
+    {
+        if (_vm?.Document == null) return;
+
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
+
+        double fontSize = _vm.CurrentFontSize * 2; // stamps are bigger
+        double displayFontSize = fontSize * Scale / PdfRenderService.PointsToDips;
+        double defaultW = 32 * Scale;
+        double defaultH = 32 * Scale;
+
+        double pdfX = posOnCanvas.X / Scale;
+        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (defaultH / Scale);
+        double pdfW = defaultW / Scale;
+        double pdfH = defaultH / Scale;
+
+        var ann = new FreeTextAnnotation
+        {
+            PageNumber = pageNum,
+            Left = pdfX,
+            Bottom = pdfY,
+            Width = pdfW,
+            Height = pdfH,
+            Text = stampText,
+            FontSize = fontSize,
+            FontFamily = _vm.CurrentFontFamily,
+            IsBold = true,
+            FontColor = colorHex,
+            TextAlignment = System.Windows.TextAlignment.Center,
+        };
+        _vm.FreeTextAnnotations.Add(ann);
+
+        // Create visual directly
+        var tb = new TextBox
+        {
+            Width = defaultW,
+            Height = defaultH,
+            Text = stampText,
+            FontSize = Math.Max(8, displayFontSize),
+            FontWeight = FontWeights.Bold,
+            Foreground = ParseBrush(colorHex),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            IsReadOnly = true,
+            TextAlignment = System.Windows.TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = "Delete Stamp" };
+        delItem.Click += (_, _) =>
+        {
+            _vm.RemoveFreeTextAnnotation(ann);
+            AnnotationCanvas.Children.Remove(tb);
+        };
+        cm.Items.Add(delItem);
+        tb.ContextMenu = cm;
+
+        Canvas.SetLeft(tb, posOnCanvas.X);
+        Canvas.SetTop(tb, posOnCanvas.Y);
+        AnnotationCanvas.Children.Add(tb);
+
+        _vm.StatusText = $"Stamp '{stampText}' placed.";
+        Services.ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
     }
 
     // ── Free-text TextBox placement ───────────────────────────────────────────
@@ -678,12 +831,27 @@ public partial class PdfViewerControl : UserControl
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             Padding = new Thickness(2),
+            TextAlignment = _vm.CurrentTextAlignment,
             ToolTip = vertical ? "Vertical text — click away to commit"
                                : "Type here, then click away to commit",
         };
 
         if (vertical)
             tb.LayoutTransform = new RotateTransform(-90);
+
+        if (_vm.ForceUpperCase)
+        {
+            tb.TextChanged += (_, _) =>
+            {
+                string upper = tb.Text.ToUpperInvariant();
+                if (tb.Text != upper)
+                {
+                    int caret = tb.CaretIndex;
+                    tb.Text = upper;
+                    tb.CaretIndex = Math.Min(caret, upper.Length);
+                }
+            };
+        }
 
         Canvas.SetLeft(tb, posOnCanvas.X);
         Canvas.SetTop(tb, posOnCanvas.Y);
@@ -714,14 +882,14 @@ public partial class PdfViewerControl : UserControl
             IsItalic = _vm.CurrentFontItalic,
             IsUnderline = _vm.CurrentFontUnderline,
             FontColor = _vm.CurrentFontColor,
+            TextAlignment = _vm.CurrentTextAlignment,
+            ForceUpperCase = _vm.ForceUpperCase,
         };
 
         tb.LostFocus += (_, _) => FinalizeAnnotationBox();
-
         tb.Focus();
         Keyboard.Focus(tb);
 
-        // Select all so pre-filled text (like a date) is ready to confirm or edit
         if (!string.IsNullOrEmpty(prefilledText))
             tb.SelectAll();
 
@@ -748,8 +916,6 @@ public partial class PdfViewerControl : UserControl
         }
 
         ann.Text = text;
-
-        // Register in VM; the annotation model carries all font props set at placement time
         _vm?.FreeTextAnnotations.Add(ann);
 
         if (_vm != null) _vm.StatusText = $"Annotation placed: \"{text}\"";
@@ -768,7 +934,6 @@ public partial class PdfViewerControl : UserControl
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        // Default signature size: 200×60 display pixels → convert to PDF pts
         double dispW = 200 * Scale;
         double dispH = 60 * Scale;
 
@@ -788,18 +953,13 @@ public partial class PdfViewerControl : UserControl
         };
 
         _vm.AddPlacedSignature(sig);
-        var imgCtrl = BuildSignatureImage(sig, pageH);
-        AnnotationCanvas.Children.Add(imgCtrl);
-
+        AnnotationCanvas.Children.Add(BuildSignatureImage(sig, pageH));
         _vm.StatusText = "Signature placed. Right-click to delete.";
     }
 
     private SignatureData? OpenSignatureDialog()
     {
-        var dlg = new SignatureDialog
-        {
-            Owner = Window.GetWindow(this)
-        };
+        var dlg = new SignatureDialog { Owner = Window.GetWindow(this) };
         return dlg.ShowDialog() == true ? dlg.Result : null;
     }
 

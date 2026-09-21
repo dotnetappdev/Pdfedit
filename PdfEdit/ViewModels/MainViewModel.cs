@@ -13,10 +13,12 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
     private readonly PdfRenderService _renderService = new();
+    private readonly ClaudeAiService _aiService = new();
 
     private PdfDocumentInfo? _document;
     private int _currentPageIndex;
     private double _zoom = 1.0;
+    private double _uiScale = 1.0;
     private string _statusText = "Ready — Open a PDF to begin.";
     private FormFieldInfo? _selectedField;
     private FreeTextAnnotation? _selectedAnnotation;
@@ -24,6 +26,10 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isLoading;
     private bool _highlightFields = true;
     private string? _currentFilePath;
+    private bool _showAiPanel;
+    private bool _showSearchOverlay;
+    private string _searchQuery = string.Empty;
+    private bool _isAiRunning;
 
     // Font/style state for new and selected annotations
     private double _currentFontSize = 12;
@@ -32,21 +38,23 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _currentFontItalic;
     private bool _currentFontUnderline;
     private string _currentFontColor = "#000000";
+    private TextAlignment _currentTextAlignment = TextAlignment.Left;
+    private bool _forceUpperCase;
     private bool _updatingFromAnnotation;
 
-    // Page rotation: pageIndex → cumulative degrees (0/90/180/270)
+    // Page rotation: pageIndex → cumulative degrees
     private readonly Dictionary<int, int> _pageRotations = new();
 
-    // Free-text annotations placed by the user
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
-
-    // Placed signature images
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
+    public ObservableCollection<SearchResult> SearchResults { get; } = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? PageChanged;
     public event Action? DocumentLoaded;
     public event Action? AnnotationFormattingChanged;
+    public event Action<double>? UiScaleChanged;
+    public event Action<bool>? SearchOverlayToggled;
 
     // ── Available options ────────────────────────────────────────────────────
 
@@ -92,7 +100,6 @@ public class MainViewModel : INotifyPropertyChanged
     public string CurrentPageDisplay => HasDocument ? $"Page {_currentPageIndex + 1} of {_document!.PageCount}" : "—";
     public string PageCountDisplay => HasDocument ? _document!.PageCount.ToString() : "0";
     public int PageCount => _document?.PageCount ?? 1;
-
     public int CurrentPageRotation => GetPageRotation(_currentPageIndex);
 
     public double Zoom
@@ -111,6 +118,21 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string ZoomPercent => $"{(int)Math.Round(_zoom * 100)}%";
 
+    public double UiScale
+    {
+        get => _uiScale;
+        set
+        {
+            value = Math.Clamp(value, 0.5, 2.0);
+            if (Math.Abs(_uiScale - value) < 0.01) return;
+            _uiScale = value;
+            OnPropertyChanged();
+            UiScaleChanged?.Invoke(_uiScale);
+            AppSettings.Current.UiScale = _uiScale;
+            AppSettings.Current.Save();
+        }
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -123,7 +145,6 @@ public class MainViewModel : INotifyPropertyChanged
         set { _selectedField = value; OnPropertyChanged(); }
     }
 
-    /// <summary>The free-text annotation currently focused/selected in the viewer.</summary>
     public FreeTextAnnotation? SelectedAnnotation
     {
         get => _selectedAnnotation;
@@ -140,6 +161,8 @@ public class MainViewModel : INotifyPropertyChanged
                 CurrentFontItalic = value.IsItalic;
                 CurrentFontUnderline = value.IsUnderline;
                 CurrentFontColor = value.FontColor;
+                CurrentTextAlignment = value.TextAlignment;
+                ForceUpperCase = value.ForceUpperCase;
                 _updatingFromAnnotation = false;
             }
         }
@@ -161,6 +184,40 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _highlightFields;
         set { _highlightFields = value; OnPropertyChanged(); PageChanged?.Invoke(); }
+    }
+
+    public bool ShowAiPanel
+    {
+        get => _showAiPanel;
+        set { _showAiPanel = value; OnPropertyChanged(); }
+    }
+
+    public bool ShowSearchOverlay
+    {
+        get => _showSearchOverlay;
+        set
+        {
+            _showSearchOverlay = value;
+            OnPropertyChanged();
+            SearchOverlayToggled?.Invoke(value);
+        }
+    }
+
+    public string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            _searchQuery = value;
+            OnPropertyChanged();
+            PerformSearch(value);
+        }
+    }
+
+    public bool IsAiRunning
+    {
+        get => _isAiRunning;
+        set { _isAiRunning = value; OnPropertyChanged(); }
     }
 
     // ── Font/style properties ────────────────────────────────────────────────
@@ -262,6 +319,55 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public TextAlignment CurrentTextAlignment
+    {
+        get => _currentTextAlignment;
+        set
+        {
+            if (_currentTextAlignment == value) return;
+            _currentTextAlignment = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.TextAlignment = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public bool ForceUpperCase
+    {
+        get => _forceUpperCase;
+        set
+        {
+            if (_forceUpperCase == value) return;
+            _forceUpperCase = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.ForceUpperCase = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    // ── AI panel ─────────────────────────────────────────────────────────────
+
+    private string _aiPrompt = string.Empty;
+    private string _aiResponse = string.Empty;
+
+    public string AiPrompt
+    {
+        get => _aiPrompt;
+        set { _aiPrompt = value; OnPropertyChanged(); }
+    }
+
+    public string AiResponse
+    {
+        get => _aiResponse;
+        set { _aiResponse = value; OnPropertyChanged(); }
+    }
+
     // ── Collections ──────────────────────────────────────────────────────────
 
     public Dictionary<string, string> FieldValues { get; } = new();
@@ -298,9 +404,25 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ToggleUnderlineCommand { get; }
     public ICommand DeleteAnnotationCommand { get; }
     public ICommand SetFontColorCommand { get; }
+    public ICommand SetAlignmentCommand { get; }
+    public ICommand ToggleForceUpperCaseCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
+    public ICommand ToggleAiPanelCommand { get; }
+    public ICommand RunAiFillCommand { get; }
+    public ICommand ToggleSearchCommand { get; }
+    public ICommand IncreaseUiScaleCommand { get; }
+    public ICommand DecreaseUiScaleCommand { get; }
+    public ICommand NavigateToResultCommand { get; }
 
     public MainViewModel()
     {
+        // Load settings
+        _uiScale = AppSettings.Current.UiScale;
+        _currentFontFamily = AppSettings.Current.DefaultFontFamily;
+        _currentFontSize = AppSettings.Current.DefaultFontSize;
+        _currentFontColor = AppSettings.Current.DefaultFontColor;
+        _forceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
+
         OpenCommand = new AsyncRelayCommand(OpenAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => HasDocument);
         SaveAsCommand = new AsyncRelayCommand(SaveAsAsync, () => HasDocument);
@@ -345,6 +467,22 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (p is string color) CurrentFontColor = color;
         });
+        SetAlignmentCommand = new RelayCommand(p =>
+        {
+            if (p is string s && Enum.TryParse<TextAlignment>(s, out var align))
+                CurrentTextAlignment = align;
+        });
+        ToggleForceUpperCaseCommand = new RelayCommand(() => ForceUpperCase = !ForceUpperCase);
+        OpenSettingsCommand = new RelayCommand(OpenSettings);
+        ToggleAiPanelCommand = new RelayCommand(() => ShowAiPanel = !ShowAiPanel);
+        RunAiFillCommand = new AsyncRelayCommand(RunAiFillAsync, () => HasDocument && !IsAiRunning);
+        ToggleSearchCommand = new RelayCommand(() => ShowSearchOverlay = !ShowSearchOverlay);
+        IncreaseUiScaleCommand = new RelayCommand(() => UiScale += 0.1);
+        DecreaseUiScaleCommand = new RelayCommand(() => UiScale -= 0.1);
+        NavigateToResultCommand = new RelayCommand(p =>
+        {
+            if (p is SearchResult r) NavigateToSearchResult(r);
+        });
     }
 
     // ── Public Methods ───────────────────────────────────────────────────────
@@ -364,7 +502,6 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Field '{fieldName}' updated.";
     }
 
-    /// <summary>Adds a free-text annotation on the current page with current font settings applied.</summary>
     public FreeTextAnnotation AddFreeTextAnnotation(double pdfX, double pdfY, double pdfW, double pdfH,
                                                      string text, bool isVertical,
                                                      double? fontSize = null)
@@ -384,6 +521,8 @@ public class MainViewModel : INotifyPropertyChanged
             IsItalic = _currentFontItalic,
             IsUnderline = _currentFontUnderline,
             FontColor = _currentFontColor,
+            TextAlignment = _currentTextAlignment,
+            ForceUpperCase = _forceUpperCase,
         };
         FreeTextAnnotations.Add(ann);
         return ann;
@@ -399,7 +538,6 @@ public class MainViewModel : INotifyPropertyChanged
         => FreeTextAnnotations.Where(a => a.PageNumber == _currentPageIndex + 1);
 
     public void AddPlacedSignature(PlacedSignature sig) => PlacedSignatures.Add(sig);
-
     public void RemovePlacedSignature(PlacedSignature sig) => PlacedSignatures.Remove(sig);
 
     public IEnumerable<PlacedSignature> GetSignaturesForCurrentPage()
@@ -413,6 +551,7 @@ public class MainViewModel : INotifyPropertyChanged
         RemoveFreeTextAnnotation(_selectedAnnotation);
         PageChanged?.Invoke();
         StatusText = "Annotation deleted.";
+        ToastService.Instance.Info("Annotation deleted.");
     }
 
     private async Task OpenAsync()
@@ -457,14 +596,17 @@ public class MainViewModel : INotifyPropertyChanged
             RefreshCurrentPageFields();
 
             DocumentLoaded?.Invoke();
-            StatusText = $"Opened: {System.IO.Path.GetFileName(path)} — " +
-                         $"{Document.PageCount} page(s), {Document.FormFields.Count} form field(s).";
+            string msg = $"Opened: {System.IO.Path.GetFileName(path)} — " +
+                         $"{Document.PageCount} page(s), {Document.FormFields.Count} field(s).";
+            StatusText = msg;
+            ToastService.Instance.Success($"Opened {System.IO.Path.GetFileName(path)}");
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Failed to open PDF:\n{ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             StatusText = "Error loading document.";
+            ToastService.Instance.Error("Failed to open PDF.");
         }
         finally
         {
@@ -484,11 +626,13 @@ public class MainViewModel : INotifyPropertyChanged
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
+            ToastService.Instance.Success("Saved successfully.");
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Save failed:\n{ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            ToastService.Instance.Error("Save failed.");
         }
         finally
         {
@@ -515,6 +659,7 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
+            ToastService.Instance.Success($"Saved as {System.IO.Path.GetFileName(dlg.FileName)}");
         }
         catch (Exception ex)
         {
@@ -539,6 +684,7 @@ public class MainViewModel : INotifyPropertyChanged
             _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
+            ToastService.Instance.Success("Flattened PDF saved.");
         }
         catch (Exception ex)
         {
@@ -560,12 +706,25 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedField = null;
         SelectedAnnotation = null;
         StatusText = "Document closed.";
+        ToastService.Instance.Info("Document closed.");
     }
 
     private void Print()
     {
-        MessageBox.Show("Print is not yet implemented.\nSave the filled PDF and print from your PDF viewer.",
-            "Print", MessageBoxButton.OK, MessageBoxImage.Information);
+        if (_document == null) return;
+
+        var dlg = new System.Windows.Controls.PrintDialog();
+        if (dlg.ShowDialog() == true)
+        {
+            // Print the current rendered page image via the WPF print dialog
+            var doc = new System.Windows.Documents.FlowDocument();
+            doc.Blocks.Add(new System.Windows.Documents.Paragraph(
+                new System.Windows.Documents.Run($"Printing: {System.IO.Path.GetFileName(_currentFilePath)}\n\nFor best results, save the PDF and print from your system's PDF viewer.")));
+            dlg.PrintDocument(
+                ((System.Windows.Documents.IDocumentPaginatorSource)doc).DocumentPaginator,
+                "PdfEdit Print");
+            ToastService.Instance.Info("Sent to printer.");
+        }
     }
 
     private void ClearAllFields()
@@ -577,6 +736,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         PageChanged?.Invoke();
         StatusText = "All fields cleared.";
+        ToastService.Instance.Info("All fields cleared.");
     }
 
     private async Task ExportDataAsync()
@@ -590,6 +750,7 @@ public class MainViewModel : INotifyPropertyChanged
         if (dlg.ShowDialog() != true) return;
         _formService.ExportFormData(_currentFilePath!, dlg.FileName, FieldValues);
         StatusText = $"Data exported to: {System.IO.Path.GetFileName(dlg.FileName)}";
+        ToastService.Instance.Success($"Exported to {System.IO.Path.GetFileName(dlg.FileName)}");
     }
 
     private async Task ImportDataAsync()
@@ -610,6 +771,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         PageChanged?.Invoke();
         StatusText = $"Imported {imported.Count} field values.";
+        ToastService.Instance.Success($"Imported {imported.Count} field values.");
     }
 
     private void RotatePage(int degrees)
@@ -624,6 +786,117 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Page {_currentPageIndex + 1} rotated to {next}°.";
     }
 
+    private void OpenSettings()
+    {
+        var dlg = new Dialogs.SettingsWindow
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            UiScale = AppSettings.Current.UiScale;
+            CurrentFontFamily = AppSettings.Current.DefaultFontFamily;
+            CurrentFontSize = AppSettings.Current.DefaultFontSize;
+            CurrentFontColor = AppSettings.Current.DefaultFontColor;
+            ForceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
+            ToastService.Instance.Success("Settings saved.");
+        }
+    }
+
+    private async Task RunAiFillAsync()
+    {
+        var key = AppSettings.Current.ClaudeApiKey;
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            ToastService.Instance.Warning("No API key — set it in Settings → AI Assistant.");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(AiPrompt))
+        {
+            ToastService.Instance.Warning("Enter a prompt describing how to fill the form.");
+            return;
+        }
+
+        IsAiRunning = true;
+        AiResponse = "Running Claude AI…";
+        try
+        {
+            var fieldNames = AllFields.Select(f => f.Name).ToList();
+            var result = await _aiService.FillFormFieldsAsync(AiPrompt, fieldNames, key);
+            int count = 0;
+            foreach (var (k, v) in result)
+            {
+                if (FieldValues.ContainsKey(k))
+                {
+                    UpdateFieldValue(k, v);
+                    count++;
+                }
+            }
+            PageChanged?.Invoke();
+            AiResponse = $"Filled {count} of {result.Count} suggested fields.";
+            ToastService.Instance.Success($"AI filled {count} fields.");
+        }
+        catch (Exception ex)
+        {
+            AiResponse = $"Error: {ex.Message}";
+            ToastService.Instance.Error("AI fill failed.");
+        }
+        finally
+        {
+            IsAiRunning = false;
+        }
+    }
+
+    private void PerformSearch(string query)
+    {
+        SearchResults.Clear();
+        if (string.IsNullOrWhiteSpace(query)) return;
+
+        var q = query.ToLowerInvariant();
+
+        foreach (var f in AllFields)
+        {
+            if (f.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                f.Value.Contains(q, StringComparison.OrdinalIgnoreCase))
+            {
+                SearchResults.Add(new SearchResult
+                {
+                    Label = f.Name,
+                    Detail = f.Value,
+                    Kind = "Field",
+                    PageNumber = f.PageNumber,
+                    Field = f
+                });
+            }
+        }
+
+        foreach (var ann in FreeTextAnnotations)
+        {
+            if (ann.Text.Contains(q, StringComparison.OrdinalIgnoreCase))
+            {
+                SearchResults.Add(new SearchResult
+                {
+                    Label = ann.Text.Length > 40 ? ann.Text[..40] + "…" : ann.Text,
+                    Detail = $"Page {ann.PageNumber}",
+                    Kind = "Annotation",
+                    PageNumber = ann.PageNumber,
+                    Annotation = ann
+                });
+            }
+        }
+    }
+
+    public void NavigateToSearchResult(SearchResult result)
+    {
+        if (result.PageNumber > 0)
+            CurrentPageIndex = result.PageNumber - 1;
+        if (result.Field != null)
+            SelectedField = result.Field;
+        if (result.Annotation != null)
+            SelectedAnnotation = result.Annotation;
+        ShowSearchOverlay = false;
+    }
+
     public void RefreshCurrentPageFields()
     {
         CurrentPageFields.Clear();
@@ -635,4 +908,15 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
+
+/// <summary>A result item from global search.</summary>
+public class SearchResult
+{
+    public string Label { get; set; } = string.Empty;
+    public string Detail { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public int PageNumber { get; set; }
+    public FormFieldInfo? Field { get; set; }
+    public FreeTextAnnotation? Annotation { get; set; }
 }
