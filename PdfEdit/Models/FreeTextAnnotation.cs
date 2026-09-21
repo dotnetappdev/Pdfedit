@@ -18,4 +18,8 @@ public class FreeTextAnnotation
     public double FontSize { get; set; } = 12;
     public bool IsVertical { get; set; }      // true → rotated 90° (top-to-bottom)
     public string FontColor { get; set; } = "#000000";
+    public string FontFamily { get; set; } = "Arial";
+    public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
+    public bool IsUnderline { get; set; }
 }

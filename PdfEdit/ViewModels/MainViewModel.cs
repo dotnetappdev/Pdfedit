@@ -19,10 +19,20 @@ public class MainViewModel : INotifyPropertyChanged
     private double _zoom = 1.0;
     private string _statusText = "Ready — Open a PDF to begin.";
     private FormFieldInfo? _selectedField;
+    private FreeTextAnnotation? _selectedAnnotation;
     private ActiveTool _activeTool = ActiveTool.Hand;
     private bool _isLoading;
     private bool _highlightFields = true;
     private string? _currentFilePath;
+
+    // Font/style state for new and selected annotations
+    private double _currentFontSize = 12;
+    private string _currentFontFamily = "Arial";
+    private bool _currentFontBold;
+    private bool _currentFontItalic;
+    private bool _currentFontUnderline;
+    private string _currentFontColor = "#000000";
+    private bool _updatingFromAnnotation;
 
     // Page rotation: pageIndex → cumulative degrees (0/90/180/270)
     private readonly Dictionary<int, int> _pageRotations = new();
@@ -30,9 +40,21 @@ public class MainViewModel : INotifyPropertyChanged
     // Free-text annotations placed by the user
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
 
+    // Placed signature images
+    public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
+
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? PageChanged;
     public event Action? DocumentLoaded;
+    public event Action? AnnotationFormattingChanged;
+
+    // ── Available options ────────────────────────────────────────────────────
+
+    public IList<string> AvailableFonts { get; } = new List<string>
+    {
+        "Arial", "Times New Roman", "Courier New", "Georgia", "Verdana",
+        "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
+    };
 
     // ── Bindable Properties ──────────────────────────────────────────────────
 
@@ -71,7 +93,6 @@ public class MainViewModel : INotifyPropertyChanged
     public string PageCountDisplay => HasDocument ? _document!.PageCount.ToString() : "0";
     public int PageCount => _document?.PageCount ?? 1;
 
-    /// <summary>Rotation degrees for the currently displayed page (0/90/180/270).</summary>
     public int CurrentPageRotation => GetPageRotation(_currentPageIndex);
 
     public double Zoom
@@ -102,6 +123,28 @@ public class MainViewModel : INotifyPropertyChanged
         set { _selectedField = value; OnPropertyChanged(); }
     }
 
+    /// <summary>The free-text annotation currently focused/selected in the viewer.</summary>
+    public FreeTextAnnotation? SelectedAnnotation
+    {
+        get => _selectedAnnotation;
+        set
+        {
+            _selectedAnnotation = value;
+            OnPropertyChanged();
+            if (value != null)
+            {
+                _updatingFromAnnotation = true;
+                CurrentFontSize = value.FontSize;
+                CurrentFontFamily = value.FontFamily;
+                CurrentFontBold = value.IsBold;
+                CurrentFontItalic = value.IsItalic;
+                CurrentFontUnderline = value.IsUnderline;
+                CurrentFontColor = value.FontColor;
+                _updatingFromAnnotation = false;
+            }
+        }
+    }
+
     public ActiveTool ActiveTool
     {
         get => _activeTool;
@@ -120,13 +163,109 @@ public class MainViewModel : INotifyPropertyChanged
         set { _highlightFields = value; OnPropertyChanged(); PageChanged?.Invoke(); }
     }
 
-    // Current form field values (name → value), live as user edits
+    // ── Font/style properties ────────────────────────────────────────────────
+
+    public double CurrentFontSize
+    {
+        get => _currentFontSize;
+        set
+        {
+            value = Math.Clamp(value, 6, 144);
+            if (Math.Abs(_currentFontSize - value) < 0.5) return;
+            _currentFontSize = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.FontSize = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public string CurrentFontFamily
+    {
+        get => _currentFontFamily;
+        set
+        {
+            if (_currentFontFamily == value) return;
+            _currentFontFamily = value ?? "Arial";
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.FontFamily = _currentFontFamily;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public bool CurrentFontBold
+    {
+        get => _currentFontBold;
+        set
+        {
+            if (_currentFontBold == value) return;
+            _currentFontBold = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.IsBold = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public bool CurrentFontItalic
+    {
+        get => _currentFontItalic;
+        set
+        {
+            if (_currentFontItalic == value) return;
+            _currentFontItalic = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.IsItalic = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public bool CurrentFontUnderline
+    {
+        get => _currentFontUnderline;
+        set
+        {
+            if (_currentFontUnderline == value) return;
+            _currentFontUnderline = value;
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.IsUnderline = value;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    public string CurrentFontColor
+    {
+        get => _currentFontColor;
+        set
+        {
+            if (_currentFontColor == value) return;
+            _currentFontColor = value ?? "#000000";
+            OnPropertyChanged();
+            if (!_updatingFromAnnotation && _selectedAnnotation != null)
+            {
+                _selectedAnnotation.FontColor = _currentFontColor;
+                AnnotationFormattingChanged?.Invoke();
+            }
+        }
+    }
+
+    // ── Collections ──────────────────────────────────────────────────────────
+
     public Dictionary<string, string> FieldValues { get; } = new();
-
-    // Fields on the current page
     public ObservableCollection<FormFieldInfo> CurrentPageFields { get; } = new();
-
-    // All document fields
     public ObservableCollection<FormFieldInfo> AllFields { get; } = new();
 
     // ── Commands ─────────────────────────────────────────────────────────────
@@ -152,6 +291,13 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand RotatePageCWCommand { get; }
     public ICommand RotatePageCCWCommand { get; }
     public ICommand ResetPageRotationCommand { get; }
+    public ICommand IncreaseFontSizeCommand { get; }
+    public ICommand DecreaseFontSizeCommand { get; }
+    public ICommand ToggleBoldCommand { get; }
+    public ICommand ToggleItalicCommand { get; }
+    public ICommand ToggleUnderlineCommand { get; }
+    public ICommand DeleteAnnotationCommand { get; }
+    public ICommand SetFontColorCommand { get; }
 
     public MainViewModel()
     {
@@ -188,6 +334,17 @@ public class MainViewModel : INotifyPropertyChanged
             PageChanged?.Invoke();
             StatusText = "Page rotation reset.";
         }, () => HasDocument);
+
+        IncreaseFontSizeCommand = new RelayCommand(() => CurrentFontSize += 2, () => HasDocument);
+        DecreaseFontSizeCommand = new RelayCommand(() => CurrentFontSize -= 2, () => HasDocument);
+        ToggleBoldCommand = new RelayCommand(() => CurrentFontBold = !CurrentFontBold, () => HasDocument);
+        ToggleItalicCommand = new RelayCommand(() => CurrentFontItalic = !CurrentFontItalic, () => HasDocument);
+        ToggleUnderlineCommand = new RelayCommand(() => CurrentFontUnderline = !CurrentFontUnderline, () => HasDocument);
+        DeleteAnnotationCommand = new RelayCommand(DeleteSelectedAnnotation, () => _selectedAnnotation != null);
+        SetFontColorCommand = new RelayCommand(p =>
+        {
+            if (p is string color) CurrentFontColor = color;
+        });
     }
 
     // ── Public Methods ───────────────────────────────────────────────────────
@@ -207,12 +364,10 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Field '{fieldName}' updated.";
     }
 
-    /// <summary>
-    /// Add a free-text annotation placed by the user on the current page.
-    /// pdfX/pdfY/pdfW/pdfH are in PDF points (72pts/inch, Y from bottom-left).
-    /// </summary>
-    public void AddFreeTextAnnotation(double pdfX, double pdfY, double pdfW, double pdfH,
-                                       string text, bool isVertical)
+    /// <summary>Adds a free-text annotation on the current page with current font settings applied.</summary>
+    public FreeTextAnnotation AddFreeTextAnnotation(double pdfX, double pdfY, double pdfW, double pdfH,
+                                                     string text, bool isVertical,
+                                                     double? fontSize = null)
     {
         var ann = new FreeTextAnnotation
         {
@@ -223,17 +378,42 @@ public class MainViewModel : INotifyPropertyChanged
             Height = pdfH,
             Text = text,
             IsVertical = isVertical,
+            FontSize = fontSize ?? _currentFontSize,
+            FontFamily = _currentFontFamily,
+            IsBold = _currentFontBold,
+            IsItalic = _currentFontItalic,
+            IsUnderline = _currentFontUnderline,
+            FontColor = _currentFontColor,
         };
         FreeTextAnnotations.Add(ann);
+        return ann;
     }
 
     public void RemoveFreeTextAnnotation(FreeTextAnnotation ann)
-        => FreeTextAnnotations.Remove(ann);
+    {
+        FreeTextAnnotations.Remove(ann);
+        if (_selectedAnnotation == ann) SelectedAnnotation = null;
+    }
 
     public IEnumerable<FreeTextAnnotation> GetAnnotationsForCurrentPage()
         => FreeTextAnnotations.Where(a => a.PageNumber == _currentPageIndex + 1);
 
-    // ── Private Methods ──────────────────────────────────────────────────────
+    public void AddPlacedSignature(PlacedSignature sig) => PlacedSignatures.Add(sig);
+
+    public void RemovePlacedSignature(PlacedSignature sig) => PlacedSignatures.Remove(sig);
+
+    public IEnumerable<PlacedSignature> GetSignaturesForCurrentPage()
+        => PlacedSignatures.Where(s => s.PageNumber == _currentPageIndex + 1);
+
+    // ── Private Commands ─────────────────────────────────────────────────────
+
+    private void DeleteSelectedAnnotation()
+    {
+        if (_selectedAnnotation == null) return;
+        RemoveFreeTextAnnotation(_selectedAnnotation);
+        PageChanged?.Invoke();
+        StatusText = "Annotation deleted.";
+    }
 
     private async Task OpenAsync()
     {
@@ -261,6 +441,7 @@ public class MainViewModel : INotifyPropertyChanged
             AllFields.Clear();
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
+            PlacedSignatures.Clear();
 
             foreach (var f in Document.FormFields)
             {
@@ -299,7 +480,7 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath, tmp, FieldValues,
-                _pageRotations, FreeTextAnnotations, flatten: false);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -331,7 +512,7 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
-                _pageRotations, FreeTextAnnotations, flatten: false);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
         }
@@ -356,7 +537,7 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
-                _pageRotations, FreeTextAnnotations, flatten: true);
+                _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
         }
         catch (Exception ex)
@@ -374,8 +555,10 @@ public class MainViewModel : INotifyPropertyChanged
         AllFields.Clear();
         CurrentPageFields.Clear();
         FreeTextAnnotations.Clear();
+        PlacedSignatures.Clear();
         _pageRotations.Clear();
         SelectedField = null;
+        SelectedAnnotation = null;
         StatusText = "Document closed.";
     }
 
@@ -433,10 +616,8 @@ public class MainViewModel : INotifyPropertyChanged
     {
         int current = GetPageRotation(_currentPageIndex);
         int next = (current + degrees + 360) % 360;
-        if (next == 0)
-            _pageRotations.Remove(_currentPageIndex);
-        else
-            _pageRotations[_currentPageIndex] = next;
+        if (next == 0) _pageRotations.Remove(_currentPageIndex);
+        else _pageRotations[_currentPageIndex] = next;
 
         OnPropertyChanged(nameof(CurrentPageRotation));
         PageChanged?.Invoke();

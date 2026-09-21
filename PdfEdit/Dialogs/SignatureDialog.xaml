@@ -1,0 +1,107 @@
+<Window x:Class="PdfEdit.Dialogs.SignatureDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create Signature"
+        Width="540" Height="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#2D2D2D"
+        Foreground="#CCCCCC">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#3E3E3E"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="Padding" Value="14,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl x:Name="TabCtrl" Background="#252526" BorderBrush="#3E3E3E"
+                    Foreground="#CCCCCC">
+
+            <!-- ── Draw tab ── -->
+            <TabItem Header="Draw">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Draw your signature in the white area below:"
+                               Foreground="#AAAAAA" Margin="0,0,0,6"/>
+                    <Border Grid.Row="1" BorderBrush="#666666" BorderThickness="1" Background="White">
+                        <InkCanvas x:Name="InkArea" Background="White"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ── Type tab ── -->
+            <TabItem Header="Type">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Type your name:" Foreground="#AAAAAA" Margin="0,0,0,4"/>
+                    <TextBox Grid.Row="1" x:Name="TypedNameBox"
+                             Background="#1E1E1E" Foreground="#CCCCCC"
+                             BorderBrush="#555555" Padding="6,4"
+                             FontSize="13"
+                             TextChanged="TypedNameBox_TextChanged"/>
+                    <TextBlock Grid.Row="2" Text="Font style:" Foreground="#AAAAAA" Margin="0,8,0,4"/>
+                    <ComboBox Grid.Row="2" x:Name="FontStyleBox" HorizontalAlignment="Right"
+                              Width="160" Foreground="#CCCCCC" Background="#3E3E3E"
+                              BorderBrush="#555555" Margin="0,8,0,4"
+                              SelectionChanged="FontStyleBox_SelectionChanged"/>
+                    <Border Grid.Row="3" BorderBrush="#666666" BorderThickness="1"
+                            Background="White" Margin="0,8,0,0">
+                        <TextBlock x:Name="SignaturePreview"
+                                   FontFamily="Segoe Script" FontSize="36"
+                                   Foreground="Black"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Text="Your Name Here" Padding="8"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ── Image tab ── -->
+            <TabItem Header="Image">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Browse Image…" Click="BrowseImage_Click"/>
+                        <TextBlock x:Name="ImagePathLabel" Margin="10,0,0,0"
+                                   Foreground="#888888" VerticalAlignment="Center"
+                                   Text="No image selected" FontSize="11"/>
+                    </StackPanel>
+                    <Border Grid.Row="1" BorderBrush="#666666" BorderThickness="1" Background="White">
+                        <Image x:Name="ImagePreview" Stretch="Uniform" Margin="4"/>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- ── Buttons ── -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="0,12,0,0">
+            <Button Content="Clear" Click="Clear_Click" Margin="0,0,6,0"/>
+            <Button Content="Apply Signature" IsDefault="True" Click="Apply_Click"
+                    Background="#0E639C" Foreground="White" BorderBrush="#1177BB"
+                    Margin="0,0,6,0"/>
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

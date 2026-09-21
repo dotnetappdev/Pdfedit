@@ -31,6 +31,8 @@
         <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
         <KeyBinding Key="BracketRight" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
         <KeyBinding Key="BracketLeft" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
+        <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
+        <KeyBinding Key="S" Command="{Binding SetToolCommand}" CommandParameter="Signature"/>
     </Fluent:RibbonWindow.InputBindings>
 
     <Grid>
@@ -254,18 +256,30 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="TextFill"
                                          ToolTip="Text fill tool (T)"/>
-                    <Fluent:ToggleButton Header="Signature"
-                                         GroupName="ToolGroup"
-                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
-                                         Command="{Binding SetToolCommand}"
-                                         CommandParameter="Signature"
-                                         ToolTip="Signature tool (S)"/>
                     <Fluent:ToggleButton Header="Zoom"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Zoom, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Zoom"
                                          ToolTip="Zoom tool (Z)"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Sign &amp; Date -->
+                <Fluent:RibbonGroupBox Header="Sign &amp; Date">
+                    <Fluent:ToggleButton Header="Signature"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Signature"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Signature Tool — click page to draw, type, or import a signature"/>
+                    <Fluent:ToggleButton Header="Date Stamp"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DateStamp, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DateStamp"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Date Stamp — click page to place today's date"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text annotation tools -->
@@ -284,6 +298,86 @@
                                          CommandParameter="VerticalText"
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Vertical Text — click anywhere to place text that reads top-to-bottom"/>
+                    <Fluent:Button Header="Delete Annotation"
+                                   Command="{Binding DeleteAnnotationCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding SelectedAnnotation, Converter={StaticResource NullToBoolConverter}}"
+                                   ToolTip="Delete the selected annotation (or press Delete key)"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Text Formatting -->
+                <Fluent:RibbonGroupBox Header="Text Format">
+                    <StackPanel Orientation="Vertical" Margin="2,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="Font:" Foreground="#CCCCCC" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ComboBox Width="110"
+                                      ItemsSource="{Binding AvailableFonts}"
+                                      SelectedItem="{Binding CurrentFontFamily, Mode=TwoWay}"
+                                      IsEnabled="{Binding HasDocument}"
+                                      FontSize="11" Height="22"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="Size:" Foreground="#CCCCCC" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <Fluent:Spinner Value="{Binding CurrentFontSize, Mode=TwoWay}"
+                                            Minimum="6" Maximum="144" Format="0"
+                                            IsEnabled="{Binding HasDocument}"
+                                            Width="60" Height="22"/>
+                            <Fluent:Button Header="A-" Size="Small"
+                                           Command="{Binding DecreaseFontSizeCommand}"
+                                           IsEnabled="{Binding HasDocument}"
+                                           ToolTip="Decrease font size" Margin="2,0,0,0"/>
+                            <Fluent:Button Header="A+" Size="Small"
+                                           Command="{Binding IncreaseFontSizeCommand}"
+                                           IsEnabled="{Binding HasDocument}"
+                                           ToolTip="Increase font size" Margin="2,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <Fluent:ToggleButton Header="B" Size="Small"
+                                                  IsChecked="{Binding CurrentFontBold, Mode=TwoWay}"
+                                                  IsEnabled="{Binding HasDocument}"
+                                                  ToolTip="Bold" FontWeight="Bold" Width="28"/>
+                            <Fluent:ToggleButton Header="I" Size="Small"
+                                                  IsChecked="{Binding CurrentFontItalic, Mode=TwoWay}"
+                                                  IsEnabled="{Binding HasDocument}"
+                                                  ToolTip="Italic" FontStyle="Italic" Width="28" Margin="2,0"/>
+                            <Fluent:ToggleButton Header="U" Size="Small"
+                                                  IsChecked="{Binding CurrentFontUnderline, Mode=TwoWay}"
+                                                  IsEnabled="{Binding HasDocument}"
+                                                  ToolTip="Underline" Width="28" Margin="2,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Text Color -->
+                <Fluent:RibbonGroupBox Header="Color">
+                    <WrapPanel Width="80" Margin="2">
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="Black" ToolTip="Black"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#000000"/>
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="#1F3A8A" ToolTip="Dark Blue"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#1F3A8A"/>
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="DarkRed" ToolTip="Dark Red"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#8B0000"/>
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="DarkGreen" ToolTip="Dark Green"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#006400"/>
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="#555555" ToolTip="Dark Gray"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#555555"/>
+                        <Button Width="22" Height="22" Margin="1"
+                                Background="Purple" ToolTip="Purple"
+                                Command="{Binding SetFontColorCommand}"
+                                CommandParameter="#800080"/>
+                    </WrapPanel>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
