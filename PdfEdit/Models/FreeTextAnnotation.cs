@@ -18,7 +18,9 @@ public class FreeTextAnnotation
 
     public string Text { get; set; } = string.Empty;
     public double FontSize { get; set; } = 12;
-    public bool IsVertical { get; set; }
+    public double RotationAngle { get; set; } = 0.0;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsVertical => Math.Abs(RotationAngle - (-90.0)) < 0.5;
     public string FontColor { get; set; } = "#000000";
     public string FontFamily { get; set; } = "Arial";
     public bool IsBold { get; set; }

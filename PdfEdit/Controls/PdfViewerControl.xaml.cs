@@ -195,6 +195,26 @@ public partial class PdfViewerControl : UserControl
             if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 2);
         }));
 
+        // Rotate CCW (↺ -90°)
+        panel.Children.Add(MakeToolbarBtn("↺", "Rotate 90° counter-clockwise", () =>
+        {
+            if (_focusedAnnotation == null || _focusedAnnotationTb == null) return;
+            _focusedAnnotation.RotationAngle = (_focusedAnnotation.RotationAngle - 90) % 360;
+            _focusedAnnotationTb.LayoutTransform = _focusedAnnotation.RotationAngle == 0
+                ? Transform.Identity
+                : new RotateTransform(_focusedAnnotation.RotationAngle);
+        }));
+
+        // Rotate CW (↻ +90°)
+        panel.Children.Add(MakeToolbarBtn("↻", "Rotate 90° clockwise", () =>
+        {
+            if (_focusedAnnotation == null || _focusedAnnotationTb == null) return;
+            _focusedAnnotation.RotationAngle = (_focusedAnnotation.RotationAngle + 90) % 360;
+            _focusedAnnotationTb.LayoutTransform = _focusedAnnotation.RotationAngle == 0
+                ? Transform.Identity
+                : new RotateTransform(_focusedAnnotation.RotationAngle);
+        }));
+
         // Delete button
         var deleteBtn = new Border
         {
@@ -478,10 +498,41 @@ public partial class PdfViewerControl : UserControl
         if (ctrl is Control fieldCtrl)
             fieldCtrl.TabIndex = tabIndex;
 
-        // Right-click a field to delete it (like removing a field in Acrobat).
+        // Right-click context menu — Acrobat-style for text fields, simpler for others.
         if (ctrl is FrameworkElement fe)
         {
             var menu = new ContextMenu();
+
+            if (ctrl is TextBox tb2)
+            {
+                var cutItem = new MenuItem { Header = "Cut", InputGestureText = "Ctrl+X" };
+                cutItem.Click += (_, _) => tb2.Cut();
+
+                var copyItem = new MenuItem { Header = "Copy", InputGestureText = "Ctrl+C" };
+                copyItem.Click += (_, _) => tb2.Copy();
+
+                var pasteItem = new MenuItem { Header = "Paste", InputGestureText = "Ctrl+V" };
+                pasteItem.Click += (_, _) => tb2.Paste();
+
+                var selectAllItem = new MenuItem { Header = "Select All", InputGestureText = "Ctrl+A" };
+                selectAllItem.Click += (_, _) => tb2.SelectAll();
+
+                var clearItem = new MenuItem { Header = "Clear Field" };
+                clearItem.Click += (_, _) =>
+                {
+                    tb2.Clear();
+                    _vm?.UpdateFieldValue(field.Name, string.Empty);
+                };
+
+                menu.Items.Add(cutItem);
+                menu.Items.Add(copyItem);
+                menu.Items.Add(pasteItem);
+                menu.Items.Add(selectAllItem);
+                menu.Items.Add(new Separator());
+                menu.Items.Add(clearItem);
+                menu.Items.Add(new Separator());
+            }
+
             var del = new MenuItem { Header = $"Delete field \"{field.Name}\"" };
             del.Click += (_, _) => _vm?.DeleteField(field);
             menu.Items.Add(del);
@@ -537,11 +588,17 @@ public partial class PdfViewerControl : UserControl
             tb.LayoutTransform = new RotateTransform(-90);
 
         tb.TextChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, tb.Text);
+        tb.GotFocus += (_, _) =>
+        {
+            tb.Background = FieldFocusBrush;
+        };
         tb.LostFocus += (_, _) =>
         {
             tb.Background = FieldFillBrush;
-            tb.BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush;
-            tb.BorderThickness = new Thickness(1);
+            tb.BorderBrush = field.IsRequired && string.IsNullOrWhiteSpace(tb.Text)
+                ? FieldRequiredBorderBrush
+                : FieldBorderBrush;
+            tb.BorderThickness = new Thickness(field.IsRequired && string.IsNullOrWhiteSpace(tb.Text) ? 1.5 : 1);
         };
         return tb;
     }
@@ -804,8 +861,8 @@ public partial class PdfViewerControl : UserControl
 
         ApplyAnnotationFormatting(ann, tb);
 
-        if (ann.IsVertical)
-            tb.LayoutTransform = new RotateTransform(-90);
+        if (ann.RotationAngle != 0)
+            tb.LayoutTransform = new RotateTransform(ann.RotationAngle);
 
         tb.TextChanged += (_, _) =>
         {
@@ -850,6 +907,37 @@ public partial class PdfViewerControl : UserControl
 
         // Right-click context menu
         var cm = new ContextMenu();
+
+        var cutAnn = new MenuItem { Header = "Cut", InputGestureText = "Ctrl+X" };
+        cutAnn.Click += (_, _) => tb.Cut();
+        var copyAnn = new MenuItem { Header = "Copy", InputGestureText = "Ctrl+C" };
+        copyAnn.Click += (_, _) => tb.Copy();
+        var pasteAnn = new MenuItem { Header = "Paste", InputGestureText = "Ctrl+V" };
+        pasteAnn.Click += (_, _) => tb.Paste();
+        var selAllAnn = new MenuItem { Header = "Select All", InputGestureText = "Ctrl+A" };
+        selAllAnn.Click += (_, _) => tb.SelectAll();
+        cm.Items.Add(cutAnn);
+        cm.Items.Add(copyAnn);
+        cm.Items.Add(pasteAnn);
+        cm.Items.Add(selAllAnn);
+        cm.Items.Add(new Separator());
+
+        var rotateCwAnn = new MenuItem { Header = "Rotate 90° Clockwise" };
+        rotateCwAnn.Click += (_, _) =>
+        {
+            ann.RotationAngle = (ann.RotationAngle + 90) % 360;
+            tb.LayoutTransform = ann.RotationAngle == 0 ? Transform.Identity : new RotateTransform(ann.RotationAngle);
+        };
+        var rotateCcwAnn = new MenuItem { Header = "Rotate 90° Counter-clockwise" };
+        rotateCcwAnn.Click += (_, _) =>
+        {
+            ann.RotationAngle = (ann.RotationAngle - 90 + 360) % 360;
+            tb.LayoutTransform = ann.RotationAngle == 0 ? Transform.Identity : new RotateTransform(ann.RotationAngle);
+        };
+        cm.Items.Add(rotateCwAnn);
+        cm.Items.Add(rotateCcwAnn);
+        cm.Items.Add(new Separator());
+
         var deleteItem = new MenuItem { Header = "Delete Annotation" };
         deleteItem.Click += (_, _) =>
         {
@@ -1151,8 +1239,9 @@ public partial class PdfViewerControl : UserControl
                                : "Type here, then click away to commit",
         };
 
-        if (vertical)
-            tb.LayoutTransform = new RotateTransform(-90);
+        double initialRotation = vertical ? -90.0 : 0.0;
+        if (initialRotation != 0)
+            tb.LayoutTransform = new RotateTransform(initialRotation);
 
         if (_vm.ForceUpperCase)
         {
@@ -1190,7 +1279,7 @@ public partial class PdfViewerControl : UserControl
             Bottom = pdfY,
             Width = pdfW,
             Height = pdfH,
-            IsVertical = vertical,
+            RotationAngle = initialRotation,
             FontSize = _vm.CurrentFontSize,
             FontFamily = _vm.CurrentFontFamily,
             IsBold = _vm.CurrentFontBold,

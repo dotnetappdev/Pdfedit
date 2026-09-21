@@ -631,7 +631,7 @@ public class MainViewModel : INotifyPropertyChanged
             Width = pdfW,
             Height = pdfH,
             Text = text,
-            IsVertical = isVertical,
+            RotationAngle = isVertical ? -90.0 : 0.0,
             FontSize = fontSize ?? _currentFontSize,
             FontFamily = _currentFontFamily,
             IsBold = _currentFontBold,

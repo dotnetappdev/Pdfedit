@@ -203,8 +203,8 @@ public class PdfFormService
             var pdfAnn = new PdfFreeTextAnnotation(rect, new PdfString(ann.Text));
             pdfAnn.SetContents(ann.Text);
 
-            if (ann.IsVertical)
-                pdfAnn.Put(PdfName.Rotate, new PdfNumber(90));
+            if (ann.RotationAngle != 0)
+                pdfAnn.Put(PdfName.Rotate, new PdfNumber((int)((-ann.RotationAngle % 360 + 360) % 360)));
 
             // Build default appearance: honour bold/italic via font flag approximation using base fonts
             string fontName = ann.IsBold && ann.IsItalic ? "Helvetica-BoldOblique"
