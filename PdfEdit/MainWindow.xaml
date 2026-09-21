@@ -1329,7 +1329,7 @@
                         </avalonDock:LayoutAnchorablePaneGroup>
 
                         <!-- ── Fill & Sign Toolbox — right side, Adobe-style ─ -->
-                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="190">
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="185">
                             <avalonDock:LayoutAnchorablePane>
                                 <avalonDock:LayoutAnchorable Title="Fill &amp; Sign" ContentId="tools"
                                                              CanClose="False" CanHide="False">
