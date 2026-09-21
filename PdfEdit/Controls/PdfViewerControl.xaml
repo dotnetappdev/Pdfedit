@@ -77,7 +77,9 @@
 
                         <!-- AcroForm field overlay — live WPF controls -->
                         <Canvas x:Name="FieldOverlayCanvas"
-                                IsHitTestVisible="True"/>
+                                IsHitTestVisible="True"
+                                KeyboardNavigation.TabNavigation="Cycle"
+                                KeyboardNavigation.DirectionalNavigation="Continue"/>
 
                         <!-- Free-text annotation overlay — user-placed text -->
                         <Canvas x:Name="AnnotationCanvas"

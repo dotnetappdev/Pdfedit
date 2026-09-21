@@ -404,7 +404,15 @@ public partial class PdfViewerControl : UserControl
 
         bool verticalMode = _vm.ActiveTool == ActiveTool.VerticalText;
 
-        foreach (var field in fields)
+        // Tab through fields in reading order (top-to-bottom, then left-to-right),
+        // matching Adobe Acrobat's Tab / Shift+Tab navigation between fields.
+        var ordered = fields
+            .OrderBy(f => Math.Round((pageHeightPts - f.Bottom - f.Height) / 8))
+            .ThenBy(f => f.Left)
+            .ToList();
+
+        int tabIndex = 0;
+        foreach (var field in ordered)
         {
             double x = field.Left * Scale;
             double y = (pageHeightPts - field.Bottom - field.Height) * Scale;
@@ -415,7 +423,7 @@ public partial class PdfViewerControl : UserControl
                 AddHighlight(x, y, w, h, field.IsRequired);
 
             if (!field.IsReadOnly)
-                AddFieldControl(field, x, y, w, h, verticalMode);
+                AddFieldControl(field, x, y, w, h, verticalMode, tabIndex++);
         }
     }
 
@@ -439,7 +447,7 @@ public partial class PdfViewerControl : UserControl
         HighlightCanvas.Children.Add(rect);
     }
 
-    private void AddFieldControl(FormFieldInfo field, double x, double y, double w, double h, bool verticalText)
+    private void AddFieldControl(FormFieldInfo field, double x, double y, double w, double h, bool verticalText, int tabIndex = 0)
     {
         UIElement? ctrl = field.FieldType switch
         {
@@ -453,6 +461,9 @@ public partial class PdfViewerControl : UserControl
         };
 
         if (ctrl == null) return;
+
+        if (ctrl is Control fieldCtrl)
+            fieldCtrl.TabIndex = tabIndex;
 
         // Right-click a field to delete it (like removing a field in Acrobat).
         if (ctrl is FrameworkElement fe)
@@ -484,6 +495,7 @@ public partial class PdfViewerControl : UserControl
             // Required fields get a red outline, matching Acrobat's convention.
             BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush,
             BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
+            Cursor = Cursors.IBeam,
             FontSize = Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
             AcceptsReturn = field.IsMultiline,
