@@ -32,6 +32,9 @@ public class AppSettings
 
     // ── AI ───────────────────────────────────────────────────────────────────
     public string ClaudeApiKey { get; set; } = string.Empty;
+    public string OpenAiApiKey { get; set; } = string.Empty;
+    public string AiProvider { get; set; } = "Claude";
+    public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
 
     // ── Accessibility ────────────────────────────────────────────────────────
     public bool HighContrastFocusIndicators { get; set; }

@@ -13,7 +13,6 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
     private readonly PdfRenderService _renderService = new();
-    private readonly ClaudeAiService _aiService = new();
 
     private PdfDocumentInfo? _document;
     private int _currentPageIndex;
@@ -360,8 +359,59 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    // ── AI panel ─────────────────────────────────────────────────────────────
+    // ── AI chat ───────────────────────────────────────────────────────────────
 
+    private string _aiChatInput = string.Empty;
+    private string _aiProvider = "Claude";
+    private string _aiModel = "claude-haiku-4-5-20251001";
+    private CancellationTokenSource? _aiCts;
+
+    public string AiChatInput
+    {
+        get => _aiChatInput;
+        set { _aiChatInput = value; OnPropertyChanged(); }
+    }
+
+    public string AiProvider
+    {
+        get => _aiProvider;
+        set
+        {
+            if (_aiProvider == value) return;
+            _aiProvider = value;
+            OnPropertyChanged();
+            SyncAiModels();
+            AppSettings.Current.AiProvider = value;
+            AppSettings.Current.Save();
+        }
+    }
+
+    public string AiModel
+    {
+        get => _aiModel;
+        set
+        {
+            if (_aiModel == value) return;
+            _aiModel = value;
+            OnPropertyChanged();
+            AppSettings.Current.AiModel = value;
+            AppSettings.Current.Save();
+        }
+    }
+
+    public IList<string> AiProviders { get; } = Services.AiProviderService.Providers.Keys.ToList();
+    public ObservableCollection<string> AiModels { get; } = new();
+    public ObservableCollection<AiChatMessage> AiChatHistory { get; } = new();
+
+    // Thumbnails toggle
+    private bool _showThumbnails;
+    public bool ShowThumbnails
+    {
+        get => _showThumbnails;
+        set { _showThumbnails = value; OnPropertyChanged(); }
+    }
+
+    // Legacy prompt/response for RunAiFillCommand ribbon button
     private string _aiPrompt = string.Empty;
     private string _aiResponse = string.Empty;
 
@@ -424,6 +474,13 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand NavigateToResultCommand { get; }
     public ICommand OpenRecentCommand { get; }
     public ICommand ShowAboutCommand { get; }
+    public ICommand SendAiChatCommand { get; }
+    public ICommand ClearAiChatCommand { get; }
+    public ICommand DeleteCurrentPageCommand { get; }
+    public ICommand InsertBlankPageCommand { get; }
+    public ICommand MergePdfCommand { get; }
+    public ICommand ExtractCurrentPageCommand { get; }
+    public ICommand ToggleThumbnailsCommand { get; }
 
     public MainViewModel()
     {
@@ -433,6 +490,9 @@ public class MainViewModel : INotifyPropertyChanged
         _currentFontSize = AppSettings.Current.DefaultFontSize;
         _currentFontColor = AppSettings.Current.DefaultFontColor;
         _forceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
+        _aiProvider = AppSettings.Current.AiProvider;
+        _aiModel = AppSettings.Current.AiModel;
+        SyncAiModels();
 
         OpenCommand = new AsyncRelayCommand(OpenAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => HasDocument);
@@ -504,6 +564,17 @@ public class MainViewModel : INotifyPropertyChanged
             var dlg = new Dialogs.AboutDialog { Owner = Application.Current.MainWindow };
             dlg.ShowDialog();
         });
+        SendAiChatCommand = new AsyncRelayCommand(SendAiChatAsync, () => !_isAiRunning);
+        ClearAiChatCommand = new RelayCommand(() =>
+        {
+            AiChatHistory.Clear();
+            AiChatInput = string.Empty;
+        });
+        DeleteCurrentPageCommand = new AsyncRelayCommand(DeleteCurrentPageAsync, () => HasDocument && (_document?.PageCount ?? 1) > 1);
+        InsertBlankPageCommand = new AsyncRelayCommand(InsertBlankPageAsync, () => HasDocument);
+        MergePdfCommand = new AsyncRelayCommand(MergePdfAsync, () => HasDocument);
+        ExtractCurrentPageCommand = new AsyncRelayCommand(ExtractCurrentPageAsync, () => HasDocument);
+        ToggleThumbnailsCommand = new RelayCommand(() => ShowThumbnails = !ShowThumbnails);
 
         SyncRecentFileEntries();
     }
@@ -845,10 +916,13 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task RunAiFillAsync()
     {
-        var key = AppSettings.Current.ClaudeApiKey;
+        var key = _aiProvider == "OpenAI"
+            ? AppSettings.Current.OpenAiApiKey
+            : AppSettings.Current.ClaudeApiKey;
+
         if (string.IsNullOrWhiteSpace(key))
         {
-            ToastService.Instance.Warning("No API key — set it in Settings → AI Assistant.");
+            ToastService.Instance.Warning($"No {_aiProvider} API key — set it in Settings → AI.");
             return;
         }
         if (string.IsNullOrWhiteSpace(AiPrompt))
@@ -858,11 +932,12 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         IsAiRunning = true;
-        AiResponse = "Running Claude AI…";
+        AiResponse = "Running AI…";
         try
         {
             var fieldNames = AllFields.Select(f => f.Name).ToList();
-            var result = await _aiService.FillFormFieldsAsync(AiPrompt, fieldNames, key);
+            var result = await Services.AiProviderService.FillFormFieldsAsync(
+                AiPrompt, fieldNames, _aiModel, key);
             int count = 0;
             foreach (var (k, v) in result)
             {
@@ -884,6 +959,157 @@ public class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsAiRunning = false;
+        }
+    }
+
+    private async Task SendAiChatAsync()
+    {
+        var input = AiChatInput.Trim();
+        if (string.IsNullOrEmpty(input)) return;
+
+        var key = _aiProvider == "OpenAI"
+            ? AppSettings.Current.OpenAiApiKey
+            : AppSettings.Current.ClaudeApiKey;
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            ToastService.Instance.Warning($"No {_aiProvider} API key — add it in Settings → AI.");
+            return;
+        }
+
+        AiChatHistory.Add(new AiChatMessage { Role = "user", Content = input });
+        AiChatInput = string.Empty;
+
+        var reply = new AiChatMessage { Role = "assistant", Content = "" };
+        AiChatHistory.Add(reply);
+
+        IsAiRunning = true;
+        _aiCts?.Cancel();
+        _aiCts = new CancellationTokenSource();
+
+        try
+        {
+            var history = AiChatHistory.Take(AiChatHistory.Count - 1).ToList();
+            await Services.AiProviderService.SendStreamingAsync(
+                history, _aiProvider, _aiModel, key,
+                chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
+                _aiCts.Token);
+
+            if (string.IsNullOrEmpty(reply.Content))
+                reply.Content = "(No response — check your API key and model selection.)";
+        }
+        catch (OperationCanceledException)
+        {
+            reply.Content = "(Cancelled)";
+        }
+        catch (Exception ex)
+        {
+            reply.Content = $"Error: {ex.Message}";
+            ToastService.Instance.Error("AI error — check your API key.");
+        }
+        finally
+        {
+            IsAiRunning = false;
+        }
+    }
+
+    private async Task DeleteCurrentPageAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        var tmp = _currentFilePath + ".ptmp";
+        try
+        {
+            _formService.DeletePages(_currentFilePath, tmp, new[] { _currentPageIndex });
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await LoadDocumentAsync(_currentFilePath);
+            ToastService.Instance.Success("Page deleted.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Delete page failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task InsertBlankPageAsync()
+    {
+        if (_currentFilePath == null) return;
+        var tmp = _currentFilePath + ".ptmp";
+        try
+        {
+            _formService.InsertBlankPage(_currentFilePath, tmp, _currentPageIndex);
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await LoadDocumentAsync(_currentFilePath);
+            ToastService.Instance.Success("Blank page inserted.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Insert page failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task MergePdfAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select PDFs to Merge",
+            Filter = "PDF Files (*.pdf)|*.pdf",
+            Multiselect = true
+        };
+        if (dlg.ShowDialog() != true || dlg.FileNames.Length == 0) return;
+
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Merged PDF",
+            Filter = "PDF Files (*.pdf)|*.pdf",
+            DefaultExt = ".pdf",
+            FileName = "merged.pdf"
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            var sources = new[] { _currentFilePath }.Concat(dlg.FileNames);
+            _formService.MergePdfs(sources, dlgSave.FileName);
+            await LoadDocumentAsync(dlgSave.FileName);
+            ToastService.Instance.Success($"Merged {dlg.FileNames.Length + 1} PDFs.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Merge failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task ExtractCurrentPageAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Extracted Page",
+            Filter = "PDF Files (*.pdf)|*.pdf",
+            DefaultExt = ".pdf",
+            FileName = $"page_{_currentPageIndex + 1}.pdf"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            _formService.ExtractPages(_currentFilePath, dlg.FileName, new[] { _currentPageIndex });
+            ToastService.Instance.Success($"Page {_currentPageIndex + 1} extracted.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Extract failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -964,6 +1190,15 @@ public class MainViewModel : INotifyPropertyChanged
         foreach (var p in AppSettings.Current.RecentFiles)
             RecentFileEntries.Add(new RecentFileEntry(p));
         OnPropertyChanged(nameof(HasNoRecentFiles));
+    }
+
+    private void SyncAiModels()
+    {
+        AiModels.Clear();
+        foreach (var m in Services.AiProviderService.GetModels(_aiProvider))
+            AiModels.Add(m);
+        if (AiModels.Count > 0 && !AiModels.Contains(_aiModel))
+            _aiModel = AiModels[0];
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -159,8 +159,26 @@
                                      AutomationProperties.HelpText="Your Claude API key from console.anthropic.com"/>
 
                         <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
-                                   Margin="0,6,0,0"
+                                   Margin="0,6,0,20"
                                    Text="Get your API key from console.anthropic.com"/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="OPENAI"/>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12"
+                                   TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Enter your OpenAI API key to use GPT models. Your key is stored locally."/>
+
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="API key:" Margin="0,0,0,4"/>
+                        <PasswordBox x:Name="OpenAiKeyBox"
+                                     Background="{DynamicResource InputBgBrush}"
+                                     Foreground="{DynamicResource InputForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}"
+                                     BorderThickness="1" Padding="6,4" FontSize="13" Height="30"
+                                     AutomationProperties.Name="OpenAI API key"
+                                     AutomationProperties.HelpText="Your OpenAI API key from platform.openai.com"/>
+
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
+                                   Margin="0,6,0,0"
+                                   Text="Get your API key from platform.openai.com"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

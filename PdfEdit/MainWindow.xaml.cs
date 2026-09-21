@@ -17,6 +17,7 @@ public partial class MainWindow : RibbonWindow
         Resources.Add("EnumToBoolConverter", new EnumToBoolConverter());
         Resources.Add("NullToBoolConverter", new NullToBoolConverter());
         Resources.Add("BoolToVisibilityConverter", new BoolToVisibilityConverter());
+        Resources.Add("InverseBoolConverter", new InverseBoolConverter());
 
         InitializeComponent();
         Loaded += OnWindowLoaded;

@@ -300,6 +300,64 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Pages group -->
+                <Fluent:RibbonGroupBox Header="Pages"
+                                        AutomationProperties.Name="Page operations group">
+                    <Fluent:Button Header="Delete Page"
+                                   Command="{Binding DeleteCurrentPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="DP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Delete the current page from the document"
+                                   AutomationProperties.Name="Delete current page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Insert Blank"
+                                   Command="{Binding InsertBlankPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="IB"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Insert a blank page after the current page"
+                                   AutomationProperties.Name="Insert blank page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Extract Page"
+                                   Command="{Binding ExtractCurrentPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="XP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save the current page as a separate PDF"
+                                   AutomationProperties.Name="Extract current page to PDF">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Merge PDFs"
+                                   Command="{Binding MergePdfCommand}"
+                                   KeyTip="MP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Combine this PDF with other PDFs into one document"
+                                   AutomationProperties.Name="Merge PDFs">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Thumbnails"
+                                   Command="{Binding ToggleThumbnailsCommand}"
+                                   Size="Middle"
+                                   KeyTip="TH"
+                                   ToolTip="Show/hide page thumbnails panel"
+                                   AutomationProperties.Name="Toggle page thumbnails">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── EDIT TAB ──────────────────────────────────────────────── -->
@@ -819,30 +877,51 @@
             <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
             <Fluent:RibbonTabItem Header="AI Assistant"
                                    AutomationProperties.Name="AI assistant tab">
-                <Fluent:RibbonGroupBox Header="Claude AI"
-                                        AutomationProperties.Name="Claude AI group">
-                    <Fluent:Button Header="AI Panel"
+                <Fluent:RibbonGroupBox Header="Chat"
+                                        AutomationProperties.Name="AI chat group">
+                    <Fluent:Button Header="Open Chat"
                                    Command="{Binding ToggleAiPanelCommand}"
-                                   ToolTip="Show/hide the AI assistant panel in Properties"
-                                   AutomationProperties.Name="Toggle AI assistant panel">
+                                   ToolTip="Show AI Chat panel (right sidebar → AI Chat tab)"
+                                   AutomationProperties.Name="Open AI chat panel">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Clear Chat"
+                                   Command="{Binding ClearAiChatCommand}"
+                                   Size="Middle"
+                                   ToolTip="Clear the AI chat history"
+                                   AutomationProperties.Name="Clear AI chat history"/>
                     <Fluent:Button Header="Fill Fields"
                                    Command="{Binding RunAiFillCommand}"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Ask Claude AI to fill form fields based on your prompt"
+                                   ToolTip="Use AI to auto-fill form fields (uses the AI Fill tab prompt)"
                                    AutomationProperties.Name="Run AI form fill"/>
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Settings"
-                                        AutomationProperties.Name="AI settings group">
-                    <Fluent:Button Header="API Key"
+                <Fluent:RibbonGroupBox Header="Provider"
+                                        AutomationProperties.Name="AI provider group">
+                    <Fluent:ComboBox Header="Provider"
+                                     ItemsSource="{Binding AiProviders}"
+                                     SelectedItem="{Binding AiProvider}"
+                                     Width="90"
+                                     AutomationProperties.Name="AI provider selector"/>
+                    <Fluent:ComboBox Header="Model"
+                                     ItemsSource="{Binding AiModels}"
+                                     SelectedItem="{Binding AiModel}"
+                                     Width="160"
+                                     AutomationProperties.Name="AI model selector"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Setup"
+                                        AutomationProperties.Name="AI setup group">
+                    <Fluent:Button Header="API Keys"
                                    Command="{Binding OpenSettingsCommand}"
-                                   Size="Middle"
-                                   ToolTip="Configure your Claude API key in Settings → AI Assistant"
-                                   AutomationProperties.Name="Configure AI API key"/>
+                                   ToolTip="Add your Claude or OpenAI API key in Settings → AI"
+                                   AutomationProperties.Name="Configure AI API keys">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
 
@@ -880,10 +959,26 @@
                               AutomationProperties.Name="Resize toolbox"/>
 
                 <!-- ── PDF Viewer ───────────────────────────────────────────── -->
-                <controls:PdfViewerControl Grid.Column="2"
-                                            x:Name="PdfViewer"
-                                            DataContext="{Binding}"
-                                            AutomationProperties.Name="PDF document viewer"/>
+                <!-- PDF Viewer + collapsible thumbnails strip -->
+                <Grid Grid.Column="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <controls:PageThumbnailsPanel
+                        Grid.Column="0"
+                        Width="106"
+                        DataContext="{Binding}"
+                        Visibility="{Binding ShowThumbnails,
+                            Converter={StaticResource BoolToVisibilityConverter}}"
+                        AutomationProperties.Name="Page thumbnails"/>
+
+                    <controls:PdfViewerControl Grid.Column="1"
+                                               x:Name="PdfViewer"
+                                               DataContext="{Binding}"
+                                               AutomationProperties.Name="PDF document viewer"/>
+                </Grid>
 
                 <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"
                               AutomationProperties.Name="Resize properties panel"/>
@@ -1030,56 +1125,10 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <!-- AI Fill tab -->
-                        <TabItem Header="AI Fill"
-                                 AutomationProperties.Name="AI form fill assistant">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                                <StackPanel>
-                                    <TextBlock Text="AI FORM FILL" Style="{StaticResource SectionHeader}"/>
-                                    <TextBlock Text="Describe what to fill and Claude AI will complete the form fields automatically."
-                                               FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
-
-                                    <TextBlock Text="Prompt:" FontSize="11" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding AiPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource PropTextBox}"
-                                             AcceptsReturn="True"
-                                             TextWrapping="Wrap"
-                                             MinHeight="80"
-                                             MaxHeight="160"
-                                             VerticalScrollBarVisibility="Auto"
-                                             Margin="0,0,0,8"
-                                             AutomationProperties.Name="AI prompt"
-                                             AutomationProperties.HelpText="Describe what information to fill in the form"/>
-
-                                    <Button Content="Fill Fields with AI"
-                                            Command="{Binding RunAiFillCommand}"
-                                            Style="{StaticResource ModernButton}"
-                                            Height="32"
-                                            IsEnabled="{Binding HasDocument}"
-                                            Margin="0,0,0,8"
-                                            AutomationProperties.Name="Run AI form fill"
-                                            AutomationProperties.HelpText="Sends your prompt to Claude AI to fill the form fields"/>
-
-                                    <ProgressBar IsIndeterminate="True"
-                                                 Height="4"
-                                                 Margin="0,0,0,8"
-                                                 Visibility="{Binding IsAiRunning, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                 AutomationProperties.Name="AI processing indicator"/>
-
-                                    <TextBlock Text="AI Response:" FontSize="11" Margin="0,4,0,4"/>
-                                    <TextBox Text="{Binding AiResponse, Mode=OneWay}"
-                                             Style="{StaticResource PropTextBox}"
-                                             IsReadOnly="True"
-                                             TextWrapping="Wrap"
-                                             MaxHeight="120"
-                                             VerticalScrollBarVisibility="Auto"
-                                             AutomationProperties.Name="AI response"
-                                             AutomationProperties.HelpText="Shows the Claude AI response"/>
-
-                                    <TextBlock Text="Add your Claude API key in Settings → AI Assistant to enable this feature."
-                                               FontSize="10" TextWrapping="Wrap" Margin="0,12,0,0"/>
-                                </StackPanel>
-                            </ScrollViewer>
+                        <!-- AI Chat tab -->
+                        <TabItem Header="AI Chat"
+                                 AutomationProperties.Name="AI chat assistant">
+                            <controls:AiChatPanel DataContext="{Binding}"/>
                         </TabItem>
 
                     </TabControl>

@@ -58,6 +58,7 @@ public partial class SettingsWindow : Window
 
         // AI
         ApiKeyBox.Password = s.ClaudeApiKey;
+        OpenAiKeyBox.Password = s.OpenAiApiKey;
 
         // Accessibility
         HighContrastFocusCb.IsChecked = s.HighContrastFocusIndicators;
@@ -162,6 +163,7 @@ public partial class SettingsWindow : Window
         s.ForceUpperCaseDefault = ForceUpperCaseCb.IsChecked == true;
 
         s.ClaudeApiKey = ApiKeyBox.Password;
+        s.OpenAiApiKey = OpenAiKeyBox.Password;
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
         s.DateFormat = GetSelectedDateFormat();
 

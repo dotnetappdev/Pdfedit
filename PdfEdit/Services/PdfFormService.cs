@@ -10,6 +10,7 @@ using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using PdfEdit.Models;
+using Rectangle = iText.Kernel.Geom.Rectangle;
 
 namespace PdfEdit.Services;
 
@@ -234,6 +235,78 @@ public class PdfFormService
                     // Skip invalid/corrupt image bytes
                 }
             }
+        }
+    }
+
+    // ── Page Operations ──────────────────────────────────────────────────────
+
+    /// <summary>Copies all pages except those in pageIndexes (0-based) to destPath.</summary>
+    public void DeletePages(string sourcePath, string destPath, IEnumerable<int> pageIndexes)
+    {
+        var skip = new HashSet<int>(pageIndexes);
+        using var reader = new PdfReader(sourcePath);
+        using var writer = new PdfWriter(destPath);
+        using var src = new PdfDocument(reader);
+        using var dest = new PdfDocument(writer);
+
+        int total = src.GetNumberOfPages();
+        for (int i = 1; i <= total; i++)
+        {
+            if (!skip.Contains(i - 1))
+                src.CopyPagesTo(i, i, dest);
+        }
+    }
+
+    /// <summary>Inserts a blank page the same size as page afterPageIndex (0-based) immediately after it.</summary>
+    public void InsertBlankPage(string sourcePath, string destPath, int afterPageIndex)
+    {
+        using var reader = new PdfReader(sourcePath);
+        using var writer = new PdfWriter(destPath);
+        using var src = new PdfDocument(reader);
+        using var dest = new PdfDocument(writer);
+
+        int total = src.GetNumberOfPages();
+        int insertAfter = afterPageIndex + 1;
+
+        for (int i = 1; i <= total; i++)
+        {
+            src.CopyPagesTo(i, i, dest);
+            if (i == insertAfter)
+            {
+                var sz = src.GetPage(i).GetPageSize();
+                dest.AddNewPage(new PageSize(sz));
+            }
+        }
+    }
+
+    /// <summary>Copies the specified pages (0-based) to a new PDF at destPath.</summary>
+    public void ExtractPages(string sourcePath, string destPath, IEnumerable<int> pageIndexes)
+    {
+        using var reader = new PdfReader(sourcePath);
+        using var writer = new PdfWriter(destPath);
+        using var src = new PdfDocument(reader);
+        using var dest = new PdfDocument(writer);
+
+        int total = src.GetNumberOfPages();
+        foreach (var idx in pageIndexes.OrderBy(x => x))
+        {
+            int pageNum = idx + 1;
+            if (pageNum >= 1 && pageNum <= total)
+                src.CopyPagesTo(pageNum, pageNum, dest);
+        }
+    }
+
+    /// <summary>Concatenates all sourcePaths PDFs into destPath in order.</summary>
+    public void MergePdfs(IEnumerable<string> sourcePaths, string destPath)
+    {
+        using var writer = new PdfWriter(destPath);
+        using var dest = new PdfDocument(writer);
+
+        foreach (var path in sourcePaths)
+        {
+            using var reader = new PdfReader(path);
+            using var src = new PdfDocument(reader);
+            src.CopyPagesTo(1, src.GetNumberOfPages(), dest);
         }
     }
 
