@@ -6,6 +6,7 @@
              AutomationProperties.Name="AI chat assistant">
 
     <UserControl.Resources>
+
         <Style x:Key="PresetChip" TargetType="Button">
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Margin" Value="2,2"/>
@@ -30,6 +31,159 @@
                                 <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                                 <Setter Property="Foreground" Value="White"/>
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Model picker toggle button -->
+        <Style x:Key="ModelPickerBtn" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource InputBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Icon-only action button (cog, clear) -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                Padding="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Model row radio button inside popup -->
+        <Style x:Key="ModelRadioBtn" TargetType="RadioButton">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0" VerticalAlignment="Center"/>
+                                <Ellipse x:Name="Dot" Grid.Column="1"
+                                         Width="7" Height="7" Margin="8,0,0,0"
+                                         Fill="{DynamicResource AccentBrush}"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ActiveBgBrush}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Connection action button -->
+        <Style x:Key="ConnectBtn" TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Disconnect/sign-out button -->
+        <Style x:Key="DisconnectBtn" TargetType="Button" BasedOn="{StaticResource ConnectBtn}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CC4444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CC4444"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#22CC4444"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -83,51 +237,309 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+
     </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Provider / model -->
+            <RowDefinition Height="Auto"/>  <!-- Model selector bar -->
             <RowDefinition Height="Auto"/>  <!-- Profile selector -->
             <RowDefinition Height="Auto"/>  <!-- Task presets -->
             <RowDefinition Height="*"/>     <!-- Chat history -->
             <RowDefinition Height="Auto"/>  <!-- Input row -->
         </Grid.RowDefinitions>
 
-        <!-- ── Provider / Model row ─────────────────────────────────────── -->
+        <!-- ── Model selector bar ───────────────────────────────────────────── -->
         <Border Grid.Row="0"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="8,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <ComboBox Grid.Column="0"
-                          ItemsSource="{Binding AiProviders}"
-                          SelectedItem="{Binding AiProvider}"
-                          FontSize="12"
-                          AutomationProperties.Name="AI provider selector"/>
+                <!-- Model picker button -->
+                <Button Grid.Column="0"
+                        x:Name="ModelPickerBtn"
+                        Style="{StaticResource ModelPickerBtn}"
+                        Click="ModelPickerBtn_Click"
+                        ToolTip="Select AI model"
+                        AutomationProperties.Name="Select AI model">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ProviderIcon}"
+                                   FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding ModelDisplayLabel}"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ForegroundBrush}"/>
+                        <TextBlock Text="  +"
+                                   FontSize="14" FontWeight="Light"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource DimForegroundBrush}"/>
+                    </StackPanel>
+                </Button>
 
-                <ComboBox Grid.Column="2"
-                          ItemsSource="{Binding AiModels}"
-                          SelectedItem="{Binding AiModel}"
-                          FontSize="12"
-                          AutomationProperties.Name="AI model selector"/>
+                <!-- Connections cog -->
+                <Button Grid.Column="1"
+                        x:Name="ConnectionsBtn"
+                        Style="{StaticResource IconBtn}"
+                        Margin="4,0,0,0"
+                        Click="ConnectionsBtn_Click"
+                        ToolTip="AI account connections"
+                        AutomationProperties.Name="AI connections settings">
+                    <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                </Button>
 
-                <Button Grid.Column="3" x:Name="ClearBtn"
-                        Content="✕" Width="26" Height="26"
-                        Margin="6,0,0,0" FontSize="11"
-                        ToolTip="Clear chat history"
+                <!-- Clear chat -->
+                <Button Grid.Column="2"
+                        x:Name="ClearBtn"
+                        Style="{StaticResource IconBtn}"
+                        Margin="2,0,0,0"
                         Click="Clear_Click"
-                        AutomationProperties.Name="Clear chat history"/>
+                        ToolTip="Clear chat history"
+                        AutomationProperties.Name="Clear chat history">
+                    <TextBlock Text="✕" FontSize="12"/>
+                </Button>
             </Grid>
         </Border>
 
-        <!-- ── Profile selector row ────────────────────────────────────── -->
+        <!-- ── Model picker Popup ────────────────────────────────────────────── -->
+        <Popup x:Name="ModelPickerPopup"
+               PlacementTarget="{Binding ElementName=ModelPickerBtn}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Background="{DynamicResource PanelBgBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="6"
+                    MinWidth="200"
+                    Effect="{x:Null}">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.35" ShadowDepth="4" Direction="270"/>
+                </Border.Effect>
+                <StackPanel>
+                    <!-- Provider tabs -->
+                    <StackPanel Orientation="Horizontal" Margin="2,4,2,8">
+                        <Button x:Name="ClaudeTabBtn"
+                                Tag="Claude"
+                                Click="ProviderTab_Click"
+                                Padding="10,4" Margin="0,0,4,0"
+                                FontSize="11" FontWeight="SemiBold"
+                                AutomationProperties.Name="Claude provider tab">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="TabBd"
+                                            Background="{DynamicResource AccentBrush}"
+                                            CornerRadius="5"
+                                            Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="✦" Foreground="White" Margin="0,0,5,0" FontSize="11"/>
+                                            <TextBlock Text="Claude" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding AiProvider}" Value="OpenAI">
+                                            <Setter TargetName="TabBd" Property="Background" Value="{DynamicResource InputBgBrush}"/>
+                                            <Setter TargetName="TabBd" Property="TextElement.Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button x:Name="OpenAiTabBtn"
+                                Tag="OpenAI"
+                                Click="ProviderTab_Click"
+                                Padding="10,4"
+                                FontSize="11" FontWeight="SemiBold"
+                                AutomationProperties.Name="OpenAI provider tab">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="TabBd2"
+                                            Background="{DynamicResource InputBgBrush}"
+                                            CornerRadius="5"
+                                            Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="☁" Margin="0,0,5,0" FontSize="11"
+                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                            <TextBlock Text="ChatGPT" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding AiProvider}" Value="OpenAI">
+                                            <Setter TargetName="TabBd2" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter TargetName="TabBd2" Property="TextElement.Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Model list (updated by code-behind) -->
+                    <StackPanel x:Name="ModelListPanel" Margin="0,0,0,4"/>
+
+                    <!-- Connection status hint -->
+                    <Border BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0"
+                            Padding="4,8,4,2">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="PopupStatusDot" Width="7" Height="7" Margin="0,0,6,0"
+                                     Fill="#CC4444"/>
+                            <TextBlock x:Name="PopupStatusText"
+                                       Text="Not connected — add key in ⚙" FontSize="10"
+                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- ── Connections settings Popup ───────────────────────────────────── -->
+        <Popup x:Name="ConnectionsPopup"
+               PlacementTarget="{Binding ElementName=ConnectionsBtn}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Background="{DynamicResource PanelBgBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="14,12"
+                    Width="270">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.35" ShadowDepth="4" Direction="270"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="AI Connections" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,12"/>
+
+                    <!-- ── Claude section ────────────────────────────────── -->
+                    <StackPanel Margin="0,0,0,14">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="✦" FontSize="13"
+                                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,6,0"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="Claude (Anthropic)" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource ForegroundBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Ellipse x:Name="ClaudeStatusDot" Width="7" Height="7" Margin="8,0,0,0"
+                                     VerticalAlignment="Center" Fill="#CC4444"/>
+                            <TextBlock x:Name="ClaudeStatusText" Text="Not connected" FontSize="10"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
+
+                        <!-- Connected view -->
+                        <StackPanel x:Name="ClaudeConnectedView" Orientation="Horizontal" Visibility="Collapsed">
+                            <Border Background="{DynamicResource InputBgBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1" CornerRadius="5"
+                                    Padding="8,5" Margin="0,0,8,0">
+                                <TextBlock x:Name="ClaudeKeyHint" FontSize="11" FontFamily="Consolas"
+                                           Foreground="{DynamicResource DimForegroundBrush}"/>
+                            </Border>
+                            <Button Style="{StaticResource DisconnectBtn}"
+                                    Content="Sign out"
+                                    Click="ClaudeSignOut_Click"
+                                    AutomationProperties.Name="Sign out from Claude"/>
+                        </StackPanel>
+
+                        <!-- Not connected view -->
+                        <StackPanel x:Name="ClaudeConnectView">
+                            <PasswordBox x:Name="ClaudeKeyBox"
+                                         Margin="0,0,0,6"
+                                         Height="32"
+                                         FontSize="12"
+                                         Background="{DynamicResource InputBgBrush}"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         BorderBrush="{DynamicResource InputBorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="8,6"
+                                         AutomationProperties.Name="Claude API key"/>
+                            <TextBlock FontSize="10" Foreground="{DynamicResource DimForegroundBrush}"
+                                       Margin="0,0,0,6"
+                                       Text="Enter your Anthropic API key (sk-ant-…)"/>
+                            <Button Style="{StaticResource ConnectBtn}"
+                                    Content="Connect Claude"
+                                    HorizontalAlignment="Left"
+                                    Click="ClaudeConnect_Click"
+                                    AutomationProperties.Name="Connect Claude account"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Rectangle Height="1" Fill="{DynamicResource AppBorderBrush}" Margin="0,0,0,14"/>
+
+                    <!-- ── OpenAI / ChatGPT section ─────────────────────── -->
+                    <StackPanel Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="☁" FontSize="13"
+                                       Foreground="{DynamicResource DimForegroundBrush}" Margin="0,0,6,0"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="OpenAI (ChatGPT)" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource ForegroundBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Ellipse x:Name="OpenAiStatusDot" Width="7" Height="7" Margin="8,0,0,0"
+                                     VerticalAlignment="Center" Fill="#CC4444"/>
+                            <TextBlock x:Name="OpenAiStatusText" Text="Not connected" FontSize="10"
+                                       Margin="5,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
+
+                        <!-- Connected view -->
+                        <StackPanel x:Name="OpenAiConnectedView" Orientation="Horizontal" Visibility="Collapsed">
+                            <Border Background="{DynamicResource InputBgBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1" CornerRadius="5"
+                                    Padding="8,5" Margin="0,0,8,0">
+                                <TextBlock x:Name="OpenAiKeyHint" FontSize="11" FontFamily="Consolas"
+                                           Foreground="{DynamicResource DimForegroundBrush}"/>
+                            </Border>
+                            <Button Style="{StaticResource DisconnectBtn}"
+                                    Content="Sign out"
+                                    Click="OpenAiSignOut_Click"
+                                    AutomationProperties.Name="Sign out from OpenAI"/>
+                        </StackPanel>
+
+                        <!-- Not connected view -->
+                        <StackPanel x:Name="OpenAiConnectView">
+                            <PasswordBox x:Name="OpenAiKeyBox"
+                                         Margin="0,0,0,6"
+                                         Height="32"
+                                         FontSize="12"
+                                         Background="{DynamicResource InputBgBrush}"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         BorderBrush="{DynamicResource InputBorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="8,6"
+                                         AutomationProperties.Name="OpenAI API key"/>
+                            <TextBlock FontSize="10" Foreground="{DynamicResource DimForegroundBrush}"
+                                       Margin="0,0,0,6"
+                                       Text="Enter your OpenAI API key (sk-…)"/>
+                            <Button Style="{StaticResource ConnectBtn}"
+                                    Content="Connect ChatGPT"
+                                    HorizontalAlignment="Left"
+                                    Click="OpenAiConnect_Click"
+                                    AutomationProperties.Name="Connect OpenAI account"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Footer note -->
+                    <TextBlock FontSize="10" Foreground="{DynamicResource DimForegroundBrush}"
+                               TextWrapping="Wrap"
+                               Text="Keys are stored locally on your device and never shared with third parties."/>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- ── Profile selector row ────────────────────────────────────────── -->
         <Border Grid.Row="1"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="8,5">
@@ -168,7 +580,7 @@
             </Grid>
         </Border>
 
-        <!-- ── Task preset chips ────────────────────────────────────────── -->
+        <!-- ── Task preset chips ────────────────────────────────────────────── -->
         <Border Grid.Row="2"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="6,6">
@@ -194,7 +606,7 @@
             </WrapPanel>
         </Border>
 
-        <!-- ── Chat history ─────────────────────────────────────────────── -->
+        <!-- ── Chat history ─────────────────────────────────────────────────── -->
         <ScrollViewer Grid.Row="3"
                       x:Name="ChatScroll"
                       VerticalScrollBarVisibility="Auto"
@@ -212,7 +624,7 @@
                                Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,6"/>
                     <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
                                Foreground="{DynamicResource DimForegroundBrush}"
-                               Text="Pick a task above or type a message to get started. Bring your own API key in Settings → AI."/>
+                               Text="Pick a task above or type a message to get started. Connect your account with the ⚙ icon above."/>
                 </StackPanel>
 
                 <ItemsControl x:Name="ChatList"
@@ -236,7 +648,7 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ── Input row ─────────────────────────────────────────────────── -->
+        <!-- ── Input row ─────────────────────────────────────────────────────── -->
         <Border Grid.Row="4"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0"
                 Padding="8,8">

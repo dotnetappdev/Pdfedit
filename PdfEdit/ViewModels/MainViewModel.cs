@@ -381,6 +381,8 @@ public class MainViewModel : INotifyPropertyChanged
             if (_aiProvider == value) return;
             _aiProvider = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ProviderIcon));
+            OnPropertyChanged(nameof(ModelDisplayLabel));
             SyncAiModels();
             AppSettings.Current.AiProvider = value;
             AppSettings.Current.Save();
@@ -395,6 +397,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (_aiModel == value) return;
             _aiModel = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ModelDisplayLabel));
             AppSettings.Current.AiModel = value;
             AppSettings.Current.Save();
         }
@@ -403,6 +406,60 @@ public class MainViewModel : INotifyPropertyChanged
     public IList<string> AiProviders { get; } = Services.AiProviderService.Providers.Keys.ToList();
     public ObservableCollection<string> AiModels { get; } = new();
     public ObservableCollection<AiChatMessage> AiChatHistory { get; } = new();
+
+    // ── Connection state ─────────────────────────────────────────────────────
+
+    public bool IsClaudeConnected => !string.IsNullOrEmpty(AppSettings.Current.ClaudeApiKey);
+    public bool IsOpenAiConnected => !string.IsNullOrEmpty(AppSettings.Current.OpenAiApiKey);
+
+    public string ProviderIcon => _aiProvider == "OpenAI" ? "☁" : "✦";
+
+    public string ModelDisplayLabel
+    {
+        get
+        {
+            return _aiModel switch
+            {
+                "claude-haiku-4-5-20251001" => "Haiku",
+                "claude-sonnet-5"           => "Sonnet 5",
+                "claude-opus-5"             => "Opus 5",
+                "gpt-4o-mini"               => "4o mini",
+                "gpt-4o"                    => "4o",
+                "gpt-3.5-turbo"             => "3.5 Turbo",
+                _                           => _aiModel
+            };
+        }
+    }
+
+    public void ConnectClaude(string apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey)) return;
+        AppSettings.Current.ClaudeApiKey = apiKey.Trim();
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsClaudeConnected));
+    }
+
+    public void DisconnectClaude()
+    {
+        AppSettings.Current.ClaudeApiKey = string.Empty;
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsClaudeConnected));
+    }
+
+    public void ConnectOpenAi(string apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey)) return;
+        AppSettings.Current.OpenAiApiKey = apiKey.Trim();
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsOpenAiConnected));
+    }
+
+    public void DisconnectOpenAi()
+    {
+        AppSettings.Current.OpenAiApiKey = string.Empty;
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsOpenAiConnected));
+    }
 
     public ObservableCollection<PersonalProfile> Profiles => Services.PersonalProfileStore.All;
 
