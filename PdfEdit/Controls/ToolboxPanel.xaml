@@ -6,7 +6,7 @@
              xmlns:models="clr-namespace:PdfEdit.Models"
              mc:Ignorable="d"
              Width="56"
-             Background="#252526">
+             Background="{DynamicResource SidebarBgBrush}">
 
     <UserControl.Resources>
         <!-- Tool button style -->
@@ -28,12 +28,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3E3E3E"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#555555"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource InputBgBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#0E639C"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#1177BB"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -43,7 +43,7 @@
 
         <!-- Separator style -->
         <Style x:Key="ToolSep" TargetType="Separator">
-            <Setter Property="Background" Value="#3E3E3E"/>
+            <Setter Property="Background" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="Margin" Value="8,4"/>
             <Setter Property="Height" Value="1"/>
         </Style>
@@ -60,7 +60,7 @@
                          ToolTip="Hand Tool — Pan document (H)"
                          Checked="Tool_Checked">
                 <Path Data="M10 15V9a1 1 0 0 1 2 0v3h.5a1 1 0 0 1 1 1v.5h.5a1 1 0 0 1 1 1V15a4 4 0 0 1-4 4h-1a4 4 0 0 1-4-4v-2a1 1 0 0 1 1-1h.5V9a1 1 0 0 1 2 0v6"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <!-- Select tool -->
@@ -70,7 +70,7 @@
                          ToolTip="Select Tool — Select and move (V)"
                          Checked="Tool_Checked">
                 <Path Data="M4 4l7.07 17 2.51-7.39L21 11.07z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <Separator Style="{StaticResource ToolSep}"/>
@@ -82,7 +82,7 @@
                          ToolTip="Text Fill Tool — Click a text field to fill it (T)"
                          Checked="Tool_Checked">
                 <Path Data="M9.6 14.4l-3 3 1.4 1.4 3-3-1.4-1.4zM12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-5h2V7h-2v8z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <!-- Checkbox toggle tool -->
@@ -92,7 +92,7 @@
                          ToolTip="Checkbox Tool — Toggle checkboxes (C)"
                          Checked="Tool_Checked">
                 <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <!-- Signature tool -->
@@ -102,7 +102,7 @@
                          ToolTip="Signature Tool — Click a signature field (S)"
                          Checked="Tool_Checked">
                 <Path Data="M17.75 4.09l-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94 3.19-.27.99-3.02.99 3.02 3.34.27zm3.5 6.91l-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.18.64-1.96.64 1.96 2.06.18zM8.68 18.12c-1.9 0-3.49-1.35-3.84-3.15l-1.5.26C3.87 17.67 6.07 20 8.68 20c.48 0 .94-.07 1.38-.18l-.38-1.44c-.3.09-.62.14-.95.14l-.05-.4z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <Separator Style="{StaticResource ToolSep}"/>
@@ -114,7 +114,7 @@
                          ToolTip="Highlight Tool (I)"
                          Checked="Tool_Checked">
                 <Path Data="M6 14l3 3 8-8-3-3-8 8zm-2 6l2.5-2.5L4 15.5 1.5 18 4 20zm14.83-14.97l-1.06-1.06a.87.87 0 0 0-1.23 0l-1.5 1.5 2.29 2.29 1.5-1.5c.34-.33.34-.87 0-1.23z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <!-- Zoom tool -->
@@ -124,7 +124,7 @@
                          ToolTip="Zoom Tool (Z) — Ctrl+Wheel also zooms"
                          Checked="Tool_Checked">
                 <Path Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 0 0 9.5 3 6.5 6.5 0 0 0 3 9.5 6.5 6.5 0 0 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm2.5-4h-2v2H9v-2H7V9h2V7h1v2h2v1z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <Separator Style="{StaticResource ToolSep}"/>
@@ -136,7 +136,7 @@
                          ToolTip="Stamp Tool (M)"
                          Checked="Tool_Checked">
                 <Path Data="M18 15H6l-4 4V3c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <Separator Style="{StaticResource ToolSep}"/>
@@ -147,7 +147,7 @@
                          Tag="AddText"
                          ToolTip="Add Text — click page to place horizontal text"
                          Checked="Tool_Checked">
-                <TextBlock Text="T" Foreground="#CCCCCC" FontSize="20" FontWeight="Bold"
+                <TextBlock Text="T" Foreground="{DynamicResource ForegroundBrush}" FontSize="20" FontWeight="Bold"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </RadioButton>
 
@@ -158,7 +158,7 @@
                          ToolTip="Vertical Text — click page to place top-to-bottom text"
                          Checked="Tool_Checked">
                 <Grid Width="22" Height="22">
-                    <TextBlock Text="T" Foreground="#CCCCCC" FontSize="20" FontWeight="Bold"
+                    <TextBlock Text="T" Foreground="{DynamicResource ForegroundBrush}" FontSize="20" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                RenderTransformOrigin="0.5,0.5">
                         <TextBlock.RenderTransform>
@@ -176,7 +176,7 @@
                          Checked="Tool_Checked"
                          AutomationProperties.Name="Date stamp tool">
                 <Path Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
-                      Fill="#CCCCCC" Width="22" Height="22" Stretch="Uniform"/>
+                      Fill="{DynamicResource ForegroundBrush}" Width="22" Height="22" Stretch="Uniform"/>
             </RadioButton>
 
             <Separator Style="{StaticResource ToolSep}"/>
@@ -206,7 +206,7 @@
             <Separator Style="{StaticResource ToolSep}"/>
 
             <!-- My Signatures section -->
-            <TextBlock Text="SIGS" Foreground="#888888" FontSize="9"
+            <TextBlock Text="SIGS" Foreground="{DynamicResource DimForegroundBrush}" FontSize="9"
                        HorizontalAlignment="Center" Margin="0,2,0,2"
                        AutomationProperties.Name="My Signatures section"/>
 
@@ -219,7 +219,7 @@
                     Focusable="False"
                     Cursor="Hand"
                     AutomationProperties.Name="Add signature to library"
-                    Background="#2D5A8E"
+                    Background="{DynamicResource AccentBrush}"
                     Foreground="White"
                     BorderThickness="0">
                 <TextBlock Text="+" FontSize="14" FontWeight="Bold"/>

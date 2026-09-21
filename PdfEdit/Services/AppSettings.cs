@@ -15,6 +15,10 @@ public class AppSettings
     public string Theme { get; set; } = "Dark";
     public double UiScale { get; set; } = 1.0;
 
+    // Per-area interface font sizes (keyed by InterfaceFontArea.Key).
+    // Absent keys fall back to each area's default size.
+    public Dictionary<string, double> InterfaceFontSizes { get; set; } = new();
+
     // ── Window geometry ──────────────────────────────────────────────────────
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;

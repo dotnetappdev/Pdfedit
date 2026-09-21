@@ -7,6 +7,7 @@
         ResizeMode="NoResize"
         Background="{DynamicResource PanelBgBrush}"
         Foreground="{DynamicResource ForegroundBrush}"
+        FontSize="{DynamicResource DialogFontSize}"
         AutomationProperties.Name="PdfEdit Settings">
 
     <Window.Resources>
@@ -86,6 +87,87 @@
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+
+            <!-- ── Fonts Tab (Visual Studio style) ───────────────────────── -->
+            <TabItem Header="Fonts"
+                     AutomationProperties.Name="Interface font settings">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Style="{StaticResource SectionHead}"
+                               Margin="0,0,0,6" Text="INTERFACE FONT SIZES"/>
+                    <TextBlock Grid.Row="1"
+                               Foreground="{DynamicResource DimForegroundBrush}"
+                               FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Text="Pick an area of the interface, then choose its font size. Changes apply immediately."/>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Show settings for: -->
+                        <DockPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock DockPanel.Dock="Top"
+                                       Style="{StaticResource SettingLabel}"
+                                       Margin="0,0,0,4" Text="Show settings for:"/>
+                            <ListBox x:Name="FontAreaList"
+                                     Background="{DynamicResource InputBgBrush}"
+                                     Foreground="{DynamicResource ForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}"
+                                     BorderThickness="1"
+                                     DisplayMemberPath="DisplayName"
+                                     SelectionChanged="FontAreaList_SelectionChanged"
+                                     AutomationProperties.Name="Interface area list"/>
+                        </DockPanel>
+
+                        <!-- Selected area editor -->
+                        <StackPanel Grid.Column="1">
+                            <TextBlock x:Name="FontAreaName"
+                                       Foreground="{DynamicResource ForegroundBrush}"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Margin="0,20,0,2"/>
+                            <TextBlock x:Name="FontAreaDesc"
+                                       Foreground="{DynamicResource DimForegroundBrush}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Margin="0,0,0,14"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                <TextBlock Style="{StaticResource SettingLabel}" Text="Size:"/>
+                                <ComboBox x:Name="FontSizeCombo"
+                                          Width="90" Height="30" IsEditable="True"
+                                          FontSize="13" VerticalContentAlignment="Center"
+                                          SelectionChanged="FontSizeCombo_Changed"
+                                          AutomationProperties.Name="Font size for selected area"/>
+                            </StackPanel>
+
+                            <Border Background="{DynamicResource InputBgBrush}"
+                                    BorderBrush="{DynamicResource InputBorderBrush}"
+                                    BorderThickness="1" Padding="12" CornerRadius="3">
+                                <TextBlock x:Name="FontPreview"
+                                           Foreground="{DynamicResource ForegroundBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="AaBbCcXxYyZz 0123456789 — The quick brown fox."/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Grid.Row="3" Content="Reset all to defaults"
+                            HorizontalAlignment="Left" Margin="0,16,0,0"
+                            Padding="12,6" Click="ResetFonts_Click"
+                            Background="{DynamicResource InputBgBrush}"
+                            Foreground="{DynamicResource ForegroundBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}"
+                            BorderThickness="1"
+                            AutomationProperties.Name="Reset all interface font sizes to defaults"/>
+                </Grid>
             </TabItem>
 
             <!-- ── Editor Tab ────────────────────────────────────────────── -->

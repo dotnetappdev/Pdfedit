@@ -58,6 +58,7 @@
              RIBBON TOOLBAR
              ════════════════════════════════════════════════════════════════ -->
         <Fluent:Ribbon Grid.Row="0" x:Name="MainRibbon"
+                       FontSize="{DynamicResource RibbonFontSize}"
                        AutomationProperties.Name="Main ribbon toolbar">
 
             <!-- Application Menu (File menu) -->
@@ -978,6 +979,7 @@
                         BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="0,0,1,0">
                     <controls:ToolboxPanel DataContext="{Binding}"
+                                           FontSize="{DynamicResource PanelFontSize}"
                                            AutomationProperties.Name="Tool palette"/>
                 </Border>
 
@@ -994,6 +996,7 @@
 
                     <controls:PageThumbnailsPanel
                         Grid.Column="0"
+                        FontSize="{DynamicResource PanelFontSize}"
                         Width="106"
                         DataContext="{Binding}"
                         Visibility="{Binding ShowThumbnails,
@@ -1154,7 +1157,8 @@
                         <!-- AI Chat tab -->
                         <TabItem Header="AI Chat"
                                  AutomationProperties.Name="AI chat assistant">
-                            <controls:AiChatPanel DataContext="{Binding}"/>
+                            <controls:AiChatPanel DataContext="{Binding}"
+                                                  FontSize="{DynamicResource ChatFontSize}"/>
                         </TabItem>
 
                     </TabControl>
@@ -1283,6 +1287,7 @@
              STATUS BAR
              ════════════════════════════════════════════════════════════════ -->
         <StatusBar Grid.Row="2"
+                   FontSize="{DynamicResource StatusBarFontSize}"
                    AutomationProperties.Name="Status bar">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>

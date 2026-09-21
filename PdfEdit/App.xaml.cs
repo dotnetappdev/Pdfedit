@@ -38,6 +38,15 @@ public partial class App : Application
             ErrorDialog.Show("Failed to apply the selected theme. The default appearance will be used.", ex);
         }
 
+        try
+        {
+            FontService.ApplyAll();
+        }
+        catch (Exception ex)
+        {
+            ErrorDialog.Show("Failed to apply interface font sizes. Defaults will be used.", ex);
+        }
+
         MainWindow mainWindow;
         try
         {
@@ -110,12 +119,48 @@ public partial class App : Application
 
         var merged = Current.Resources.MergedDictionaries;
 
-        // Replace existing theme dictionary (index 1, after Fluent)
-        if (_themeDict != null && merged.Contains(_themeDict))
-            merged.Remove(_themeDict);
+        // Remove any theme dictionary already merged — including the default one
+        // declared in App.xaml. Otherwise it would remain and, because later
+        // merged dictionaries win in WPF, keep overriding the newly applied theme.
+        for (int i = merged.Count - 1; i >= 0; i--)
+        {
+            var src = merged[i].Source?.OriginalString ?? string.Empty;
+            if (src.Contains("Themes/", StringComparison.OrdinalIgnoreCase) &&
+                src.EndsWith("Theme.xaml", StringComparison.OrdinalIgnoreCase))
+            {
+                merged.RemoveAt(i);
+            }
+        }
 
-        // Insert after Fluent (index 0)
-        merged.Insert(1, newDict);
+        // Insert right after the Fluent generic dictionary (index 0).
+        int insertAt = merged.Count > 0 ? 1 : 0;
+        merged.Insert(insertAt, newDict);
         _themeDict = newDict;
+
+        // Keep the Fluent ribbon in sync with the app theme.
+        ApplyRibbonTheme(themeName);
+    }
+
+    /// <summary>
+    /// Switches the Fluent.Ribbon (ControlzEx) theme so the ribbon matches the
+    /// selected app theme. Runs best-effort: if the theme can't be applied the
+    /// ribbon simply keeps its previous appearance.
+    /// </summary>
+    private static void ApplyRibbonTheme(string themeName)
+    {
+        try
+        {
+            string fluentTheme = themeName switch
+            {
+                "Light" => "Light.Blue",
+                "HighContrast" => "Dark.Yellow",
+                _ => "Dark.Blue"
+            };
+            ControlzEx.Theming.ThemeManager.Current.ChangeTheme(Current, fluentTheme);
+        }
+        catch
+        {
+            // Non-fatal: ribbon keeps its default theme.
+        }
     }
 }

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             Background="#4A4A4A"
+             Background="{DynamicResource ContentBgBrush}"
              d:DesignHeight="700" d:DesignWidth="900">
 
     <Grid>
@@ -23,18 +23,18 @@
 
         <!-- No-document placeholder -->
         <Border x:Name="PlaceholderPanel"
-                Background="#2D2D2D"
+                Background="{DynamicResource ContentBgBrush}"
                 Visibility="Visible">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Path Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
-                      Fill="#555555" Width="72" Height="72" Stretch="Uniform"/>
+                      Fill="{DynamicResource DimForegroundBrush}" Width="72" Height="72" Stretch="Uniform"/>
                 <TextBlock Text="Open a PDF to begin"
                            FontSize="18"
-                           Foreground="#888888"
+                           Foreground="{DynamicResource ForegroundBrush}"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="Use File → Open or drag a PDF here"
                            FontSize="13"
-                           Foreground="#666666"
+                           Foreground="{DynamicResource DimForegroundBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
@@ -44,7 +44,7 @@
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
                       Visibility="Collapsed"
-                      Background="#4A4A4A"
+                      Background="{DynamicResource ContentBgBrush}"
                       AllowDrop="True"
                       Drop="OnDrop">
 
@@ -61,7 +61,7 @@
 
                 <!-- Page container (image + form field overlay) -->
                 <Border x:Name="PageBorder"
-                        BorderBrush="#CCCCCC"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1"
                         Background="White">
                     <Grid x:Name="PageGrid">

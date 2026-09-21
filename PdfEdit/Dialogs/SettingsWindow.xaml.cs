@@ -1,12 +1,18 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using PdfEdit.Models;
 using PdfEdit.Services;
 
 namespace PdfEdit.Dialogs;
 
 public partial class SettingsWindow : Window
 {
+    // Snapshot of interface font sizes taken when the dialog opens, so Cancel
+    // can revert any live changes the user previewed.
+    private readonly Dictionary<string, double> _fontSnapshot;
+    private bool _fontsInitialized;
+
     private readonly List<string> _fonts = new()
     {
         "Arial", "Times New Roman", "Courier New", "Georgia", "Verdana",
@@ -29,7 +35,62 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        _fontSnapshot = new Dictionary<string, double>(AppSettings.Current.InterfaceFontSizes);
         LoadCurrentSettings();
+        InitFontSettings();
+    }
+
+    // ── Fonts tab (Visual Studio "Fonts and Colors" style) ───────────────────
+    private void InitFontSettings()
+    {
+        for (double s = InterfaceFonts.MinSize; s <= InterfaceFonts.MaxSize; s++)
+            FontSizeCombo.Items.Add(s.ToString("0"));
+
+        // Apply custom sizes typed directly into the editable combo box.
+        FontSizeCombo.LostFocus += (_, _) => ApplySelectedFontSize();
+        FontSizeCombo.KeyUp += (_, ev) =>
+        {
+            if (ev.Key == System.Windows.Input.Key.Enter) ApplySelectedFontSize();
+        };
+
+        FontAreaList.ItemsSource = InterfaceFonts.Areas;
+        _fontsInitialized = true;
+        FontAreaList.SelectedIndex = 0; // triggers SelectionChanged → loads editor
+    }
+
+    private void FontAreaList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_fontsInitialized || FontAreaList.SelectedItem is not InterfaceFontArea area)
+            return;
+
+        FontAreaName.Text = area.DisplayName;
+        FontAreaDesc.Text = area.Description;
+
+        double size = FontService.GetSize(area);
+        FontSizeCombo.Text = size.ToString("0");
+        FontPreview.FontSize = size;
+    }
+
+    private void FontSizeCombo_Changed(object sender, SelectionChangedEventArgs e)
+        => ApplySelectedFontSize();
+
+    private void ApplySelectedFontSize()
+    {
+        if (!_fontsInitialized || FontAreaList.SelectedItem is not InterfaceFontArea area)
+            return;
+        if (!double.TryParse(FontSizeCombo.Text, out var size))
+            return;
+
+        size = Math.Clamp(size, InterfaceFonts.MinSize, InterfaceFonts.MaxSize);
+        FontService.SetSize(area, size);   // applies live to the whole app
+        FontPreview.FontSize = size;
+    }
+
+    private void ResetFonts_Click(object sender, RoutedEventArgs e)
+    {
+        FontService.ResetAll();
+        // Refresh the editor for the currently selected area.
+        FontAreaList_SelectionChanged(FontAreaList, null!);
     }
 
     private void LoadCurrentSettings()
@@ -176,6 +237,11 @@ public partial class SettingsWindow : Window
     {
         // Restore original theme if user changed it without saving
         App.SwitchTheme(AppSettings.Current.Theme);
+
+        // Revert any live font-size previews to the snapshot taken on open.
+        AppSettings.Current.InterfaceFontSizes = new Dictionary<string, double>(_fontSnapshot);
+        FontService.ApplyAll();
+
         DialogResult = false;
         Close();
     }
