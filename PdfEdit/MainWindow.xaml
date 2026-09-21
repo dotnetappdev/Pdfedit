@@ -390,6 +390,138 @@
 
             </Fluent:RibbonTabItem>
 
+            <!-- ── FILL & SIGN TAB (Adobe-style) ─────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Fill &amp; Sign"
+                                   AutomationProperties.Name="Fill and Sign tab">
+
+                <!-- Add content -->
+                <Fluent:RibbonGroupBox Header="Add Content"
+                                        AutomationProperties.Name="Add content group">
+                    <Fluent:ToggleButton Header="Add Text"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Text — click anywhere on the page to type, then use the floating toolbar to resize, recolour or move it (Adobe Fill &amp; Sign style)"
+                                         AutomationProperties.Name="Add text anywhere">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="Ab" FontWeight="Bold" FontSize="18"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Date"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DateStamp, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DateStamp"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Date — click the page to stamp today's date (D)"
+                                         AutomationProperties.Name="Add date">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Marks (check / cross / dot / line / circle) -->
+                <Fluent:RibbonGroupBox Header="Marks"
+                                        AutomationProperties.Name="Marks group">
+                    <Fluent:ToggleButton Header="Check" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Checkmark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Checkmark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Checkmark — click a checkbox or the page to place ✓ (K)"
+                                         AutomationProperties.Name="Checkmark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="✓" Foreground="#4CAF50" FontWeight="Bold" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Cross" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=XMark, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="XMark"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Cross — click the page to place ✕"
+                                         AutomationProperties.Name="Cross mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="✕" Foreground="#F44336" FontWeight="Bold" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Dot" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Dot, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Dot"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Dot — click the page to place a filled dot ●"
+                                         AutomationProperties.Name="Dot mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="●" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Line" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Line, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Line"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Line — click the page to place a short line —"
+                                         AutomationProperties.Name="Line mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="—" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Circle" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Circle, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Circle"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Circle — click the page to place a circle ○"
+                                         AutomationProperties.Name="Circle mark">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="○" FontSize="13"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Sign -->
+                <Fluent:RibbonGroupBox Header="Sign"
+                                        AutomationProperties.Name="Sign group">
+                    <Fluent:ToggleButton Header="Sign"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Signature"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Sign — click a signature field or the page to place your signature (S)"
+                                         AutomationProperties.Name="Sign document">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Fields -->
+                <Fluent:RibbonGroupBox Header="Fields"
+                                        AutomationProperties.Name="Fields group">
+                    <Fluent:ToggleButton Header="Highlight Fields"
+                                         IsChecked="{Binding HighlightFields, Mode=TwoWay}"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Show a coloured highlight over all fillable form fields (Adobe 'Highlight Existing Fields')"
+                                         AutomationProperties.Name="Highlight existing fields">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Clear All"
+                                   Command="{Binding ClearAllFieldsCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Clear the values of all form fields"
+                                   AutomationProperties.Name="Clear all fields"/>
+                    <Fluent:Button Header="Delete Field"
+                                   Command="{Binding DeleteSelectedFieldCommand}"
+                                   Size="Middle"
+                                   ToolTip="Delete the selected form field (or right-click a field on the page)"
+                                   AutomationProperties.Name="Delete selected field"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
             <!-- ── EDIT TAB ──────────────────────────────────────────────── -->
             <Fluent:RibbonTabItem Header="Edit"
                                    AutomationProperties.Name="Edit tab">

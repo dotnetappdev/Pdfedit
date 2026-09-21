@@ -857,14 +857,22 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.Checkmark or ActiveTool.XMark)
+        if (tool is ActiveTool.Checkmark or ActiveTool.XMark
+                 or ActiveTool.Dot or ActiveTool.Line or ActiveTool.Circle)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
 
             FinalizeAnnotationBox();
-            PlaceStampAnnotation(posOnPage, tool == ActiveTool.Checkmark ? "✓" : "✕",
-                tool == ActiveTool.Checkmark ? "#2E7D32" : "#C62828");
+            (string glyph, string colour) = tool switch
+            {
+                ActiveTool.Checkmark => ("✓", "#2E7D32"),
+                ActiveTool.XMark => ("✕", "#C62828"),
+                ActiveTool.Dot => ("●", "#1A1A1A"),
+                ActiveTool.Line => ("—", "#1A1A1A"),
+                _ => ("○", "#1A1A1A"), // Circle
+            };
+            PlaceStampAnnotation(posOnPage, glyph, colour);
             e.Handled = true;
             return;
         }

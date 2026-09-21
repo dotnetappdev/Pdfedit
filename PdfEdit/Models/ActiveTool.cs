@@ -14,5 +14,8 @@ public enum ActiveTool
     VerticalText,
     DateStamp,
     Checkmark,
-    XMark
+    XMark,
+    Dot,
+    Line,
+    Circle
 }
