@@ -84,9 +84,9 @@ public partial class SettingsWindow : Window
                 IsChecked = fmt == currentFormat,
                 Foreground = fg,
                 FontSize = 13,
-                VerticalAlignment = VerticalAlignment.Center,
-                AutomationProperties = { Name = $"Date format: {label}" }
+                VerticalAlignment = VerticalAlignment.Center
             };
+            System.Windows.Automation.AutomationProperties.SetName(rb, $"Date format: {label}");
 
             var labelSp = new StackPanel { Orientation = Orientation.Horizontal };
             labelSp.Children.Add(new TextBlock
@@ -116,9 +116,9 @@ public partial class SettingsWindow : Window
                 FontSize = 13,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextAlignment = TextAlignment.Right,
-                MinWidth = 180,
-                AutomationProperties = { HelpText = $"Preview: {today.ToString(fmt)}" }
+                MinWidth = 180
             };
+            System.Windows.Automation.AutomationProperties.SetHelpText(preview, $"Preview: {today.ToString(fmt)}");
             Grid.SetColumn(preview, 1);
 
             row.Children.Add(rb);

@@ -32,8 +32,8 @@
         <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}"/>
         <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ZoomOutCommand}"/>
         <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
-        <KeyBinding Key="BracketRight" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
-        <KeyBinding Key="BracketLeft" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
+        <KeyBinding Key="OemCloseBrackets" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
+        <KeyBinding Key="OemOpenBrackets" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
         <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
@@ -65,24 +65,24 @@
                 <Fluent:ApplicationMenu KeyTip="F"
                                         AutomationProperties.Name="File menu">
 
-                    <Fluent:ApplicationMenuItem Header="Open…"
+                    <Fluent:MenuItem Header="Open…"
                                                 KeyTip="O"
                                                 Command="{Binding OpenCommand}"
                                                 AutomationProperties.Name="Open PDF file"/>
 
-                    <Fluent:ApplicationMenuItem Header="Save"
+                    <Fluent:MenuItem Header="Save"
                                                 KeyTip="S"
                                                 Command="{Binding SaveCommand}"
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Save PDF"/>
 
-                    <Fluent:ApplicationMenuItem Header="Save As…"
+                    <Fluent:MenuItem Header="Save As…"
                                                 KeyTip="A"
                                                 Command="{Binding SaveAsCommand}"
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Save as new file"/>
 
-                    <Fluent:ApplicationMenuItem Header="Flatten &amp; Save…"
+                    <Fluent:MenuItem Header="Flatten &amp; Save…"
                                                 KeyTip="L"
                                                 Command="{Binding FlattenAndSaveCommand}"
                                                 IsEnabled="{Binding HasDocument}"
@@ -90,7 +90,7 @@
 
                     <Separator/>
 
-                    <Fluent:ApplicationMenuItem Header="Print…"
+                    <Fluent:MenuItem Header="Print…"
                                                 KeyTip="P"
                                                 Command="{Binding PrintCommand}"
                                                 IsEnabled="{Binding HasDocument}"
@@ -98,7 +98,7 @@
 
                     <Separator/>
 
-                    <Fluent:ApplicationMenuItem Header="Close"
+                    <Fluent:MenuItem Header="Close"
                                                 KeyTip="C"
                                                 Command="{Binding CloseCommand}"
                                                 IsEnabled="{Binding HasDocument}"
@@ -106,12 +106,12 @@
 
                     <Separator/>
 
-                    <Fluent:ApplicationMenuItem Header="About PdfEdit…"
+                    <Fluent:MenuItem Header="About PdfEdit…"
                                                 KeyTip="B"
                                                 Command="{Binding ShowAboutCommand}"
                                                 AutomationProperties.Name="About PdfEdit"/>
 
-                    <Fluent:ApplicationMenu.RightContent>
+                    <Fluent:ApplicationMenu.RightPaneContent>
                         <StackPanel Margin="4,8" Width="230">
                             <TextBlock Text="RECENT FILES"
                                        FontSize="11" FontWeight="SemiBold"
@@ -162,7 +162,7 @@
                                     HorizontalAlignment="Stretch"
                                     AutomationProperties.Name="Open global search"/>
                         </StackPanel>
-                    </Fluent:ApplicationMenu.RightContent>
+                    </Fluent:ApplicationMenu.RightPaneContent>
 
                 </Fluent:ApplicationMenu>
             </Fluent:Ribbon.Menu>

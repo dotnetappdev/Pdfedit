@@ -11,6 +11,7 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using PdfEdit.Models;
 using Rectangle = iText.Kernel.Geom.Rectangle;
+using PdfDocumentInfo = PdfEdit.Models.PdfDocumentInfo;
 
 namespace PdfEdit.Services;
 
@@ -70,8 +71,8 @@ public class PdfFormService
                         FieldType = GetFieldType(field),
                         IsReadOnly = field.IsReadOnly(),
                         IsRequired = field.IsRequired(),
-                        DefaultValue = field.GetDefaultValueAsString(),
-                        Tooltip = field.GetDisplayName(),
+                        DefaultValue = field.GetPdfObject().GetAsString(PdfName.DV)?.ToUnicodeString() ?? string.Empty,
+                        Tooltip = field.GetPdfObject().GetAsString(PdfName.TU)?.ToUnicodeString() ?? string.Empty,
                     };
 
                     if (field is PdfTextFormField txt)
@@ -106,7 +107,7 @@ public class PdfFormService
                             {
                                 foreach (var key in normalAp.KeySet())
                                 {
-                                    if (!key.Equals(PdfName.Off))
+                                    if (!key.Equals(new PdfName("Off")))
                                         fieldInfo.Value = key.GetValue();
                                 }
                             }
@@ -154,7 +155,7 @@ public class PdfFormService
                 var field = form.GetField(name);
                 if (field == null) continue;
 
-                if (field is PdfButtonFormField btn && btn.IsCheckBox())
+                if (field is PdfButtonFormField btn && !btn.IsPushButton() && !btn.IsRadio())
                     field.SetValue(value is "Yes" or "true" or "On" or "1" ? "Yes" : "Off");
                 else
                     field.SetValue(value);
@@ -204,7 +205,7 @@ public class PdfFormService
                 ? $"{r:F3} {g:F3} {b:F3} rg"
                 : "0 0 0 rg";
 
-            pdfAnn.SetDefaultAppearance($"/{fontName} {ann.FontSize:F1} Tf {colorStr}");
+            pdfAnn.SetDefaultAppearance(new PdfString($"/{fontName} {ann.FontSize:F1} Tf {colorStr}"));
 
             page.AddAnnotation(pdfAnn);
         }
@@ -225,7 +226,7 @@ public class PdfFormService
                     var xobj = new PdfImageXObject(imageData);
                     var canvas = new PdfCanvas(page);
                     // Transformation matrix: [scaleX 0 0 scaleY translateX translateY]
-                    canvas.AddXObject(xobj,
+                    canvas.AddXObjectWithTransformationMatrix(xobj,
                         (float)sig.Width, 0f, 0f, (float)sig.Height,
                         (float)sig.Left, (float)sig.Bottom);
                     canvas.Release();

@@ -459,9 +459,9 @@ public partial class PdfViewerControl : UserControl
             AcceptsReturn = field.IsMultiline,
             TextWrapping = field.IsMultiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Padding = new Thickness(2, 0, 2, 0),
-            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
-            AutomationProperties = { Name = $"Form field: {field.Name}" }
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
         };
+        System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.Name}");
 
         if (vertical)
             tb.LayoutTransform = new RotateTransform(-90);
@@ -479,9 +479,9 @@ public partial class PdfViewerControl : UserControl
             IsChecked = field.Value is "Yes" or "true" or "On" or "1",
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = field.Name,
-            AutomationProperties = { Name = $"Checkbox: {field.Name}" }
+            ToolTip = field.Name
         };
+        System.Windows.Automation.AutomationProperties.SetName(cb, $"Checkbox: {field.Name}");
         cb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
         cb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
         cb.GotFocus += (_, _) => _vm!.SelectedField = field;
@@ -497,9 +497,9 @@ public partial class PdfViewerControl : UserControl
             IsChecked = field.Value == "Yes",
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = field.Name,
-            AutomationProperties = { Name = $"Radio button: {field.Name}" }
+            ToolTip = field.Name
         };
+        System.Windows.Automation.AutomationProperties.SetName(rb, $"Radio button: {field.Name}");
         rb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
         rb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
         rb.GotFocus += (_, _) => _vm!.SelectedField = field;
@@ -512,9 +512,9 @@ public partial class PdfViewerControl : UserControl
         {
             Width = w, Height = h,
             FontSize = Math.Max(8, h * 0.55),
-            ToolTip = field.Name,
-            AutomationProperties = { Name = $"Dropdown: {field.Name}" }
+            ToolTip = field.Name
         };
+        System.Windows.Automation.AutomationProperties.SetName(cb, $"Dropdown: {field.Name}");
         foreach (var opt in field.Options) cb.Items.Add(opt);
         var cur = _vm!.FieldValues.TryGetValue(field.Name, out var cv) ? cv : field.Value;
         cb.SelectedItem = cur;
@@ -641,9 +641,9 @@ public partial class PdfViewerControl : UserControl
             BorderBrush = new SolidColorBrush(Color.FromArgb(120, 70, 130, 180)),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(2),
-            ToolTip = "Annotation — drag the toolbar to move · right-click to delete",
-            AutomationProperties = { Name = "Text annotation" }
+            ToolTip = "Annotation — drag the toolbar to move · right-click to delete"
         };
+        System.Windows.Automation.AutomationProperties.SetName(tb, "Text annotation");
 
         ApplyAnnotationFormatting(ann, tb);
 

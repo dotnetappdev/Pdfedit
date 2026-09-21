@@ -23,7 +23,6 @@ public class PdfRenderService : IDisposable
 
     public async Task LoadAsync(string absolutePath)
     {
-        _pdfDoc?.Dispose();
         _pdfDoc = null;
 
         var file = await StorageFile.GetFileFromPathAsync(absolutePath);
@@ -82,7 +81,7 @@ public class PdfRenderService : IDisposable
     {
         if (!_disposed)
         {
-            _pdfDoc?.Dispose();
+            _pdfDoc = null;
             _disposed = true;
         }
     }

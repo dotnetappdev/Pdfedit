@@ -78,9 +78,9 @@ public partial class ToolboxPanel : UserControl
             Background = Brushes.White,
             ToolTip = $"{sig.Name}\nAdded {sig.CreatedAt}\nLeft-click to place · Right-click to delete",
             Cursor = System.Windows.Input.Cursors.Hand,
-            Child = img,
-            AutomationProperties = { Name = $"Saved signature: {sig.Name}" }
+            Child = img
         };
+        System.Windows.Automation.AutomationProperties.SetName(border, $"Saved signature: {sig.Name}");
 
         border.MouseLeftButtonDown += (_, e) =>
         {

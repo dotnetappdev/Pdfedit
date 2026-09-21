@@ -58,6 +58,7 @@
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <TextBlock x:Name="LoadingText"
                                            Text="…" FontSize="18"
+                                           Visibility="Collapsed"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Foreground="{DynamicResource DimForegroundBrush}"/>
@@ -71,9 +72,6 @@
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding Thumbnail}" Value="{x:Null}">
                             <Setter TargetName="LoadingText" Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Thumbnail}" Value="{x:Static {x:Null}}">
-                            <Setter TargetName="LoadingText" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>
