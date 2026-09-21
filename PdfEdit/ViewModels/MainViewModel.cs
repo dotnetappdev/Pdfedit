@@ -423,6 +423,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand DecreaseUiScaleCommand { get; }
     public ICommand NavigateToResultCommand { get; }
     public ICommand OpenRecentCommand { get; }
+    public ICommand ShowAboutCommand { get; }
 
     public MainViewModel()
     {
@@ -497,6 +498,11 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (p is string path && !string.IsNullOrEmpty(path))
                 _ = LoadDocumentAsync(path);
+        });
+        ShowAboutCommand = new RelayCommand(() =>
+        {
+            var dlg = new Dialogs.AboutDialog { Owner = Application.Current.MainWindow };
+            dlg.ShowDialog();
         });
 
         SyncRecentFileEntries();

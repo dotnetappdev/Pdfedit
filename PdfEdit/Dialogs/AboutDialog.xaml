@@ -1,0 +1,98 @@
+<Window x:Class="PdfEdit.Dialogs.AboutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About PdfEdit"
+        Width="420" Height="380"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource PanelBgBrush}"
+        Foreground="{DynamicResource ForegroundBrush}"
+        AutomationProperties.Name="About PdfEdit">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Content -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="32,24">
+
+            <!-- App icon (text glyph) -->
+            <Border Width="72" Height="72"
+                    CornerRadius="16"
+                    Background="{DynamicResource AccentBrush}"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,20">
+                <TextBlock Text="&#xEA90;"
+                           FontFamily="Segoe MDL2 Assets"
+                           FontSize="36"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- App name -->
+            <TextBlock Text="PdfEdit"
+                       FontSize="28" FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource ForegroundBrush}"
+                       Margin="0,0,0,4"/>
+
+            <!-- Version -->
+            <TextBlock x:Name="VersionText"
+                       FontSize="13"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource DimForegroundBrush}"
+                       Margin="0,0,0,16"/>
+
+            <!-- Tagline -->
+            <TextBlock Text="PDF Form Filler &amp; Annotator"
+                       FontSize="13"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource ForegroundBrush}"
+                       Margin="0,0,0,20"/>
+
+            <!-- Built-with chips -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                        Margin="0,0,0,20">
+                <Border CornerRadius="4" Padding="8,4" Margin="3,0"
+                        Background="{DynamicResource AppBorderBrush}">
+                    <TextBlock Text=".NET 10" FontSize="11"
+                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                </Border>
+                <Border CornerRadius="4" Padding="8,4" Margin="3,0"
+                        Background="{DynamicResource AppBorderBrush}">
+                    <TextBlock Text="iText7 8" FontSize="11"
+                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                </Border>
+                <Border CornerRadius="4" Padding="8,4" Margin="3,0"
+                        Background="{DynamicResource AppBorderBrush}">
+                    <TextBlock Text="Fluent.Ribbon 10" FontSize="11"
+                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Copyright -->
+            <TextBlock x:Name="CopyrightText"
+                       FontSize="11"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource DimForegroundBrush}"/>
+        </StackPanel>
+
+        <!-- Close button -->
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource AppBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,12">
+            <Button Content="Close"
+                    Width="90"
+                    HorizontalAlignment="Right"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Click="Close_Click"
+                    AutomationProperties.Name="Close About dialog"/>
+        </Border>
+    </Grid>
+</Window>

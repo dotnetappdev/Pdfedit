@@ -104,6 +104,13 @@
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Close document"/>
 
+                    <Separator/>
+
+                    <Fluent:ApplicationMenuItem Header="About PdfEdit…"
+                                                KeyTip="B"
+                                                Command="{Binding ShowAboutCommand}"
+                                                AutomationProperties.Name="About PdfEdit"/>
+
                     <Fluent:ApplicationMenu.RightContent>
                         <StackPanel Margin="4,8" Width="230">
                             <TextBlock Text="RECENT FILES"
