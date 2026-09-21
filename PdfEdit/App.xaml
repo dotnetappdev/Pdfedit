@@ -1,7 +1,8 @@
 <Application x:Class="PdfEdit.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:Fluent="urn:fluent-ribbon">
+             xmlns:Fluent="urn:fluent-ribbon"
+             xmlns:conv="clr-namespace:PdfEdit.Converters">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -12,6 +13,15 @@
                 <!-- Styles that reference theme tokens via DynamicResource -->
                 <ResourceDictionary Source="Resources/AppTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Value converters, registered application-wide so any control
+                 (including stand-alone UserControls) can resolve them. -->
+            <conv:ZeroToOneConverter x:Key="ZeroToOneConverter"/>
+            <conv:ZoomPercentConverter x:Key="ZoomPercentConverter"/>
+            <conv:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+            <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

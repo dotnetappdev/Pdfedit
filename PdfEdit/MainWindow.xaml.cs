@@ -11,14 +11,8 @@ public partial class MainWindow : RibbonWindow
 {
     public MainWindow()
     {
-        // Register converters before InitializeComponent so XAML can resolve them
-        Resources.Add("ZeroToOneConverter", new ZeroToOneConverter());
-        Resources.Add("ZoomPercentConverter", new ZoomPercentConverter());
-        Resources.Add("EnumToBoolConverter", new EnumToBoolConverter());
-        Resources.Add("NullToBoolConverter", new NullToBoolConverter());
-        Resources.Add("BoolToVisibilityConverter", new BoolToVisibilityConverter());
-        Resources.Add("InverseBoolConverter", new InverseBoolConverter());
-
+        // Value converters are registered application-wide in App.xaml so that
+        // every control (including stand-alone UserControls) can resolve them.
         InitializeComponent();
         Loaded += OnWindowLoaded;
     }
