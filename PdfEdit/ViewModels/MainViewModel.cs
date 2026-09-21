@@ -56,6 +56,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
+    public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? PageChanged;
@@ -421,6 +422,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand IncreaseUiScaleCommand { get; }
     public ICommand DecreaseUiScaleCommand { get; }
     public ICommand NavigateToResultCommand { get; }
+    public ICommand OpenRecentCommand { get; }
 
     public MainViewModel()
     {
@@ -491,6 +493,13 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (p is SearchResult r) NavigateToSearchResult(r);
         });
+        OpenRecentCommand = new RelayCommand(p =>
+        {
+            if (p is string path && !string.IsNullOrEmpty(path))
+                _ = LoadDocumentAsync(path);
+        });
+
+        SyncRecentFileEntries();
     }
 
     // ── Public Methods ───────────────────────────────────────────────────────
@@ -599,9 +608,25 @@ public class MainViewModel : INotifyPropertyChanged
             await _renderService.LoadAsync(path);
 
             _currentPageIndex = 0;
+            _zoom = 1.0;
+
+            // Restore per-document state (last page + zoom)
+            var docState = DocumentStateStore.Get(path);
+            if (docState != null)
+            {
+                _currentPageIndex = Math.Clamp(docState.LastPageIndex, 0, Document.PageCount - 1);
+                _zoom = Math.Clamp(docState.LastZoom, 0.1, 5.0);
+                OnPropertyChanged(nameof(Zoom));
+                OnPropertyChanged(nameof(ZoomPercent));
+            }
+
             OnPropertyChanged(nameof(CurrentPageIndex));
             OnPropertyChanged(nameof(CurrentPageRotation));
             RefreshCurrentPageFields();
+
+            // Record in recent files
+            AppSettings.Current.AddRecentFile(path);
+            SyncRecentFileEntries();
 
             DocumentLoaded?.Invoke();
             string msg = $"Opened: {System.IO.Path.GetFileName(path)} — " +
@@ -703,6 +728,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void CloseDocument()
     {
+        SaveDocumentState();
         _currentFilePath = null;
         Document = null;
         FieldValues.Clear();
@@ -912,6 +938,26 @@ public class MainViewModel : INotifyPropertyChanged
         int page = _currentPageIndex + 1;
         foreach (var f in AllFields.Where(f => f.PageNumber == page))
             CurrentPageFields.Add(f);
+    }
+
+    public bool HasNoRecentFiles => RecentFileEntries.Count == 0;
+
+    public void SaveDocumentState()
+    {
+        if (_currentFilePath == null) return;
+        DocumentStateStore.Set(_currentFilePath, new DocumentState
+        {
+            LastPageIndex = _currentPageIndex,
+            LastZoom = _zoom
+        });
+    }
+
+    private void SyncRecentFileEntries()
+    {
+        RecentFileEntries.Clear();
+        foreach (var p in AppSettings.Current.RecentFiles)
+            RecentFileEntries.Add(new RecentFileEntry(p));
+        OnPropertyChanged(nameof(HasNoRecentFiles));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

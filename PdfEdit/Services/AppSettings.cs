@@ -11,15 +11,47 @@ public class AppSettings
 
     private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
 
+    // ── Appearance ───────────────────────────────────────────────────────────
     public string Theme { get; set; } = "Dark";
+    public double UiScale { get; set; } = 1.0;
+
+    // ── Window geometry ──────────────────────────────────────────────────────
+    public double WindowLeft { get; set; } = double.NaN;
+    public double WindowTop { get; set; } = double.NaN;
+    public double WindowWidth { get; set; } = 1280;
+    public double WindowHeight { get; set; } = 800;
+    public bool WindowMaximized { get; set; }
+
+    // ── Editor defaults ──────────────────────────────────────────────────────
     public string DefaultFontFamily { get; set; } = "Arial";
     public double DefaultFontSize { get; set; } = 12;
-    public double UiScale { get; set; } = 1.0;
-    public string ClaudeApiKey { get; set; } = string.Empty;
     public string DefaultFontColor { get; set; } = "#000000";
     public bool ForceUpperCaseDefault { get; set; }
-    public bool HighContrastFocusIndicators { get; set; }
     public string DateFormat { get; set; } = "MMMM d, yyyy";
+    public string LastActiveTool { get; set; } = "Hand";
+
+    // ── AI ───────────────────────────────────────────────────────────────────
+    public string ClaudeApiKey { get; set; } = string.Empty;
+
+    // ── Accessibility ────────────────────────────────────────────────────────
+    public bool HighContrastFocusIndicators { get; set; }
+
+    // ── Recent files (max 12, newest first) ──────────────────────────────────
+    public List<string> RecentFiles { get; set; } = new();
+
+    public void AddRecentFile(string path)
+    {
+        RecentFiles.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        RecentFiles.Insert(0, path);
+        while (RecentFiles.Count > 12) RecentFiles.RemoveAt(RecentFiles.Count - 1);
+        Save();
+    }
+
+    public void RemoveRecentFile(string path)
+    {
+        RecentFiles.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        Save();
+    }
 
     [JsonIgnore]
     public static AppSettings Current { get; private set; } = new();

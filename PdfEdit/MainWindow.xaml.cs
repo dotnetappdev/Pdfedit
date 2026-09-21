@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using System.Windows;
 using Fluent;
 using PdfEdit.Converters;
+using PdfEdit.Services;
 using PdfEdit.ViewModels;
 
 namespace PdfEdit;
@@ -17,6 +19,40 @@ public partial class MainWindow : RibbonWindow
         Resources.Add("BoolToVisibilityConverter", new BoolToVisibilityConverter());
 
         InitializeComponent();
+        Loaded += OnWindowLoaded;
+    }
+
+    private void OnWindowLoaded(object sender, RoutedEventArgs e)
+    {
+        var s = AppSettings.Current;
+        if (!double.IsNaN(s.WindowLeft) && !double.IsNaN(s.WindowTop))
+        {
+            Left = s.WindowLeft;
+            Top = s.WindowTop;
+        }
+        Width = s.WindowWidth;
+        Height = s.WindowHeight;
+        if (s.WindowMaximized)
+            WindowState = WindowState.Maximized;
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        base.OnClosing(e);
+        var s = AppSettings.Current;
+        if (WindowState == WindowState.Normal)
+        {
+            s.WindowLeft = Left;
+            s.WindowTop = Top;
+            s.WindowWidth = Width;
+            s.WindowHeight = Height;
+        }
+        s.WindowMaximized = WindowState == WindowState.Maximized;
+
+        if (DataContext is MainViewModel vm)
+            vm.SaveDocumentState();
+
+        s.Save();
     }
 
     public async Task OpenFileAsync(string path)

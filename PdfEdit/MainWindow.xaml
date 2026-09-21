@@ -105,10 +105,44 @@
                                                 AutomationProperties.Name="Close document"/>
 
                     <Fluent:ApplicationMenu.RightContent>
-                        <StackPanel Margin="4,8" Width="200">
-                            <TextBlock Text="QUICK ACTIONS"
+                        <StackPanel Margin="4,8" Width="230">
+                            <TextBlock Text="RECENT FILES"
                                        FontSize="11" FontWeight="SemiBold"
-                                       Margin="0,0,0,8"/>
+                                       Margin="0,0,0,6"/>
+                            <ScrollViewer MaxHeight="280"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding RecentFileEntries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:RecentFileEntry}">
+                                            <Button Command="{Binding DataContext.OpenRecentCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding FullPath}"
+                                                    HorizontalContentAlignment="Left"
+                                                    HorizontalAlignment="Stretch"
+                                                    Padding="8,5" Margin="0,1"
+                                                    ToolTip="{Binding FullPath}"
+                                                    AutomationProperties.Name="{Binding FileName}">
+                                                <StackPanel MaxWidth="210">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               FontWeight="SemiBold" FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Directory}"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource AppMutedBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <TextBlock Text="No recent files" FontSize="11"
+                                       Foreground="{DynamicResource AppMutedBrush}"
+                                       Margin="8,4"
+                                       Visibility="{Binding HasNoRecentFiles,
+                                           Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <Separator Margin="0,8"/>
                             <Button Content="⚙ Settings"
                                     Command="{Binding OpenSettingsCommand}"
                                     Padding="10,6"
