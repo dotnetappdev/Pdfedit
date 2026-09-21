@@ -1,0 +1,88 @@
+<UserControl x:Class="PdfEdit.Controls.PdfViewerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             Background="#4A4A4A"
+             d:DesignHeight="700" d:DesignWidth="900">
+
+    <Grid>
+        <!-- Loading overlay -->
+        <Border x:Name="LoadingOverlay"
+                Background="#80000000"
+                Visibility="Collapsed"
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Loading…"
+                           Foreground="White"
+                           FontSize="18"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- No-document placeholder -->
+        <Border x:Name="PlaceholderPanel"
+                Background="#2D2D2D"
+                Visibility="Visible">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Path Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+                      Fill="#555555" Width="72" Height="72" Stretch="Uniform"/>
+                <TextBlock Text="Open a PDF to begin"
+                           FontSize="18"
+                           Foreground="#888888"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Use File → Open or drag a PDF here"
+                           FontSize="13"
+                           Foreground="#666666"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- PDF ScrollViewer -->
+        <ScrollViewer x:Name="PdfScrollViewer"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="Collapsed"
+                      Background="#4A4A4A"
+                      AllowDrop="True"
+                      Drop="OnDrop">
+
+            <Grid HorizontalAlignment="Center"
+                  VerticalAlignment="Top"
+                  Margin="24">
+
+                <!-- Page shadow -->
+                <Border CornerRadius="2"
+                        Margin="4,4,0,0"
+                        Background="#33000000"
+                        Width="{Binding ActualWidth, ElementName=PageImage}"
+                        Height="{Binding ActualHeight, ElementName=PageImage}"/>
+
+                <!-- Page container (image + form field overlay) -->
+                <Border x:Name="PageBorder"
+                        BorderBrush="#CCCCCC"
+                        BorderThickness="1"
+                        Background="White">
+                    <Grid x:Name="PageGrid">
+
+                        <!-- Rendered PDF page image -->
+                        <Image x:Name="PageImage"
+                               Stretch="None"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <!-- Form field overlay canvas — controls are placed here at runtime -->
+                        <Canvas x:Name="FieldOverlayCanvas"
+                                IsHitTestVisible="True"/>
+
+                        <!-- Field highlight overlay (semi-transparent rectangles) -->
+                        <Canvas x:Name="HighlightCanvas"
+                                IsHitTestVisible="False"/>
+
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

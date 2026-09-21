@@ -1,0 +1,448 @@
+<Fluent:RibbonWindow x:Class="PdfEdit.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Fluent="urn:fluent-ribbon"
+        xmlns:controls="clr-namespace:PdfEdit.Controls"
+        xmlns:vm="clr-namespace:PdfEdit.ViewModels"
+        xmlns:models="clr-namespace:PdfEdit.Models"
+        mc:Ignorable="d"
+        Title="PdfEdit — PDF Form Filler"
+        Height="780" Width="1280"
+        MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E">
+
+    <Fluent:RibbonWindow.DataContext>
+        <vm:MainViewModel/>
+    </Fluent:RibbonWindow.DataContext>
+
+    <!-- ── Keyboard shortcuts ──────────────────────────────────────────── -->
+    <Fluent:RibbonWindow.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseCommand}"/>
+        <KeyBinding Key="Right" Modifiers="Control" Command="{Binding NextPageCommand}"/>
+        <KeyBinding Key="Left" Modifiers="Control" Command="{Binding PreviousPageCommand}"/>
+        <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}"/>
+        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ZoomOutCommand}"/>
+        <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
+    </Fluent:RibbonWindow.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- Ribbon -->
+            <RowDefinition Height="*"/>      <!-- Content -->
+            <RowDefinition Height="Auto"/>   <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             RIBBON TOOLBAR
+             ════════════════════════════════════════════════════════════════ -->
+        <Fluent:Ribbon Grid.Row="0" x:Name="MainRibbon">
+
+            <!-- Quick Access Toolbar -->
+            <Fluent:Ribbon.QuickAccessItems>
+                <Fluent:QuickAccessMenuItem Command="{Binding OpenCommand}" ToolTip="Open (Ctrl+O)"/>
+                <Fluent:QuickAccessMenuItem Command="{Binding SaveCommand}" ToolTip="Save (Ctrl+S)"/>
+            </Fluent:Ribbon.QuickAccessItems>
+
+            <!-- ── HOME TAB ────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Home">
+
+                <!-- File group -->
+                <Fluent:RibbonGroupBox Header="File">
+                    <Fluent:Button Header="Open"
+                                   Command="{Binding OpenCommand}"
+                                   KeyTip="O"
+                                   ToolTip="Open a PDF file (Ctrl+O)"/>
+
+                    <Fluent:Button Header="Save"
+                                   Command="{Binding SaveCommand}"
+                                   KeyTip="S"
+                                   ToolTip="Save filled PDF (Ctrl+S)"
+                                   IsEnabled="{Binding HasDocument}"/>
+
+                    <Fluent:Button Header="Save As"
+                                   Command="{Binding SaveAsCommand}"
+                                   KeyTip="A"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save as a new file (Ctrl+Shift+S)"/>
+
+                    <Fluent:Button Header="Close"
+                                   Command="{Binding CloseCommand}"
+                                   KeyTip="C"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Close the current document"/>
+
+                    <Fluent:Button Header="Print"
+                                   Command="{Binding PrintCommand}"
+                                   KeyTip="P"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Print document"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Navigation group -->
+                <Fluent:RibbonGroupBox Header="Navigation">
+                    <Fluent:Button Header="First"
+                                   Command="{Binding FirstPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="F"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Go to first page"/>
+                    <Fluent:Button Header="Previous"
+                                   Command="{Binding PreviousPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="R"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Previous page (Ctrl+Left)"/>
+                    <Fluent:Button Header="Next"
+                                   Command="{Binding NextPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="N"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Next page (Ctrl+Right)"/>
+                    <Fluent:Button Header="Last"
+                                   Command="{Binding LastPageCommand}"
+                                   Size="Middle"
+                                   KeyTip="L"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Go to last page"/>
+
+                    <Fluent:Spinner Header="Page"
+                                    Value="{Binding CurrentPageIndex, Converter={StaticResource ZeroToOneConverter}, Mode=TwoWay}"
+                                    Minimum="1"
+                                    Maximum="{Binding PageCount}"
+                                    Format="0"
+                                    IsEnabled="{Binding HasDocument}"
+                                    Width="60"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── VIEW TAB ─────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="View">
+
+                <Fluent:RibbonGroupBox Header="Zoom">
+                    <Fluent:Button Header="Zoom In"
+                                   Command="{Binding ZoomInCommand}"
+                                   KeyTip="I"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Zoom in (Ctrl++)"/>
+                    <Fluent:Button Header="Zoom Out"
+                                   Command="{Binding ZoomOutCommand}"
+                                   KeyTip="O"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Zoom out (Ctrl+-)"/>
+                    <Fluent:Button Header="Fit Page"
+                                   Command="{Binding ZoomFitCommand}"
+                                   KeyTip="F"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Fit page (Ctrl+0)"/>
+                    <Fluent:Button Header="100%"
+                                   Command="{Binding ZoomActualCommand}"
+                                   KeyTip="A"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Actual size"/>
+
+                    <Fluent:Spinner Header="Zoom %"
+                                    Value="{Binding Zoom, Converter={StaticResource ZoomPercentConverter}, Mode=TwoWay}"
+                                    Minimum="10"
+                                    Maximum="500"
+                                    Format="0"
+                                    IsEnabled="{Binding HasDocument}"
+                                    Width="70"/>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Display">
+                    <Fluent:ToggleButton Header="Highlight Fields"
+                                         IsChecked="{Binding HighlightFields}"
+                                         KeyTip="H"
+                                         Size="Middle"
+                                         ToolTip="Show/hide field highlight overlay"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── FORMS TAB ─────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Forms">
+
+                <Fluent:RibbonGroupBox Header="Fill">
+                    <Fluent:Button Header="Clear All"
+                                   Command="{Binding ClearAllFieldsCommand}"
+                                   KeyTip="C"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Clear all form fields"/>
+                    <Fluent:Button Header="Import Data"
+                                   Command="{Binding ImportDataCommand}"
+                                   KeyTip="I"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Import field values from TSV file"/>
+                    <Fluent:Button Header="Export Data"
+                                   Command="{Binding ExportDataCommand}"
+                                   KeyTip="E"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export field values to TSV file"/>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Save Options">
+                    <Fluent:Button Header="Save Filled PDF"
+                                   Command="{Binding SaveCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save PDF with form fields editable"/>
+                    <Fluent:Button Header="Flatten &amp; Save"
+                                   Command="{Binding FlattenAndSaveCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save PDF with fields baked in (non-editable)"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+            <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Tools">
+
+                <Fluent:RibbonGroupBox Header="Active Tool">
+                    <Fluent:ToggleButton Header="Hand"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Hand, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Hand"
+                                         ToolTip="Hand / Pan tool (H)"/>
+                    <Fluent:ToggleButton Header="Select"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Select"
+                                         ToolTip="Selection tool (V)"/>
+                    <Fluent:ToggleButton Header="Text Fill"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TextFill, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="TextFill"
+                                         ToolTip="Text fill tool (T)"/>
+                    <Fluent:ToggleButton Header="Signature"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Signature, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Signature"
+                                         ToolTip="Signature tool (S)"/>
+                    <Fluent:ToggleButton Header="Zoom"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Zoom, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Zoom"
+                                         ToolTip="Zoom tool (Z)"/>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
+        </Fluent:Ribbon>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             MAIN CONTENT AREA
+             ════════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="56"/>           <!-- Toolbox -->
+                <ColumnDefinition Width="4"/>             <!-- Splitter -->
+                <ColumnDefinition Width="*"/>             <!-- PDF Viewer -->
+                <ColumnDefinition Width="4"/>             <!-- Splitter -->
+                <ColumnDefinition Width="220" MinWidth="180" MaxWidth="380"/> <!-- Properties -->
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Toolbox ───────────────────────────────────────────────── -->
+            <Border Grid.Column="0"
+                    Background="#252526"
+                    BorderBrush="#3E3E3E"
+                    BorderThickness="0,0,1,0">
+                <controls:ToolboxPanel DataContext="{Binding}"/>
+            </Border>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+
+            <!-- ── PDF Viewer ─────────────────────────────────────────────── -->
+            <controls:PdfViewerControl Grid.Column="2"
+                                        x:Name="PdfViewer"
+                                        DataContext="{Binding}"/>
+
+            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
+
+            <!-- ── Properties Panel ──────────────────────────────────────── -->
+            <Border Grid.Column="4"
+                    Background="#252526"
+                    BorderBrush="#3E3E3E"
+                    BorderThickness="1,0,0,0">
+                <TabControl>
+
+                    <!-- Field Properties tab -->
+                    <TabItem Header="Properties">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                            <StackPanel>
+
+                                <!-- Document Info -->
+                                <TextBlock Text="DOCUMENT" Style="{StaticResource SectionHeader}"/>
+                                <TextBlock Text="{Binding Document.Title, FallbackValue='—'}"
+                                           FontSize="12" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Document.Title}"/>
+                                <TextBlock Text="{Binding CurrentPageDisplay}"
+                                           FontSize="11" Foreground="#888888"/>
+                                <TextBlock Text="{Binding ZoomPercent}"
+                                           FontSize="11" Foreground="#888888"/>
+
+                                <Separator Margin="0,8" Background="#3E3E3E"/>
+
+                                <!-- Selected Field Info -->
+                                <TextBlock Text="SELECTED FIELD" Style="{StaticResource SectionHeader}"/>
+
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1"
+                                               Text="{Binding SelectedField.Name, FallbackValue='—'}"
+                                               FontSize="11" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding SelectedField.Name}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1"
+                                               Text="{Binding SelectedField.FieldType, FallbackValue='—'}"
+                                               FontSize="11" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Page:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1"
+                                               Text="{Binding SelectedField.PageNumber, FallbackValue='—'}"
+                                               FontSize="11" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Required:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1"
+                                               Text="{Binding SelectedField.IsRequired, FallbackValue='—'}"
+                                               FontSize="11" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Value:" FontSize="11" Foreground="#888888" VerticalAlignment="Top" Margin="0,6,0,0"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1"
+                                             Text="{Binding SelectedField.Value, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource PropTextBox}"
+                                             Margin="0,4,0,0"
+                                             IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Tooltip:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1"
+                                               Text="{Binding SelectedField.Tooltip, FallbackValue='—'}"
+                                               FontSize="11" Margin="0,4,0,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+
+                                <Separator Margin="0,8" Background="#3E3E3E"/>
+
+                                <!-- All fields list -->
+                                <TextBlock Text="ALL FIELDS" Style="{StaticResource SectionHeader}"/>
+                                <TextBlock Text="{Binding AllFields.Count, StringFormat='{}{0} fields'}"
+                                           FontSize="11" Foreground="#888888" Margin="0,0,0,4"/>
+
+                                <ListBox ItemsSource="{Binding AllFields}"
+                                         SelectedItem="{Binding SelectedField}"
+                                         MaxHeight="260"
+                                         Background="#2D2D2D"
+                                         BorderBrush="#3E3E3E"
+                                         Foreground="#CCCCCC"
+                                         FontSize="11">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="2,1">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding FieldType}" Foreground="#888888"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Fields on current page tab -->
+                    <TabItem Header="Page Fields">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                            <StackPanel>
+                                <TextBlock Text="FIELDS ON THIS PAGE" Style="{StaticResource SectionHeader}"/>
+                                <TextBlock Text="{Binding CurrentPageFields.Count, StringFormat='{}{0} fields'}"
+                                           FontSize="11" Foreground="#888888" Margin="0,0,0,4"/>
+                                <ListBox ItemsSource="{Binding CurrentPageFields}"
+                                         SelectedItem="{Binding SelectedField}"
+                                         Background="#2D2D2D"
+                                         BorderBrush="#3E3E3E"
+                                         Foreground="#CCCCCC"
+                                         FontSize="11">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="2,2">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Value, StringFormat='Value: {0}'}"
+                                                           Foreground="#AAAAAA" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                </TabControl>
+            </Border>
+        </Grid>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             STATUS BAR
+             ════════════════════════════════════════════════════════════════ -->
+        <StatusBar Grid.Row="2">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Column="0">
+                <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="12"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="1" Margin="8,0">
+                <TextBlock Text="{Binding CurrentPageDisplay}" Foreground="White" FontSize="12"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="2" Margin="8,0">
+                <TextBlock Text="{Binding ZoomPercent}" Foreground="White" FontSize="12"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="3" Margin="8,0">
+                <TextBlock Text="{Binding ActiveTool, StringFormat='Tool: {0}'}" Foreground="White" FontSize="12"/>
+            </StatusBarItem>
+        </StatusBar>
+
+    </Grid>
+</Fluent:RibbonWindow>
