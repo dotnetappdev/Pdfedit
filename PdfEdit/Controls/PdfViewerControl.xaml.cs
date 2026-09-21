@@ -25,6 +25,7 @@ public partial class PdfViewerControl : UserControl
     private static readonly Brush FieldBorderBrush = Freeze(Color.FromArgb(150, 70, 130, 200));
     private static readonly Brush FieldFocusBrush = Freeze(Color.FromArgb(90, 120, 180, 255));
     private static readonly Brush FieldFocusBorderBrush = Freeze(Color.FromArgb(230, 30, 120, 220));
+    private static readonly Brush FieldRequiredBorderBrush = Freeze(Color.FromArgb(200, 210, 60, 60));
 
     private static Brush Freeze(Color c)
     {
@@ -480,8 +481,9 @@ public partial class PdfViewerControl : UserControl
             Background = FieldFillBrush,
             Foreground = Brushes.Black,
             CaretBrush = Brushes.Black,
-            BorderBrush = FieldBorderBrush,
-            BorderThickness = new Thickness(1),
+            // Required fields get a red outline, matching Acrobat's convention.
+            BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush,
+            BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
             FontSize = Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
             AcceptsReturn = field.IsMultiline,
@@ -505,7 +507,7 @@ public partial class PdfViewerControl : UserControl
         tb.LostFocus += (_, _) =>
         {
             tb.Background = FieldFillBrush;
-            tb.BorderBrush = FieldBorderBrush;
+            tb.BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush;
         };
         return tb;
     }

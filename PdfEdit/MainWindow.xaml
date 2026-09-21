@@ -214,7 +214,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Save as a new file (Ctrl+Shift+S)"
-                                   AutomationProperties.Name="Save as new file"/>
+                                   AutomationProperties.Name="Save as new file">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Print"
                                    Command="{Binding PrintCommand}"
@@ -222,7 +226,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Print document (Ctrl+P)"
-                                   AutomationProperties.Name="Print document"/>
+                                   AutomationProperties.Name="Print document">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Close"
                                    Command="{Binding CloseCommand}"
@@ -230,7 +238,11 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Close the current document (Ctrl+W)"
-                                   AutomationProperties.Name="Close document"/>
+                                   AutomationProperties.Name="Close document">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Button Header="Settings"
                                    Command="{Binding OpenSettingsCommand}"
@@ -253,28 +265,44 @@
                                    KeyTip="F"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Go to first page"
-                                   AutomationProperties.Name="Go to first page"/>
+                                   AutomationProperties.Name="Go to first page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE892;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Previous"
                                    Command="{Binding PreviousPageCommand}"
                                    Size="Middle"
                                    KeyTip="R"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Previous page (Ctrl+Left)"
-                                   AutomationProperties.Name="Previous page"/>
+                                   AutomationProperties.Name="Previous page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Next"
                                    Command="{Binding NextPageCommand}"
                                    Size="Middle"
                                    KeyTip="N"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Next page (Ctrl+Right)"
-                                   AutomationProperties.Name="Next page"/>
+                                   AutomationProperties.Name="Next page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Last"
                                    Command="{Binding LastPageCommand}"
                                    Size="Middle"
                                    KeyTip="L"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Go to last page"
-                                   AutomationProperties.Name="Go to last page"/>
+                                   AutomationProperties.Name="Go to last page">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE893;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
 
                     <Fluent:Spinner Header="Page"
                                     Value="{Binding CurrentPageIndex, Converter={StaticResource ZeroToOneConverter}, Mode=TwoWay}"
@@ -476,21 +504,33 @@
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Zoom in (Ctrl++)"
-                                   AutomationProperties.Name="Zoom in"/>
+                                   AutomationProperties.Name="Zoom in">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"
                                    Command="{Binding ZoomOutCommand}"
                                    KeyTip="O"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Zoom out (Ctrl+-)"
-                                   AutomationProperties.Name="Zoom out"/>
+                                   AutomationProperties.Name="Zoom out">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Fit Page"
                                    Command="{Binding ZoomFitCommand}"
                                    KeyTip="F"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Fit page (Ctrl+0)"
-                                   AutomationProperties.Name="Fit page to window"/>
+                                   AutomationProperties.Name="Fit page to window">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="100%"
                                    Command="{Binding ZoomActualCommand}"
                                    KeyTip="A"
@@ -827,16 +867,26 @@
             <Fluent:RibbonTabItem Header="Forms"
                                    AutomationProperties.Name="Forms tab">
 
-                <Fluent:RibbonGroupBox Header="Fill"
-                                        AutomationProperties.Name="Form fill group">
+                <Fluent:RibbonGroupBox Header="Fields"
+                                        AutomationProperties.Name="Form fields group">
                     <Fluent:Button Header="Clear All"
                                    Command="{Binding ClearAllFieldsCommand}"
                                    KeyTip="C"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Clear all form fields"
+                                   ToolTip="Clear the values of all form fields"
                                    AutomationProperties.Name="Clear all form fields">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Delete Field"
+                                   Command="{Binding DeleteSelectedFieldCommand}"
+                                   KeyTip="D"
+                                   ToolTip="Delete the selected form field (or right-click a field on the page)"
+                                   AutomationProperties.Name="Delete selected field"
+                                   AutomationProperties.HelpText="Removes the currently selected form field from the document">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#D24040"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import Data"
