@@ -88,6 +88,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Provider / model -->
+            <RowDefinition Height="Auto"/>  <!-- Profile selector -->
             <RowDefinition Height="Auto"/>  <!-- Task presets -->
             <RowDefinition Height="*"/>     <!-- Chat history -->
             <RowDefinition Height="Auto"/>  <!-- Input row -->
@@ -126,8 +127,49 @@
             </Grid>
         </Border>
 
-        <!-- ── Task preset chips ────────────────────────────────────────── -->
+        <!-- ── Profile selector row ────────────────────────────────────── -->
         <Border Grid.Row="1"
+                BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
+                Padding="8,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Profile:" FontSize="11"
+                           VerticalAlignment="Center" Margin="0,0,6,0"
+                           Foreground="{DynamicResource DimForegroundBrush}"/>
+
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding Profiles}"
+                          SelectedItem="{Binding SelectedProfile}"
+                          DisplayMemberPath="DisplayName"
+                          FontSize="12"
+                          AutomationProperties.Name="Personal profile selector"/>
+
+                <Button Grid.Column="2"
+                        Content="⚡ Quick Fill"
+                        FontSize="11" Padding="8,4" Margin="6,0,0,0"
+                        Command="{Binding QuickFillWithProfileCommand}"
+                        ToolTip="Fill form fields instantly from the selected profile (no AI needed)"
+                        AutomationProperties.Name="Quick fill from profile"/>
+
+                <Button Grid.Column="3"
+                        Content="&#xE713;"
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="13" Width="28" Height="28"
+                        Margin="4,0,0,0"
+                        Command="{Binding ManageProfilesCommand}"
+                        ToolTip="Manage personal profiles"
+                        AutomationProperties.Name="Manage profiles"/>
+            </Grid>
+        </Border>
+
+        <!-- ── Task preset chips ────────────────────────────────────────── -->
+        <Border Grid.Row="2"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="6,6">
             <WrapPanel>
@@ -153,7 +195,7 @@
         </Border>
 
         <!-- ── Chat history ─────────────────────────────────────────────── -->
-        <ScrollViewer Grid.Row="2"
+        <ScrollViewer Grid.Row="3"
                       x:Name="ChatScroll"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
@@ -195,7 +237,7 @@
         </ScrollViewer>
 
         <!-- ── Input row ─────────────────────────────────────────────────── -->
-        <Border Grid.Row="3"
+        <Border Grid.Row="4"
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0"
                 Padding="8,8">
             <Grid>

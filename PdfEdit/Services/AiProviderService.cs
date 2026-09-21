@@ -37,21 +37,23 @@ public static class AiProviderService
         string model,
         string apiKey,
         Action<string> onChunk,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? systemPrompt = null)
     {
         if (provider == "OpenAI")
-            await SendOpenAiStreamAsync(history, model, apiKey, onChunk, ct);
+            await SendOpenAiStreamAsync(history, model, apiKey, onChunk, ct, systemPrompt);
         else
-            await SendClaudeStreamAsync(history, model, apiKey, onChunk, ct);
+            await SendClaudeStreamAsync(history, model, apiKey, onChunk, ct, systemPrompt);
     }
 
-    // Non-streaming form fill (keeps backward compat with RunAiFillCommand)
+    // Non-streaming form fill
     public static async Task<Dictionary<string, string>> FillFormFieldsAsync(
         string userPrompt,
         IEnumerable<string> fieldNames,
         string model,
         string apiKey,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? systemPrompt = null)
     {
         var fieldList = string.Join(", ", fieldNames);
         var fullPrompt =
@@ -61,7 +63,7 @@ public static class AiProviderService
 
         var messages = new[] { new AiChatMessage { Role = "user", Content = fullPrompt } };
         var sb = new StringBuilder();
-        await SendClaudeStreamAsync(messages, model, apiKey, chunk => sb.Append(chunk), ct);
+        await SendClaudeStreamAsync(messages, model, apiKey, chunk => sb.Append(chunk), ct, systemPrompt);
         var text = sb.ToString();
 
         int start = text.IndexOf('{');
@@ -79,20 +81,19 @@ public static class AiProviderService
         string model,
         string apiKey,
         Action<string> onChunk,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? systemPrompt = null)
     {
         var messages = history
             .Where(m => m.Role != "system")
             .Select(m => new { role = m.Role, content = m.Content })
             .ToArray();
 
-        var body = JsonSerializer.Serialize(new
-        {
-            model,
-            max_tokens = 2048,
-            stream = true,
-            messages
-        });
+        object requestObj = string.IsNullOrEmpty(systemPrompt)
+            ? new { model, max_tokens = 2048, stream = true, messages }
+            : new { model, max_tokens = 2048, stream = true, system = systemPrompt, messages };
+
+        var body = JsonSerializer.Serialize(requestObj);
 
         var req = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         req.Headers.Add("x-api-key", apiKey);
@@ -133,9 +134,15 @@ public static class AiProviderService
         string model,
         string apiKey,
         Action<string> onChunk,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? systemPrompt = null)
     {
-        var messages = history.Select(m => new { role = m.Role, content = m.Content }).ToArray();
+        var msgList = history
+            .Select(m => (object)new { role = m.Role, content = m.Content })
+            .ToList();
+        if (!string.IsNullOrEmpty(systemPrompt))
+            msgList.Insert(0, (object)new { role = "system", content = systemPrompt });
+        var messages = msgList.ToArray();
 
         var body = JsonSerializer.Serialize(new { model, stream = true, messages });
 

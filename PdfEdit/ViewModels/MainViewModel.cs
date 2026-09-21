@@ -365,6 +365,7 @@ public class MainViewModel : INotifyPropertyChanged
     private string _aiProvider = "Claude";
     private string _aiModel = "claude-haiku-4-5-20251001";
     private CancellationTokenSource? _aiCts;
+    private PersonalProfile? _selectedProfile;
 
     public string AiChatInput
     {
@@ -402,6 +403,14 @@ public class MainViewModel : INotifyPropertyChanged
     public IList<string> AiProviders { get; } = Services.AiProviderService.Providers.Keys.ToList();
     public ObservableCollection<string> AiModels { get; } = new();
     public ObservableCollection<AiChatMessage> AiChatHistory { get; } = new();
+
+    public ObservableCollection<PersonalProfile> Profiles => Services.PersonalProfileStore.All;
+
+    public PersonalProfile? SelectedProfile
+    {
+        get => _selectedProfile;
+        set { _selectedProfile = value; OnPropertyChanged(); }
+    }
 
     // Thumbnails toggle
     private bool _showThumbnails;
@@ -481,6 +490,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand MergePdfCommand { get; }
     public ICommand ExtractCurrentPageCommand { get; }
     public ICommand ToggleThumbnailsCommand { get; }
+    public ICommand ManageProfilesCommand { get; }
+    public ICommand QuickFillWithProfileCommand { get; }
 
     public MainViewModel()
     {
@@ -575,6 +586,13 @@ public class MainViewModel : INotifyPropertyChanged
         MergePdfCommand = new AsyncRelayCommand(MergePdfAsync, () => HasDocument);
         ExtractCurrentPageCommand = new AsyncRelayCommand(ExtractCurrentPageAsync, () => HasDocument);
         ToggleThumbnailsCommand = new RelayCommand(() => ShowThumbnails = !ShowThumbnails);
+        ManageProfilesCommand = new RelayCommand(OpenManageProfiles);
+        QuickFillWithProfileCommand = new RelayCommand(QuickFillWithProfile,
+            () => HasDocument && _selectedProfile != null);
+
+        // Pre-select first profile if any exist
+        if (Services.PersonalProfileStore.All.Count > 0)
+            _selectedProfile = Services.PersonalProfileStore.All[0];
 
         SyncRecentFileEntries();
     }
@@ -914,6 +932,42 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private void OpenManageProfiles()
+    {
+        var dlg = new Dialogs.ManageProfilesDialog
+        {
+            Owner = Application.Current.MainWindow
+        };
+        dlg.ShowDialog();
+        OnPropertyChanged(nameof(Profiles));
+        // Keep selection valid
+        if (_selectedProfile != null &&
+            !Services.PersonalProfileStore.All.Contains(_selectedProfile))
+        {
+            SelectedProfile = Services.PersonalProfileStore.All.Count > 0
+                ? Services.PersonalProfileStore.All[0] : null;
+        }
+    }
+
+    private void QuickFillWithProfile()
+    {
+        if (_selectedProfile == null || !HasDocument) return;
+        var matches = Services.PersonalProfileStore.MatchFields(
+            AllFields.Select(f => f.Name), _selectedProfile);
+
+        int count = 0;
+        foreach (var (k, v) in matches)
+        {
+            UpdateFieldValue(k, v);
+            count++;
+        }
+        PageChanged?.Invoke();
+        if (count > 0)
+            ToastService.Instance.Success($"Quick Fill: {count} field(s) filled from profile.");
+        else
+            ToastService.Instance.Warning("No matching fields found for this profile.");
+    }
+
     private async Task RunAiFillAsync()
     {
         var key = _aiProvider == "OpenAI"
@@ -936,8 +990,10 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             var fieldNames = AllFields.Select(f => f.Name).ToList();
+            var sysPrompt = _selectedProfile != null
+                ? Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile) : null;
             var result = await Services.AiProviderService.FillFormFieldsAsync(
-                AiPrompt, fieldNames, _aiModel, key);
+                AiPrompt, fieldNames, _aiModel, key, systemPrompt: sysPrompt);
             int count = 0;
             foreach (var (k, v) in result)
             {
@@ -990,10 +1046,13 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             var history = AiChatHistory.Take(AiChatHistory.Count - 1).ToList();
+            var sysPrompt = _selectedProfile != null
+                ? Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile) : null;
             await Services.AiProviderService.SendStreamingAsync(
                 history, _aiProvider, _aiModel, key,
                 chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
-                _aiCts.Token);
+                _aiCts.Token,
+                systemPrompt: sysPrompt);
 
             if (string.IsNullOrEmpty(reply.Content))
                 reply.Content = "(No response — check your API key and model selection.)";

@@ -912,6 +912,32 @@
                                      Width="160"
                                      AutomationProperties.Name="AI model selector"/>
                 </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Profiles"
+                                        AutomationProperties.Name="Personal profiles group">
+                    <Fluent:Button Header="Manage Profiles"
+                                   Command="{Binding ManageProfilesCommand}"
+                                   ToolTip="Store your name, address, NI number and more for auto-fill"
+                                   AutomationProperties.Name="Manage personal profiles">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Quick Fill"
+                                   Command="{Binding QuickFillWithProfileCommand}"
+                                   Size="Middle"
+                                   ToolTip="Fill matching form fields from the selected profile instantly"
+                                   AutomationProperties.Name="Quick fill from profile">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:ComboBox Header="Profile"
+                                     ItemsSource="{Binding Profiles}"
+                                     SelectedItem="{Binding SelectedProfile}"
+                                     DisplayMemberPath="DisplayName"
+                                     Width="110"
+                                     AutomationProperties.Name="Active profile selector"/>
+                </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Setup"
                                         AutomationProperties.Name="AI setup group">
                     <Fluent:Button Header="API Keys"
