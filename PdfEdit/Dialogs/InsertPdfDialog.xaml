@@ -1,0 +1,102 @@
+<Window x:Class="PdfEdit.Dialogs.InsertPdfDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Insert PDF"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="{DynamicResource AppBgBrush}">
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Icon + Title -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,14">
+            <Border Width="36" Height="36" CornerRadius="18"
+                    Background="{DynamicResource AccentBrush}" Margin="0,0,12,0">
+                <TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                           Foreground="White"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock Text="Insert PDF" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ForegroundBrush}"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- File picker -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="FilePathBox"
+                     IsReadOnly="True"
+                     Padding="8,6"
+                     FontSize="12"
+                     Foreground="{DynamicResource ForegroundBrush}"
+                     Background="{DynamicResource InputBgBrush}"
+                     BorderBrush="{DynamicResource AppBorderBrush}"
+                     Text="No file selected"
+                     VerticalContentAlignment="Center"/>
+            <Button Grid.Column="1" Content="Browse…" Margin="8,0,0,0"
+                    Padding="12,6" FontSize="12"
+                    Click="Browse_Click"
+                    AutomationProperties.Name="Browse for PDF to insert"/>
+        </Grid>
+
+        <!-- Insert position -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <TextBlock Text="Insert position:" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,8"/>
+            <RadioButton x:Name="RadioBeginning"
+                         Content="At the beginning (before page 1)"
+                         FontSize="12" Margin="0,0,0,6"
+                         Foreground="{DynamicResource ForegroundBrush}"
+                         GroupName="InsertPos"/>
+            <RadioButton x:Name="RadioBeforeCurrent"
+                         Content="Before current page"
+                         FontSize="12" Margin="0,0,0,6"
+                         Foreground="{DynamicResource ForegroundBrush}"
+                         IsChecked="True"
+                         GroupName="InsertPos"/>
+            <RadioButton x:Name="RadioAfterCurrent"
+                         Content="After current page"
+                         FontSize="12" Margin="0,0,0,6"
+                         Foreground="{DynamicResource ForegroundBrush}"
+                         GroupName="InsertPos"/>
+            <RadioButton x:Name="RadioEnd"
+                         Content="At the end (after last page)"
+                         FontSize="12"
+                         Foreground="{DynamicResource ForegroundBrush}"
+                         GroupName="InsertPos"/>
+        </StackPanel>
+
+        <!-- Separator -->
+        <Rectangle Grid.Row="3" Height="1"
+                   Fill="{DynamicResource AppBorderBrush}"
+                   Margin="0,0,0,16"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel"
+                    Padding="18,7" Margin="0,0,10,0"
+                    FontSize="12" IsCancel="True"
+                    Click="Cancel_Click"
+                    AutomationProperties.Name="Cancel"/>
+            <Button x:Name="InsertBtn"
+                    Content="Insert"
+                    Padding="18,7"
+                    FontSize="12" FontWeight="SemiBold"
+                    IsDefault="True"
+                    IsEnabled="False"
+                    Click="Insert_Click"
+                    AutomationProperties.Name="Insert PDF"/>
+        </StackPanel>
+    </Grid>
+</Window>

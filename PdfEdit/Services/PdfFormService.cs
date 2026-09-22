@@ -372,6 +372,34 @@ public class PdfFormService
         }
     }
 
+    /// <summary>
+    /// Inserts all pages of pdfToInsert into sourcePath after insertAfterPageIndex (0-based).
+    /// Pass -1 to insert at the very beginning.
+    /// </summary>
+    public void InsertPdfAt(string sourcePath, string pdfToInsert, string destPath, int insertAfterPageIndex)
+    {
+        using var srcReader   = new PdfReader(sourcePath);
+        using var insertReader = new PdfReader(pdfToInsert);
+        using var writer = new PdfWriter(destPath);
+        using var outDoc = new PdfDocument(writer);
+        using var srcDoc    = new PdfDocument(srcReader);
+        using var insertDoc = new PdfDocument(insertReader);
+
+        int srcTotal    = srcDoc.GetNumberOfPages();
+        int splitAfter  = Math.Clamp(insertAfterPageIndex + 1, 0, srcTotal); // 1-based page count before insert
+
+        // Pages before insertion point
+        if (splitAfter > 0)
+            srcDoc.CopyPagesTo(1, splitAfter, outDoc);
+
+        // Inserted PDF pages
+        insertDoc.CopyPagesTo(1, insertDoc.GetNumberOfPages(), outDoc);
+
+        // Remaining pages
+        if (splitAfter < srcTotal)
+            srcDoc.CopyPagesTo(splitAfter + 1, srcTotal, outDoc);
+    }
+
     /// <summary>Splits each page of sourcePath into a separate PDF in outputFolder.</summary>
     public int SplitPdf(string sourcePath, string outputFolder)
     {

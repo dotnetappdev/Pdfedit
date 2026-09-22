@@ -71,7 +71,8 @@ A native WPF application for viewing, editing, and filling PDF forms — styled 
 - **Insert Page Before** — Insert a blank page before the current page
 - **Delete Page** — Remove the current page (disabled on single-page documents)
 - **Extract Page** — Save the current page as a standalone PDF
-- **Merge PDF** — Append one or more PDFs to the current document
+- **Merge PDF** — Append one or more PDFs to the end of the current document
+- **Insert PDF** — Insert another PDF at a chosen position: beginning, before/after the current page, or end of document
 - **Split PDF** — Split every page into individual files (saved to `{name}_split/`)
 - **Drag-and-Drop Reorder** — Drag thumbnails to reorder pages; PDF is rewritten automatically
 - **Right-Click Thumbnails** — Context menu: Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract

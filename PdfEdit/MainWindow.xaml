@@ -413,10 +413,20 @@
                                    Command="{Binding MergePdfCommand}"
                                    KeyTip="MP"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Combine this PDF with other PDFs into one document"
+                                   ToolTip="Combine this PDF with other PDFs, appending them at the end"
                                    AutomationProperties.Name="Merge PDFs">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Insert PDF"
+                                   Command="{Binding InsertPdfCommand}"
+                                   KeyTip="IP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Insert another PDF at the beginning, before/after the current page, or at the end"
+                                   AutomationProperties.Name="Insert PDF at position">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Thumbnails"

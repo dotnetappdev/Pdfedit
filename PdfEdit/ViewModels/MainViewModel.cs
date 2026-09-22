@@ -563,6 +563,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand DeleteCurrentPageCommand { get; }
     public ICommand InsertBlankPageCommand { get; }
     public ICommand MergePdfCommand { get; }
+    public ICommand InsertPdfCommand { get; }
     public ICommand ExtractCurrentPageCommand { get; }
     public ICommand ToggleThumbnailsCommand { get; }
     public ICommand ManageProfilesCommand { get; }
@@ -671,7 +672,8 @@ public class MainViewModel : INotifyPropertyChanged
         });
         DeleteCurrentPageCommand = new AsyncRelayCommand(DeleteCurrentPageAsync, () => HasDocument && (_document?.PageCount ?? 1) > 1);
         InsertBlankPageCommand = new AsyncRelayCommand(InsertBlankPageAsync, () => HasDocument);
-        MergePdfCommand = new AsyncRelayCommand(MergePdfAsync, () => HasDocument);
+        MergePdfCommand   = new AsyncRelayCommand(MergePdfAsync,      () => HasDocument);
+        InsertPdfCommand  = new AsyncRelayCommand(InsertPdfAsync,      () => HasDocument);
         ExtractCurrentPageCommand = new AsyncRelayCommand(ExtractCurrentPageAsync, () => HasDocument);
         ToggleThumbnailsCommand = new RelayCommand(() => ShowThumbnails = !ShowThumbnails);
         ManageProfilesCommand = new RelayCommand(OpenManageProfiles);
@@ -1634,6 +1636,44 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("PDF merge failed.", ex);
+        }
+    }
+
+    private async Task InsertPdfAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.InsertPdfDialog(_currentPageIndex + 1, TotalPages);
+        dlg.Owner = System.Windows.Application.Current.MainWindow;
+        if (dlg.ShowDialog() != true || dlg.SelectedFilePath == null) return;
+
+        // Determine 0-based index after which pages are inserted (-1 = before page 0)
+        int insertAfterIndex = dlg.InsertPosition switch
+        {
+            Dialogs.InsertPdfPosition.Beginning     => -1,
+            Dialogs.InsertPdfPosition.BeforeCurrent => _currentPageIndex - 1,
+            Dialogs.InsertPdfPosition.AfterCurrent  => _currentPageIndex,
+            Dialogs.InsertPdfPosition.End           => TotalPages - 1,
+            _                                       => _currentPageIndex
+        };
+
+        var tmp = System.IO.Path.GetTempFileName() + ".pdf";
+        try
+        {
+            await Task.Run(() => _formService.InsertPdfAt(_currentFilePath, dlg.SelectedFilePath, tmp, insertAfterIndex));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            var savedPage = _currentPageIndex;
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = Math.Min(savedPage, TotalPages - 1);
+            ToastService.Instance.Success($"PDF inserted successfully.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Insert PDF failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
         }
     }
 
