@@ -580,6 +580,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AnalyzeContractCommand { get; }
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
+    public ICommand CompressPdfCommand { get; }
     public ICommand AddPageNumbersCommand { get; }
     public ICommand WatermarkCommand { get; }
     public ICommand NewDesignCommand { get; }
@@ -701,6 +702,7 @@ public class MainViewModel : INotifyPropertyChanged
         SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
         WatermarkCommand         = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
         AddPageNumbersCommand    = new AsyncRelayCommand(AddPageNumbersAsync, () => HasDocument);
+        CompressPdfCommand       = new AsyncRelayCommand(CompressPdfAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1187,6 +1189,43 @@ public class MainViewModel : INotifyPropertyChanged
         string dir = degrees > 0 ? "clockwise" : "counter-clockwise";
         StatusText = $"All {_document.PageCount} pages rotated 90° {dir}.";
         ToastService.Instance.Success($"All {_document.PageCount} pages rotated 90° {dir}.");
+    }
+
+    private async Task CompressPdfAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Compressed PDF",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_compressed.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Compressing PDF…";
+            string outPath = dlgSave.FileName;
+            var (orig, comp) = await Task.Run(() => _formService.CompressPdf(_currentFilePath, outPath));
+            double savings = orig > 0 ? (1.0 - (double)comp / orig) * 100 : 0;
+            string msg = $"Compressed {FormatBytes(orig)} → {FormatBytes(comp)} ({savings:F0}% saved)";
+            StatusText = msg;
+            ToastService.Instance.Success(msg);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not compress PDF.", ex);
+            StatusText = "Compression failed.";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1_000_000) return $"{bytes / 1_000_000.0:F1} MB";
+        if (bytes >= 1_000)     return $"{bytes / 1_000.0:F0} KB";
+        return $"{bytes} B";
     }
 
     private async Task AddPageNumbersAsync()

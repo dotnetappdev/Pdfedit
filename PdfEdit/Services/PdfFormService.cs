@@ -463,6 +463,29 @@ public class PdfFormService
         return result;
     }
 
+    /// <summary>
+    /// Re-compress a PDF with maximum compression settings.
+    /// Returns a tuple of (originalBytes, compressedBytes) so the caller can show savings.
+    /// </summary>
+    public (long Original, long Compressed) CompressPdf(string inputPath, string outputPath)
+    {
+        long originalSize = new System.IO.FileInfo(inputPath).Length;
+
+        var writerProps = new WriterProperties()
+            .SetCompressionLevel(CompressionConstants.BEST_COMPRESSION)
+            .UseSmartMode();
+
+        using var reader = new PdfReader(inputPath);
+        reader.SetUnethicalReading(true);
+        using var writer = new PdfWriter(outputPath, writerProps);
+        using var pdf    = new PdfDocument(reader, writer);
+        // Copying pages with full compression enabled via smart mode;
+        // iText re-serializes all content streams.
+
+        long compressedSize = new System.IO.FileInfo(outputPath).Length;
+        return (originalSize, compressedSize);
+    }
+
     /// <summary>Add page numbers (footer) to every page of a PDF.</summary>
     public void AddPageNumbers(string inputPath, string outputPath,
         string format = "Page {n} of {total}",

@@ -538,6 +538,16 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Compress"
+                                   Command="{Binding CompressPdfCommand}"
+                                   KeyTip="CZ"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Re-save with maximum compression to reduce file size"
+                                   AutomationProperties.Name="Compress PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
