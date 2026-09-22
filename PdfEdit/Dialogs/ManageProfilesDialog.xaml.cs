@@ -86,12 +86,12 @@ public partial class ManageProfilesDialog : Window
     private void DeleteProfile_Click(object sender, RoutedEventArgs e)
     {
         if (_editing == null) return;
-        var result = MessageBox.Show(
+        bool confirmed = AppDialog.ShowConfirm(
             $"Delete profile \"{_editing.DisplayName}\"?",
-            "Confirm Delete",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-        if (result != MessageBoxResult.Yes) return;
+            title: "Confirm Delete",
+            confirmText: "Delete",
+            isDanger: true);
+        if (!confirmed) return;
 
         PersonalProfileStore.Remove(_editing.Id);
         ClearForm();

@@ -16,6 +16,10 @@ public class FormFieldInfo
     public string? DefaultValue { get; set; }
     public List<string> Options { get; set; } = new();
 
+    // For radio buttons and checkboxes: the PDF export value this widget represents.
+    // For radio buttons Value holds the group's CURRENT selection; ExportValue identifies THIS button.
+    public string ExportValue { get; set; } = "Yes";
+
     public bool IsReadOnly { get; set; }
     public bool IsRequired { get; set; }
     public bool IsMultiline { get; set; }

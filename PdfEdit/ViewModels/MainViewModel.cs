@@ -496,6 +496,8 @@ public class MainViewModel : INotifyPropertyChanged
     // ── Collections ──────────────────────────────────────────────────────────
 
     public Dictionary<string, string> FieldValues { get; } = new();
+    // Maps field name → export/on-value (for checkboxes and radio buttons)
+    public Dictionary<string, string> FieldExportValues { get; } = new();
     public ObservableCollection<FormFieldInfo> CurrentPageFields { get; } = new();
     public ObservableCollection<FormFieldInfo> AllFields { get; } = new();
 
@@ -751,6 +753,7 @@ public class MainViewModel : INotifyPropertyChanged
             Document = _formService.LoadDocument(path);
 
             FieldValues.Clear();
+            FieldExportValues.Clear();
             AllFields.Clear();
             DeletedFieldNames.Clear();
             _pageRotations.Clear();
@@ -760,7 +763,13 @@ public class MainViewModel : INotifyPropertyChanged
             foreach (var f in Document.FormFields)
             {
                 AllFields.Add(f);
-                FieldValues[f.Name] = f.Value;
+                // For radio groups, all widgets share the same Name; Value is the group's current selection.
+                // Only set FieldValues once per name (all widgets have the same group value).
+                if (!FieldValues.ContainsKey(f.Name))
+                    FieldValues[f.Name] = f.Value;
+                // Track export values for checkboxes and radio buttons
+                if (f.FieldType is Models.FieldType.Checkbox or Models.FieldType.RadioButton)
+                    FieldExportValues[f.Name + "|" + f.ExportValue] = f.ExportValue;
             }
 
             await _renderService.LoadAsync(path);
@@ -794,8 +803,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to open PDF:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Failed to open PDF", ex.Message, ex);
             StatusText = "Error loading document.";
             ToastService.Instance.Error("Failed to open PDF.");
         }
@@ -812,18 +820,27 @@ public class MainViewModel : INotifyPropertyChanged
         var tmp = _currentFilePath + ".tmp";
         try
         {
-            _formService.SaveFull(_currentFilePath, tmp, FieldValues,
+            var errors = _formService.SaveFull(_currentFilePath, tmp, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames);
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
-            ToastService.Instance.Success("Saved successfully.");
+            if (errors.Count > 0)
+            {
+                ToastService.Instance.Warning($"Saved with {errors.Count} issue(s) — see details.");
+                Dialogs.AppDialog.ShowError("Saved with warnings",
+                    $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
+                    + string.Join("\n", errors.Take(10)));
+            }
+            else
+            {
+                ToastService.Instance.Success("Saved successfully.");
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Save failed:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Save failed", ex.Message, ex);
             ToastService.Instance.Error("Save failed.");
         }
         finally
@@ -847,17 +864,27 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
+            var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames);
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
-            ToastService.Instance.Success($"Saved as {System.IO.Path.GetFileName(dlg.FileName)}");
+            if (errors.Count > 0)
+            {
+                ToastService.Instance.Warning($"Saved with {errors.Count} issue(s).");
+                Dialogs.AppDialog.ShowError("Saved with warnings",
+                    $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
+                    + string.Join("\n", errors.Take(10)));
+            }
+            else
+            {
+                ToastService.Instance.Success($"Saved as {System.IO.Path.GetFileName(dlg.FileName)}");
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Save failed:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Save failed", ex.Message, ex);
+            ToastService.Instance.Error("Save failed.");
         }
     }
 
@@ -874,17 +901,40 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
+            var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
-                deletedFieldNames: DeletedFieldNames);
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
-            ToastService.Instance.Success("Flattened PDF saved.");
+            if (errors.Count > 0)
+            {
+                ToastService.Instance.Warning($"Flattened with {errors.Count} issue(s).");
+                Dialogs.AppDialog.ShowError("Flattened with warnings",
+                    $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
+                    + string.Join("\n", errors.Take(10)));
+            }
+            else
+            {
+                ToastService.Instance.Success("Flattened PDF saved.");
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Flatten & Save failed:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Flatten & Save failed", ex.Message, ex);
+            ToastService.Instance.Error("Flatten & Save failed.");
         }
+    }
+
+    private Dictionary<string, string> BuildExportValuesForSave()
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var kv in FieldExportValues)
+        {
+            // Key format: "FieldName|ExportValue"
+            var sep = kv.Key.LastIndexOf('|');
+            if (sep > 0)
+                result[kv.Key[..sep]] = kv.Value;
+        }
+        return result;
     }
 
     private void CloseDocument()
@@ -1170,7 +1220,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Delete page failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Delete page failed.", ex);
         }
         finally
         {
@@ -1191,7 +1241,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Insert page failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Insert page failed.", ex);
         }
         finally
         {
@@ -1229,7 +1279,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Merge failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("PDF merge failed.", ex);
         }
     }
 
@@ -1253,7 +1303,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Extract failed:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Dialogs.AppDialog.ShowError("Page extraction failed.", ex);
         }
     }
 

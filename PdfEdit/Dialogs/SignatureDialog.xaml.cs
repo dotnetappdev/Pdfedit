@@ -79,8 +79,7 @@ public partial class SignatureDialog : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to load image:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            AppDialog.ShowError("Failed to load image.", ex);
         }
     }
 
@@ -114,8 +113,7 @@ public partial class SignatureDialog : Window
 
             if (bytes == null || bytes.Length == 0)
             {
-                MessageBox.Show("Please provide a signature before clicking Apply.",
-                    "No Signature", MessageBoxButton.OK, MessageBoxImage.Warning);
+                AppDialog.ShowInfo("Please provide a signature before clicking Apply.", "No Signature");
                 return;
             }
 
@@ -139,8 +137,7 @@ public partial class SignatureDialog : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to capture signature:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            AppDialog.ShowError("Failed to capture signature.", ex);
         }
     }
 

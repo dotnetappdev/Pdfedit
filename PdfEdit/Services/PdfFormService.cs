@@ -99,6 +99,8 @@ public class PdfFormService
                     if (field is PdfButtonFormField btn && btn.IsRadio())
                     {
                         fieldInfo.RadioGroup = name;
+                        // ExportValue = the on-value this WIDGET represents.
+                        // Value = the group's currently-selected export value (do NOT overwrite it).
                         var appearance = widget.GetAppearanceDictionary();
                         if (appearance != null)
                         {
@@ -108,7 +110,30 @@ public class PdfFormService
                                 foreach (var key in normalAp.KeySet())
                                 {
                                     if (!key.Equals(new PdfName("Off")))
-                                        fieldInfo.Value = key.GetValue();
+                                    {
+                                        fieldInfo.ExportValue = key.GetValue();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (field is PdfButtonFormField cbtn && !cbtn.IsPushButton() && !cbtn.IsRadio())
+                    {
+                        // Checkbox: detect actual on-value from appearance dict
+                        var appearance = widget.GetAppearanceDictionary();
+                        if (appearance != null)
+                        {
+                            var normalAp = appearance.GetAsDictionary(PdfName.N);
+                            if (normalAp != null)
+                            {
+                                foreach (var key in normalAp.KeySet())
+                                {
+                                    if (!key.Equals(new PdfName("Off")))
+                                    {
+                                        fieldInfo.ExportValue = key.GetValue();
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -122,10 +147,10 @@ public class PdfFormService
         return info;
     }
 
-    public void SaveWithFormData(string sourcePath, string destPath,
+    public List<string> SaveWithFormData(string sourcePath, string destPath,
         Dictionary<string, string> fieldValues, bool flatten = false)
     {
-        SaveFull(sourcePath, destPath, fieldValues,
+        return SaveFull(sourcePath, destPath, fieldValues,
             new Dictionary<int, int>(),
             new ObservableCollection<FreeTextAnnotation>(),
             new ObservableCollection<PlacedSignature>(),
@@ -135,14 +160,18 @@ public class PdfFormService
     /// <summary>
     /// Saves the PDF with filled form fields, page rotations, free-text annotations, and placed signatures.
     /// </summary>
-    public void SaveFull(string sourcePath, string destPath,
+    public List<string> SaveFull(string sourcePath, string destPath,
         Dictionary<string, string> fieldValues,
         Dictionary<int, int> pageRotations,
         IEnumerable<FreeTextAnnotation> freeTextAnnotations,
         IEnumerable<PlacedSignature>? placedSignatures = null,
         bool flatten = false,
-        IEnumerable<string>? deletedFieldNames = null)
+        IEnumerable<string>? deletedFieldNames = null,
+        Dictionary<string, string>? fieldExportValues = null)
     {
+        var saveErrors = new List<string>();
+        fieldExportValues ??= new Dictionary<string, string>();
+
         using var reader = new PdfReader(sourcePath);
         using var writer = new PdfWriter(destPath);
         using var doc = new PdfDocument(reader, writer);
@@ -166,10 +195,27 @@ public class PdfFormService
                 var field = form.GetField(name);
                 if (field == null) continue;
 
-                if (field is PdfButtonFormField btn && !btn.IsPushButton() && !btn.IsRadio())
-                    field.SetValue(value is "Yes" or "true" or "On" or "1" ? "Yes" : "Off");
-                else
-                    field.SetValue(value);
+                try
+                {
+                    if (field is PdfButtonFormField btn && !btn.IsPushButton() && !btn.IsRadio())
+                    {
+                        // Use the export value stored in fieldExportValues when available,
+                        // otherwise fall back to "Yes" for checked state.
+                        bool isChecked = value is "Yes" or "true" or "On" or "1"
+                            || (!string.IsNullOrEmpty(value) && value != "Off" && value != "false" && value != "0");
+                        string onValue = fieldExportValues.TryGetValue(name, out var ev) && !string.IsNullOrEmpty(ev)
+                            ? ev : "Yes";
+                        field.SetValue(isChecked ? onValue : "Off");
+                    }
+                    else
+                    {
+                        field.SetValue(value);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    saveErrors.Add($"Field '{name}': {ex.Message}");
+                }
             }
 
             if (flatten) form.FlattenFields();
@@ -242,12 +288,14 @@ public class PdfFormService
                         (float)sig.Left, (float)sig.Bottom);
                     canvas.Release();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Skip invalid/corrupt image bytes
+                    saveErrors.Add($"Signature on page {pageNum}: {ex.Message}");
                 }
             }
         }
+
+        return saveErrors;
     }
 
     // ── Page Operations ──────────────────────────────────────────────────────

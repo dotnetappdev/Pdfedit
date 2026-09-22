@@ -605,35 +605,40 @@ public partial class PdfViewerControl : UserControl
 
     private CheckBox BuildCheckBox(FormFieldInfo field, double w, double h)
     {
+        var currentVal = _vm!.FieldValues.TryGetValue(field.Name, out var cv) ? cv : field.Value;
+        bool isChecked = currentVal == field.ExportValue
+            || (currentVal is "Yes" or "true" or "On" or "1");
+
         var cb = new CheckBox
         {
             Width = w, Height = h,
-            IsChecked = field.Value is "Yes" or "true" or "On" or "1",
+            IsChecked = isChecked,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = field.Name
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
         };
         System.Windows.Automation.AutomationProperties.SetName(cb, $"Checkbox: {field.Name}");
-        cb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
+        cb.Checked   += (_, _) => _vm!.UpdateFieldValue(field.Name, field.ExportValue);
         cb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
-        cb.GotFocus += (_, _) => _vm!.SelectedField = field;
+        cb.GotFocus  += (_, _) => _vm!.SelectedField = field;
         return cb;
     }
 
     private RadioButton BuildRadioButton(FormFieldInfo field, double w, double h)
     {
+        var groupVal = _vm!.FieldValues.TryGetValue(field.Name, out var gv) ? gv : field.Value;
         var rb = new RadioButton
         {
             Width = w, Height = h,
             GroupName = field.RadioGroup ?? field.Name,
-            IsChecked = field.Value == "Yes",
+            IsChecked = groupVal == field.ExportValue,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = field.Name
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
         };
-        System.Windows.Automation.AutomationProperties.SetName(rb, $"Radio button: {field.Name}");
-        rb.Checked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Yes");
-        rb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
+        System.Windows.Automation.AutomationProperties.SetName(rb, $"Radio: {field.Name} = {field.ExportValue}");
+        // Only handle Checked — GroupName handles mutual exclusion automatically
+        rb.Checked  += (_, _) => _vm!.UpdateFieldValue(field.Name, field.ExportValue);
         rb.GotFocus += (_, _) => _vm!.SelectedField = field;
         return rb;
     }
