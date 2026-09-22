@@ -1408,7 +1408,7 @@ public partial class PdfViewerControl : UserControl
             _freehandPoints.Add(posOnPage);
             _freehandPolyline = new Polyline
             {
-                Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentHighlightColor ?? "#1A1A1A")),
+                Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentDrawingColor ?? "#1A1A1A")),
                 StrokeThickness = _vm?.CurrentStrokeWidth ?? 2.0,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -1436,8 +1436,12 @@ public partial class PdfViewerControl : UserControl
             if (!IsOnPage(posOnPage)) return;
             _isDrawingShape = true;
             _shapeDragStart = posOnPage;
-            string colorHex = _vm?.CurrentHighlightColor ?? "#C62828";
+            string colorHex = _vm?.CurrentDrawingColor ?? "#C62828";
             var strokeBrush = new SolidColorBrush(ParseColor(colorHex));
+            string fillHex = _vm?.CurrentFillColor ?? "";
+            Brush shapeFill = string.IsNullOrEmpty(fillHex)
+                ? new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B))
+                : new SolidColorBrush(ParseColor(fillHex));
 
             double sw = _vm?.CurrentStrokeWidth ?? 2.0;
             if (tool == ActiveTool.DrawArrow)
@@ -1456,7 +1460,7 @@ public partial class PdfViewerControl : UserControl
                 System.Windows.Shapes.Shape rb = tool == ActiveTool.DrawEllipse
                     ? new System.Windows.Shapes.Ellipse()
                     : new Rectangle();
-                rb.Fill = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
+                rb.Fill = shapeFill;
                 rb.Stroke = strokeBrush;
                 rb.StrokeThickness = sw;
                 rb.Width  = 0;
@@ -1688,7 +1692,7 @@ public partial class PdfViewerControl : UserControl
                     // Encode path as a compact string stored as annotation content
                     string encodedPts = string.Join(";", _freehandPolyline.Points.Select(p =>
                         $"{p.X / Scale:F2},{(pageH - p.Y / Scale):F2}"));
-                    string colorHex = _vm.CurrentHighlightColor ?? "#000000";
+                    string colorHex = _vm.CurrentDrawingColor ?? "#000000";
 
                     var annot = new Models.FreeTextAnnotation
                     {
@@ -1700,8 +1704,8 @@ public partial class PdfViewerControl : UserControl
                         Text       = $"__INK__:{colorHex}:{encodedPts}",
                         FontSize   = 0,
                         FontFamily = "Ink",
-                        Color      = colorHex,
-                        Bold       = false, Italic = false, Underline = false,
+                        FontColor  = colorHex,
+                        IsBold     = false, IsItalic = false, IsUnderline = false,
                     };
                     _vm.FreeTextAnnotations.Add(annot);
                     _vm.StatusText = "Ink stroke added.";
@@ -1797,7 +1801,8 @@ public partial class PdfViewerControl : UserControl
                 if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
                 {
                     double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                    string colorHex = _vm.CurrentHighlightColor ?? "#C62828";
+                    string colorHex = _vm.CurrentDrawingColor ?? "#C62828";
+                    string fillHex  = _vm.CurrentFillColor ?? "";
                     double strokeW = _vm.CurrentStrokeWidth;
 
                     if (_arrowRubberBand != null)
@@ -1845,6 +1850,7 @@ public partial class PdfViewerControl : UserControl
                                 X2          = left + rectW / Scale,
                                 Y2          = bottom + rectH2 / Scale,
                                 StrokeColor = colorHex,
+                                FillColor   = fillHex,
                                 LineWidth   = strokeW,
                             };
                             _vm.AddShapeAnnotation(shape);
@@ -2441,7 +2447,13 @@ public partial class PdfViewerControl : UserControl
     private void PlaceShapeVisual(Models.ShapeAnnotation shape, double pageH)
     {
         var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
-        var fillBrush   = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
+        Brush fillBrush;
+        if (shape.FillColor == "")
+            fillBrush = System.Windows.Media.Brushes.Transparent;
+        else if (!string.IsNullOrEmpty(shape.FillColor))
+            fillBrush = new SolidColorBrush(ParseColor(shape.FillColor));
+        else
+            fillBrush = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
 
         System.Windows.UIElement visual;
 

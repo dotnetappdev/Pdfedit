@@ -12,4 +12,6 @@ public class ShapeAnnotation
     public ShapeKind Kind        { get; set; }
     public string    StrokeColor { get; set; } = "#C62828";
     public double    LineWidth   { get; set; } = 2.0;
+    // null = auto semi-transparent fill; "" = no fill (transparent); "#RRGGBB" = solid fill
+    public string?   FillColor   { get; set; } = null;
 }

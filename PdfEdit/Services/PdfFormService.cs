@@ -386,6 +386,8 @@ public class PdfFormService
                 {
                     var annot = new PdfSquareAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
+                    if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
+                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     page.AddAnnotation(annot);
                 }
@@ -393,6 +395,8 @@ public class PdfFormService
                 {
                     var annot = new PdfCircleAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
+                    if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
+                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     page.AddAnnotation(annot);
                 }

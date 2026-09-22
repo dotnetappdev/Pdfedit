@@ -77,11 +77,13 @@ public class MainViewModel : INotifyPropertyChanged
         "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
     };
 
-    public IList<string> AvailableStamps { get; } = new List<string>
+    private static readonly string[] _builtInStamps =
     {
         "APPROVED", "CONFIDENTIAL", "DRAFT", "FINAL", "FOR REVIEW",
         "NOT APPROVED", "RECEIVED", "REJECTED", "REVISED", "VOID"
     };
+
+    public System.Collections.ObjectModel.ObservableCollection<string> AvailableStamps { get; } = new();
 
     private string _selectedStamp = "APPROVED";
     public string SelectedStamp
@@ -233,6 +235,20 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _currentHighlightColor;
         set { _currentHighlightColor = value; OnPropertyChanged(); }
+    }
+
+    private string _currentDrawingColor = "#C62828";
+    public string CurrentDrawingColor
+    {
+        get => _currentDrawingColor;
+        set { _currentDrawingColor = value; OnPropertyChanged(); }
+    }
+
+    private string _currentFillColor = "";
+    public string CurrentFillColor
+    {
+        get => _currentFillColor;
+        set { _currentFillColor = value; OnPropertyChanged(); }
     }
 
     private double _currentStrokeWidth = 2.0;
@@ -664,6 +680,10 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ImportXfdfCommand { get; }
     public ICommand ExportAnnotationSummaryCommand { get; }
     public ICommand FindAndHighlightCommand { get; }
+    public ICommand SetDrawingColorCommand { get; }
+    public ICommand SetFillColorCommand { get; }
+    public ICommand AddCustomStampCommand { get; }
+    public ICommand DocumentStatisticsCommand { get; }
 
     // ── Design Canvas ─────────────────────────────────────────────────────────
     private bool _isDesignMode;
@@ -683,10 +703,12 @@ public class MainViewModel : INotifyPropertyChanged
         _currentFontFamily = AppSettings.Current.DefaultFontFamily;
         _currentFontSize = AppSettings.Current.DefaultFontSize;
         _currentFontColor = AppSettings.Current.DefaultFontColor;
+        _currentDrawingColor = AppSettings.Current.DefaultDrawingColor;
         _forceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
         _aiProvider = AppSettings.Current.AiProvider;
         _aiModel = AppSettings.Current.AiModel;
         SyncAiModels();
+        SyncStamps();
 
         NavigateToBookmarkCommand = new RelayCommand(p =>
         {
@@ -845,6 +867,10 @@ public class MainViewModel : INotifyPropertyChanged
         ImportXfdfCommand         = new AsyncRelayCommand(ImportXfdfAsync,         () => HasDocument);
         ExportAnnotationSummaryCommand = new AsyncRelayCommand(ExportAnnotationSummaryAsync, () => HasDocument);
         FindAndHighlightCommand   = new AsyncRelayCommand(FindAndHighlightAsync,   () => HasDocument);
+        SetDrawingColorCommand    = new RelayCommand(p => { if (p is string c) { CurrentDrawingColor = c; AppSettings.Current.DefaultDrawingColor = c; AppSettings.Current.Save(); } });
+        SetFillColorCommand       = new RelayCommand(p => { if (p is string c) CurrentFillColor = c; });
+        AddCustomStampCommand     = new RelayCommand(AddCustomStamp);
+        DocumentStatisticsCommand = new AsyncRelayCommand(ShowDocumentStatisticsAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -3101,6 +3127,78 @@ public class MainViewModel : INotifyPropertyChanged
             AiModels.Add(m);
         if (AiModels.Count > 0 && !AiModels.Contains(_aiModel))
             _aiModel = AiModels[0];
+    }
+
+    private void SyncStamps()
+    {
+        AvailableStamps.Clear();
+        foreach (var s in _builtInStamps)
+            AvailableStamps.Add(s);
+        foreach (var s in AppSettings.Current.CustomStamps)
+            AvailableStamps.Add(s);
+    }
+
+    private void AddCustomStamp()
+    {
+        var dlg = new Dialogs.InputDialog("Custom Stamp", "Enter the text for the custom stamp:", "");
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+        string text = dlg.InputText.Trim().ToUpperInvariant();
+        if (AvailableStamps.Contains(text)) { SelectedStamp = text; return; }
+        AppSettings.Current.CustomStamps.Add(text);
+        AppSettings.Current.Save();
+        AvailableStamps.Add(text);
+        SelectedStamp = text;
+    }
+
+    private async Task ShowDocumentStatisticsAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        StatusText = "Computing document statistics…";
+        try
+        {
+            var fileInfo = new System.IO.FileInfo(_currentFilePath);
+            int pageCount = _document.PageCount;
+            int fieldCount = AllFields.Count;
+            int highlightCount = HighlightAnnotations.Count;
+            int stickyCount = StickyNotes.Count;
+            int freeTextCount = FreeTextAnnotations.Count(f => !f.Text.StartsWith("__INK__:"));
+            int inkCount = FreeTextAnnotations.Count(f => f.Text.StartsWith("__INK__:"));
+            int shapeCount = ShapeAnnotations.Count;
+            int totalAnnotations = highlightCount + stickyCount + freeTextCount + inkCount + shapeCount;
+            int bookmarkCount = Bookmarks.Count;
+            string docText = await Task.Run(() => Services.PdfTextExtractorService.GetDocumentText(_currentFilePath, 200000));
+            int wordCount = string.IsNullOrWhiteSpace(docText) ? 0
+                : docText.Split(new[] {' ', '\t', '\r', '\n'}, StringSplitOptions.RemoveEmptyEntries).Length;
+            int charCount = docText.Replace("\n", "").Replace("\r", "").Length;
+
+            string sizeStr = fileInfo.Length switch
+            {
+                < 1024 => $"{fileInfo.Length} B",
+                < 1024 * 1024 => $"{fileInfo.Length / 1024.0:F1} KB",
+                _ => $"{fileInfo.Length / (1024.0 * 1024):F2} MB"
+            };
+
+            string msg = $"Pages:               {pageCount}\n" +
+                         $"File size:           {sizeStr}\n" +
+                         $"Bookmarks:           {bookmarkCount}\n" +
+                         $"\n" +
+                         $"Form fields:         {fieldCount}\n" +
+                         $"\n" +
+                         $"Total annotations:   {totalAnnotations}\n" +
+                         $"  Highlights/marks:  {highlightCount}\n" +
+                         $"  Sticky notes:      {stickyCount}\n" +
+                         $"  Free text:         {freeTextCount}\n" +
+                         $"  Ink strokes:       {inkCount}\n" +
+                         $"  Shapes:            {shapeCount}\n" +
+                         $"\n" +
+                         $"Word count:          {wordCount:N0}\n" +
+                         $"Character count:     {charCount:N0}";
+
+            System.Windows.MessageBox.Show(msg, "Document Statistics",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not compute statistics.", ex); }
+        finally { StatusText = "Ready"; }
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

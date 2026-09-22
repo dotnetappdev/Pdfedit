@@ -1254,6 +1254,20 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Document Statistics group -->
+                <Fluent:RibbonGroupBox Header="Document"
+                                        AutomationProperties.Name="Document information group">
+                    <Fluent:Button Header="Document&#x0a;Statistics"
+                                   Command="{Binding DocumentStatisticsCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Show page count, word count, annotation count, and file size"
+                                   AutomationProperties.Name="Show document statistics">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
@@ -1468,6 +1482,11 @@
                               VerticalAlignment="Center" Margin="0,2,0,0"
                               ToolTip="Choose stamp text"
                               AutomationProperties.Name="Stamp text selector"/>
+                    <Fluent:Button Header="Custom&#x0a;Stamp"
+                                   Command="{Binding AddCustomStampCommand}"
+                                   Size="Middle"
+                                   ToolTip="Create a custom stamp with your own text"
+                                   AutomationProperties.Name="Add custom stamp text"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Marks group -->
@@ -1572,6 +1591,59 @@
                                     Tag="8" Click="SetStrokeWidth_Click" ToolTip="Very thick (8pt)"
                                     AutomationProperties.Name="8pt stroke"/>
                         </StackPanel>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Drawing Color group -->
+                <Fluent:RibbonGroupBox Header="Drawing Color"
+                                        AutomationProperties.Name="Drawing color group">
+                    <StackPanel Orientation="Vertical" Margin="2,2">
+                        <TextBlock Text="Stroke:" FontSize="11" Margin="0,0,0,2"/>
+                        <WrapPanel Width="90" Margin="0,0,0,4">
+                            <Button Width="22" Height="22" Margin="1" Background="#C62828" ToolTip="Red"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#C62828"
+                                    AutomationProperties.Name="Drawing color red"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#1565C0" ToolTip="Blue"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#1565C0"
+                                    AutomationProperties.Name="Drawing color blue"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#2E7D32" ToolTip="Green"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#2E7D32"
+                                    AutomationProperties.Name="Drawing color green"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#000000" ToolTip="Black"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#000000"
+                                    AutomationProperties.Name="Drawing color black"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FF6F00" ToolTip="Orange"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#FF6F00"
+                                    AutomationProperties.Name="Drawing color orange"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#6A1B9A" ToolTip="Purple"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#6A1B9A"
+                                    AutomationProperties.Name="Drawing color purple"/>
+                        </WrapPanel>
+                        <TextBlock Text="Fill:" FontSize="11" Margin="0,0,0,2"/>
+                        <WrapPanel Width="90">
+                            <Button Width="22" Height="22" Margin="1" ToolTip="No fill (transparent)"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter=""
+                                    AutomationProperties.Name="No fill">
+                                <TextBlock Text="∅" FontSize="10"/>
+                            </Button>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFEBEE" ToolTip="Light red fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFEBEE"
+                                    AutomationProperties.Name="Light red fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#E3F2FD" ToolTip="Light blue fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#E3F2FD"
+                                    AutomationProperties.Name="Light blue fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#E8F5E9" ToolTip="Light green fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#E8F5E9"
+                                    AutomationProperties.Name="Light green fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFFDE7" ToolTip="Light yellow fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFFDE7"
+                                    AutomationProperties.Name="Light yellow fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFFFFF" ToolTip="White (opaque) fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFFFFF"
+                                    AutomationProperties.Name="White fill">
+                                <TextBlock Text="W" FontSize="8"/>
+                            </Button>
+                        </WrapPanel>
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 
