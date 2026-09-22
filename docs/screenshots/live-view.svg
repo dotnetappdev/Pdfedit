@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+  <!-- Live View - Dark Theme with annotations -->
+  <rect width="900" height="560" fill="#1E1E1E"/>
+
+  <!-- Title bar -->
+  <rect width="900" height="28" fill="#252526"/>
+  <text x="450" y="19" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">PdfEdit — employment_contract.pdf</text>
+
+  <!-- Ribbon -->
+  <rect y="28" width="900" height="88" fill="#2D2D30" stroke="#3F3F46" stroke-width="1"/>
+  <!-- Ribbon tabs -->
+  <rect y="28" width="900" height="28" fill="#252526"/>
+
+  <rect x="0" y="28" width="60" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="30" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Home</text>
+  <!-- Tools tab - active -->
+  <rect x="60" y="28" width="72" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="96" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Fill &amp; Sign</text>
+  <rect x="132" y="28" width="50" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="157" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Forms</text>
+  <rect x="182" y="28" width="50" height="28" fill="#0A84FF"/>
+  <text x="207" y="46" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="11" font-weight="bold">Tools</text>
+  <rect x="232" y="28" width="80" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="272" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">AI Assistant</text>
+  <rect x="312" y="28" width="60" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="342" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Design</text>
+
+  <!-- Annotation tools in ribbon -->
+  <rect x="8" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="31" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="15">T</text>
+  <text x="31" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Text</text>
+
+  <rect x="58" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="81" y="80" text-anchor="middle" fill="#FFD700" font-family="Segoe UI" font-size="15">▮</text>
+  <text x="81" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Highlight</text>
+
+  <rect x="108" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="131" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="15">📌</text>
+  <text x="131" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Note</text>
+
+  <rect x="158" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="181" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">▭</text>
+  <text x="181" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Rectangle</text>
+
+  <rect x="208" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="231" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">◯</text>
+  <text x="231" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Ellipse</text>
+
+  <rect x="258" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="281" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">➤</text>
+  <text x="281" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Arrow</text>
+
+  <!-- Callout tool - active/selected -->
+  <rect x="308" y="60" width="46" height="50" fill="#0A84FF" stroke="#0A84FF" stroke-width="1.5" rx="3"/>
+  <text x="331" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12">💬</text>
+  <text x="331" y="104" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="9">Callout</text>
+
+  <rect x="358" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="381" y="80" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">◻</text>
+  <text x="381" y="104" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Eraser</text>
+
+  <line x1="412" y1="62" x2="412" y2="108" stroke="#555" stroke-width="1"/>
+
+  <!-- Color pickers -->
+  <rect x="418" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <rect x="428" y="68" width="26" height="18" fill="#C62828" rx="2"/>
+  <text x="441" y="101" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Stroke</text>
+
+  <rect x="468" y="60" width="46" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <rect x="478" y="68" width="26" height="18" fill="#FFFDE7" rx="2" stroke="#888" stroke-width="0.5"/>
+  <text x="491" y="101" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Fill</text>
+
+  <!-- Left toolbox panel -->
+  <rect x="0" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="70" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">TOOLS</text>
+  <line x1="8" y1="140" x2="132" y2="140" stroke="#3F3F46" stroke-width="1"/>
+
+  <!-- PDF Tools section -->
+  <text x="14" y="155" fill="#777" font-family="Segoe UI" font-size="9">PDF TOOLS</text>
+
+  <rect x="8" y="160" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="178" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">☜ Hand (Pan)</text>
+
+  <rect x="8" y="192" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="210" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">T Add Text</text>
+
+  <rect x="8" y="224" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="242" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">✒ Signature</text>
+
+  <rect x="8" y="256" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="274" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">▮ Highlight</text>
+
+  <!-- Draw section -->
+  <line x1="8" y1="292" x2="132" y2="292" stroke="#3F3F46" stroke-width="1"/>
+  <text x="14" y="305" fill="#777" font-family="Segoe UI" font-size="9">DRAW / ANNOTATE</text>
+
+  <rect x="8" y="310" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="328" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">▭ Rectangle</text>
+
+  <rect x="8" y="342" width="124" height="28" fill="#3C3C3C" rx="3"/>
+  <text x="60" y="360" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">◯ Ellipse</text>
+
+  <!-- Active tool - Callout -->
+  <rect x="8" y="374" width="124" height="28" fill="#0A84FF" rx="3"/>
+  <text x="60" y="392" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">💬 Callout ✓</text>
+
+  <!-- Design section -->
+  <line x1="8" y1="412" x2="132" y2="412" stroke="#0A84FF" stroke-width="1.5"/>
+  <text x="14" y="426" fill="#0A84FF" font-family="Segoe UI" font-size="9">DESIGN CANVAS</text>
+
+  <rect x="8" y="432" width="124" height="28" fill="#2D2D30" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="60" y="450" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="10">⬤ Select</text>
+
+  <rect x="8" y="464" width="124" height="28" fill="#2D2D30" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="60" y="482" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="10">T Text Box</text>
+
+  <!-- Main view area -->
+  <rect x="140" y="116" width="620" height="444" fill="#1E1E1E"/>
+
+  <!-- Tab bar - Live View active -->
+  <rect x="140" y="116" width="90" height="26" fill="#1E1E1E" stroke="#0A84FF" stroke-width="1.5"/>
+  <text x="185" y="133" text-anchor="middle" fill="#0A84FF" font-family="Segoe UI" font-size="11" font-weight="bold">Live View</text>
+  <rect x="230" y="116" width="80" height="26" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="270" y="133" text-anchor="middle" fill="#999" font-family="Segoe UI" font-size="11">Design</text>
+
+  <!-- PDF page -->
+  <rect x="210" y="152" width="380" height="400" fill="#FFFFFF" rx="2" filter="url(#shadow)"/>
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Contract content -->
+  <text x="400" y="180" text-anchor="middle" fill="#111111" font-family="Segoe UI" font-size="14" font-weight="bold">EMPLOYMENT CONTRACT</text>
+  <line x1="230" y1="188" x2="570" y2="188" stroke="#AAAAAA" stroke-width="0.5"/>
+
+  <text x="230" y="208" fill="#333333" font-family="Segoe UI" font-size="10">This Agreement is entered into as of January 1, 2025, between:</text>
+  <text x="230" y="224" fill="#333333" font-family="Segoe UI" font-size="10">Employer: Acme Corporation ("Company")</text>
+  <text x="230" y="240" fill="#333333" font-family="Segoe UI" font-size="10">Employee: John Smith ("Employee")</text>
+
+  <text x="230" y="264" fill="#333333" font-family="Segoe UI" font-size="10" font-weight="bold">1. POSITION AND DUTIES</text>
+  <!-- Highlight annotation -->
+  <rect x="230" y="278" width="260" height="13" fill="#FFD700" opacity="0.4"/>
+  <text x="230" y="289" fill="#333333" font-family="Segoe UI" font-size="10">The Employee shall serve as Senior Developer</text>
+  <text x="230" y="305" fill="#333333" font-family="Segoe UI" font-size="10">and perform such duties as assigned by the Company.</text>
+
+  <text x="230" y="329" fill="#333333" font-family="Segoe UI" font-size="10" font-weight="bold">2. COMPENSATION</text>
+  <text x="230" y="345" fill="#333333" font-family="Segoe UI" font-size="10">Annual salary: $120,000, payable bi-weekly.</text>
+  <!-- Callout annotation -->
+  <rect x="380" y="330" width="160" height="48" fill="#FFFDE7" stroke="#C62828" stroke-width="2" rx="3"/>
+  <text x="388" y="348" fill="#222" font-family="Segoe UI" font-size="9">Verify against</text>
+  <text x="388" y="362" fill="#222" font-family="Segoe UI" font-size="9">offer letter #2024-87</text>
+  <text x="388" y="376" fill="#222" font-family="Segoe UI" font-size="9">before signing</text>
+  <polygon points="450,378 470,378 460,394" fill="#FFFDE7" stroke="#C62828" stroke-width="2"/>
+
+  <text x="230" y="414" fill="#333333" font-family="Segoe UI" font-size="10" font-weight="bold">3. CONFIDENTIALITY</text>
+  <text x="230" y="430" fill="#333333" font-family="Segoe UI" font-size="10">Employee agrees to keep all proprietary information</text>
+  <!-- Sticky note pin -->
+  <text x="556" y="432" fill="#FFB300" font-family="Segoe UI" font-size="16">📌</text>
+
+  <!-- Signature field overlay -->
+  <rect x="230" y="500" width="160" height="36" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-dasharray="4,2" rx="2"/>
+  <text x="310" y="522" text-anchor="middle" fill="#0A84FF" font-family="Segoe UI" font-size="10">Employee Signature</text>
+
+  <rect x="420" y="500" width="140" height="36" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-dasharray="4,2" rx="2"/>
+  <text x="490" y="522" text-anchor="middle" fill="#0A84FF" font-family="Segoe UI" font-size="10">Date</text>
+
+  <!-- Page number -->
+  <text x="400" y="556" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Page 1 of 4</text>
+
+  <!-- Right panel -->
+  <rect x="760" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="830" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">SAVED SIGNATURES</text>
+  <line x1="768" y1="140" x2="892" y2="140" stroke="#3F3F46" stroke-width="1"/>
+
+  <!-- Signature thumbnails -->
+  <rect x="768" y="148" width="116" height="44" fill="#2A2A2A" stroke="#3F3F46" stroke-width="1" rx="4"/>
+  <text x="826" y="168" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, cursive" font-size="18" font-style="italic">J. Smith</text>
+  <text x="826" y="185" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="8">John Smith</text>
+
+  <rect x="768" y="198" width="116" height="44" fill="#2A2A2A" stroke="#3F3F46" stroke-width="1" rx="4"/>
+  <text x="826" y="215" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, cursive" font-size="14" font-style="italic">JS</text>
+  <text x="826" y="235" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="8">Initials</text>
+
+  <!-- Add signature button -->
+  <rect x="768" y="250" width="116" height="28" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="3"/>
+  <text x="826" y="268" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">+ Add Signature</text>
+
+  <line x1="768" y1="288" x2="892" y2="288" stroke="#3F3F46" stroke-width="1"/>
+  <text x="830" y="305" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">PAGE INFO</text>
+  <text x="770" y="324" fill="#888" font-family="Segoe UI" font-size="9">Page 1 of 4</text>
+  <text x="770" y="342" fill="#888" font-family="Segoe UI" font-size="9">Rotation: 0°</text>
+  <text x="770" y="360" fill="#888" font-family="Segoe UI" font-size="9">Form fields: 8</text>
+  <text x="770" y="378" fill="#888" font-family="Segoe UI" font-size="9">Annotations: 3</text>
+
+  <!-- Status bar -->
+  <rect x="0" y="536" width="900" height="24" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="12" y="552" fill="#CCCCCC" font-family="Segoe UI" font-size="10">Live View  |  Page 1 of 4  |  Zoom: 100%  |  Active Tool: Callout  |  3 annotations</text>
+
+  <!-- Label badge -->
+  <rect x="270" y="490" width="360" height="30" fill="#1A56A0" rx="4"/>
+  <text x="450" y="510" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12" font-weight="bold">Live View — PDF with Callout + Highlight Annotations</text>
+</svg>

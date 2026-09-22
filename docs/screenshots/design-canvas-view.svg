@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+  <!-- Design Canvas Tab - Dark Theme -->
+  <rect width="900" height="560" fill="#1E1E1E"/>
+
+  <!-- Title bar -->
+  <rect width="900" height="28" fill="#252526"/>
+  <text x="450" y="19" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="12">PdfEdit — New Design</text>
+
+  <!-- Ribbon -->
+  <rect y="28" width="900" height="88" fill="#2D2D30" stroke="#3F3F46" stroke-width="1"/>
+  <!-- Ribbon tabs -->
+  <rect y="28" width="900" height="28" fill="#252526"/>
+  <rect x="0" y="28" width="60" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="30" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Home</text>
+  <rect x="60" y="28" width="72" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="96" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Fill &amp; Sign</text>
+  <rect x="132" y="28" width="50" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="157" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Forms</text>
+  <rect x="182" y="28" width="50" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="207" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">Tools</text>
+  <rect x="232" y="28" width="80" height="28" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="272" y="46" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">AI Assistant</text>
+  <!-- Design tab - active/highlighted -->
+  <rect x="312" y="28" width="60" height="28" fill="#0A84FF" rx="0"/>
+  <text x="342" y="46" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="11" font-weight="bold">Design</text>
+
+  <!-- Design ribbon buttons -->
+  <rect x="8" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="33" y="78" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="16">+</text>
+  <text x="33" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">New Design</text>
+
+  <rect x="62" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="87" y="78" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">T</text>
+  <text x="87" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Text Box</text>
+
+  <rect x="116" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="141" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">▭</text>
+  <text x="141" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Rectangle</text>
+
+  <rect x="170" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="195" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">◯</text>
+  <text x="195" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Ellipse</text>
+
+  <rect x="224" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="249" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">⟼</text>
+  <text x="249" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Arrow</text>
+
+  <rect x="278" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="303" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">⊞</text>
+  <text x="303" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Table</text>
+
+  <rect x="332" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="357" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">🖼</text>
+  <text x="357" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Image</text>
+
+  <line x1="390" y1="62" x2="390" y2="108" stroke="#555" stroke-width="1"/>
+
+  <rect x="396" y="60" width="50" height="50" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="4"/>
+  <text x="421" y="82" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="14">⬛</text>
+  <text x="421" y="103" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Templates</text>
+
+  <!-- Export buttons -->
+  <rect x="700" y="60" width="90" height="50" fill="#0A84FF" stroke="none" rx="4"/>
+  <text x="745" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="11" font-weight="bold">Export PDF</text>
+  <text x="745" y="98" text-anchor="middle" fill="#DDDDFF" font-family="Segoe UI" font-size="9">Ctrl+Shift+E</text>
+
+  <rect x="796" y="60" width="96" height="50" fill="#2D8A2D" stroke="none" rx="4"/>
+  <text x="844" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="11" font-weight="bold">Open as PDF</text>
+  <text x="844" y="98" text-anchor="middle" fill="#CCFFCC" font-family="Segoe UI" font-size="9">Preview &amp; Fill</text>
+
+  <!-- Left toolbox -->
+  <rect x="0" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="70" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">DESIGN CANVAS TOOLS</text>
+  <line x1="8" y1="140" x2="132" y2="140" stroke="#3F3F46" stroke-width="1"/>
+
+  <!-- Tool buttons in toolbox -->
+  <rect x="8" y="146" width="124" height="32" fill="#0A84FF" rx="4"/>
+  <text x="70" y="167" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="11">⬤ Select / Move</text>
+
+  <rect x="8" y="182" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="203" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">T  Text Box</text>
+
+  <rect x="8" y="218" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="239" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">▭  Rectangle</text>
+
+  <rect x="8" y="254" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="275" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">◯  Ellipse</text>
+
+  <rect x="8" y="290" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="311" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">—  Line</text>
+
+  <rect x="8" y="326" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="347" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">➤  Arrow</text>
+
+  <rect x="8" y="362" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="383" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">🖊  Pen</text>
+
+  <rect x="8" y="398" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="419" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">🖼  Image</text>
+
+  <rect x="8" y="434" width="124" height="32" fill="#3C3C3C" rx="4"/>
+  <text x="70" y="455" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="11">⊞  Table</text>
+
+  <!-- Main canvas area -->
+  <rect x="140" y="116" width="620" height="444" fill="#1E1E1E"/>
+
+  <!-- Tab bar -->
+  <rect x="140" y="116" width="90" height="26" fill="#2D2D30" stroke="#3F3F46" stroke-width="0.5"/>
+  <text x="185" y="133" text-anchor="middle" fill="#999" font-family="Segoe UI" font-size="11">Live View</text>
+  <rect x="230" y="116" width="80" height="26" fill="#1E1E1E" stroke="#0A84FF" stroke-width="1.5"/>
+  <text x="270" y="133" text-anchor="middle" fill="#0A84FF" font-family="Segoe UI" font-size="11" font-weight="bold">Design</text>
+
+  <!-- Grid background -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#2A2A2A" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect x="140" y="142" width="620" height="418" fill="url(#grid)"/>
+
+  <!-- White page surface with drop shadow -->
+  <rect x="218" y="162" width="464" height="358" fill="#1A1A1A" opacity="0.5" rx="2" transform="translate(4,4)"/>
+  <rect x="218" y="162" width="464" height="358" fill="#FFFFFF" rx="2"/>
+
+  <!-- Page content - Invoice template -->
+  <rect x="218" y="162" width="464" height="42" fill="#1A56A0" rx="2"/>
+  <text x="238" y="182" fill="#FFFFFF" font-family="Segoe UI" font-size="14" font-weight="bold">INVOICE</text>
+  <text x="238" y="198" fill="#AACCFF" font-family="Segoe UI" font-size="10">Acme Corporation · 123 Main St</text>
+  <text x="600" y="180" text-anchor="end" fill="#FFFFFF" font-family="Segoe UI" font-size="11">#INV-2024-001</text>
+  <text x="600" y="196" text-anchor="end" fill="#AACCFF" font-family="Segoe UI" font-size="10">Due: Dec 31, 2024</text>
+
+  <!-- Table element with selection handles -->
+  <rect x="228" y="252" width="444" height="130" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <!-- Table header -->
+  <rect x="228" y="252" width="444" height="24" fill="#1A56A0" stroke="#1A56A0"/>
+  <text x="296" y="268" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">Description</text>
+  <text x="520" y="268" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">Qty</text>
+  <text x="580" y="268" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">Unit Price</text>
+  <text x="648" y="268" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">Total</text>
+  <line x1="488" y1="252" x2="488" y2="382" stroke="#CCCCCC" stroke-width="0.5"/>
+  <line x1="548" y1="252" x2="548" y2="382" stroke="#CCCCCC" stroke-width="0.5"/>
+  <line x1="610" y1="252" x2="610" y2="382" stroke="#CCCCCC" stroke-width="0.5"/>
+  <line x1="228" y1="276" x2="672" y2="276" stroke="#CCCCCC" stroke-width="0.5"/>
+  <text x="248" y="293" fill="#333333" font-family="Segoe UI" font-size="9">Web Design Services</text>
+  <text x="520" y="293" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">5</text>
+  <text x="580" y="293" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$500</text>
+  <text x="648" y="293" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$2,500</text>
+  <line x1="228" y1="300" x2="672" y2="300" stroke="#EEEEEE" stroke-width="0.5"/>
+  <text x="248" y="317" fill="#333333" font-family="Segoe UI" font-size="9">SEO Optimization</text>
+  <text x="520" y="317" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">3</text>
+  <text x="580" y="317" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$300</text>
+  <text x="648" y="317" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$900</text>
+  <line x1="228" y1="324" x2="672" y2="324" stroke="#EEEEEE" stroke-width="0.5"/>
+  <text x="248" y="341" fill="#333333" font-family="Segoe UI" font-size="9">Content Writing</text>
+  <text x="520" y="341" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">8</text>
+  <text x="580" y="341" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$150</text>
+  <text x="648" y="341" text-anchor="middle" fill="#333333" font-family="Segoe UI" font-size="9">$1,200</text>
+  <line x1="228" y1="348" x2="672" y2="348" stroke="#CCCCCC" stroke-width="0.5"/>
+  <!-- Total row -->
+  <rect x="548" y="358" width="124" height="24" fill="#F0F4FF"/>
+  <text x="578" y="374" fill="#333333" font-family="Segoe UI" font-size="10" font-weight="bold">TOTAL</text>
+  <text x="648" y="374" text-anchor="middle" fill="#1A56A0" font-family="Segoe UI" font-size="10" font-weight="bold">$4,600</text>
+
+  <!-- Selection handles on table -->
+  <circle cx="228" cy="252" r="4" fill="#0A84FF" stroke="#FFFFFF" stroke-width="1.5"/>
+  <circle cx="450" cy="252" r="4" fill="#0A84FF" stroke="#FFFFFF" stroke-width="1.5"/>
+  <circle cx="672" cy="252" r="4" fill="#0A84FF" stroke="#FFFFFF" stroke-width="1.5"/>
+  <circle cx="228" cy="382" r="4" fill="#0A84FF" stroke="#FFFFFF" stroke-width="1.5"/>
+  <circle cx="672" cy="382" r="4" fill="#0A84FF" stroke="#FFFFFF" stroke-width="1.5"/>
+
+  <!-- Text element -->
+  <rect x="228" y="210" width="200" height="30" fill="none" stroke="#3C3C3C" stroke-width="1" stroke-dasharray="2,2"/>
+  <text x="238" y="230" fill="#333333" font-family="Segoe UI" font-size="13" font-weight="bold">Bill To:</text>
+
+  <!-- Right Properties panel -->
+  <rect x="760" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="830" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">ELEMENT PROPERTIES</text>
+  <line x1="768" y1="140" x2="892" y2="140" stroke="#3F3F46" stroke-width="1"/>
+
+  <text x="770" y="158" fill="#888" font-family="Segoe UI" font-size="9">Font Family</text>
+  <rect x="768" y="162" width="124" height="20" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="2"/>
+  <text x="780" y="176" fill="#CCCCCC" font-family="Segoe UI" font-size="10">Segoe UI</text>
+
+  <text x="770" y="196" fill="#888" font-family="Segoe UI" font-size="9">Font Size</text>
+  <rect x="768" y="200" width="60" height="20" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="2"/>
+  <text x="798" y="214" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">12</text>
+
+  <text x="770" y="234" fill="#888" font-family="Segoe UI" font-size="9">Fill Color</text>
+  <rect x="768" y="238" width="20" height="20" fill="#1A56A0" stroke="#555" stroke-width="1" rx="2"/>
+  <text x="796" y="252" fill="#CCCCCC" font-family="Segoe UI" font-size="10">#1A56A0</text>
+
+  <text x="770" y="272" fill="#888" font-family="Segoe UI" font-size="9">Stroke Color</text>
+  <rect x="768" y="276" width="20" height="20" fill="#0A84FF" stroke="#555" stroke-width="1" rx="2"/>
+  <text x="796" y="290" fill="#CCCCCC" font-family="Segoe UI" font-size="10">#0A84FF</text>
+
+  <text x="770" y="310" fill="#888" font-family="Segoe UI" font-size="9">Opacity</text>
+  <rect x="768" y="314" width="124" height="12" fill="#3C3C3C" rx="6"/>
+  <rect x="768" y="314" width="100" height="12" fill="#0A84FF" rx="6"/>
+  <text x="830" y="326" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="8">80%</text>
+
+  <text x="770" y="346" fill="#888" font-family="Segoe UI" font-size="9">Rows / Cols</text>
+  <rect x="768" y="350" width="56" height="20" fill="#3C3C3C" stroke="#555" stroke-width="1" rx="2"/>
+  <text x="796" y="364" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">4 × 4</text>
+
+  <!-- Status bar -->
+  <rect x="0" y="536" width="900" height="24" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
+  <text x="12" y="552" fill="#CCCCCC" font-family="Segoe UI" font-size="10">Design Mode  |  Page: A4  |  Elements: 6  |  Selected: Table (4×4)  |  Zoom: 100%</text>
+
+  <!-- Label badge -->
+  <rect x="300" y="490" width="300" height="30" fill="#0A84FF" rx="4"/>
+  <text x="450" y="510" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12" font-weight="bold">Design Canvas — Invoice Template</text>
+</svg>

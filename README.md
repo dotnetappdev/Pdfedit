@@ -6,21 +6,25 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 
 ## Screenshots
 
-| Home Ribbon — Form Filling | Tools Tab — Annotations & Drawing |
-|---|---|
-| ![Home Ribbon](docs/screenshots/home-ribbon.png) | ![Tools Tab](docs/screenshots/tools-tab.png) |
-
-| AI Smart Fill | Design Canvas |
-|---|---|
-| ![AI Smart Fill](docs/screenshots/ai-smart-fill.png) | ![Design Canvas](docs/screenshots/design-canvas.png) |
-
-| Annotations — Highlight, Ink & Sticky Notes | Page Management |
-|---|---|
-| ![Annotations](docs/screenshots/annotations.png) | ![Page Management](docs/screenshots/page-management.png) |
-
-| Dark Theme | Light Theme (IRS W-4) |
+| Dark Theme — Form Filling | Light Theme (IRS W-4) |
 |---|---|
 | ![Dark Theme](docs/screenshots/dark-theme.png) | ![Light Theme](docs/screenshots/light-theme.png) |
+
+| Live View — PDF Annotations & Callouts | Design Canvas — Invoice Template |
+|---|---|
+| ![Live View](docs/screenshots/live-view.svg) | ![Design Canvas](docs/screenshots/design-canvas-view.svg) |
+
+| High Contrast Theme | Page Management |
+|---|---|
+| ![High Contrast](docs/screenshots/high-contrast-theme.svg) | ![Page Management](docs/screenshots/page-management.png) |
+
+| AI Features | Settings & Accessibility |
+|---|---|
+| ![AI Features](docs/screenshots/ai-features.png) | ![Accessibility Settings](docs/screenshots/settings-accessibility.png) |
+
+| Ribbon Icons | Form Filling |
+|---|---|
+| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | ![Form Filling](docs/screenshots/form-filling.png) |
 
 ---
 
@@ -60,8 +64,11 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 | File Attachments (embed/extract) | ✅ | ✅ | ❌ | ✅ |
 | Annotation Undo / Redo | ✅ | ✅ | ❌ | ✅ |
 | Shape annotations (rect/ellipse/arrow) | ✅ | ✅ | ❌ | ✅ |
+| Callout (speech bubble) annotations | ✅ | ✅ | ❌ | ✅ |
 | Shape fill color | ✅ | ✅ | ❌ | ✅ |
 | Eraser tool | ✅ | ✅ | ❌ | ✅ |
+| Separate Live View / Design Canvas tabs | ✅ | ✅ | ❌ | ✅ |
+| Unified toolbox auto-switches view | ✅ | ❌ | ❌ | ❌ |
 | Radio button form field creator | ✅ | ✅ | ❌ | ✅ |
 | Highlight opacity control | ✅ | ✅ | ❌ | ✅ |
 | Separate drawing / highlight color | ✅ | ✅ | ❌ | ✅ |
@@ -212,6 +219,7 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 **Shape Annotations**
 - **Rectangle / Ellipse** — Drag to draw stroked shape annotations; configurable stroke colour and width
 - **Arrow** — Drag to draw arrow annotations; saved as PDF line annotations with arrowhead
+- **Callout** — Drag to place a speech-bubble callout box; enter text when prompted; saved as a standard PDF `FreeTextAnnotation` with callout line (`IT=FreeTextCallout`); default light-yellow fill
 - Right-click any shape to delete it
 - Supports annotation Undo/Redo (Ctrl+Z / Ctrl+Y)
 
@@ -308,6 +316,8 @@ Embed and manage attached files within the PDF document:
 - **Three Live Themes** — Dark, Light, and High Contrast (no restart required)
 - **Fluent Ribbon** — Home, Fill & Sign, Forms, Tools, AI Assistant, **Design** tabs
 - **Dockable Panels** — Properties, thumbnails, AI Chat via AvalonDock
+- **Separate Live View / Design Canvas tabs** — the main editor area has two tabs: **Live View** (PDF viewer with annotations and form filling) and **Design** (blank-canvas designer); switching is seamless with full state preserved in each
+- **Unified Toolbox with Auto-Tab Switching** — the left toolbox lists all tools in one panel; selecting a PDF annotation/fill tool automatically activates the Live View tab; selecting a design canvas tool automatically switches to the Design tab — no manual tab clicks needed
 - **Toast Notifications** — Success/info/warning/error with auto-dismiss
 - **Themed Dialogs** — Error (expandable stack trace), Confirm (danger mode), Info
 - **UI Scale** — Independent of zoom; 75%–200%
