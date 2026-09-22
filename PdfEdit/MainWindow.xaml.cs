@@ -126,6 +126,89 @@ public partial class MainWindow : RibbonWindow
     private void DesignRedo_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.Redo();
     private void DesignZoomIn_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.ZoomIn();
     private void DesignZoomOut_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.ZoomOut();
+    private void DesignZoomFit_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var ctrl = DesignCanvasControl;
+        VM.DesignCanvas.ZoomFit(ctrl.ActualWidth - 80, ctrl.ActualHeight - 80);
+    }
+
+    private void SaveDesign_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title  = "Save Design",
+            Filter = "PdfEdit Design|*.pdfdesign|All files|*.*",
+            DefaultExt = "pdfdesign"
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            VM.DesignCanvas.SaveDesign(dlg.FileName);
+            Dialogs.AppDialog.ShowInfo($"Design saved to {System.IO.Path.GetFileName(dlg.FileName)}.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not save design.", ex); }
+    }
+
+    private void LoadDesign_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title  = "Load Design",
+            Filter = "PdfEdit Design|*.pdfdesign|All files|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            if (VM == null) VM_EnsureDesign();
+            VM!.DesignCanvas.LoadDesign(dlg.FileName);
+            VM.IsDesignMode = true;
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not load design.", ex); }
+    }
+
+    private void VM_EnsureDesign()
+    {
+        // Ensures design mode is active so DesignCanvas VM is initialized
+        VM?.NewDesignCommand.Execute(null);
+    }
+
+    private void DesignBgColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var current = VM.DesignCanvas.PageBackground;
+        // Use a simple color-picker dialog built from WPF
+        var win = new Window
+        {
+            Title = "Page Background Color",
+            Width = 320, Height = 180,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
+            ResizeMode = ResizeMode.NoResize,
+            Background = (System.Windows.Media.Brush)FindResource("AppBgBrush")
+        };
+        var stack = new StackPanel { Margin = new Thickness(16) };
+        var label = new TextBlock { Text = "Enter color (hex, e.g. #FFFFFF or #FFE8D5):", Margin = new Thickness(0,0,0,8) };
+        var box   = new TextBox   { Text = $"#{current.R:X2}{current.G:X2}{current.B:X2}", Margin = new Thickness(0,0,0,12), Padding = new Thickness(4) };
+        var btns  = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var ok    = new Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
+        var cancel= new Button { Content = "Cancel", Width = 70, IsCancel = true };
+        btns.Children.Add(ok); btns.Children.Add(cancel);
+        stack.Children.Add(label); stack.Children.Add(box); stack.Children.Add(btns);
+        win.Content = stack;
+        ok.Click += (_, _) =>
+        {
+            try
+            {
+                var c = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(box.Text);
+                VM.DesignCanvas.PageBackground = c;
+                win.DialogResult = true;
+            }
+            catch { }
+        };
+        win.ShowDialog();
+    }
 
     private void DesignAlign_Click(object sender, RoutedEventArgs e)
     {

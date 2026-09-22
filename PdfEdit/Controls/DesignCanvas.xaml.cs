@@ -39,13 +39,15 @@ public class DesignElementTemplateSelector : DataTemplateSelector
 public partial class DesignCanvas : UserControl
 {
     // ── Mouse state ──────────────────────────────────────────────────────────
-    private enum DragMode { None, Moving, Drawing, ResizingSE, ResizingNW, ResizingNE, ResizingSW, ResizingE, ResizingS }
+    private enum DragMode { None, Moving, Drawing, ResizingSE, ResizingNW, ResizingNE, ResizingSW, ResizingE, ResizingS, RubberBand, MovingMulti }
 
     private DragMode _dragMode = DragMode.None;
     private Point _dragStart;
     private Point _elemOrigin;
     private Size  _elemSizeOrigin;
     private DesignElement? _dragElement;
+    // Origin positions for multi-selection move
+    private Dictionary<DesignElement, Point> _multiOrigins = new();
 
     // Ink (freehand)
     private bool _isInking;
@@ -92,11 +94,21 @@ public partial class DesignCanvas : UserControl
                 RefreshSelectionHandles();
             if (e.PropertyName is nameof(DesignCanvasViewModel.Zoom))
                 ApplyZoom();
-            if (e.PropertyName is nameof(DesignCanvasViewModel.ShowGrid))
+            if (e.PropertyName is nameof(DesignCanvasViewModel.ShowGrid)
+                               or nameof(DesignCanvasViewModel.GridSize))
                 DrawGrid();
+            if (e.PropertyName is nameof(DesignCanvasViewModel.PageBackground))
+                ApplyBackground();
         };
         ApplyZoom();
+        ApplyBackground();
         DrawGrid();
+    }
+
+    private void ApplyBackground()
+    {
+        if (VM == null) return;
+        PageBorder.Background = new SolidColorBrush(VM.PageBackground);
     }
 
     // ── Zoom ─────────────────────────────────────────────────────────────────
@@ -116,12 +128,12 @@ public partial class DesignCanvas : UserControl
         GridOverlay.Children.Clear();
         if (VM == null || !VM.ShowGrid) return;
 
-        const double step = 20;
-        var pen = new Pen(new SolidColorBrush(Color.FromArgb(30, 0, 0, 0)), 0.5);
+        double step = VM.GridSize;
+        var brush = new SolidColorBrush(Color.FromArgb(30, 0, 0, 0));
         for (double x = 0; x <= VM.PageWidth; x += step)
-            GridOverlay.Children.Add(new Line { X1 = x, Y1 = 0, X2 = x, Y2 = VM.PageHeight, Stroke = pen.Brush, StrokeThickness = 0.5 });
+            GridOverlay.Children.Add(new Line { X1 = x, Y1 = 0, X2 = x, Y2 = VM.PageHeight, Stroke = brush, StrokeThickness = 0.5 });
         for (double y = 0; y <= VM.PageHeight; y += step)
-            GridOverlay.Children.Add(new Line { X1 = 0, Y1 = y, X2 = VM.PageWidth, Y2 = y, Stroke = pen.Brush, StrokeThickness = 0.5 });
+            GridOverlay.Children.Add(new Line { X1 = 0, Y1 = y, X2 = VM.PageWidth, Y2 = y, Stroke = brush, StrokeThickness = 0.5 });
     }
 
     // ── Mouse events ─────────────────────────────────────────────────────────
@@ -137,24 +149,42 @@ public partial class DesignCanvas : UserControl
 
         if (VM.ActiveTool == DesignTool.Select)
         {
-            // Hit test for an existing element
             var hit = HitTestElement(pos);
+            bool shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+
             if (hit != null)
             {
-                VM.SelectedElement = hit;
-                if (!hit.IsLocked)
+                if (shift)
                 {
-                    _dragMode = DragMode.Moving;
-                    _dragElement = hit;
-                    _elemOrigin = new Point(hit.X, hit.Y);
+                    VM.AddToMultiSelection(hit);
+                }
+                else if (VM.HasMultiSelection && VM.MultiSelection.Contains(hit))
+                {
+                    // drag all selected elements
+                    _dragMode = DragMode.MovingMulti;
+                    _multiOrigins = VM.MultiSelection.ToDictionary(el => el, el => new Point(el.X, el.Y));
+                    _dragStart = pos;
                     InteractionCanvas.CaptureMouse();
+                }
+                else
+                {
+                    VM.SetMultiSelection([hit]);
+                    if (!hit.IsLocked)
+                    {
+                        _dragMode = DragMode.Moving;
+                        _dragElement = hit;
+                        _elemOrigin = new Point(hit.X, hit.Y);
+                        InteractionCanvas.CaptureMouse();
+                    }
                 }
             }
             else
             {
-                VM.ClearSelection();
+                if (!shift) VM.ClearSelection();
                 HideHandles();
-                _dragMode = DragMode.Drawing; // rubber band
+                _dragMode = DragMode.RubberBand;
+                _dragStart = pos;
+                InteractionCanvas.CaptureMouse();
             }
             return;
         }
@@ -217,9 +247,35 @@ public partial class DesignCanvas : UserControl
         {
             var dx = pos.X - _dragStart.X;
             var dy = pos.Y - _dragStart.Y;
-            _dragElement.X = Math.Max(0, _elemOrigin.X + dx);
-            _dragElement.Y = Math.Max(0, _elemOrigin.Y + dy);
+            _dragElement.X = VM.Snap(Math.Max(0, _elemOrigin.X + dx));
+            _dragElement.Y = VM.Snap(Math.Max(0, _elemOrigin.Y + dy));
             RefreshSelectionHandles();
+            return;
+        }
+
+        if (_dragMode == DragMode.MovingMulti && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var dx = pos.X - _dragStart.X;
+            var dy = pos.Y - _dragStart.Y;
+            foreach (var (elem, origin) in _multiOrigins)
+            {
+                elem.X = VM.Snap(Math.Max(0, origin.X + dx));
+                elem.Y = VM.Snap(Math.Max(0, origin.Y + dy));
+            }
+            RefreshSelectionHandles();
+            return;
+        }
+
+        if (_dragMode == DragMode.RubberBand && e.LeftButton == MouseButtonState.Pressed)
+        {
+            double x = Math.Min(pos.X, _dragStart.X);
+            double y = Math.Min(pos.Y, _dragStart.Y);
+            double w = Math.Abs(pos.X - _dragStart.X);
+            double h = Math.Abs(pos.Y - _dragStart.Y);
+            Canvas.SetLeft(DrawPreviewRect, x); Canvas.SetTop(DrawPreviewRect, y);
+            DrawPreviewRect.Width = w; DrawPreviewRect.Height = h;
+            DrawPreviewRect.Visibility = Visibility.Visible;
+            DrawPreviewLine.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -267,6 +323,38 @@ public partial class DesignCanvas : UserControl
             InteractionCanvas.ReleaseMouseCapture();
             _dragMode = DragMode.None;
             _dragElement = null;
+            return;
+        }
+
+        if (_dragMode == DragMode.MovingMulti)
+        {
+            InteractionCanvas.ReleaseMouseCapture();
+            _dragMode = DragMode.None;
+            _multiOrigins.Clear();
+            return;
+        }
+
+        if (_dragMode == DragMode.RubberBand)
+        {
+            InteractionCanvas.ReleaseMouseCapture();
+            _dragMode = DragMode.None;
+            DrawPreviewRect.Visibility = Visibility.Collapsed;
+
+            double x = Math.Min(pos.X, _dragStart.X);
+            double y = Math.Min(pos.Y, _dragStart.Y);
+            double w = Math.Abs(pos.X - _dragStart.X);
+            double h = Math.Abs(pos.Y - _dragStart.Y);
+
+            if (w > 4 && h > 4 && VM != null)
+            {
+                var selRect = new Rect(x, y, w, h);
+                var hits = VM.Elements.Where(e => new Rect(e.X, e.Y, e.Width, e.Height).IntersectsWith(selRect)).ToList();
+                if (hits.Count > 0)
+                    VM.SetMultiSelection(hits);
+                else
+                    VM.ClearSelection();
+                RefreshSelectionHandles();
+            }
             return;
         }
 
@@ -380,7 +468,43 @@ public partial class DesignCanvas : UserControl
     private void RefreshSelectionHandles()
     {
         HideHandles();
-        var sel = VM?.SelectedElement;
+        if (VM == null) return;
+
+        var accentColor = TryFindResource("AccentColor") is Color c ? c : Color.FromRgb(0x0A, 0x84, 0xFF);
+
+        // Draw individual selection rects for all multi-selected elements
+        if (VM.HasMultiSelection)
+        {
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = 0, maxY = 0;
+            foreach (var e in VM.MultiSelection)
+            {
+                var selRect = new Rectangle
+                {
+                    Width = e.Width + 2, Height = e.Height + 2,
+                    Stroke = new SolidColorBrush(accentColor) { Opacity = 0.6 },
+                    StrokeThickness = 1, Fill = Brushes.Transparent,
+                    StrokeDashArray = new DoubleCollection([4, 2]),
+                    IsHitTestVisible = false
+                };
+                Canvas.SetLeft(selRect, e.X - 1); Canvas.SetTop(selRect, e.Y - 1);
+                SelectionOverlay.Children.Insert(0, selRect);
+                minX = Math.Min(minX, e.X); minY = Math.Min(minY, e.Y);
+                maxX = Math.Max(maxX, e.X + e.Width); maxY = Math.Max(maxY, e.Y + e.Height);
+            }
+            // Group bounding box
+            var groupRect = new Rectangle
+            {
+                Width = maxX - minX + 4, Height = maxY - minY + 4,
+                Stroke = new SolidColorBrush(accentColor),
+                StrokeThickness = 1.5, Fill = Brushes.Transparent,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(groupRect, minX - 2); Canvas.SetTop(groupRect, minY - 2);
+            SelectionOverlay.Children.Insert(0, groupRect);
+            return;
+        }
+
+        var sel = VM.SelectedElement;
         if (sel == null) return;
 
         double l = sel.X, t = sel.Y, w = sel.Width, h = sel.Height;
@@ -400,17 +524,15 @@ public partial class DesignCanvas : UserControl
         };
 
         // Selection border rectangle
-        SelectionOverlay.Children.OfType<Rectangle>().ToList().ForEach(r => SelectionOverlay.Children.Remove(r));
-        var accentColor = TryFindResource("AccentColor") is Color c ? c : Color.FromRgb(0x0A, 0x84, 0xFF);
-        var selRect = new Rectangle
+        var singleRect = new Rectangle
         {
             Width = w + 2, Height = h + 2,
             Stroke = new SolidColorBrush(accentColor),
             StrokeThickness = 1.5, Fill = Brushes.Transparent,
             IsHitTestVisible = false
         };
-        Canvas.SetLeft(selRect, l - 1); Canvas.SetTop(selRect, t - 1);
-        SelectionOverlay.Children.Insert(0, selRect);
+        Canvas.SetLeft(singleRect, l - 1); Canvas.SetTop(singleRect, t - 1);
+        SelectionOverlay.Children.Insert(0, singleRect);
 
         for (int i = 0; i < 8; i++)
         {
@@ -422,7 +544,8 @@ public partial class DesignCanvas : UserControl
 
     private void HideHandles()
     {
-        SelectionOverlay.Children.OfType<Rectangle>().ToList().ForEach(r => SelectionOverlay.Children.Remove(r));
+        foreach (var r in SelectionOverlay.Children.OfType<Rectangle>().ToList())
+            SelectionOverlay.Children.Remove(r);
         foreach (var h in _handles) h.Visibility = Visibility.Collapsed;
     }
 

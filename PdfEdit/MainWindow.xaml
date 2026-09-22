@@ -1374,6 +1374,28 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Save / Load Design -->
+                <Fluent:RibbonGroupBox Header="Design File"
+                                        AutomationProperties.Name="Design file group">
+                    <Fluent:Button Header="Save Design"
+                                   Click="SaveDesign_Click"
+                                   ToolTip="Save canvas as a .pdfdesign file (all elements preserved)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Save design">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Load Design"
+                                   Click="LoadDesign_Click"
+                                   ToolTip="Open a previously saved .pdfdesign file"
+                                   AutomationProperties.Name="Load design">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Templates -->
                 <Fluent:RibbonGroupBox Header="Templates"
                                         IsEnabled="{Binding IsDesignMode}"
@@ -1632,15 +1654,30 @@
                     <Fluent:ToggleButton Header="Grid"
                                          IsChecked="{Binding DesignCanvas.ShowGrid}"
                                          Size="Middle"
-                                         ToolTip="Toggle grid overlay"
+                                         ToolTip="Toggle grid overlay (20px)"
                                          AutomationProperties.Name="Toggle grid">
                         <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Snap"
+                                         IsChecked="{Binding DesignCanvas.SnapToGrid}"
+                                         Size="Middle"
+                                         ToolTip="Snap elements to grid while dragging"
+                                         AutomationProperties.Name="Snap to grid">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7EF;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Bg Color" Click="DesignBgColor_Click" Size="Middle"
+                                   ToolTip="Set the page background color"
+                                   AutomationProperties.Name="Page background color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Zoom In"   Click="DesignZoomIn_Click"  Size="Middle" AutomationProperties.Name="Design zoom in">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"  Click="DesignZoomOut_Click" Size="Middle" AutomationProperties.Name="Design zoom out">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Fit"       Click="DesignZoomFit_Click" Size="Middle" ToolTip="Fit canvas to window" AutomationProperties.Name="Design zoom fit">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

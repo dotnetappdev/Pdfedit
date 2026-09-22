@@ -34,6 +34,13 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private bool _elementLocked;
     private DesignElement? _clipboard;
 
+    private bool _snapToGrid;
+    private double _gridSize = 20;
+    private Color _pageBackground = Colors.White;
+
+    // Multi-selection
+    private readonly HashSet<DesignElement> _multiSelection = new();
+
     private readonly Stack<List<DesignElement>> _undoStack = new();
     private readonly Stack<List<DesignElement>> _redoStack = new();
 
@@ -225,6 +232,77 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     public Color PenColor     { get => _penColor;     set { _penColor     = value; OnPropertyChanged(); } }
     public double PenThickness { get => _penThickness; set { _penThickness = value; OnPropertyChanged(); } }
 
+    public bool SnapToGrid
+    {
+        get => _snapToGrid;
+        set { _snapToGrid = value; OnPropertyChanged(); }
+    }
+
+    public double GridSize
+    {
+        get => _gridSize;
+        set { _gridSize = Math.Max(4, value); OnPropertyChanged(); }
+    }
+
+    public Color PageBackground
+    {
+        get => _pageBackground;
+        set { _pageBackground = value; OnPropertyChanged(); }
+    }
+
+    // ── Multi-selection ───────────────────────────────────────────────────────
+
+    public IReadOnlySet<DesignElement> MultiSelection => _multiSelection;
+    public bool HasMultiSelection => _multiSelection.Count > 1;
+
+    public void SetMultiSelection(IEnumerable<DesignElement> elements)
+    {
+        foreach (var e in _multiSelection) e.IsSelected = false;
+        _multiSelection.Clear();
+        foreach (var e in elements) { e.IsSelected = true; _multiSelection.Add(e); }
+        SelectedElement = _multiSelection.LastOrDefault();
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    public void AddToMultiSelection(DesignElement element)
+    {
+        if (_multiSelection.Contains(element))
+        {
+            element.IsSelected = false;
+            _multiSelection.Remove(element);
+        }
+        else
+        {
+            element.IsSelected = true;
+            _multiSelection.Add(element);
+        }
+        SelectedElement = _multiSelection.LastOrDefault();
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    public void MoveMultiSelection(double dx, double dy)
+    {
+        foreach (var e in _multiSelection)
+        {
+            e.X = Snap(Math.Max(0, e.X + dx));
+            e.Y = Snap(Math.Max(0, e.Y + dy));
+        }
+    }
+
+    public void DeleteMultiSelection()
+    {
+        if (_multiSelection.Count == 0) return;
+        SaveUndo();
+        foreach (var e in _multiSelection.ToList()) Elements.Remove(e);
+        _multiSelection.Clear();
+        SelectedElement = null;
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    /// <summary>Snap a coordinate to the nearest grid point when SnapToGrid is enabled.</summary>
+    public double Snap(double value) =>
+        _snapToGrid && _gridSize > 0 ? Math.Round(value / _gridSize) * _gridSize : value;
+
     public double ElementOpacity
     {
         get => _elementOpacity;
@@ -261,22 +339,46 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     public void DeleteSelected()
     {
+        if (_multiSelection.Count > 1)
+        {
+            DeleteMultiSelection();
+            return;
+        }
         if (_selectedElement == null) return;
         SaveUndo();
         Elements.Remove(_selectedElement);
         SelectedElement = null;
     }
 
+    public void SaveDesign(string path)
+        => Services.DesignSerializerService.Save(Elements, _pageSize, _customPageWidth, _customPageHeight, _pageBackground, path);
+
+    public void LoadDesign(string path)
+    {
+        var (elems, ps, cw, ch, bg) = Services.DesignSerializerService.Load(path);
+        SaveUndo();
+        Elements.Clear();
+        SelectedElement = null;
+        _multiSelection.Clear();
+        foreach (var e in elems) Elements.Add(e);
+        PageSize = ps;
+        CustomPageWidth = cw;
+        CustomPageHeight = ch;
+        PageBackground = bg;
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
     public void SelectAll()
     {
-        foreach (var e in Elements) e.IsSelected = true;
-        SelectedElement = Elements.LastOrDefault();
+        SetMultiSelection(Elements);
     }
 
     public void ClearSelection()
     {
         foreach (var e in Elements) e.IsSelected = false;
+        _multiSelection.Clear();
         SelectedElement = null;
+        OnPropertyChanged(nameof(HasMultiSelection));
     }
 
     public void BringForward()
@@ -536,11 +638,13 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     private void RestoreState(List<DesignElement> state)
     {
+        _multiSelection.Clear();
         SelectedElement = null;
         Elements.Clear();
         foreach (var e in state) Elements.Add(e);
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
+        OnPropertyChanged(nameof(HasMultiSelection));
     }
 
     private static DesignElement CloneElement(DesignElement src) => src switch

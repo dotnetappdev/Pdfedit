@@ -21,7 +21,8 @@ public static class DesignExportService
         IEnumerable<DesignElement> elements,
         double pageWidthPt,
         double pageHeightPt,
-        string outputPath)
+        string outputPath,
+        System.Windows.Media.Color? backgroundColor = null)
     {
         using var writer = new PdfWriter(outputPath);
         using var pdf    = new PdfDocument(writer);
@@ -31,6 +32,16 @@ public static class DesignExportService
         var pdfCanvas = new PdfCanvas(page);
         var document  = new Document(pdf, pageSize);
         document.SetMargins(0, 0, 0, 0);
+
+        // Fill page background if not white
+        if (backgroundColor is { } bg && (bg.R != 255 || bg.G != 255 || bg.B != 255 || bg.A != 255))
+        {
+            pdfCanvas.SaveState();
+            pdfCanvas.SetFillColor(new iText.Kernel.Colors.DeviceRgb(bg.R / 255f, bg.G / 255f, bg.B / 255f));
+            pdfCanvas.Rectangle(0, 0, (float)pageWidthPt, (float)pageHeightPt);
+            pdfCanvas.Fill();
+            pdfCanvas.RestoreState();
+        }
 
         // Draw elements ordered by ZOrder
         foreach (var elem in elements.OrderBy(e => e.ZOrder))

@@ -725,7 +725,7 @@ public class MainViewModel : INotifyPropertyChanged
             try
             {
                 await Task.Run(() => Services.DesignExportService.ExportToPdf(
-                    DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, tmp));
+                    DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, tmp, DesignCanvas.PageBackground));
                 IsDesignMode = false;
                 await LoadDocumentAsync(tmp);
                 StatusText = "Design exported and opened as PDF.";
@@ -1790,7 +1790,7 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             await Task.Run(() => Services.DesignExportService.ExportToPdf(
-                DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, dlg.FileName));
+                DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, dlg.FileName, DesignCanvas.PageBackground));
             ToastService.Instance.Success($"Design exported to {System.IO.Path.GetFileName(dlg.FileName)}");
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
