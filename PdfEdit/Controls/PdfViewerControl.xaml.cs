@@ -56,6 +56,11 @@ public partial class PdfViewerControl : UserControl
     private Point _panStart;
     private double _scrollHStart, _scrollVStart;
 
+    // Highlight drag state
+    private bool _isDrawingHighlight;
+    private Point _highlightDragStart;
+    private Rectangle? _highlightRubberBand;
+
     // Adobe-style field selection chrome
     private Border?    _fieldChromeBorder;
     private TextBlock? _fieldChromeLabel;
@@ -393,6 +398,8 @@ public partial class PdfViewerControl : UserControl
             FieldOverlayCanvas.Height = h;
             HighlightCanvas.Width = w;
             HighlightCanvas.Height = h;
+            HlAnnotCanvas.Width = w;
+            HlAnnotCanvas.Height = h;
             AnnotationCanvas.Width = w;
             AnnotationCanvas.Height = h;
 
@@ -403,6 +410,7 @@ public partial class PdfViewerControl : UserControl
 
             _vm.RefreshCurrentPageFields();
             BuildFieldOverlay(_vm.CurrentPageFields, _vm.HighlightFields);
+            BuildHighlightAnnotationOverlay(_vm.GetHighlightAnnotationsForCurrentPage());
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
         }
@@ -844,6 +852,86 @@ public partial class PdfViewerControl : UserControl
         FieldOverlayCanvas.Children.Add(_fieldChromeBorder);
     }
 
+    // ── Highlight annotation overlay ──────────────────────────────────────────
+
+    private void BuildHighlightAnnotationOverlay(IEnumerable<Models.HighlightAnnotation> highlights)
+    {
+        HlAnnotCanvas.Children.Clear();
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var hl in highlights)
+            PlaceHighlightAnnotationVisual(hl, pageH);
+    }
+
+    private void PlaceHighlightAnnotationVisual(Models.HighlightAnnotation hl, double pageH)
+    {
+        double x = hl.Left * Scale;
+        double y = (pageH - hl.Bottom - hl.Height) * Scale;
+        double w = hl.Width * Scale;
+        double h = hl.Height * Scale;
+
+        Color c = ParseColor(hl.Color);
+        byte alpha = (byte)(hl.Opacity * 200);
+
+        FrameworkElement elem;
+        if (hl.Kind == Models.HighlightKind.Highlight)
+        {
+            var rect = new Rectangle
+            {
+                Width = w, Height = h,
+                Fill = new SolidColorBrush(Color.FromArgb(alpha, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y);
+            elem = rect;
+        }
+        else if (hl.Kind == Models.HighlightKind.Underline)
+        {
+            double lineH = Math.Max(2, h * 0.1);
+            var rect = new Rectangle
+            {
+                Width = w, Height = lineH,
+                Fill = new SolidColorBrush(Color.FromArgb(220, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y + h - lineH);
+            elem = rect;
+        }
+        else // Strikethrough
+        {
+            double lineH = Math.Max(2, h * 0.1);
+            var rect = new Rectangle
+            {
+                Width = w, Height = lineH,
+                Fill = new SolidColorBrush(Color.FromArgb(220, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y + (h - lineH) / 2);
+            elem = rect;
+        }
+
+        elem.ToolTip = "Right-click to delete highlight";
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = "Delete Highlight" };
+        delItem.Click += (_, _) =>
+        {
+            _vm!.RemoveHighlightAnnotation(hl);
+            HlAnnotCanvas.Children.Remove(elem);
+        };
+        cm.Items.Add(delItem);
+        elem.ContextMenu = cm;
+
+        HlAnnotCanvas.Children.Add(elem);
+    }
+
+    private static Color ParseColor(string hex)
+    {
+        try { return (Color)ColorConverter.ConvertFromString(hex); }
+        catch { return Colors.Yellow; }
+    }
+
     // ── Free-text annotation overlay ──────────────────────────────────────────
 
     private void BuildAnnotationOverlay(IEnumerable<FreeTextAnnotation> annotations)
@@ -1116,6 +1204,28 @@ public partial class PdfViewerControl : UserControl
             if (!IsOnPage(posOnPage)) return;
             PlaceSignatureAtPoint(posOnPage);
             e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.Highlight)
+        {
+            var posOnPage = e.GetPosition(HlAnnotCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingHighlight = true;
+            _highlightDragStart = posOnPage;
+            _highlightRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(100, 255, 255, 0)),
+                Stroke = new SolidColorBrush(Color.FromArgb(180, 200, 150, 0)),
+                StrokeThickness = 1,
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_highlightRubberBand, posOnPage.X);
+            Canvas.SetTop(_highlightRubberBand, posOnPage.Y);
+            HlAnnotCanvas.Children.Add(_highlightRubberBand);
+            CaptureMouse();
+            e.Handled = true;
         }
     }
 
@@ -1129,6 +1239,46 @@ public partial class PdfViewerControl : UserControl
             _isPanning = false;
             ReleaseMouseCapture();
             Cursor = Cursors.Arrow;
+            return;
+        }
+
+        if (_isDrawingHighlight)
+        {
+            _isDrawingHighlight = false;
+            ReleaseMouseCapture();
+
+            if (_highlightRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _highlightRubberBand.Width;
+                double rectH = _highlightRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_highlightRubberBand);
+                double canvasY = Canvas.GetTop(_highlightRubberBand);
+                HlAnnotCanvas.Children.Remove(_highlightRubberBand);
+                _highlightRubberBand = null;
+
+                if (rectW > 4 && rectH > 4)
+                {
+                    int pageNum = _vm.CurrentPageIndex + 1;
+                    if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                    {
+                        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        var hl = new Models.HighlightAnnotation
+                        {
+                            Left    = canvasX / Scale,
+                            Bottom  = pageH - (canvasY / Scale) - (rectH / Scale),
+                            Width   = rectW / Scale,
+                            Height  = rectH / Scale,
+                            Color   = "#FFFF00",
+                            Opacity = 0.4f,
+                            Kind    = Models.HighlightKind.Highlight,
+                        };
+                        _vm.AddHighlightAnnotation(hl);
+                        PlaceHighlightAnnotationVisual(hl, pageH);
+                        _vm.StatusText = "Highlight added. Right-click to delete.";
+                    }
+                }
+            }
+            e.Handled = true;
         }
     }
 
@@ -1139,6 +1289,20 @@ public partial class PdfViewerControl : UserControl
             var pos = e.GetPosition(this);
             PdfScrollViewer.ScrollToHorizontalOffset(_scrollHStart + (_panStart.X - pos.X));
             PdfScrollViewer.ScrollToVerticalOffset(_scrollVStart + (_panStart.Y - pos.Y));
+            return;
+        }
+
+        if (_isDrawingHighlight && _highlightRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(HlAnnotCanvas);
+            double x = Math.Min(pos.X, _highlightDragStart.X);
+            double y = Math.Min(pos.Y, _highlightDragStart.Y);
+            double w = Math.Abs(pos.X - _highlightDragStart.X);
+            double h = Math.Abs(pos.Y - _highlightDragStart.Y);
+            Canvas.SetLeft(_highlightRubberBand, x);
+            Canvas.SetTop(_highlightRubberBand, y);
+            _highlightRubberBand.Width  = w;
+            _highlightRubberBand.Height = h;
         }
     }
 

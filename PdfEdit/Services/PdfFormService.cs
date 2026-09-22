@@ -169,7 +169,8 @@ public class PdfFormService
         IEnumerable<PlacedSignature>? placedSignatures = null,
         bool flatten = false,
         IEnumerable<string>? deletedFieldNames = null,
-        Dictionary<string, string>? fieldExportValues = null)
+        Dictionary<string, string>? fieldExportValues = null,
+        IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -269,7 +270,41 @@ public class PdfFormService
             page.AddAnnotation(pdfAnn);
         }
 
-        // ── 4. Placed signatures ──────────────────────────────────────────
+        // ── 4. Highlight annotations ──────────────────────────────────────
+        if (highlightAnnotations != null)
+        {
+            foreach (var hl in highlightAnnotations)
+            {
+                int pageNum = hl.PageNumber;
+                if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
+                var page = doc.GetPage(pageNum);
+
+                var rect = new Rectangle(
+                    (float)hl.Left,
+                    (float)hl.Bottom,
+                    (float)hl.Width,
+                    (float)hl.Height);
+
+                ParseHexColor(hl.Color, out float r, out float g, out float b);
+                var color = new DeviceRgb(r, g, b);
+
+                iText.Kernel.Pdf.Annot.PdfAnnotation pdfHL;
+                if (hl.Kind == Models.HighlightKind.Strikethrough)
+                    pdfHL = new iText.Kernel.Pdf.Annot.PdfStrikeOutAnnotation(rect);
+                else if (hl.Kind == Models.HighlightKind.Underline)
+                    pdfHL = new iText.Kernel.Pdf.Annot.PdfUnderlineAnnotation(rect);
+                else
+                    pdfHL = new PdfHighlightAnnotation(rect);
+
+                pdfHL.SetColor(color);
+                var extState = new iText.Kernel.Pdf.PdfExtGState().SetFillOpacity(hl.Opacity);
+                var extStateDict = extState.GetPdfObject();
+                pdfHL.Put(PdfName.CA, new PdfNumber(hl.Opacity));
+                page.AddAnnotation(pdfHL);
+            }
+        }
+
+        // ── 5. Placed signatures ──────────────────────────────────────────
         if (placedSignatures != null)
         {
             foreach (var sig in placedSignatures)

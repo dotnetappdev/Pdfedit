@@ -75,6 +75,10 @@
                         <Canvas x:Name="HighlightCanvas"
                                 IsHitTestVisible="False"/>
 
+                        <!-- User-drawn highlight annotations (right-click to delete) -->
+                        <Canvas x:Name="HlAnnotCanvas"
+                                IsHitTestVisible="True"/>
+
                         <!-- AcroForm field overlay — live WPF controls -->
                         <Canvas x:Name="FieldOverlayCanvas"
                                 IsHitTestVisible="True"

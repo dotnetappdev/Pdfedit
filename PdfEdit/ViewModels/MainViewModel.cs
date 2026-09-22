@@ -54,6 +54,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
+    public ObservableCollection<Models.HighlightAnnotation> HighlightAnnotations { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
     public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
@@ -853,6 +854,22 @@ public class MainViewModel : INotifyPropertyChanged
     public IEnumerable<PlacedSignature> GetSignaturesForCurrentPage()
         => PlacedSignatures.Where(s => s.PageNumber == _currentPageIndex + 1);
 
+    public void AddHighlightAnnotation(Models.HighlightAnnotation hl)
+    {
+        hl.PageNumber = _currentPageIndex + 1;
+        HighlightAnnotations.Add(hl);
+        PageChanged?.Invoke();
+    }
+
+    public void RemoveHighlightAnnotation(Models.HighlightAnnotation hl)
+    {
+        HighlightAnnotations.Remove(hl);
+        PageChanged?.Invoke();
+    }
+
+    public IEnumerable<Models.HighlightAnnotation> GetHighlightAnnotationsForCurrentPage()
+        => HighlightAnnotations.Where(h => h.PageNumber == _currentPageIndex + 1);
+
     // ── Private Commands ─────────────────────────────────────────────────────
 
     private void DeleteSelectedAnnotation()
@@ -893,6 +910,7 @@ public class MainViewModel : INotifyPropertyChanged
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
+            HighlightAnnotations.Clear();
             Bookmarks.Clear();
 
             foreach (var f in Document.FormFields)
@@ -985,7 +1003,8 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath, tmp, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -1029,7 +1048,8 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
@@ -1066,7 +1086,8 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1112,6 +1133,7 @@ public class MainViewModel : INotifyPropertyChanged
         CurrentPageFields.Clear();
         FreeTextAnnotations.Clear();
         PlacedSignatures.Clear();
+        HighlightAnnotations.Clear();
         _pageRotations.Clear();
         SelectedField = null;
         SelectedAnnotation = null;
