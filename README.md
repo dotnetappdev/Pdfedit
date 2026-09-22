@@ -32,8 +32,15 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 |---------|---------|---------------|-----------|-----------|
 | Design canvas (build from scratch) | ✅ | ✅ | ❌ | ✅ |
 | AI Smart Fill (auto-fill all fields) | ✅ Claude + GPT | ❌ | ❌ | ❌ |
-| Built-in templates (Invoice, Letter…) | ✅ | Limited | ✅ | ❌ |
+| Built-in templates (Invoice, Letter…) | ✅ 7 templates | Limited | ✅ | ❌ |
 | Table element | ✅ | ✅ | ❌ | ✅ |
+| Watermark / Page Numbers | ✅ | ✅ | ✅ | ✅ |
+| Bookmarks / Outline panel | ✅ | ✅ | ❌ | ✅ |
+| Document Properties editor | ✅ | ✅ | ❌ | ✅ |
+| Export pages as images (PNG) | ✅ | ✅ | ❌ | ✅ |
+| Find & Replace in form fields | ✅ | ✅ | ❌ | ✅ |
+| Required-field validation | ✅ | ✅ | ❌ | ❌ |
+| PDF/A archival export | ✅ | ✅ | ❌ | ✅ |
 | Free (open source) | ✅ | ❌ | ❌ | ❌ |
 | WPF native (no browser) | ✅ | ✅ | ❌ | ✅ |
 | Bring your own AI key | ✅ | ❌ | ❌ | ❌ |
@@ -82,6 +89,8 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Form** — Labelled input fields for applications and surveys
 - **Certificate** — Decorative bordered certificate with gold accents and signature lines
 - **Business Card** — 85×54 mm card with two-tone background and contact details
+- **Resume / CV** — Two-column professional CV with skills, experience, and education sections
+- **Flyer** — Bold promotional flyer with headline, body text, and accent bar
 
 **Pages & View**
 - Page size: A4, Letter, A3, or Custom dimensions
@@ -105,6 +114,8 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Delete Field** — Remove individual AcroForm fields from the document
 - **Import / Export** — Save and reload all field values as TSV files
 - **Flatten & Save** — Bake filled values into a non-editable PDF
+- **Find & Replace** — Search and replace text across all form field values; case-sensitive option
+- **Validate Required Fields** — One-click check; lists empty required fields and navigates to the first one
 
 ---
 
@@ -151,8 +162,18 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Split PDF** — Split every page into individual files
 - **Drag-and-Drop Reorder** — Drag thumbnails in the left panel to reorder pages
 - **Right-Click Thumbnails** — Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract
+- **Watermark** — Diagonal text watermark on all pages (text, opacity, angle, font size, colour)
+- **Page Numbers** — Footer on every page: "Page N of M" (left/centre/right, configurable format)
+- **Compress PDF** — Re-save with `BEST_COMPRESSION` + smart mode; reports before/after file size
+- **Export as Images** — Render every page to PNG at 192 DPI into a chosen folder
+- **Archive (PDF/A)** — Save as PDF 1.4 with archival conformance metadata
 
 ---
+
+### Document Management
+
+- **Document Properties** — Edit PDF metadata: title, author, subject, keywords; shows creator, producer, page count, file size (File menu → Document Properties or Home tab)
+- **Bookmarks / Outline** — Side panel shows the PDF outline tree; click any bookmark to navigate to its page
 
 ### Navigation & Viewing
 
@@ -162,6 +183,7 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - Recent files in File menu
 - Document state remembered per file (last page + zoom)
 - Global search across field names, values, and annotations
+- Bookmarks panel in Properties dock — click any heading to navigate
 - Print via system dialog
 
 ---
@@ -196,6 +218,12 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 | Delete element | Del |
 | Nudge 1px | Arrow keys |
 | Nudge 10px | Shift+Arrow |
+| Resize element 1px / 10px | Ctrl+Arrow / Ctrl+Shift+Arrow |
+| Select tool | V |
+| Text tool | T |
+| Rectangle / Ellipse / Line | R / E / L |
+| Arrow / Pen / Image | A / P / I |
+| Table tool | B |
 | Next page | Ctrl+Right |
 | Previous page | Ctrl+Left |
 | Zoom in | Ctrl+Add |
@@ -255,7 +283,7 @@ dotnet test
 | Layer | Description |
 |-------|-------------|
 | `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
-| `Services/PdfFormService` | Reads/writes AcroForm fields, splits, merges, reorders, rotates, inserts pages via iText7 |
+| `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; compression; metadata; bookmarks; redaction; PDF/A export via iText7 |
 | `Services/PdfTextExtractorService` | Extracts text from PDF pages via iText7; cached per page for AI context |
 | `Services/AiProviderService` | Streaming HTTP client for Claude and OpenAI; document analysis prompt builder |
 | `Services/DesignExportService` | Renders DesignCanvas elements to a PDF page via iText7; handles WPF→PDF coordinate transform, opacity, and table layout |
@@ -270,6 +298,12 @@ dotnet test
 | `Controls/PageThumbnailsPanel` | Left thumbnail strip with drag-and-drop reorder |
 | `Controls/AiChatPanel` | AI chat UI — model picker, provider tabs, preset chips, streaming |
 | `Dialogs/AppDialog` | Themed dialogs replacing `MessageBox.Show` |
+| `Dialogs/DocumentPropertiesDialog` | Edit PDF metadata (title, author, subject, keywords); shows read-only info |
+| `Dialogs/FindReplaceFieldsDialog` | Find & replace text across form field values with case-sensitive option |
+| `Dialogs/WatermarkDialog` | Watermark configuration: text, font size, opacity, angle, colour |
+| `Dialogs/ShortcutsDialog` | Scrollable keyboard shortcut reference (F1) |
+| `Models/BookmarkItem` | Hierarchical PDF outline node (title, page number, children) |
+| `Models/PdfMetadataInfo` | PDF metadata DTO (title, author, subject, keywords, creator, producer, page count) |
 | `Resources/AppTheme.xaml` | `DynamicResource` token-based style system for live theme switching |
 
 ---
