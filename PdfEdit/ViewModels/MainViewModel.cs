@@ -218,6 +218,13 @@ public class MainViewModel : INotifyPropertyChanged
         set { _highlightFields = value; OnPropertyChanged(); PageChanged?.Invoke(); }
     }
 
+    private string _currentHighlightColor = "#FFFF00";
+    public string CurrentHighlightColor
+    {
+        get => _currentHighlightColor;
+        set { _currentHighlightColor = value; OnPropertyChanged(); }
+    }
+
     public bool ShowAiPanel
     {
         get => _showAiPanel;
@@ -609,6 +616,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ExportPdfACommand { get; }
     public ICommand ValidateRequiredFieldsCommand { get; }
     public ICommand ApplyRedactionsCommand { get; }
+    public ICommand DuplicatePageCommand { get; }
+    public ICommand AddHeaderFooterCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -747,6 +756,8 @@ public class MainViewModel : INotifyPropertyChanged
         ValidateRequiredFieldsCommand = new RelayCommand(ValidateRequiredFields, () => HasDocument);
         ApplyRedactionsCommand        = new AsyncRelayCommand(ApplyRedactionsAsync,
             () => HasDocument && RedactionRegions.Count > 0);
+        DuplicatePageCommand          = new AsyncRelayCommand(DuplicatePageAsync, () => HasDocument);
+        AddHeaderFooterCommand        = new AsyncRelayCommand(AddHeaderFooterAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1588,6 +1599,67 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Dialogs.AppDialog.ShowError("Redaction failed.", ex);
             StatusText = "Redaction failed.";
+        }
+    }
+
+    private async Task DuplicatePageAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int idx = _currentPageIndex;
+            await Task.Run(() => _formService.DuplicatePage(_currentFilePath, tmp, idx));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+            StatusText = $"Page {idx + 1} duplicated.";
+            ToastService.Instance.Success($"Page {idx + 1} duplicated.");
+            await OpenFileAsync(_currentFilePath);
+            CurrentPageIndex = idx + 1;
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Duplicate page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task AddHeaderFooterAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.HeaderFooterDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+        if (string.IsNullOrWhiteSpace(dlg.HeaderText) && string.IsNullOrWhiteSpace(dlg.FooterText))
+        {
+            ToastService.Instance.Info("No header or footer text entered.");
+            return;
+        }
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddHeaderFooter(
+                _currentFilePath, tmp,
+                string.IsNullOrWhiteSpace(dlg.HeaderText) ? null : dlg.HeaderText,
+                string.IsNullOrWhiteSpace(dlg.FooterText) ? null : dlg.FooterText,
+                dlg.FontSize, 18f, dlg.Alignment));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+            StatusText = "Header/footer added.";
+            ToastService.Instance.Success("Header/footer added to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add header/footer failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
         }
     }
 

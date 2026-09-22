@@ -393,6 +393,64 @@ public class PdfFormService
         }
     }
 
+    /// <summary>Duplicates the page at pageIndex (0-based) and inserts the copy immediately after it.</summary>
+    public void DuplicatePage(string inputPath, string outputPath, int pageIndex)
+    {
+        string tmp = System.IO.Path.GetTempFileName() + ".pdf";
+        try
+        {
+            ExtractPages(inputPath, tmp, new[] { pageIndex });
+            InsertPdfAt(inputPath, tmp, outputPath, pageIndex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    /// <summary>Adds a header and/or footer text string to every page.</summary>
+    public void AddHeaderFooter(string inputPath, string outputPath,
+        string? headerText, string? footerText,
+        float fontSize = 10f, float marginPt = 18f,
+        string alignment = "Center")
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf = new PdfDocument(reader, writer);
+        var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+        int total = pdf.GetNumberOfPages();
+
+        for (int i = 1; i <= total; i++)
+        {
+            var page = pdf.GetPage(i);
+            var size = page.GetPageSize();
+            var canvas = new PdfCanvas(page);
+
+            void DrawText(string text, float y)
+            {
+                float tw = font.GetWidth(text, fontSize);
+                float x = alignment switch
+                {
+                    "Left"  => marginPt,
+                    "Right" => size.GetWidth() - tw - marginPt,
+                    _       => (size.GetWidth() - tw) / 2,
+                };
+                canvas.SaveState();
+                canvas.BeginText();
+                canvas.SetFontAndSize(font, fontSize);
+                canvas.SetTextMatrix(1, 0, 0, 1, x, y);
+                canvas.ShowText(text);
+                canvas.EndText();
+                canvas.RestoreState();
+            }
+
+            if (!string.IsNullOrWhiteSpace(headerText))
+                DrawText(headerText!, size.GetHeight() - marginPt - fontSize);
+            if (!string.IsNullOrWhiteSpace(footerText))
+                DrawText(footerText!, marginPt);
+        }
+    }
+
     /// <summary>Concatenates all sourcePaths PDFs into destPath in order.</summary>
     public void MergePdfs(IEnumerable<string> sourcePaths, string destPath)
     {

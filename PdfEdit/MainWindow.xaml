@@ -584,6 +584,26 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Duplicate&#x0a;Page"
+                                   Command="{Binding DuplicatePageCommand}"
+                                   KeyTip="DUP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Duplicate the current page and insert the copy immediately after it"
+                                   AutomationProperties.Name="Duplicate current page">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Header /&#x0a;Footer"
+                                   Command="{Binding AddHeaderFooterCommand}"
+                                   KeyTip="HF"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add custom header and/or footer text to every page"
+                                   AutomationProperties.Name="Add header and footer">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -1160,6 +1180,50 @@
                             </StackPanel>
                         </Fluent:ToggleButton.Header>
                     </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Highlight color picker -->
+                <Fluent:RibbonGroupBox Header="Highlight Color"
+                                        AutomationProperties.Name="Highlight annotation color group">
+                    <StackPanel Orientation="Vertical" Margin="2,4">
+                        <TextBlock Text="Color:" FontSize="11" Margin="0,0,0,3"/>
+                        <ComboBox Width="110" Height="22" FontSize="11"
+                                  SelectedValue="{Binding CurrentHighlightColor, Mode=TwoWay}"
+                                  IsEnabled="{Binding HasDocument}"
+                                  ToolTip="Highlight color"
+                                  AutomationProperties.Name="Highlight color picker">
+                            <ComboBoxItem Tag="#FFFF00" IsSelected="True">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFFF00" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Yellow"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#90EE90">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#90EE90" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Green"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#ADD8E6">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#ADD8E6" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Blue"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FFB6C1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFB6C1" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Pink"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FFA500">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFA500" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Orange"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text annotation tools -->

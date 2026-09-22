@@ -1358,7 +1358,7 @@ public partial class PdfViewerControl : UserControl
                             Bottom  = pageH - (canvasY / Scale) - (rectH / Scale),
                             Width   = rectW / Scale,
                             Height  = rectH / Scale,
-                            Color   = "#FFFF00",
+                            Color   = _vm.CurrentHighlightColor,
                             Opacity = 0.4f,
                             Kind    = kind,
                         };
