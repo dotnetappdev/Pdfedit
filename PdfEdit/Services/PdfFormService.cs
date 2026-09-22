@@ -1156,6 +1156,34 @@ public class PdfFormService
         form.AddField(field, page);
     }
 
+    public void AddRadioButtonField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float size,
+        string groupName, string onValue)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var page = pdf.GetPage(pageNumber);
+        var rect = new Rectangle(left, bottom, size, size);
+
+        // Reuse existing radio group or create new one
+        PdfButtonFormField? group = form.GetField(groupName) as PdfButtonFormField;
+        if (group == null)
+        {
+            group = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, groupName)
+                .SetWidgetRectangle(rect)
+                .CreateRadioGroup();
+            form.AddField(group, page);
+        }
+        var widget = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, groupName)
+            .SetWidgetRectangle(rect)
+            .CreateRadioButton(onValue, true);
+        group.AddKid(widget);
+    }
+
     /// <summary>Exports all extractable text from each page to a UTF-8 text file.</summary>
     public void ExportTextToFile(string inputPath, string outputPath)
     {

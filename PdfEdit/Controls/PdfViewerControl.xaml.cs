@@ -1480,16 +1480,16 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox)
+        if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox or ActiveTool.AddRadioButton)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
             _isDrawingFormField = true;
             _formFieldTool = tool;
             _formFieldDragStart = posOnPage;
-            var strokeColor = tool == ActiveTool.AddCheckbox
-                ? Color.FromArgb(200, 30, 160, 30)
-                : Color.FromArgb(200, 30, 90, 220);
+            var strokeColor = tool == ActiveTool.AddCheckbox ? Color.FromArgb(200, 30, 160, 30)
+                            : tool == ActiveTool.AddRadioButton ? Color.FromArgb(200, 160, 80, 0)
+                            : Color.FromArgb(200, 30, 90, 220);
             _formFieldRubberBand = new Rectangle
             {
                 Fill = new SolidColorBrush(Color.FromArgb(30, strokeColor.R, strokeColor.G, strokeColor.B)),
@@ -1738,6 +1738,7 @@ public partial class PdfViewerControl : UserControl
                         Owner = Window.GetWindow(this),
                         FieldType = _formFieldTool == ActiveTool.AddCheckbox ? "Checkbox"
                                   : _formFieldTool == ActiveTool.AddComboBox ? "Combo Box"
+                                  : _formFieldTool == ActiveTool.AddRadioButton ? "Radio Button"
                                   : "Text Field",
                     };
                     if (nameDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(nameDlg.FieldName))
@@ -1761,6 +1762,8 @@ public partial class PdfViewerControl : UserControl
                                     svc.AddCheckboxField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname);
                                 else if (fTool == ActiveTool.AddComboBox)
                                     svc.AddComboBoxField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname, nameDlg.ComboChoices ?? Array.Empty<string>());
+                                else if (fTool == ActiveTool.AddRadioButton)
+                                    svc.AddRadioButtonField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname, fname);
                                 else
                                     svc.AddTextFormField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname);
                                 System.IO.File.Copy(tmpPath, srcPath, overwrite: true);

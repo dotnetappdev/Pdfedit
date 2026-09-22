@@ -1041,6 +1041,18 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Radio Button"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddRadioButton, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddRadioButton"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Radio Button — drag to add a radio button field (same group name = same group)"
+                                         AutomationProperties.Name="Add radio button form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE915;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
