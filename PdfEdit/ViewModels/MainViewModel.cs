@@ -1152,6 +1152,7 @@ public class MainViewModel : INotifyPropertyChanged
     private async Task LoadDocumentAsync(string path)
     {
         IsLoading = true;
+        IsDesignMode = false;  // always switch to Live View when opening a PDF
         StatusText = $"Loading {System.IO.Path.GetFileName(path)}…";
 
         try

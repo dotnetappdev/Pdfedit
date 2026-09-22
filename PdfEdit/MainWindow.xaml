@@ -2473,23 +2473,20 @@
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
 
-                        <!-- ── Document area: PDF Viewer OR Design Canvas ─── -->
+                        <!-- ── Document area: Live View + Design as separate tabs ─── -->
                         <avalonDock:LayoutDocumentPaneGroup>
                             <avalonDock:LayoutDocumentPane>
-                                <!-- PDF viewer (visible in PDF mode) -->
-                                <avalonDock:LayoutDocument Title="Document" ContentId="document" CanClose="False">
-                                    <Grid>
-                                        <!-- PDF viewer (shown when not in design mode) -->
-                                        <controls:PdfViewerControl x:Name="PdfViewer"
-                                                                   DataContext="{Binding}"
-                                                                   Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                                   AutomationProperties.Name="PDF document viewer"/>
-                                        <!-- Design Canvas (shown in design mode) -->
-                                        <controls:DesignCanvas x:Name="DesignCanvasControl"
-                                                               DataContext="{Binding DesignCanvas}"
-                                                               Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                               AutomationProperties.Name="Design canvas"/>
-                                    </Grid>
+                                <!-- Live View tab: PDF viewer/filler -->
+                                <avalonDock:LayoutDocument Title="Live View" ContentId="liveview" CanClose="False">
+                                    <controls:PdfViewerControl x:Name="PdfViewer"
+                                                               DataContext="{Binding}"
+                                                               AutomationProperties.Name="PDF document viewer"/>
+                                </avalonDock:LayoutDocument>
+                                <!-- Design tab: blank-canvas PDF builder -->
+                                <avalonDock:LayoutDocument Title="Design" ContentId="design" CanClose="False">
+                                    <controls:DesignCanvas x:Name="DesignCanvasControl"
+                                                           DataContext="{Binding DesignCanvas}"
+                                                           AutomationProperties.Name="Design canvas"/>
                                 </avalonDock:LayoutDocument>
                             </avalonDock:LayoutDocumentPane>
                         </avalonDock:LayoutDocumentPaneGroup>

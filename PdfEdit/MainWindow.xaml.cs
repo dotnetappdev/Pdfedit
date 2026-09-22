@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using Fluent;
+using PdfEdit.Controls;
 using PdfEdit.Models;
 using PdfEdit.Services;
 using PdfEdit.ViewModels;
@@ -42,7 +43,48 @@ public partial class MainWindow : RibbonWindow
         Height = s.WindowHeight;
         if (s.WindowMaximized)
             WindowState = WindowState.Maximized;
+
+        // Sync tab selection ↔ IsDesignMode in both directions
+        if (VM != null)
+            VM.PropertyChanged += OnVmPropertyChangedTabSync;
+        DockManager.ActiveContentChanged += OnDockActiveContentChanged;
     }
+
+    private bool _syncingView;
+
+    // VM → tab: when IsDesignMode changes, switch the active AvalonDock document
+    private void OnVmPropertyChangedTabSync(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.IsDesignMode) || _syncingView) return;
+        var doc = VM?.IsDesignMode == true
+            ? FindLayoutDocument("design")
+            : FindLayoutDocument("liveview");
+        if (doc != null)
+        {
+            _syncingView = true;
+            doc.IsActive = true;
+            _syncingView = false;
+        }
+    }
+
+    // Tab → VM: when the user clicks a tab, update IsDesignMode
+    private void OnDockActiveContentChanged(object? sender, EventArgs e)
+    {
+        if (VM == null || _syncingView) return;
+        bool isDesign = DockManager.ActiveContent is DesignCanvas;
+        if (VM.IsDesignMode != isDesign)
+        {
+            _syncingView = true;
+            VM.IsDesignMode = isDesign;
+            _syncingView = false;
+        }
+    }
+
+    private AvalonDock.Layout.LayoutDocument? FindLayoutDocument(string contentId)
+        => DockManager.Layout
+            .Descendents()
+            .OfType<AvalonDock.Layout.LayoutDocument>()
+            .FirstOrDefault(d => d.ContentId == contentId);
 
     protected override void OnClosing(CancelEventArgs e)
     {
