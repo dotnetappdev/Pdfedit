@@ -630,6 +630,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand PasswordProtectCommand { get; }
     public ICommand RemovePasswordCommand { get; }
     public ICommand BatesNumberCommand { get; }
+    public ICommand AddBookmarkCommand { get; }
     public ICommand CropPagesCommand { get; }
     public ICommand ExportTextCommand { get; }
     public ICommand AddTextFieldCommand { get; }
@@ -784,6 +785,7 @@ public class MainViewModel : INotifyPropertyChanged
         PasswordProtectCommand        = new AsyncRelayCommand(PasswordProtectAsync, () => HasDocument);
         RemovePasswordCommand         = new AsyncRelayCommand(RemovePasswordAsync,  () => HasDocument);
         BatesNumberCommand            = new AsyncRelayCommand(BatesNumberAsync,     () => HasDocument);
+        AddBookmarkCommand            = new AsyncRelayCommand(AddBookmarkAsync,      () => HasDocument);
         CropPagesCommand              = new AsyncRelayCommand(CropPagesAsync,        () => HasDocument);
         ExportTextCommand             = new AsyncRelayCommand(ExportTextAsync,       () => HasDocument);
         AddTextFieldCommand   = new RelayCommand(() => ActiveTool = ActiveTool.AddTextField,  () => HasDocument);
@@ -1774,6 +1776,41 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("Remove password failed. If the PDF is encrypted, open it with the password first.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task AddBookmarkAsync()
+    {
+        if (_currentFilePath == null) return;
+        int pageNum = _currentPageIndex + 1;
+        string defaultTitle = $"Page {pageNum}";
+        var dlg = new Dialogs.InputDialog("Add Bookmark", $"Enter bookmark title for page {pageNum}:", defaultTitle)
+        { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+
+        string title = dlg.InputText.Trim();
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddBookmark(_currentFilePath, tmp, title, pageNum));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+
+            var bms = _formService.GetBookmarks(_currentFilePath);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Bookmarks.Clear();
+                foreach (var bm in bms) Bookmarks.Add(bm);
+            });
+            StatusText = $"Bookmark '{title}' added at page {pageNum}.";
+            ToastService.Instance.Success($"Bookmark added: {title}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add bookmark failed.", ex);
         }
         finally
         {

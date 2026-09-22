@@ -1150,6 +1150,20 @@
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Bookmarks group -->
+                <Fluent:RibbonGroupBox Header="Bookmarks"
+                                        AutomationProperties.Name="Bookmarks management group">
+                    <Fluent:Button Header="Add Bookmark"
+                                   Command="{Binding AddBookmarkCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add a bookmark for the current page"
+                                   AutomationProperties.Name="Add bookmark to current page">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
@@ -2437,8 +2451,20 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="BOOKMARKS"
-                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="BOOKMARKS"
+                                               Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                    <Button Grid.Column="1" Content="+ Add" FontSize="10" Height="22" Margin="4,6,8,4"
+                                            Command="{Binding AddBookmarkCommand}"
+                                            IsEnabled="{Binding HasDocument}"
+                                            ToolTip="Add a bookmark for the current page"
+                                            Background="{DynamicResource AccentBrush}" Foreground="White"
+                                            BorderThickness="0" Padding="6,0"/>
+                                </Grid>
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                     <TreeView ItemsSource="{Binding Bookmarks}"
                                               FontSize="11"

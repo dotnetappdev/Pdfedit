@@ -722,6 +722,64 @@ public class PdfFormService
         }
     }
 
+    /// <summary>Adds a top-level bookmark pointing to the specified page.</summary>
+    public void AddBookmark(string sourcePath, string destPath, string title, int pageNumber)
+    {
+        using var reader = new PdfReader(sourcePath);
+        reader.SetUnethicalReading(true);
+        using var writer = new PdfWriter(destPath);
+        using var doc    = new PdfDocument(reader, writer);
+
+        if (pageNumber < 1 || pageNumber > doc.GetNumberOfPages())
+            throw new ArgumentOutOfRangeException(nameof(pageNumber));
+
+        var catalog  = doc.GetCatalog();
+        var outlines = catalog.GetPdfObject().GetAsDictionary(PdfName.Outlines);
+        PdfDictionary outlineRoot;
+        if (outlines == null)
+        {
+            outlineRoot = new PdfDictionary();
+            outlineRoot.Put(PdfName.Type, PdfName.Outlines);
+            outlineRoot.MakeIndirect(doc);
+            catalog.GetPdfObject().Put(PdfName.Outlines, outlineRoot);
+        }
+        else
+        {
+            outlineRoot = outlines;
+        }
+
+        var page = doc.GetPage(pageNumber);
+        var dest = new PdfArray();
+        dest.Add(page.GetPdfObject());
+        dest.Add(PdfName.XYZ);
+        dest.Add(new PdfNumber(0));
+        dest.Add(new PdfNumber(0));
+        dest.Add(new PdfNumber(0));
+
+        var entry = new PdfDictionary();
+        entry.Put(PdfName.Title, new PdfString(title));
+        entry.Put(PdfName.Dest, dest);
+        entry.Put(PdfName.Parent, outlineRoot);
+        entry.MakeIndirect(doc);
+
+        var lastChild = outlineRoot.GetAsDictionary(PdfName.Last);
+        if (lastChild == null)
+        {
+            outlineRoot.Put(PdfName.First, entry);
+            outlineRoot.Put(PdfName.Last,  entry);
+        }
+        else
+        {
+            lastChild.Put(PdfName.Next, entry);
+            entry.Put(PdfName.Prev, lastChild);
+            outlineRoot.Put(PdfName.Last, entry);
+        }
+
+        var countObj = outlineRoot.GetAsNumber(PdfName.Count);
+        int count = countObj != null ? countObj.IntValue() : 0;
+        outlineRoot.Put(PdfName.Count, new PdfNumber(count + 1));
+    }
+
     /// <summary>Extracts the bookmark/outline tree from a PDF.</summary>
     public List<Models.BookmarkItem> GetBookmarks(string path)
     {
