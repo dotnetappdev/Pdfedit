@@ -251,6 +251,13 @@ public class MainViewModel : INotifyPropertyChanged
         set { _currentFillColor = value; OnPropertyChanged(); }
     }
 
+    private float _currentHighlightOpacity = 0.4f;
+    public float CurrentHighlightOpacity
+    {
+        get => _currentHighlightOpacity;
+        set { _currentHighlightOpacity = Math.Max(0.1f, Math.Min(1.0f, value)); OnPropertyChanged(); }
+    }
+
     private double _currentStrokeWidth = 2.0;
     public double CurrentStrokeWidth
     {
@@ -684,6 +691,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand SetFillColorCommand { get; }
     public ICommand AddCustomStampCommand { get; }
     public ICommand DocumentStatisticsCommand { get; }
+    public ICommand ImportFormDataFromJsonCommand { get; }
 
     // ── Design Canvas ─────────────────────────────────────────────────────────
     private bool _isDesignMode;
@@ -871,6 +879,7 @@ public class MainViewModel : INotifyPropertyChanged
         SetFillColorCommand       = new RelayCommand(p => { if (p is string c) CurrentFillColor = c; });
         AddCustomStampCommand     = new RelayCommand(AddCustomStamp);
         DocumentStatisticsCommand = new AsyncRelayCommand(ShowDocumentStatisticsAsync, () => HasDocument);
+        ImportFormDataFromJsonCommand = new AsyncRelayCommand(ImportFormDataFromJsonAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -2951,6 +2960,54 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex) { Dialogs.AppDialog.ShowError("XFDF import failed.", ex); }
     }
 
+    private async Task ImportFormDataFromJsonAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import Form Data from JSON",
+            Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            string json = await Task.Run(() => System.IO.File.ReadAllText(dlg.FileName));
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(json);
+            if (dict == null || dict.Count == 0)
+            {
+                ToastService.Instance.Info("No data found in the JSON file.");
+                return;
+            }
+
+            int filled = 0;
+            foreach (var kvp in dict)
+            {
+                var field = AllFields.FirstOrDefault(f =>
+                    string.Equals(f.Name, kvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(f.Name.Replace(" ", "_"), kvp.Key.Replace(" ", "_"), StringComparison.OrdinalIgnoreCase));
+
+                if (field == null) continue;
+
+                string val = kvp.Value.ValueKind switch
+                {
+                    System.Text.Json.JsonValueKind.String  => kvp.Value.GetString() ?? "",
+                    System.Text.Json.JsonValueKind.Number  => kvp.Value.GetRawText(),
+                    System.Text.Json.JsonValueKind.True    => "true",
+                    System.Text.Json.JsonValueKind.False   => "false",
+                    _                                      => kvp.Value.GetRawText(),
+                };
+
+                field.Value = val;
+                filled++;
+            }
+
+            OnPropertyChanged(nameof(AllFields));
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Filled {filled} field(s) from {System.IO.Path.GetFileName(dlg.FileName)}.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Import form data failed.", ex); }
+    }
+
     private async Task ExportAnnotationSummaryAsync()
     {
         if (_currentFilePath == null) return;
@@ -3036,16 +3093,17 @@ public class MainViewModel : INotifyPropertyChanged
                     Width  = m.Width,
                     Height = Math.Max(m.Height, 6),
                     Color  = CurrentHighlightColor,
-                    Opacity = 0.4f,
+                    Opacity = CurrentHighlightOpacity,
                     Kind   = Models.HighlightKind.Highlight,
                 };
                 // Add directly — AddHighlightAnnotation would overwrite PageNumber
                 HighlightAnnotations.Add(hl);
             }
+            float capturedOpacity = CurrentHighlightOpacity;
             _undoService.Push(new Services.AnnotationAction
             {
                 Description = $"Find & highlight \"{query}\" ({matches.Count})",
-                Execute     = () => { foreach (var m in matches) HighlightAnnotations.Add(new Models.HighlightAnnotation { PageNumber = m.PageNumber, Left = m.Left, Bottom = m.Bottom, Width = m.Width, Height = Math.Max(m.Height, 6), Color = CurrentHighlightColor, Opacity = 0.4f }); },
+                Execute     = () => { foreach (var m in matches) HighlightAnnotations.Add(new Models.HighlightAnnotation { PageNumber = m.PageNumber, Left = m.Left, Bottom = m.Bottom, Width = m.Width, Height = Math.Max(m.Height, 6), Color = CurrentHighlightColor, Opacity = capturedOpacity }); },
                 Undo        = () => { for (int i = 0; i < matches.Count; i++) { if (HighlightAnnotations.Count > 0) HighlightAnnotations.RemoveAt(HighlightAnnotations.Count - 1); } },
             });
             RefreshUndoCanExecute();

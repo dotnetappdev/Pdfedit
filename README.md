@@ -55,12 +55,18 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 | Annotation summary (CSV export) | ✅ | ❌ | ❌ | ❌ |
 | Required-field validation | ✅ | ✅ | ❌ | ❌ |
 | PDF/A archival export | ✅ | ✅ | ❌ | ✅ |
-| Rubber Stamps (APPROVED, DRAFT…) | ✅ 10 stamps | ✅ | ❌ | ✅ |
+| Rubber Stamps (APPROVED, DRAFT…) | ✅ 10 + custom | ✅ | ❌ | ✅ |
+| Custom stamp creation | ✅ | ❌ | ❌ | ❌ |
 | File Attachments (embed/extract) | ✅ | ✅ | ❌ | ✅ |
 | Annotation Undo / Redo | ✅ | ✅ | ❌ | ✅ |
 | Shape annotations (rect/ellipse/arrow) | ✅ | ✅ | ❌ | ✅ |
+| Shape fill color | ✅ | ✅ | ❌ | ✅ |
 | Eraser tool | ✅ | ✅ | ❌ | ✅ |
 | Radio button form field creator | ✅ | ✅ | ❌ | ✅ |
+| Highlight opacity control | ✅ | ✅ | ❌ | ✅ |
+| Separate drawing / highlight color | ✅ | ✅ | ❌ | ✅ |
+| Document Statistics (word/annotation count) | ✅ | ✅ | ❌ | ✅ |
+| Import form data from JSON | ✅ | ❌ | ❌ | ❌ |
 | Free (open source) | ✅ | ❌ | ❌ | ❌ |
 | WPF native (no browser/Electron) | ✅ | ✅ | ❌ | ✅ |
 | Bring your own AI key | ✅ | ❌ | ❌ | ❌ |

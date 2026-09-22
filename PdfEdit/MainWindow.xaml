@@ -945,6 +945,16 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Import&#x0a;from JSON"
+                                   Command="{Binding ImportFormDataFromJsonCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Fill form fields from a JSON file with {fieldName: value} pairs"
+                                   AutomationProperties.Name="Import form data from JSON">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Export Data"
                                    Command="{Binding ExportDataCommand}"
                                    KeyTip="E"
@@ -1563,6 +1573,13 @@
                                 </StackPanel>
                             </ComboBoxItem>
                         </ComboBox>
+                        <TextBlock Text="Opacity:" FontSize="11" Margin="0,6,0,3"/>
+                        <Fluent:Spinner Value="{Binding CurrentHighlightOpacity, Mode=TwoWay, Converter={StaticResource OpacityPercentConverter}}"
+                                        Minimum="10" Maximum="100" Format="0'%'"
+                                        IsEnabled="{Binding HasDocument}"
+                                        Width="72" Height="22"
+                                        ToolTip="Highlight opacity (10%–100%)"
+                                        AutomationProperties.Name="Highlight opacity"/>
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 

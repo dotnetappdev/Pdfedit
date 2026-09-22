@@ -1564,7 +1564,7 @@ public partial class PdfViewerControl : UserControl
                             Width   = rectW / Scale,
                             Height  = rectH / Scale,
                             Color   = _vm.CurrentHighlightColor,
-                            Opacity = 0.4f,
+                            Opacity = _vm.CurrentHighlightOpacity,
                             Kind    = kind,
                         };
                         _vm.AddHighlightAnnotation(hl);
