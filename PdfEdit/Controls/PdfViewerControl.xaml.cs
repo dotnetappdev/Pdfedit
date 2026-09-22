@@ -559,12 +559,36 @@ public partial class PdfViewerControl : UserControl
             lb.GotFocus += (_, _) => { _vm!.SelectedField = field; };
     }
 
-    private TextBox BuildTextBox(FormFieldInfo field, double w, double h, bool vertical)
+    private Control BuildTextBox(FormFieldInfo field, double w, double h, bool vertical)
     {
+        double dw = vertical ? h : w;
+        double dh = vertical ? w : h;
+
+        if (field.IsPassword)
+        {
+            var pb = new PasswordBox
+            {
+                Width = dw, Height = dh,
+                Background = FieldFillBrush,
+                Foreground = Brushes.Black,
+                CaretBrush = Brushes.Black,
+                BorderBrush = FieldBorderBrush,
+                BorderThickness = new Thickness(1),
+                FontSize = Math.Max(8, dh * 0.6),
+                Padding = new Thickness(2, 0, 2, 0),
+                ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
+                Password = _vm!.FieldValues.TryGetValue(field.Name, out var pv) ? pv : field.Value
+            };
+            System.Windows.Automation.AutomationProperties.SetName(pb, $"Password field: {field.Name}");
+            pb.PasswordChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, pb.Password);
+            pb.GotFocus  += (_, _) => pb.Background = FieldFocusBrush;
+            pb.LostFocus += (_, _) => pb.Background = FieldFillBrush;
+            return pb;
+        }
+
         var tb = new TextBox
         {
-            Width = vertical ? h : w,
-            Height = vertical ? w : h,
+            Width = dw, Height = dh,
             Text = _vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value,
             // Acrobat-style fillable field: faint blue fill + subtle border so the
             // user can clearly see where the fields are and that they are editable.

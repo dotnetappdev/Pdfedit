@@ -44,9 +44,28 @@
                     </Setter>
                 </Style>
             </ListBox.ItemContainerStyle>
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Rotate CW"       Click="ThumbRotateCW_Click"/>
+                    <MenuItem Header="Rotate CCW"      Click="ThumbRotateCCW_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Insert Before"   Click="ThumbInsertBefore_Click"/>
+                    <MenuItem Header="Insert After"    Click="ThumbInsertAfter_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Move Up"         Click="ThumbMoveUp_Click"/>
+                    <MenuItem Header="Move Down"       Click="ThumbMoveDown_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Delete Page"     Click="ThumbDelete_Click"/>
+                    <MenuItem Header="Extract Page…"   Click="ThumbExtract_Click"/>
+                </ContextMenu>
+            </ListBox.ContextMenu>
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type models:ThumbnailItem}">
-                    <StackPanel Width="90" Margin="0,2">
+                    <StackPanel Width="90" Margin="0,2"
+                                AllowDrop="True"
+                                MouseMove="Thumb_MouseMove"
+                                Drop="Thumb_Drop"
+                                DragOver="Thumb_DragOver">
                         <!-- Thumbnail image or placeholder -->
                         <Border Width="80" Height="106"
                                 Background="{DynamicResource InputBgBrush}"

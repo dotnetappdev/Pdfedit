@@ -33,8 +33,10 @@ public class PdfFormService
 
         for (int i = 1; i <= info.PageCount; i++)
         {
-            var size = doc.GetPage(i).GetPageSize();
+            var p = doc.GetPage(i);
+            var size = p.GetPageSize();
             info.PageSizes.Add((size.GetWidth(), size.GetHeight()));
+            info.PageRotations.Add(p.GetRotation());
         }
 
         var form = PdfAcroForm.GetAcroForm(doc, false);
@@ -368,6 +370,51 @@ public class PdfFormService
             using var src = new PdfDocument(reader);
             src.CopyPagesTo(1, src.GetNumberOfPages(), dest);
         }
+    }
+
+    /// <summary>Splits each page of sourcePath into a separate PDF in outputFolder.</summary>
+    public int SplitPdf(string sourcePath, string outputFolder)
+    {
+        using var reader = new PdfReader(sourcePath);
+        using var doc = new PdfDocument(reader);
+        int count = doc.GetNumberOfPages();
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(sourcePath);
+        System.IO.Directory.CreateDirectory(outputFolder);
+        for (int i = 1; i <= count; i++)
+        {
+            string outPath = System.IO.Path.Combine(outputFolder, $"{baseName}_p{i:D3}.pdf");
+            using var writer = new PdfWriter(outPath);
+            using var outDoc = new PdfDocument(writer);
+            doc.CopyPagesTo(i, i, outDoc);
+        }
+        return count;
+    }
+
+    /// <summary>Writes the pages of sourcePath in newOrder (0-based indices) to destPath.</summary>
+    public void ReorderPages(string sourcePath, string destPath, IEnumerable<int> newOrder)
+    {
+        var oneBasedOrder = newOrder.Select(i => i + 1).ToList();
+        using var reader = new PdfReader(sourcePath);
+        using var writer = new PdfWriter(destPath);
+        using var inDoc = new PdfDocument(reader);
+        using var outDoc = new PdfDocument(writer);
+        inDoc.CopyPagesTo(oneBasedOrder, outDoc);
+    }
+
+    /// <summary>Inserts a blank page before beforePageIndex (0-based) in the PDF.</summary>
+    public void InsertPageBefore(string sourcePath, string destPath, int beforePageIndex)
+    {
+        using var reader = new PdfReader(sourcePath);
+        using var writer = new PdfWriter(destPath);
+        using var inDoc = new PdfDocument(reader);
+        using var outDoc = new PdfDocument(writer);
+
+        int beforePageNum = beforePageIndex + 1;
+        if (beforePageNum > 1)
+            inDoc.CopyPagesTo(1, beforePageNum - 1, outDoc);
+        var refPage = inDoc.GetPage(beforePageNum);
+        outDoc.AddNewPage(new iText.Kernel.Geom.PageSize(refPage.GetPageSize()));
+        inDoc.CopyPagesTo(beforePageNum, inDoc.GetNumberOfPages(), outDoc);
     }
 
     public void ExportFormData(string pdfPath, string outputPath, Dictionary<string, string> fieldValues)

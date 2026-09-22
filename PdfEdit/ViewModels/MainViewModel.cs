@@ -108,7 +108,16 @@ public class MainViewModel : INotifyPropertyChanged
     public string CurrentPageDisplay => HasDocument ? $"Page {_currentPageIndex + 1} of {_document!.PageCount}" : "—";
     public string PageCountDisplay => HasDocument ? _document!.PageCount.ToString() : "0";
     public int PageCount => _document?.PageCount ?? 1;
-    public int CurrentPageRotation => GetPageRotation(_currentPageIndex);
+    // Absolute rotation = PDF-stored rotation + session delta, shown in status bar
+    public int CurrentPageRotation
+    {
+        get
+        {
+            int pdfRot = (_document != null && _currentPageIndex < _document.PageRotations.Count)
+                ? _document.PageRotations[_currentPageIndex] : 0;
+            return (pdfRot + GetPageRotation(_currentPageIndex) + 360) % 360;
+        }
+    }
 
     public double Zoom
     {
@@ -555,6 +564,12 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ToggleThumbnailsCommand { get; }
     public ICommand ManageProfilesCommand { get; }
     public ICommand QuickFillWithProfileCommand { get; }
+    public ICommand RotateAllPagesCWCommand { get; }
+    public ICommand RotateAllPagesCCWCommand { get; }
+    public ICommand SplitPdfCommand { get; }
+    public ICommand MovePageUpCommand { get; }
+    public ICommand MovePageDownCommand { get; }
+    public ICommand InsertPageBeforeCommand { get; }
 
     public MainViewModel()
     {
@@ -654,6 +669,15 @@ public class MainViewModel : INotifyPropertyChanged
         QuickFillWithProfileCommand = new RelayCommand(QuickFillWithProfile,
             () => HasDocument && _selectedProfile != null);
 
+        RotateAllPagesCWCommand  = new RelayCommand(() => RotateAllPages(+90), () => HasDocument);
+        RotateAllPagesCCWCommand = new RelayCommand(() => RotateAllPages(-90), () => HasDocument);
+        SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
+        MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
+            () => HasDocument && _currentPageIndex > 0);
+        MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
+            () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
+        InsertPageBeforeCommand = new AsyncRelayCommand(InsertPageBeforeAsync, () => HasDocument);
+
         // Pre-select first profile if any exist
         if (Services.PersonalProfileStore.All.Count > 0)
             _selectedProfile = Services.PersonalProfileStore.All[0];
@@ -664,6 +688,29 @@ public class MainViewModel : INotifyPropertyChanged
     // ── Public Methods ───────────────────────────────────────────────────────
 
     public async Task OpenFileAsync(string path) => await LoadDocumentAsync(path);
+
+    public async Task ReorderPagesAsync(IEnumerable<int> newOrder, int navigateToIndex = 0)
+    {
+        if (_currentFilePath == null) return;
+        var tmp = _currentFilePath + ".ptmp";
+        try
+        {
+            var orderList = newOrder.ToList();
+            await Task.Run(() => _formService.ReorderPages(_currentFilePath, tmp, orderList));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = Math.Clamp(navigateToIndex, 0, (_document?.PageCount ?? 1) - 1);
+            ToastService.Instance.Success("Page moved.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Reorder failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
 
     public PdfRenderService RenderService => _renderService;
 
@@ -1047,7 +1094,134 @@ public class MainViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(CurrentPageRotation));
         PageChanged?.Invoke();
-        StatusText = $"Page {_currentPageIndex + 1} rotated to {next}°.";
+        StatusText = $"Page {_currentPageIndex + 1} rotated — total {CurrentPageRotation}°.";
+    }
+
+    private void RotateAllPages(int degrees)
+    {
+        if (_document == null) return;
+        for (int i = 0; i < _document.PageCount; i++)
+        {
+            int current = GetPageRotation(i);
+            int next = (current + degrees + 360) % 360;
+            if (next == 0) _pageRotations.Remove(i);
+            else _pageRotations[i] = next;
+        }
+        OnPropertyChanged(nameof(CurrentPageRotation));
+        PageChanged?.Invoke();
+        string dir = degrees > 0 ? "clockwise" : "counter-clockwise";
+        StatusText = $"All {_document.PageCount} pages rotated 90° {dir}.";
+        ToastService.Instance.Success($"All {_document.PageCount} pages rotated 90° {dir}.");
+    }
+
+    private async Task SplitPdfAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        string folder = System.IO.Path.GetDirectoryName(_currentFilePath)!;
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath);
+        string splitFolder = System.IO.Path.Combine(folder, baseName + "_split");
+
+        bool confirmed = Dialogs.AppDialog.ShowConfirm(
+            $"Split \"{baseName}.pdf\" ({_document.PageCount} pages) into separate files?\n\nFiles will be saved to:\n{splitFolder}",
+            title: "Split PDF",
+            confirmText: "Split",
+            cancelText: "Cancel");
+        if (!confirmed) return;
+
+        try
+        {
+            int count = await Task.Run(() => _formService.SplitPdf(_currentFilePath, splitFolder));
+            ToastService.Instance.Success($"Split into {count} files.");
+            Dialogs.AppDialog.ShowInfo(
+                $"Split complete. {count} files saved to:\n{splitFolder}",
+                "Split PDF");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("PDF split failed.", ex);
+        }
+    }
+
+    private async Task MovePageUpAsync()
+    {
+        if (_currentFilePath == null || _document == null || _currentPageIndex <= 0) return;
+        var tmp = _currentFilePath + ".ptmp";
+        int fromIdx = _currentPageIndex;
+        int toIdx = _currentPageIndex - 1;
+        try
+        {
+            var newOrder = Enumerable.Range(0, _document.PageCount).ToList();
+            newOrder.RemoveAt(fromIdx);
+            newOrder.Insert(toIdx, fromIdx);
+            await Task.Run(() => _formService.ReorderPages(_currentFilePath, tmp, newOrder));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            int savedPage = toIdx;
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = savedPage;
+            ToastService.Instance.Success("Page moved up.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Move page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task MovePageDownAsync()
+    {
+        if (_currentFilePath == null || _document == null ||
+            _currentPageIndex >= _document.PageCount - 1) return;
+        var tmp = _currentFilePath + ".ptmp";
+        int fromIdx = _currentPageIndex;
+        int toIdx = _currentPageIndex + 1;
+        try
+        {
+            var newOrder = Enumerable.Range(0, _document.PageCount).ToList();
+            newOrder.RemoveAt(fromIdx);
+            newOrder.Insert(toIdx, fromIdx);
+            await Task.Run(() => _formService.ReorderPages(_currentFilePath, tmp, newOrder));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            int savedPage = toIdx;
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = savedPage;
+            ToastService.Instance.Success("Page moved down.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Move page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task InsertPageBeforeAsync()
+    {
+        if (_currentFilePath == null) return;
+        var tmp = _currentFilePath + ".ptmp";
+        try
+        {
+            int insertAt = _currentPageIndex;
+            await Task.Run(() => _formService.InsertPageBefore(_currentFilePath, tmp, insertAt));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            int savedPage = insertAt; // navigate to the newly inserted blank page
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = savedPage;
+            ToastService.Instance.Success("Blank page inserted before current page.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Insert page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
     }
 
     private void OpenSettings()

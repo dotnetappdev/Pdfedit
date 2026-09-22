@@ -344,15 +344,48 @@
                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Insert Blank"
+                    <Fluent:Button Header="Insert Before"
+                                   Command="{Binding InsertPageBeforeCommand}"
+                                   Size="Middle"
+                                   KeyTip="IB2"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Insert a blank page before the current page"
+                                   AutomationProperties.Name="Insert blank page before">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Insert After"
                                    Command="{Binding InsertBlankPageCommand}"
                                    Size="Middle"
                                    KeyTip="IB"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Insert a blank page after the current page"
-                                   AutomationProperties.Name="Insert blank page">
+                                   AutomationProperties.Name="Insert blank page after">
                         <Fluent:Button.Icon>
-                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Move Up"
+                                   Command="{Binding MovePageUpCommand}"
+                                   Size="Middle"
+                                   KeyTip="MU"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Move this page one position earlier in the document"
+                                   AutomationProperties.Name="Move page up">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Move Down"
+                                   Command="{Binding MovePageDownCommand}"
+                                   Size="Middle"
+                                   KeyTip="MD"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Move this page one position later in the document"
+                                   AutomationProperties.Name="Move page down">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Extract Page"
@@ -365,6 +398,16 @@
                         <Fluent:Button.Icon>
                             <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
                         </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Split PDF"
+                                   Command="{Binding SplitPdfCommand}"
+                                   KeyTip="SP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Split every page into a separate PDF file"
+                                   AutomationProperties.Name="Split PDF into separate pages">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Merge PDFs"
                                    Command="{Binding MergePdfCommand}"
@@ -686,22 +729,36 @@
                                    Command="{Binding RotatePageCWCommand}"
                                    KeyTip="R"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Rotate 90° clockwise"
+                                   ToolTip="Rotate current page 90° clockwise (Ctrl+])"
                                    AutomationProperties.Name="Rotate page clockwise"/>
                     <Fluent:Button Header="Rotate CCW"
                                    Command="{Binding RotatePageCCWCommand}"
                                    KeyTip="L"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Rotate 90° counter-clockwise"
+                                   ToolTip="Rotate current page 90° counter-clockwise (Ctrl+[)"
                                    AutomationProperties.Name="Rotate page counter-clockwise"/>
                     <Fluent:Button Header="Reset Rotation"
                                    Command="{Binding ResetPageRotationCommand}"
                                    KeyTip="T"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Reset page rotation"
+                                   ToolTip="Reset session rotation for this page"
                                    AutomationProperties.Name="Reset page rotation"/>
+                    <Fluent:Button Header="All Pages CW"
+                                   Command="{Binding RotateAllPagesCWCommand}"
+                                   KeyTip="AC"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Rotate every page 90° clockwise"
+                                   AutomationProperties.Name="Rotate all pages clockwise"/>
+                    <Fluent:Button Header="All Pages CCW"
+                                   Command="{Binding RotateAllPagesCCWCommand}"
+                                   KeyTip="AL"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Rotate every page 90° counter-clockwise"
+                                   AutomationProperties.Name="Rotate all pages counter-clockwise"/>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Display"

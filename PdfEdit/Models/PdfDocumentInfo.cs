@@ -8,6 +8,9 @@ public class PdfDocumentInfo
     // Page sizes in PDF points (72 pts = 1 inch)
     public List<(double Width, double Height)> PageSizes { get; set; } = new();
 
+    // Existing page rotations stored in the PDF (degrees: 0, 90, 180, 270)
+    public List<int> PageRotations { get; } = new();
+
     public bool HasAcroForm { get; set; }
     public List<FormFieldInfo> FormFields { get; set; } = new();
 
