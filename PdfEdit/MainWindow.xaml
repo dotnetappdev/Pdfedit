@@ -1280,6 +1280,42 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Rectangle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawRectangle, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawRectangle"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Rectangle — drag to draw a rectangle annotation"
+                                         AutomationProperties.Name="Draw rectangle annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Ellipse"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawEllipse, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawEllipse"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Ellipse — drag to draw an ellipse annotation"
+                                         AutomationProperties.Name="Draw ellipse annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEA3A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Arrow"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawArrow, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawArrow"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Arrow — drag to draw an arrow annotation"
+                                         AutomationProperties.Name="Draw arrow annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Sign & Date group -->

@@ -28,5 +28,8 @@ public enum ActiveTool
     AddCheckbox,
     AddComboBox,
     AddRadioButton,
-    StickyNote
+    StickyNote,
+    DrawRectangle,
+    DrawEllipse,
+    DrawArrow
 }

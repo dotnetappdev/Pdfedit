@@ -82,6 +82,12 @@ public partial class PdfViewerControl : UserControl
     private Rectangle? _formFieldRubberBand;
     private ActiveTool _formFieldTool;
 
+    // Shape drawing drag state (Rectangle / Ellipse / Arrow)
+    private bool _isDrawingShape;
+    private Point _shapeDragStart;
+    private System.Windows.Shapes.Shape? _shapeRubberBand;
+    private System.Windows.Shapes.Line?  _arrowRubberBand;
+
     // Adobe-style field selection chrome
     private Border?    _fieldChromeBorder;
     private TextBlock? _fieldChromeLabel;
@@ -438,6 +444,7 @@ public partial class PdfViewerControl : UserControl
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
             BuildStickyNoteOverlay(_vm.GetStickyNotesForCurrentPage());
+            BuildShapeOverlay(_vm.GetShapeAnnotationsForCurrentPage());
         }
         catch (Exception ex)
         {
@@ -1423,6 +1430,46 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingShape = true;
+            _shapeDragStart = posOnPage;
+            string colorHex = _vm?.CurrentHighlightColor ?? "#C62828";
+            var strokeBrush = new SolidColorBrush(ParseColor(colorHex));
+
+            if (tool == ActiveTool.DrawArrow)
+            {
+                _arrowRubberBand = new System.Windows.Shapes.Line
+                {
+                    Stroke = strokeBrush,
+                    StrokeThickness = 2,
+                    X1 = posOnPage.X, Y1 = posOnPage.Y,
+                    X2 = posOnPage.X, Y2 = posOnPage.Y,
+                };
+                AnnotationCanvas.Children.Add(_arrowRubberBand);
+            }
+            else
+            {
+                System.Windows.Shapes.Shape rb = tool == ActiveTool.DrawEllipse
+                    ? new System.Windows.Shapes.Ellipse()
+                    : new Rectangle();
+                rb.Fill = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
+                rb.Stroke = strokeBrush;
+                rb.StrokeThickness = 2;
+                rb.Width  = 0;
+                rb.Height = 0;
+                Canvas.SetLeft(rb, posOnPage.X);
+                Canvas.SetTop(rb,  posOnPage.Y);
+                _shapeRubberBand = rb;
+                AnnotationCanvas.Children.Add(rb);
+            }
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
         if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -1718,6 +1765,81 @@ public partial class PdfViewerControl : UserControl
             }
             e.Handled = true;
         }
+
+        if (_isDrawingShape)
+        {
+            _isDrawingShape = false;
+            ReleaseMouseCapture();
+
+            if (_vm?.Document != null)
+            {
+                int pageNum = _vm.CurrentPageIndex + 1;
+                if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                {
+                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                    string colorHex = _vm.CurrentHighlightColor ?? "#C62828";
+
+                    if (_arrowRubberBand != null)
+                    {
+                        double dx = Math.Abs(_arrowRubberBand.X2 - _arrowRubberBand.X1);
+                        double dy = Math.Abs(_arrowRubberBand.Y2 - _arrowRubberBand.Y1);
+                        if (dx > 4 || dy > 4)
+                        {
+                            var shape = new Models.ShapeAnnotation
+                            {
+                                Kind        = Models.ShapeKind.Arrow,
+                                X1          = _arrowRubberBand.X1 / Scale,
+                                Y1          = pageH - _arrowRubberBand.Y1 / Scale,
+                                X2          = _arrowRubberBand.X2 / Scale,
+                                Y2          = pageH - _arrowRubberBand.Y2 / Scale,
+                                StrokeColor = colorHex,
+                                LineWidth   = 2.0,
+                            };
+                            _vm.AddShapeAnnotation(shape);
+                            PlaceShapeVisual(shape, pageH);
+                            _vm.StatusText = "Arrow annotation added. Right-click to delete.";
+                        }
+                        AnnotationCanvas.Children.Remove(_arrowRubberBand);
+                        _arrowRubberBand = null;
+                    }
+                    else if (_shapeRubberBand != null)
+                    {
+                        double rectW = _shapeRubberBand.Width;
+                        double rectH2 = _shapeRubberBand.Height;
+                        double canvasX = Canvas.GetLeft(_shapeRubberBand);
+                        double canvasY = Canvas.GetTop(_shapeRubberBand);
+                        bool isEllipse = _shapeRubberBand is System.Windows.Shapes.Ellipse;
+                        AnnotationCanvas.Children.Remove(_shapeRubberBand);
+                        _shapeRubberBand = null;
+
+                        if (rectW > 4 && rectH2 > 4)
+                        {
+                            double left   = canvasX / Scale;
+                            double bottom = pageH - (canvasY + rectH2) / Scale;
+                            var shape = new Models.ShapeAnnotation
+                            {
+                                Kind        = isEllipse ? Models.ShapeKind.Ellipse : Models.ShapeKind.Rectangle,
+                                X1          = left,
+                                Y1          = bottom,
+                                X2          = left + rectW / Scale,
+                                Y2          = bottom + rectH2 / Scale,
+                                StrokeColor = colorHex,
+                                LineWidth   = 2.0,
+                            };
+                            _vm.AddShapeAnnotation(shape);
+                            PlaceShapeVisual(shape, pageH);
+                            _vm.StatusText = $"{(isEllipse ? "Ellipse" : "Rectangle")} annotation added. Right-click to delete.";
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (_arrowRubberBand  != null) { AnnotationCanvas.Children.Remove(_arrowRubberBand);  _arrowRubberBand  = null; }
+                if (_shapeRubberBand  != null) { AnnotationCanvas.Children.Remove(_shapeRubberBand);  _shapeRubberBand  = null; }
+            }
+            e.Handled = true;
+        }
     }
 
     private void OnMouseMove(object sender, MouseEventArgs e)
@@ -1790,6 +1912,27 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetTop(_formFieldRubberBand, y);
             _formFieldRubberBand.Width  = w;
             _formFieldRubberBand.Height = h;
+        }
+
+        if (_isDrawingShape && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            if (_arrowRubberBand != null)
+            {
+                _arrowRubberBand.X2 = pos.X;
+                _arrowRubberBand.Y2 = pos.Y;
+            }
+            else if (_shapeRubberBand != null)
+            {
+                double x = Math.Min(pos.X, _shapeDragStart.X);
+                double y = Math.Min(pos.Y, _shapeDragStart.Y);
+                double w = Math.Abs(pos.X - _shapeDragStart.X);
+                double h = Math.Abs(pos.Y - _shapeDragStart.Y);
+                Canvas.SetLeft(_shapeRubberBand, x);
+                Canvas.SetTop(_shapeRubberBand,  y);
+                _shapeRubberBand.Width  = w;
+                _shapeRubberBand.Height = h;
+            }
         }
     }
 
@@ -2254,6 +2397,68 @@ public partial class PdfViewerControl : UserControl
         PlaceStickyNoteVisual(note, pageH);
         _vm.StatusText = "Sticky note added. Right-click to delete or view.";
         ToastService.Instance.Success("Sticky note added.");
+    }
+
+    // ── Shape Annotation Overlay ──────────────────────────────────────────────
+
+    private void BuildShapeOverlay(IEnumerable<Models.ShapeAnnotation> shapes)
+    {
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var shape in shapes)
+            PlaceShapeVisual(shape, pageH);
+    }
+
+    private void PlaceShapeVisual(Models.ShapeAnnotation shape, double pageH)
+    {
+        var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
+        var fillBrush   = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
+
+        System.Windows.UIElement visual;
+
+        if (shape.Kind == Models.ShapeKind.Arrow)
+        {
+            double x1c = shape.X1 * Scale;
+            double y1c = (pageH - shape.Y1) * Scale;
+            double x2c = shape.X2 * Scale;
+            double y2c = (pageH - shape.Y2) * Scale;
+            var line = new System.Windows.Shapes.Line
+            {
+                X1 = x1c, Y1 = y1c, X2 = x2c, Y2 = y2c,
+                Stroke = strokeBrush,
+                StrokeThickness = shape.LineWidth,
+                StrokeEndLineCap = PenLineCap.Triangle,
+            };
+            line.ToolTip = "Arrow annotation (right-click to delete)";
+            var ctxLine = new ContextMenu();
+            var delLine = new MenuItem { Header = "Delete Arrow" };
+            delLine.Click += (_, _) => { AnnotationCanvas.Children.Remove(line); _vm?.RemoveShapeAnnotation(shape); };
+            ctxLine.Items.Add(delLine);
+            line.ContextMenu = ctxLine;
+            visual = line;
+        }
+        else
+        {
+            double left   = shape.X1 * Scale;
+            double top    = (pageH - shape.Y2) * Scale;
+            double width  = (shape.X2 - shape.X1) * Scale;
+            double height = (shape.Y2 - shape.Y1) * Scale;
+            System.Windows.Shapes.Shape sh = shape.Kind == Models.ShapeKind.Ellipse
+                ? new System.Windows.Shapes.Ellipse { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth }
+                : new Rectangle { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth };
+            Canvas.SetLeft(sh, left);
+            Canvas.SetTop(sh,  top);
+            sh.ToolTip = $"{shape.Kind} annotation (right-click to delete)";
+            var ctx = new ContextMenu();
+            var del = new MenuItem { Header = $"Delete {shape.Kind}" };
+            del.Click += (_, _) => { AnnotationCanvas.Children.Remove(sh); _vm?.RemoveShapeAnnotation(shape); };
+            ctx.Items.Add(del);
+            sh.ContextMenu = ctx;
+            visual = sh;
+        }
+
+        AnnotationCanvas.Children.Add(visual);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -57,6 +57,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<Models.HighlightAnnotation> HighlightAnnotations { get; } = new();
     public ObservableCollection<Models.RedactRegion> RedactionRegions { get; } = new();
     public ObservableCollection<Models.StickyNoteAnnotation> StickyNotes { get; } = new();
+    public ObservableCollection<Models.ShapeAnnotation> ShapeAnnotations { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
     public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
@@ -637,6 +638,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ExtractPageRangeCommand { get; }
     public ICommand ComparePdfsCommand { get; }
     public ICommand StickyNoteCommand { get; }
+    public ICommand DrawRectangleCommand { get; }
+    public ICommand DrawEllipseCommand { get; }
+    public ICommand DrawArrowCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -789,6 +793,9 @@ public class MainViewModel : INotifyPropertyChanged
         ExtractPageRangeCommand   = new AsyncRelayCommand(ExtractPageRangeAsync, () => HasDocument);
         ComparePdfsCommand        = new AsyncRelayCommand(ComparePdfsAsync,       () => HasDocument);
         StickyNoteCommand         = new RelayCommand(() => ActiveTool = ActiveTool.StickyNote, () => HasDocument);
+        DrawRectangleCommand      = new RelayCommand(() => ActiveTool = ActiveTool.DrawRectangle, () => HasDocument);
+        DrawEllipseCommand        = new RelayCommand(() => ActiveTool = ActiveTool.DrawEllipse, () => HasDocument);
+        DrawArrowCommand          = new RelayCommand(() => ActiveTool = ActiveTool.DrawArrow, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -959,6 +966,15 @@ public class MainViewModel : INotifyPropertyChanged
     public IEnumerable<Models.StickyNoteAnnotation> GetStickyNotesForCurrentPage()
         => StickyNotes.Where(n => n.PageNumber == _currentPageIndex + 1);
 
+    public void AddShapeAnnotation(Models.ShapeAnnotation shape)
+    {
+        shape.PageNumber = _currentPageIndex + 1;
+        ShapeAnnotations.Add(shape);
+    }
+    public void RemoveShapeAnnotation(Models.ShapeAnnotation shape) => ShapeAnnotations.Remove(shape);
+    public IEnumerable<Models.ShapeAnnotation> GetShapeAnnotationsForCurrentPage()
+        => ShapeAnnotations.Where(s => s.PageNumber == _currentPageIndex + 1);
+
     // ── Private Commands ─────────────────────────────────────────────────────
 
     private void DeleteSelectedAnnotation()
@@ -1002,6 +1018,7 @@ public class MainViewModel : INotifyPropertyChanged
             HighlightAnnotations.Clear();
             RedactionRegions.Clear();
             StickyNotes.Clear();
+            ShapeAnnotations.Clear();
             Bookmarks.Clear();
 
             foreach (var f in Document.FormFields)
@@ -1095,7 +1112,8 @@ public class MainViewModel : INotifyPropertyChanged
             var errors = _formService.SaveFull(_currentFilePath, tmp, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
-                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes);
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -1140,7 +1158,8 @@ public class MainViewModel : INotifyPropertyChanged
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
-                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes);
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
@@ -1178,7 +1197,8 @@ public class MainViewModel : INotifyPropertyChanged
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
-                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes);
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1227,6 +1247,7 @@ public class MainViewModel : INotifyPropertyChanged
         HighlightAnnotations.Clear();
         RedactionRegions.Clear();
         StickyNotes.Clear();
+        ShapeAnnotations.Clear();
         _pageRotations.Clear();
         SelectedField = null;
         SelectedAnnotation = null;

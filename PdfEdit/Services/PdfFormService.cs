@@ -172,7 +172,8 @@ public class PdfFormService
         IEnumerable<string>? deletedFieldNames = null,
         Dictionary<string, string>? fieldExportValues = null,
         IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null,
-        IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null)
+        IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null,
+        IEnumerable<Models.ShapeAnnotation>? shapeAnnotations = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -362,7 +363,52 @@ public class PdfFormService
             }
         }
 
-        // ── 6. Placed signatures ──────────────────────────────────────────
+        // ── 6. Shape annotations (Rectangle / Ellipse / Arrow) ───────────
+        if (shapeAnnotations != null)
+        {
+            foreach (var shape in shapeAnnotations)
+            {
+                int pageNum = shape.PageNumber;
+                if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
+                var page = doc.GetPage(pageNum);
+
+                ParseHexColor(shape.StrokeColor, out float sr, out float sg, out float sb);
+                var strokeColor = new DeviceRgb(sr, sg, sb);
+                float lw = (float)Math.Max(shape.LineWidth, 0.5);
+
+                double x1 = shape.X1, y1 = shape.Y1, x2 = shape.X2, y2 = shape.Y2;
+                double left   = Math.Min(x1, x2);
+                double bottom = Math.Min(y1, y2);
+                double width  = Math.Abs(x2 - x1);
+                double height = Math.Abs(y2 - y1);
+
+                if (shape.Kind == Models.ShapeKind.Rectangle)
+                {
+                    var annot = new PdfSquareAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
+                    annot.SetColor(strokeColor);
+                    annot.Put(PdfName.BS, BuildBorderStyle(lw));
+                    page.AddAnnotation(annot);
+                }
+                else if (shape.Kind == Models.ShapeKind.Ellipse)
+                {
+                    var annot = new PdfCircleAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
+                    annot.SetColor(strokeColor);
+                    annot.Put(PdfName.BS, BuildBorderStyle(lw));
+                    page.AddAnnotation(annot);
+                }
+                else if (shape.Kind == Models.ShapeKind.Arrow)
+                {
+                    var lineRect = new Rectangle((float)left, (float)bottom, (float)Math.Max(width, 1), (float)Math.Max(height, 1));
+                    var annot = new PdfLineAnnotation(lineRect, new float[] { (float)x1, (float)y1, (float)x2, (float)y2 });
+                    annot.SetColor(strokeColor);
+                    annot.Put(PdfName.LE, new PdfArray(new[] { new PdfName("None"), new PdfName("OpenArrow") }));
+                    annot.Put(PdfName.BS, BuildBorderStyle(lw));
+                    page.AddAnnotation(annot);
+                }
+            }
+        }
+
+        // ── 7. Placed signatures ──────────────────────────────────────────
         if (placedSignatures != null)
         {
             foreach (var sig in placedSignatures)
@@ -812,6 +858,15 @@ public class PdfFormService
             canvas.Fill();
             canvas.RestoreState();
         }
+    }
+
+    private static PdfDictionary BuildBorderStyle(float lineWidth)
+    {
+        var bs = new PdfDictionary();
+        bs.Put(PdfName.Type, PdfName.Border);
+        bs.Put(PdfName.W, new PdfNumber(lineWidth));
+        bs.Put(PdfName.S, PdfName.S); // Solid
+        return bs;
     }
 
     private static bool ParseHexColor(string hex, out float r, out float g, out float b)
