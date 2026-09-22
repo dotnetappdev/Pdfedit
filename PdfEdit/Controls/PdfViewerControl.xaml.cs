@@ -1409,7 +1409,7 @@ public partial class PdfViewerControl : UserControl
             _freehandPolyline = new Polyline
             {
                 Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentHighlightColor ?? "#1A1A1A")),
-                StrokeThickness = 2,
+                StrokeThickness = _vm?.CurrentStrokeWidth ?? 2.0,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -1439,12 +1439,13 @@ public partial class PdfViewerControl : UserControl
             string colorHex = _vm?.CurrentHighlightColor ?? "#C62828";
             var strokeBrush = new SolidColorBrush(ParseColor(colorHex));
 
+            double sw = _vm?.CurrentStrokeWidth ?? 2.0;
             if (tool == ActiveTool.DrawArrow)
             {
                 _arrowRubberBand = new System.Windows.Shapes.Line
                 {
                     Stroke = strokeBrush,
-                    StrokeThickness = 2,
+                    StrokeThickness = sw,
                     X1 = posOnPage.X, Y1 = posOnPage.Y,
                     X2 = posOnPage.X, Y2 = posOnPage.Y,
                 };
@@ -1457,7 +1458,7 @@ public partial class PdfViewerControl : UserControl
                     : new Rectangle();
                 rb.Fill = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
                 rb.Stroke = strokeBrush;
-                rb.StrokeThickness = 2;
+                rb.StrokeThickness = sw;
                 rb.Width  = 0;
                 rb.Height = 0;
                 Canvas.SetLeft(rb, posOnPage.X);
@@ -1778,6 +1779,7 @@ public partial class PdfViewerControl : UserControl
                 {
                     double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
                     string colorHex = _vm.CurrentHighlightColor ?? "#C62828";
+                    double strokeW = _vm.CurrentStrokeWidth;
 
                     if (_arrowRubberBand != null)
                     {
@@ -1793,7 +1795,7 @@ public partial class PdfViewerControl : UserControl
                                 X2          = _arrowRubberBand.X2 / Scale,
                                 Y2          = pageH - _arrowRubberBand.Y2 / Scale,
                                 StrokeColor = colorHex,
-                                LineWidth   = 2.0,
+                                LineWidth   = strokeW,
                             };
                             _vm.AddShapeAnnotation(shape);
                             PlaceShapeVisual(shape, pageH);
@@ -1824,7 +1826,7 @@ public partial class PdfViewerControl : UserControl
                                 X2          = left + rectW / Scale,
                                 Y2          = bottom + rectH2 / Scale,
                                 StrokeColor = colorHex,
-                                LineWidth   = 2.0,
+                                LineWidth   = strokeW,
                             };
                             _vm.AddShapeAnnotation(shape);
                             PlaceShapeVisual(shape, pageH);

@@ -1445,6 +1445,34 @@
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Stroke Width group -->
+                <Fluent:RibbonGroupBox Header="Stroke Width"
+                                        AutomationProperties.Name="Drawing stroke width group">
+                    <StackPanel Orientation="Vertical" Margin="2,4">
+                        <TextBlock Text="Width (pt):" FontSize="11" Margin="0,0,0,3"/>
+                        <Fluent:Spinner Value="{Binding CurrentStrokeWidth, Mode=TwoWay}"
+                                        Minimum="0.5" Maximum="20" Format="0.0"
+                                        IsEnabled="{Binding HasDocument}"
+                                        Width="72" Height="22"
+                                        ToolTip="Stroke width for shapes, arrows and freehand drawing"
+                                        AutomationProperties.Name="Drawing stroke width"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <Button Width="24" Height="20" FontSize="10" Content="1" Margin="0,0,2,0"
+                                    Tag="1" Click="SetStrokeWidth_Click" ToolTip="Thin (1pt)"
+                                    AutomationProperties.Name="1pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="2" Margin="0,0,2,0"
+                                    Tag="2" Click="SetStrokeWidth_Click" ToolTip="Normal (2pt)"
+                                    AutomationProperties.Name="2pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="4" Margin="0,0,2,0"
+                                    Tag="4" Click="SetStrokeWidth_Click" ToolTip="Thick (4pt)"
+                                    AutomationProperties.Name="4pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="8"
+                                    Tag="8" Click="SetStrokeWidth_Click" ToolTip="Very thick (8pt)"
+                                    AutomationProperties.Name="8pt stroke"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Text annotation tools -->
                 <Fluent:RibbonGroupBox Header="Annotations"
                                         AutomationProperties.Name="Text annotation tools group">

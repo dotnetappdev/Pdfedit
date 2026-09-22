@@ -80,6 +80,14 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    private void SetStrokeWidth_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+        if (double.TryParse(tag, out double w))
+            VM.CurrentStrokeWidth = w;
+    }
+
     // ── Design ribbon handlers ────────────────────────────────────────────────
 
     private MainViewModel? VM => DataContext as MainViewModel;

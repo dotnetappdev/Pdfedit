@@ -234,6 +234,13 @@ public class MainViewModel : INotifyPropertyChanged
         set { _currentHighlightColor = value; OnPropertyChanged(); }
     }
 
+    private double _currentStrokeWidth = 2.0;
+    public double CurrentStrokeWidth
+    {
+        get => _currentStrokeWidth;
+        set { _currentStrokeWidth = Math.Max(0.5, Math.Min(20.0, value)); OnPropertyChanged(); }
+    }
+
     public bool ShowAiPanel
     {
         get => _showAiPanel;
