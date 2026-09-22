@@ -31,5 +31,6 @@ public enum ActiveTool
     StickyNote,
     DrawRectangle,
     DrawEllipse,
-    DrawArrow
+    DrawArrow,
+    DrawCallout
 }

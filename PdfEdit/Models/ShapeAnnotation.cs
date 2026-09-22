@@ -1,6 +1,6 @@
 namespace PdfEdit.Models;
 
-public enum ShapeKind { Rectangle, Ellipse, Arrow }
+public enum ShapeKind { Rectangle, Ellipse, Arrow, Callout }
 
 public class ShapeAnnotation
 {
@@ -14,4 +14,6 @@ public class ShapeAnnotation
     public double    LineWidth   { get; set; } = 2.0;
     // null = auto semi-transparent fill; "" = no fill (transparent); "#RRGGBB" = solid fill
     public string?   FillColor   { get; set; } = null;
+    // Callout text (used when Kind == Callout)
+    public string    CalloutText { get; set; } = "";
 }

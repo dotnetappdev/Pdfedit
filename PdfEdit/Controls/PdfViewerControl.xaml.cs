@@ -82,9 +82,10 @@ public partial class PdfViewerControl : UserControl
     private Rectangle? _formFieldRubberBand;
     private ActiveTool _formFieldTool;
 
-    // Shape drawing drag state (Rectangle / Ellipse / Arrow)
+    // Shape drawing drag state (Rectangle / Ellipse / Arrow / Callout)
     private bool _isDrawingShape;
     private Point _shapeDragStart;
+    private ActiveTool _shapeTool;
     private System.Windows.Shapes.Shape? _shapeRubberBand;
     private System.Windows.Shapes.Line?  _arrowRubberBand;
 
@@ -1430,12 +1431,13 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow)
+        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
             _isDrawingShape = true;
             _shapeDragStart = posOnPage;
+            _shapeTool = tool;
             string colorHex = _vm?.CurrentDrawingColor ?? "#C62828";
             var strokeBrush = new SolidColorBrush(ParseColor(colorHex));
             string fillHex = _vm?.CurrentFillColor ?? "";
@@ -1835,6 +1837,7 @@ public partial class PdfViewerControl : UserControl
                         double canvasX = Canvas.GetLeft(_shapeRubberBand);
                         double canvasY = Canvas.GetTop(_shapeRubberBand);
                         bool isEllipse = _shapeRubberBand is System.Windows.Shapes.Ellipse;
+                        bool isCallout = _shapeTool == ActiveTool.DrawCallout;
                         AnnotationCanvas.Children.Remove(_shapeRubberBand);
                         _shapeRubberBand = null;
 
@@ -1842,20 +1845,47 @@ public partial class PdfViewerControl : UserControl
                         {
                             double left   = canvasX / Scale;
                             double bottom = pageH - (canvasY + rectH2) / Scale;
-                            var shape = new Models.ShapeAnnotation
+
+                            if (isCallout)
                             {
-                                Kind        = isEllipse ? Models.ShapeKind.Ellipse : Models.ShapeKind.Rectangle,
-                                X1          = left,
-                                Y1          = bottom,
-                                X2          = left + rectW / Scale,
-                                Y2          = bottom + rectH2 / Scale,
-                                StrokeColor = colorHex,
-                                FillColor   = fillHex,
-                                LineWidth   = strokeW,
-                            };
-                            _vm.AddShapeAnnotation(shape);
-                            PlaceShapeVisual(shape, pageH);
-                            _vm.StatusText = $"{(isEllipse ? "Ellipse" : "Rectangle")} annotation added. Right-click to delete.";
+                                var dlg = new Dialogs.InputDialog("Callout Text", "Enter the text for the callout:", "");
+                                if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.InputText))
+                                {
+                                    string defaultFill = string.IsNullOrEmpty(fillHex) ? "#FFFDE7" : fillHex;
+                                    var shape = new Models.ShapeAnnotation
+                                    {
+                                        Kind        = Models.ShapeKind.Callout,
+                                        X1          = left,
+                                        Y1          = bottom,
+                                        X2          = left + rectW / Scale,
+                                        Y2          = bottom + rectH2 / Scale,
+                                        StrokeColor = colorHex,
+                                        FillColor   = defaultFill,
+                                        LineWidth   = strokeW,
+                                        CalloutText = dlg.InputText.Trim(),
+                                    };
+                                    _vm.AddShapeAnnotation(shape);
+                                    PlaceCalloutVisual(shape, pageH);
+                                    _vm.StatusText = "Callout annotation added. Right-click to delete.";
+                                }
+                            }
+                            else
+                            {
+                                var shape = new Models.ShapeAnnotation
+                                {
+                                    Kind        = isEllipse ? Models.ShapeKind.Ellipse : Models.ShapeKind.Rectangle,
+                                    X1          = left,
+                                    Y1          = bottom,
+                                    X2          = left + rectW / Scale,
+                                    Y2          = bottom + rectH2 / Scale,
+                                    StrokeColor = colorHex,
+                                    FillColor   = fillHex,
+                                    LineWidth   = strokeW,
+                                };
+                                _vm.AddShapeAnnotation(shape);
+                                PlaceShapeVisual(shape, pageH);
+                                _vm.StatusText = $"{(isEllipse ? "Ellipse" : "Rectangle")} annotation added. Right-click to delete.";
+                            }
                         }
                     }
                 }
@@ -2446,6 +2476,11 @@ public partial class PdfViewerControl : UserControl
 
     private void PlaceShapeVisual(Models.ShapeAnnotation shape, double pageH)
     {
+        if (shape.Kind == Models.ShapeKind.Callout)
+        {
+            PlaceCalloutVisual(shape, pageH);
+            return;
+        }
         var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
         Brush fillBrush;
         if (shape.FillColor == "")
@@ -2503,11 +2538,88 @@ public partial class PdfViewerControl : UserControl
         AnnotationCanvas.Children.Add(visual);
     }
 
+    private void PlaceCalloutVisual(Models.ShapeAnnotation shape, double pageH)
+    {
+        double left   = shape.X1 * Scale;
+        double top    = (pageH - shape.Y2) * Scale;
+        double width  = (shape.X2 - shape.X1) * Scale;
+        double height = (shape.Y2 - shape.Y1) * Scale;
+
+        var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
+        var fillBrush   = string.IsNullOrEmpty(shape.FillColor)
+            ? new SolidColorBrush(Color.FromArgb(240, 255, 253, 231))
+            : new SolidColorBrush(ParseColor(shape.FillColor));
+
+        const double tipLen = 22.0;
+
+        var cv = new Canvas
+        {
+            Width   = width,
+            Height  = height + tipLen,
+            Tag     = shape,
+            ToolTip = $"Callout: {shape.CalloutText}\n(right-click to delete)",
+        };
+        Canvas.SetLeft(cv, left);
+        Canvas.SetTop(cv,  top);
+
+        var box = new Rectangle
+        {
+            Width           = width,
+            Height          = height,
+            Fill            = fillBrush,
+            Stroke          = strokeBrush,
+            StrokeThickness = shape.LineWidth,
+            RadiusX         = 3,
+            RadiusY         = 3,
+        };
+        Canvas.SetLeft(box, 0);
+        Canvas.SetTop(box,  0);
+        cv.Children.Add(box);
+
+        var tb = new TextBlock
+        {
+            Text         = shape.CalloutText,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground   = strokeBrush,
+            FontSize     = 11,
+            Width        = Math.Max(width - 10, 10),
+            MaxHeight    = Math.Max(height - 10, 10),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        Canvas.SetLeft(tb, 5);
+        Canvas.SetTop(tb,  5);
+        cv.Children.Add(tb);
+
+        double mid = width / 2.0;
+        var pointer = new Polygon
+        {
+            Points = new PointCollection
+            {
+                new Point(mid - 8, height),
+                new Point(mid + 8, height),
+                new Point(mid,     height + tipLen),
+            },
+            Fill            = fillBrush,
+            Stroke          = strokeBrush,
+            StrokeThickness = shape.LineWidth,
+        };
+        cv.Children.Add(pointer);
+
+        var ctx = new ContextMenu();
+        var del = new MenuItem { Header = "Delete Callout" };
+        del.Click += (_, _) => { AnnotationCanvas.Children.Remove(cv); _vm?.RemoveShapeAnnotation(shape); };
+        ctx.Items.Add(del);
+        cv.ContextMenu = ctx;
+        cv.MouseRightButtonDown += (s2, e2) => { ctx.IsOpen = true; e2.Handled = true; };
+
+        AnnotationCanvas.Children.Add(cv);
+    }
+
     private void EraseAnnotationsNear(Point canvasPos, double eraserRadius)
     {
         if (_vm == null) return;
 
-        // Erase shape annotations (Rectangle, Ellipse, Arrow, Freehand polylines)
+        // Erase shape annotations (Rectangle, Ellipse, Arrow, Freehand polylines, Callout canvases)
         var toRemoveUi    = new List<UIElement>();
         var toRemoveModel = new List<Models.ShapeAnnotation>();
 
@@ -2530,6 +2642,18 @@ public partial class PdfViewerControl : UserControl
                     {
                         toRemoveUi.Add(sh);
                     }
+                }
+            }
+            else if (child is Canvas cv && cv.Tag is Models.ShapeAnnotation calloutAnn)
+            {
+                double cvLeft = Canvas.GetLeft(cv);
+                double cvTop  = Canvas.GetTop(cv);
+                var bounds = new Rect(cvLeft - eraserRadius, cvTop - eraserRadius,
+                    cv.Width + eraserRadius * 2, cv.Height + eraserRadius * 2);
+                if (bounds.Contains(canvasPos))
+                {
+                    toRemoveUi.Add(cv);
+                    toRemoveModel.Add(calloutAnn);
                 }
             }
         }

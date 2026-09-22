@@ -1444,6 +1444,18 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Callout"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawCallout, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawCallout"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Callout — drag a box, then type text for a callout annotation"
+                                         AutomationProperties.Name="Draw callout annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Eraser"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"

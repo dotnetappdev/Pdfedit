@@ -409,6 +409,25 @@ public class PdfFormService
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     page.AddAnnotation(annot);
                 }
+                else if (shape.Kind == Models.ShapeKind.Callout && !string.IsNullOrEmpty(shape.CalloutText))
+                {
+                    var boxRect = new Rectangle((float)left, (float)bottom, (float)width, (float)height);
+                    var annot = new PdfFreeTextAnnotation(boxRect, new PdfString(shape.CalloutText));
+                    annot.SetColor(strokeColor);
+                    if (ParseHexColor(shape.FillColor ?? "#FFFDE7", out float fr, out float fg, out float fb))
+                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
+                    annot.Put(PdfName.BS, BuildBorderStyle(lw));
+                    // Callout line: tip below box center, knee at box bottom, attach at box bottom-center
+                    float tipX = (float)(left + width / 2.0);
+                    float tipY = (float)(bottom - 20);
+                    float kneeX = tipX;
+                    float kneeY = (float)bottom;
+                    float attachX = tipX;
+                    float attachY = (float)bottom;
+                    annot.Put(PdfName.CL, new PdfArray(new float[] { tipX, tipY, kneeX, kneeY, attachX, attachY }));
+                    annot.Put(new PdfName("IT"), new PdfName("FreeTextCallout"));
+                    page.AddAnnotation(annot);
+                }
             }
         }
 
