@@ -2,10 +2,24 @@
 
 A native WPF application for viewing, editing, and filling PDF forms — styled after Adobe Acrobat Pro with a modern Fluent ribbon, AI-powered document analysis, full page management, and live theme switching.
 
+## Demo
+
+![PdfEdit Demo](docs/screenshots/demo.gif)
+
+*Full workflow: open a PDF → fill form fields → AI Smart Fill → page management → theme switching*
+
+---
+
 ## Screenshots
 
-### Dark Theme
+### Ribbon — Clipboard, Navigation & AI Controls
+![Ribbon Icons](docs/screenshots/ribbon-icons.png)
+
+### Dark Theme — Form Filling
 ![Dark Theme](docs/screenshots/dark-theme.png)
+
+### AI Smart Fill — All Fields Filled Automatically
+![Form Filling with AI](docs/screenshots/form-filling.png)
 
 ### Light Theme (IRS W-4)
 ![Light Theme](docs/screenshots/light-theme.png)
