@@ -7,6 +7,7 @@ using PdfEdit.Dialogs;
 using PdfEdit.Models;
 using PdfEdit.Services;
 using PdfEdit.ViewModels;
+using DesignTool = PdfEdit.Models.DesignTool;
 
 namespace PdfEdit.Controls;
 
@@ -18,13 +19,27 @@ public partial class ToolboxPanel : UserControl
         Loaded += (_, _) => RefreshSignatures();
     }
 
+    // Live-View tools: set ActiveTool and ensure the Live View tab is active
     private void Tool_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is RadioButton rb && rb.Tag is string toolName
-            && Enum.TryParse<ActiveTool>(toolName, out var tool))
+            && Enum.TryParse<ActiveTool>(toolName, out var tool)
+            && DataContext is MainViewModel vm)
         {
-            if (DataContext is MainViewModel vm)
-                vm.ActiveTool = tool;
+            vm.IsDesignMode = false;
+            vm.ActiveTool = tool;
+        }
+    }
+
+    // Design-Canvas tools: set DesignCanvas.ActiveTool and switch to Design tab
+    private void DesignTool_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string toolName
+            && Enum.TryParse<DesignTool>(toolName, out var tool)
+            && DataContext is MainViewModel vm)
+        {
+            vm.IsDesignMode = true;
+            vm.DesignCanvas.ActiveTool = tool;
         }
     }
 
@@ -100,6 +115,7 @@ public partial class ToolboxPanel : UserControl
         {
             if (DataContext is MainViewModel vm)
             {
+                vm.IsDesignMode = false;
                 vm.PendingLibrarySignature = sig.ImageBytes;
                 vm.ActiveTool = ActiveTool.Signature;
                 ToastService.Instance.Info($"'{sig.Name}' selected — click on the page to place.");

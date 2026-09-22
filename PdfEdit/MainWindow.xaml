@@ -2921,14 +2921,14 @@
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
 
-                        <!-- ── Fill & Sign Toolbox — right side, Adobe-style ─ -->
+                        <!-- ── Tools Palette — right side, covers Live + Design tools ─ -->
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="185">
                             <avalonDock:LayoutAnchorablePane>
-                                <avalonDock:LayoutAnchorable Title="Fill &amp; Sign" ContentId="tools"
+                                <avalonDock:LayoutAnchorable Title="Tools" ContentId="tools"
                                                              CanClose="False" CanHide="False">
                                     <controls:ToolboxPanel DataContext="{Binding}"
                                                            FontSize="{DynamicResource PanelFontSize}"
-                                                           AutomationProperties.Name="Fill and Sign tool palette"/>
+                                                           AutomationProperties.Name="Tools palette — Live View and Design Canvas"/>
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
