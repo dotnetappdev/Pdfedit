@@ -516,6 +516,10 @@ public class MainViewModel : INotifyPropertyChanged
     // Names of existing fields the user has deleted; stripped from the PDF on save.
     public HashSet<string> DeletedFieldNames { get; } = new();
 
+    public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
+
+    public ICommand NavigateToBookmarkCommand { get; }
+
     // ── Commands ─────────────────────────────────────────────────────────────
 
     public ICommand OpenCommand { get; }
@@ -584,6 +588,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand CompressPdfCommand { get; }
     public ICommand AddPageNumbersCommand { get; }
     public ICommand WatermarkCommand { get; }
+    public ICommand DocumentPropertiesCommand { get; }
+    public ICommand ExportPagesAsImagesCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -610,6 +616,12 @@ public class MainViewModel : INotifyPropertyChanged
         _aiProvider = AppSettings.Current.AiProvider;
         _aiModel = AppSettings.Current.AiModel;
         SyncAiModels();
+
+        NavigateToBookmarkCommand = new RelayCommand(p =>
+        {
+            if (p is Models.BookmarkItem bm && bm.PageNumber > 0)
+                CurrentPageIndex = bm.PageNumber - 1;
+        });
 
         OpenCommand = new AsyncRelayCommand(OpenAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => HasDocument);
@@ -706,9 +718,11 @@ public class MainViewModel : INotifyPropertyChanged
         RotateAllPagesCWCommand  = new RelayCommand(() => RotateAllPages(+90), () => HasDocument);
         RotateAllPagesCCWCommand = new RelayCommand(() => RotateAllPages(-90), () => HasDocument);
         SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
-        WatermarkCommand         = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
-        AddPageNumbersCommand    = new AsyncRelayCommand(AddPageNumbersAsync, () => HasDocument);
-        CompressPdfCommand       = new AsyncRelayCommand(CompressPdfAsync, () => HasDocument);
+        WatermarkCommand            = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
+        AddPageNumbersCommand       = new AsyncRelayCommand(AddPageNumbersAsync, () => HasDocument);
+        CompressPdfCommand          = new AsyncRelayCommand(CompressPdfAsync, () => HasDocument);
+        DocumentPropertiesCommand   = new AsyncRelayCommand(DocumentPropertiesAsync, () => HasDocument);
+        ExportPagesAsImagesCommand  = new AsyncRelayCommand(ExportPagesAsImagesAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -873,6 +887,7 @@ public class MainViewModel : INotifyPropertyChanged
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
+            Bookmarks.Clear();
 
             foreach (var f in Document.FormFields)
             {
@@ -904,6 +919,20 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CurrentPageIndex));
             OnPropertyChanged(nameof(CurrentPageRotation));
             RefreshCurrentPageFields();
+
+            // Load bookmarks in background
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var bms = _formService.GetBookmarks(path);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var bm in bms) Bookmarks.Add(bm);
+                    });
+                }
+                catch { /* non-critical */ }
+            });
 
             // Record in recent files
             AppSettings.Current.AddRecentFile(path);
@@ -1292,6 +1321,92 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Dialogs.AppDialog.ShowError("Could not apply watermark.", ex);
             StatusText = "Watermark failed.";
+        }
+    }
+
+    private async Task DocumentPropertiesAsync()
+    {
+        if (_currentFilePath == null) return;
+        try
+        {
+            var meta = await Task.Run(() => _formService.GetMetadata(_currentFilePath));
+            var dlg  = new Dialogs.DocumentPropertiesDialog(meta)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            var updated = dlg.Result!;
+            var tmp = _currentFilePath + ".ptmp";
+            try
+            {
+                await Task.Run(() => _formService.SetMetadata(_currentFilePath, tmp, updated));
+                System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+                // Refresh the document info so the title bar / status reflects the change
+                if (_document != null)
+                {
+                    _document.Title   = updated.Title;
+                    _document.Author  = updated.Author;
+                    _document.Subject = updated.Subject;
+                }
+                ToastService.Instance.Success("Document properties saved.");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+            }
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not update document properties.", ex);
+        }
+    }
+
+    private async Task ExportPagesAsImagesAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlg = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "Choose folder to save page images",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string folder   = dlg.FolderName;
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath);
+        int total       = _document.PageCount;
+
+        StatusText = $"Exporting {total} page(s) as images…";
+        try
+        {
+            var renderer = new Services.PdfRenderService();
+            await renderer.LoadAsync(_currentFilePath);
+
+            for (int i = 0; i < total; i++)
+            {
+                StatusText = $"Exporting page {i + 1} of {total}…";
+                var bmp = await renderer.RenderPageAsync(i, zoom: 2.0); // 192 DPI
+
+                string outPath = System.IO.Path.Combine(folder, $"{baseName}_p{i + 1:D3}.png");
+                await Task.Run(() =>
+                {
+                    var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                    using var stream = System.IO.File.Create(outPath);
+                    enc.Save(stream);
+                });
+            }
+
+            StatusText = $"Exported {total} image(s) to {System.IO.Path.GetFileName(folder)}";
+            ToastService.Instance.Success($"Exported {total} PNG image(s).");
+            Dialogs.AppDialog.ShowInfo(
+                $"Exported {total} page image(s) to:\n{folder}",
+                "Export Complete");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Export failed.", ex);
+            StatusText = "Export failed.";
         }
     }
 

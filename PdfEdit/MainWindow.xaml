@@ -107,6 +107,12 @@
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Close document"/>
 
+                    <Fluent:MenuItem Header="Document Properties…"
+                                                KeyTip="R"
+                                                Command="{Binding DocumentPropertiesCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Document properties metadata"/>
+
                     <Separator/>
 
                     <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
@@ -551,6 +557,31 @@
                                    AutomationProperties.Name="Compress PDF">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export&#x0a;as Images"
+                                   Command="{Binding ExportPagesAsImagesCommand}"
+                                   KeyTip="EI"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export every page as a PNG image file into a chosen folder"
+                                   AutomationProperties.Name="Export pages as PNG images">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Document group -->
+                <Fluent:RibbonGroupBox Header="Document"
+                                        AutomationProperties.Name="Document metadata group">
+                    <Fluent:Button Header="Properties"
+                                   Command="{Binding DocumentPropertiesCommand}"
+                                   KeyTip="DP2"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Edit document metadata: title, author, subject, keywords"
+                                   AutomationProperties.Name="Document properties">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -2038,6 +2069,42 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Bookmarks tab -->
+                        <TabItem Header="Bookmarks"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="PDF bookmarks outline">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="BOOKMARKS"
+                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <TreeView ItemsSource="{Binding Bookmarks}"
+                                              FontSize="11"
+                                              AutomationProperties.Name="Bookmarks tree">
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <TextBlock Text="{Binding Title}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Cursor="Hand"
+                                                           Foreground="{DynamicResource ForegroundBrush}"
+                                                           ToolTip="{Binding Title}">
+                                                    <TextBlock.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.NavigateToBookmarkCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=TreeView}}"
+                                                                      CommandParameter="{Binding}"/>
+                                                    </TextBlock.InputBindings>
+                                                </TextBlock>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                </ScrollViewer>
                             </Grid>
                         </TabItem>
 

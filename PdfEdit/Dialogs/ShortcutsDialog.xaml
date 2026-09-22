@@ -37,6 +37,7 @@
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+W"/><TextBlock Style="{StaticResource Desc}" Text="Close document"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Z / Ctrl+Y"/><TextBlock Style="{StaticResource Desc}" Text="Undo / Redo (Design canvas)"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+F"/><TextBlock Style="{StaticResource Desc}" Text="Find text in PDF"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+P"/><TextBlock Style="{StaticResource Desc}" Text="Print document"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="F1"/><TextBlock Style="{StaticResource Desc}" Text="This shortcuts dialog"/></StackPanel>
 
                 <TextBlock Style="{StaticResource Hdr}" Text="NAVIGATION"/>
