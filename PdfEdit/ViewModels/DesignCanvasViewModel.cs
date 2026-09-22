@@ -22,6 +22,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private Color _fillColor = Colors.Transparent;
     private Color _strokeColor = Colors.Black;
     private double _strokeThickness = 2;
+    private double _cornerRadius;
     private string _fontFamily = "Segoe UI";
     private double _fontSize = 14;
     private bool _bold, _italic, _underline;
@@ -149,6 +150,17 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _strokeThickness = value;
             OnPropertyChanged();
             if (_selectedElement is ShapeDesignElement s) s.StrokeThickness = value;
+        }
+    }
+
+    public double CornerRadius
+    {
+        get => _cornerRadius;
+        set
+        {
+            _cornerRadius = Math.Max(0, value);
+            OnPropertyChanged();
+            if (_selectedElement is ShapeDesignElement s) s.CornerRadius = _cornerRadius;
         }
     }
 
@@ -724,6 +736,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _fillColor        = sh.FillColor;       OnPropertyChanged(nameof(FillColor));
             _strokeColor      = sh.StrokeColor;     OnPropertyChanged(nameof(StrokeColor));
             _strokeThickness  = sh.StrokeThickness; OnPropertyChanged(nameof(StrokeThickness));
+            _cornerRadius     = sh.CornerRadius;    OnPropertyChanged(nameof(CornerRadius));
         }
     }
 

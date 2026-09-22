@@ -174,6 +174,83 @@ public partial class MainWindow : RibbonWindow
         VM?.NewDesignCommand.Execute(null);
     }
 
+    private void DesignColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+
+        System.Windows.Media.Color current = tag switch
+        {
+            "FillColor"   => VM.DesignCanvas.FillColor,
+            "StrokeColor" => VM.DesignCanvas.StrokeColor,
+            "TextColor"   => VM.DesignCanvas.TextColor,
+            _             => System.Windows.Media.Colors.Black
+        };
+
+        var newColor = ShowColorPickerDialog($"Set {tag}", current);
+        if (newColor == null) return;
+
+        switch (tag)
+        {
+            case "FillColor":   VM.DesignCanvas.FillColor   = newColor.Value; break;
+            case "StrokeColor": VM.DesignCanvas.StrokeColor = newColor.Value; break;
+            case "TextColor":   VM.DesignCanvas.TextColor   = newColor.Value; break;
+        }
+    }
+
+    private System.Windows.Media.Color? ShowColorPickerDialog(string title, System.Windows.Media.Color current)
+    {
+        var win = new Window
+        {
+            Title = title,
+            Width = 360, Height = 220,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
+            ResizeMode = ResizeMode.NoResize,
+            Background = (System.Windows.Media.Brush)FindResource("AppBgBrush")
+        };
+        var stack = new StackPanel { Margin = new Thickness(16) };
+        stack.Children.Add(new TextBlock { Text = "Hex color (#AARRGGBB or #RRGGBB):", Margin = new Thickness(0,0,0,6) });
+        var box   = new TextBox { Text = $"#{current.A:X2}{current.R:X2}{current.G:X2}{current.B:X2}", Padding = new Thickness(4), Margin = new Thickness(0,0,0,10) };
+        stack.Children.Add(box);
+
+        // Quick swatches
+        var swatchPanel = new WrapPanel { Margin = new Thickness(0,0,0,10) };
+        var swatches = new[] { "#FF000000","#FFFFFFFF","#FF1F3A8A","#FF8B0000","#FF006400","#FF555555","#FF800080","#FFFF8C00","#FF0A84FF","#FFFFE000","#FF40C4FF","#FFAAAAAA" };
+        foreach (var hex in swatches)
+        {
+            var btn = new Button
+            {
+                Width = 24, Height = 24, Margin = new Thickness(2),
+                Tag = hex,
+                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex))
+            };
+            btn.Click += (_, _) => box.Text = hex;
+            swatchPanel.Children.Add(btn);
+        }
+        stack.Children.Add(swatchPanel);
+
+        var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var ok     = new Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
+        var cancel = new Button { Content = "Cancel", Width = 70, IsCancel = true };
+        btns.Children.Add(ok); btns.Children.Add(cancel);
+        stack.Children.Add(btns);
+        win.Content = stack;
+
+        System.Windows.Media.Color? result = null;
+        ok.Click += (_, _) =>
+        {
+            try
+            {
+                result = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(box.Text);
+                win.DialogResult = true;
+            }
+            catch { }
+        };
+        win.ShowDialog();
+        return result;
+    }
+
     private void DesignBgColor_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.DesignCanvas == null) return;
