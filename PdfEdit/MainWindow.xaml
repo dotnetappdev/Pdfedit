@@ -518,6 +518,16 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Watermark"
+                                   Command="{Binding WatermarkCommand}"
+                                   KeyTip="WM"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add a diagonal text watermark (e.g. DRAFT, CONFIDENTIAL) to all pages"
+                                   AutomationProperties.Name="Add watermark to PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -1601,6 +1611,22 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Pen Format -->
+                <Fluent:RibbonGroupBox Header="Pen Format"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Pen formatting group">
+                    <Fluent:Spinner Header="Pen Size"
+                                    Value="{Binding DesignCanvas.PenThickness}"
+                                    Minimum="1" Maximum="50" Increment="1"
+                                    Width="60"
+                                    ToolTip="Freehand pen stroke thickness"
+                                    AutomationProperties.Name="Pen thickness"/>
+                    <Fluent:Button Header="Pen Color" Size="Middle" Click="DesignPenColor_Click"
+                                   ToolTip="Set freehand pen color" AutomationProperties.Name="Pen color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Align -->
                 <Fluent:RibbonGroupBox Header="Align"
                                         IsEnabled="{Binding IsDesignMode}"
@@ -1696,6 +1722,48 @@
                     </Fluent:Button>
                     <Fluent:Button Header="Fit"       Click="DesignZoomFit_Click" Size="Middle" ToolTip="Fit canvas to window" AutomationProperties.Name="Design zoom fit">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Position / Size -->
+                <Fluent:RibbonGroupBox Header="Position &amp; Size"
+                                        IsEnabled="{Binding DesignCanvas.HasSelection}"
+                                        AutomationProperties.Name="Position and size group">
+                    <Fluent:Spinner Header="X"
+                                    Value="{Binding DesignCanvas.SelectedX, Mode=TwoWay}"
+                                    Minimum="-9999" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Horizontal position (px)"
+                                    AutomationProperties.Name="Element X position"/>
+                    <Fluent:Spinner Header="Y"
+                                    Value="{Binding DesignCanvas.SelectedY, Mode=TwoWay}"
+                                    Minimum="-9999" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Vertical position (px)"
+                                    AutomationProperties.Name="Element Y position"/>
+                    <Fluent:Spinner Header="W"
+                                    Value="{Binding DesignCanvas.SelectedWidth, Mode=TwoWay}"
+                                    Minimum="4" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Element width (px)"
+                                    AutomationProperties.Name="Element width"/>
+                    <Fluent:Spinner Header="H"
+                                    Value="{Binding DesignCanvas.SelectedHeight, Mode=TwoWay}"
+                                    Minimum="4" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Element height (px)"
+                                    AutomationProperties.Name="Element height"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Export Image -->
+                <Fluent:RibbonGroupBox Header="Export Image"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Design image export group">
+                    <Fluent:Button Header="PNG" Size="Large" Click="DesignExportPng_Click"
+                                   ToolTip="Export design canvas as PNG image"
+                                   AutomationProperties.Name="Export design as PNG">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="JPEG" Size="Large" Click="DesignExportJpeg_Click"
+                                   ToolTip="Export design canvas as JPEG image"
+                                   AutomationProperties.Name="Export design as JPEG">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -2052,6 +2120,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
@@ -2081,6 +2150,19 @@
             <StatusBarItem Grid.Column="4" Margin="8,0">
                 <TextBlock Text="{Binding UiScale, StringFormat='Scale: {0:P0}'}"
                            AutomationProperties.Name="Interface scale"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="5" Margin="8,0"
+                           Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock AutomationProperties.Name="Design element position and size">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="X:{0:F0} Y:{1:F0}  W:{2:F0} H:{3:F0}">
+                            <Binding Path="DesignCanvas.SelectedX"/>
+                            <Binding Path="DesignCanvas.SelectedY"/>
+                            <Binding Path="DesignCanvas.SelectedWidth"/>
+                            <Binding Path="DesignCanvas.SelectedHeight"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
             </StatusBarItem>
         </StatusBar>
 

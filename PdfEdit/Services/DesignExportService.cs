@@ -144,7 +144,10 @@ public static class DesignExportService
         switch (s.ElementType)
         {
             case DesignElementType.Rectangle:
-                canvas.Rectangle(x, y, w, h);
+                if (s.CornerRadius > 0)
+                    canvas.RoundRectangle(x, y, w, h, (float)Math.Min(s.CornerRadius, Math.Min(w, h) / 2));
+                else
+                    canvas.Rectangle(x, y, w, h);
                 ApplyFillStroke(canvas, hasFill, hasStroke);
                 break;
 

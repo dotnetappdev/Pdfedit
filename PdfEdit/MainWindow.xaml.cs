@@ -174,6 +174,13 @@ public partial class MainWindow : RibbonWindow
         VM?.NewDesignCommand.Execute(null);
     }
 
+    private void DesignPenColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var newColor = ShowColorPickerDialog("Set Pen Color", VM.DesignCanvas.PenColor);
+        if (newColor != null) VM.DesignCanvas.PenColor = newColor.Value;
+    }
+
     private void DesignColor_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.DesignCanvas == null) return;
@@ -285,6 +292,40 @@ public partial class MainWindow : RibbonWindow
             catch { }
         };
         win.ShowDialog();
+    }
+
+    private void DesignExportPng_Click(object sender, RoutedEventArgs e) => ExportDesignImage("png");
+    private void DesignExportJpeg_Click(object sender, RoutedEventArgs e) => ExportDesignImage("jpeg");
+
+    private void ExportDesignImage(string format)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var ext = format == "jpeg" ? "jpg" : "png";
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = $"Export Design as {format.ToUpperInvariant()}",
+            Filter = format == "jpeg" ? "JPEG Image|*.jpg;*.jpeg|All files|*.*" : "PNG Image|*.png|All files|*.*",
+            DefaultExt = ext
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var canvas = DesignCanvasControl;
+            canvas.Measure(new Size(canvas.ActualWidth, canvas.ActualHeight));
+            canvas.Arrange(new Rect(new Size(canvas.ActualWidth, canvas.ActualHeight)));
+            var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                (int)canvas.ActualWidth, (int)canvas.ActualHeight,
+                96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            rtb.Render(canvas);
+            System.Windows.Media.Imaging.BitmapEncoder encoder = format == "jpeg"
+                ? new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 92 }
+                : new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(rtb));
+            using var stream = System.IO.File.Create(dlg.FileName);
+            encoder.Save(stream);
+            Dialogs.AppDialog.ShowInfo($"Image saved to {System.IO.Path.GetFileName(dlg.FileName)}.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not export image.", ex); }
     }
 
     private void DesignAlign_Click(object sender, RoutedEventArgs e)

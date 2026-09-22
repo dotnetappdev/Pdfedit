@@ -110,6 +110,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SelectedIsText));
             OnPropertyChanged(nameof(SelectedIsShape));
+            NotifyPositionProperties();
             SyncFormatFromSelection();
         }
     }
@@ -338,6 +339,36 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     }
 
     public bool HasUnlockedSelection => _selectedElement != null && !_selectedElement.IsLocked;
+
+    // Precise position / size properties (bound to ribbon spinners)
+    public double SelectedX
+    {
+        get => _selectedElement?.X ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.X = value; } }
+    }
+    public double SelectedY
+    {
+        get => _selectedElement?.Y ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Y = value; } }
+    }
+    public double SelectedWidth
+    {
+        get => _selectedElement?.Width ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Width = Math.Max(4, value); } }
+    }
+    public double SelectedHeight
+    {
+        get => _selectedElement?.Height ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Height = Math.Max(4, value); } }
+    }
+
+    public void NotifyPositionProperties()
+    {
+        OnPropertyChanged(nameof(SelectedX));
+        OnPropertyChanged(nameof(SelectedY));
+        OnPropertyChanged(nameof(SelectedWidth));
+        OnPropertyChanged(nameof(SelectedHeight));
+    }
 
     // ── Element operations ────────────────────────────────────────────────────
 

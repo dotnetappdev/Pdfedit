@@ -658,14 +658,26 @@ public partial class DesignCanvas : UserControl
         else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control) { VM.PasteClipboard(); e.Handled = true; }
         else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control) { VM.DuplicateSelected(); e.Handled = true; }
         else if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control) { VM.SelectAll(); e.Handled = true; }
-        // Nudge selected with arrow keys
+        // Nudge selected with arrow keys (1px; 10px with Shift; Ctrl+arrow = resize)
         else if (VM.SelectedElement is DesignElement sel && !sel.IsLocked && new[] { Key.Left, Key.Right, Key.Up, Key.Down }.Contains(e.Key))
         {
-            double step = Keyboard.Modifiers == ModifierKeys.Shift ? 10 : 1;
-            if (e.Key == Key.Left)  sel.X -= step;
-            if (e.Key == Key.Right) sel.X += step;
-            if (e.Key == Key.Up)    sel.Y -= step;
-            if (e.Key == Key.Down)  sel.Y += step;
+            double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+            bool resize = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
+            if (resize)
+            {
+                if (e.Key == Key.Right) sel.Width  += step;
+                if (e.Key == Key.Left)  sel.Width  = Math.Max(4, sel.Width - step);
+                if (e.Key == Key.Down)  sel.Height += step;
+                if (e.Key == Key.Up)    sel.Height = Math.Max(4, sel.Height - step);
+            }
+            else
+            {
+                if (e.Key == Key.Left)  sel.X -= step;
+                if (e.Key == Key.Right) sel.X += step;
+                if (e.Key == Key.Up)    sel.Y -= step;
+                if (e.Key == Key.Down)  sel.Y += step;
+            }
+            VM.NotifyPositionProperties();
             RefreshSelectionHandles();
             e.Handled = true;
         }

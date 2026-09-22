@@ -580,6 +580,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AnalyzeContractCommand { get; }
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
+    public ICommand WatermarkCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -697,6 +698,7 @@ public class MainViewModel : INotifyPropertyChanged
         RotateAllPagesCWCommand  = new RelayCommand(() => RotateAllPages(+90), () => HasDocument);
         RotateAllPagesCCWCommand = new RelayCommand(() => RotateAllPages(-90), () => HasDocument);
         SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
+        WatermarkCommand         = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1183,6 +1185,39 @@ public class MainViewModel : INotifyPropertyChanged
         string dir = degrees > 0 ? "clockwise" : "counter-clockwise";
         StatusText = $"All {_document.PageCount} pages rotated 90° {dir}.";
         ToastService.Instance.Success($"All {_document.PageCount} pages rotated 90° {dir}.");
+    }
+
+    private async Task WatermarkAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        // Simple watermark dialog — collect text, opacity, angle, font size
+        var dlg = new Dialogs.WatermarkDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        var opt = dlg.Options;
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Watermarked PDF",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_watermark.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Applying watermark…";
+            string outPath = dlgSave.FileName;
+            await Task.Run(() => Services.WatermarkService.Apply(_currentFilePath, outPath, opt));
+            StatusText = $"Watermarked PDF saved: {System.IO.Path.GetFileName(outPath)}";
+            ToastService.Instance.Success("Watermark applied.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not apply watermark.", ex);
+            StatusText = "Watermark failed.";
+        }
     }
 
     private async Task SplitPdfAsync()
