@@ -97,6 +97,7 @@ public partial class MainWindow : RibbonWindow
             "Arrow"     => DesignTool.Arrow,
             "Pen"       => DesignTool.Pen,
             "Image"     => DesignTool.Image,
+            "Table"     => DesignTool.Table,
             _           => DesignTool.Select
         };
         DesignCanvasControl?.Focus();
@@ -117,11 +118,40 @@ public partial class MainWindow : RibbonWindow
 
     private void BringForward_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.BringForward();
     private void SendBackward_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.SendBackward();
+    private void BringToFront_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.BringToFront();
+    private void SendToBack_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.SendToBack();
+    private void DesignDuplicate_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.DuplicateSelected();
     private void DeleteDesignElement_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.DeleteSelected();
     private void DesignUndo_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.Undo();
     private void DesignRedo_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.Redo();
     private void DesignZoomIn_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.ZoomIn();
     private void DesignZoomOut_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.ZoomOut();
+
+    private void DesignAlign_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+        switch (tag)
+        {
+            case "AlignLeft":    VM.DesignCanvas.AlignLeft();    break;
+            case "AlignRight":   VM.DesignCanvas.AlignRight();   break;
+            case "AlignCenterH": VM.DesignCanvas.AlignCenterH(); break;
+            case "AlignTop":     VM.DesignCanvas.AlignTop();     break;
+            case "AlignBottom":  VM.DesignCanvas.AlignBottom();  break;
+            case "AlignCenterV": VM.DesignCanvas.AlignCenterV(); break;
+        }
+    }
+
+    private void DesignTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+        if (!string.IsNullOrEmpty(tag))
+        {
+            VM.DesignCanvas.LoadTemplate(tag);
+            VM.IsDesignMode = true;
+        }
+    }
 
     private void DesignPageSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

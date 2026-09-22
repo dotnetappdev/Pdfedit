@@ -93,6 +93,13 @@
             <Canvas x:Name="FreehandCanvas" Tag="{Binding}"/>
         </DataTemplate>
 
+        <!-- ── Table template ────────────────────────────────────────────── -->
+        <DataTemplate x:Key="TableTemplate" DataType="{x:Type models:TableDesignElement}">
+            <!-- Table rendered in code-behind as a UniformGrid child -->
+            <Border Tag="{Binding}" x:Name="TableHost"
+                    BorderThickness="0" Background="Transparent"/>
+        </DataTemplate>
+
         <!-- ── Selection overlay style (shared) ─────────────────────────── -->
         <Style x:Key="HandleThumb" TargetType="Thumb">
             <Setter Property="Width" Value="8"/>
@@ -162,6 +169,7 @@
                                     <Setter Property="Width" Value="{Binding Width}"/>
                                     <Setter Property="Height" Value="{Binding Height}"/>
                                     <Setter Property="Panel.ZIndex" Value="{Binding ZOrder}"/>
+                                    <Setter Property="Opacity" Value="{Binding Opacity}"/>
                                 </Style>
                             </ItemsControl.ItemContainerStyle>
                             <!-- Templates dispatched in code-behind via TemplateSelector -->
@@ -173,7 +181,8 @@
                                     EllipseTemplate="{StaticResource EllipseTemplate}"
                                     LineTemplate="{StaticResource LineTemplate}"
                                     ImageTemplate="{StaticResource ImageTemplate}"
-                                    FreehandTemplate="{StaticResource FreehandTemplate}"/>
+                                    FreehandTemplate="{StaticResource FreehandTemplate}"
+                                    TableTemplate="{StaticResource TableTemplate}"/>
                             </ItemsControl.ItemTemplateSelector>
                         </ItemsControl>
 
@@ -222,8 +231,16 @@
         <!-- Element context menu (right-click) -->
         <UserControl.ContextMenu>
             <ContextMenu>
+                <MenuItem Header="Copy"           Click="Copy_Click"      InputGestureText="Ctrl+C"/>
+                <MenuItem Header="Paste"          Click="Paste_Click"     InputGestureText="Ctrl+V"/>
+                <MenuItem Header="Duplicate"      Click="Duplicate_Click" InputGestureText="Ctrl+D"/>
+                <Separator/>
                 <MenuItem Header="Bring Forward"  Click="BringForward_Click"/>
                 <MenuItem Header="Send Backward"  Click="SendBackward_Click"/>
+                <MenuItem Header="Bring to Front" Click="BringToFront_Click"/>
+                <MenuItem Header="Send to Back"   Click="SendToBack_Click"/>
+                <Separator/>
+                <MenuItem Header="Lock Element"   Click="LockElement_Click"/>
                 <Separator/>
                 <MenuItem Header="Delete Element" Click="DeleteElement_Click"/>
                 <Separator/>

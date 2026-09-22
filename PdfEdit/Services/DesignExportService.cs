@@ -55,6 +55,15 @@ public static class DesignExportService
         float w  = (float)elem.Width;
         float h  = (float)elem.Height;
 
+        // Apply opacity via ExtGState if less than fully opaque
+        if (elem.Opacity < 0.999)
+        {
+            var gs = new iText.Kernel.Pdf.PdfExtGState()
+                .SetFillOpacity((float)elem.Opacity)
+                .SetStrokeOpacity((float)elem.Opacity);
+            pdfCanvas.SetExtGState(gs);
+        }
+
         switch (elem)
         {
             case TextDesignElement t:
@@ -71,6 +80,10 @@ public static class DesignExportService
 
             case FreehandDesignElement fh:
                 DrawFreehand(fh, pdfCanvas, pageH);
+                break;
+
+            case TableDesignElement tb:
+                DrawTable(tb, pdfCanvas, doc, x, y, w, h);
                 break;
         }
     }
@@ -213,6 +226,64 @@ public static class DesignExportService
         }
 
         canvas.RestoreState();
+    }
+
+    // ── Table ─────────────────────────────────────────────────────────────────
+
+    private static void DrawTable(TableDesignElement tb, PdfCanvas canvas, Document doc, float x, float y, float w, float h)
+    {
+        if (tb.Rows == 0 || tb.Columns == 0) return;
+
+        float cellW = w / tb.Columns;
+        float cellH = h / tb.Rows;
+        var borderColor = ToDeviceRgb(tb.BorderColor);
+        var headerBg    = ToDeviceRgb(tb.HeaderBgColor);
+        var cellBg      = ToDeviceRgb(tb.CellBgColor);
+
+        try
+        {
+            var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+            var fontBold = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+
+            for (int r = 0; r < tb.Rows; r++)
+            {
+                for (int c = 0; c < tb.Columns; c++)
+                {
+                    float cx = x + c * cellW;
+                    float cy = y + h - (r + 1) * cellH;
+
+                    // Background
+                    canvas.SaveState();
+                    canvas.SetFillColor(r == 0 ? headerBg : cellBg);
+                    canvas.Rectangle(cx, cy, cellW, cellH);
+                    canvas.Fill();
+                    canvas.RestoreState();
+
+                    // Border
+                    canvas.SaveState();
+                    canvas.SetStrokeColor(borderColor);
+                    canvas.SetLineWidth((float)tb.BorderThickness);
+                    canvas.Rectangle(cx, cy, cellW, cellH);
+                    canvas.Stroke();
+                    canvas.RestoreState();
+
+                    // Text
+                    string cellText = tb.GetCell(r, c);
+                    if (!string.IsNullOrEmpty(cellText))
+                    {
+                        var para = new Paragraph(cellText)
+                            .SetFont(r == 0 ? fontBold : font)
+                            .SetFontSize(r == 0 ? 9f : 8f)
+                            .SetFontColor(new DeviceRgb(0, 0, 0))
+                            .SetFixedPosition(cx + 2, cy + 2, cellW - 4)
+                            .SetHeight(cellH - 4)
+                            .SetMargin(0).SetPadding(0);
+                        doc.Add(para);
+                    }
+                }
+            }
+        }
+        catch { /* ignore */ }
     }
 
     // ── Color conversion ──────────────────────────────────────────────────────

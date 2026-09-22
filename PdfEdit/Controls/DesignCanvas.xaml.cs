@@ -20,6 +20,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
     public DataTemplate? LineTemplate     { get; set; }
     public DataTemplate? ImageTemplate    { get; set; }
     public DataTemplate? FreehandTemplate { get; set; }
+    public DataTemplate? TableTemplate    { get; set; }
 
     public override DataTemplate? SelectTemplate(object item, DependencyObject container) => item switch
     {
@@ -29,6 +30,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
         ShapeDesignElement { ElementType: DesignElementType.Line or DesignElementType.Arrow } => LineTemplate,
         ImageDesignElement                                      => ImageTemplate,
         FreehandDesignElement                                   => FreehandTemplate,
+        TableDesignElement                                      => TableTemplate,
         _                                                       => base.SelectTemplate(item, container)
     };
 }
@@ -140,10 +142,13 @@ public partial class DesignCanvas : UserControl
             if (hit != null)
             {
                 VM.SelectedElement = hit;
-                _dragMode = DragMode.Moving;
-                _dragElement = hit;
-                _elemOrigin = new Point(hit.X, hit.Y);
-                InteractionCanvas.CaptureMouse();
+                if (!hit.IsLocked)
+                {
+                    _dragMode = DragMode.Moving;
+                    _dragElement = hit;
+                    _elemOrigin = new Point(hit.X, hit.Y);
+                    InteractionCanvas.CaptureMouse();
+                }
             }
             else
             {
@@ -181,12 +186,21 @@ public partial class DesignCanvas : UserControl
 
         if (VM.ActiveTool is DesignTool.Text)
         {
-            // Place text immediately on click
             var elem = VM.CreateTextElement(pos.X, pos.Y);
             VM.AddElement(elem);
             _dragMode = DragMode.None;
             InteractionCanvas.ReleaseMouseCapture();
             BeginTextEdit(elem);
+            return;
+        }
+
+        if (VM.ActiveTool is DesignTool.Table)
+        {
+            var elem = VM.CreateTableElement(pos.X, pos.Y);
+            VM.AddElement(elem);
+            _dragMode = DragMode.None;
+            InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
             return;
         }
     }
@@ -449,8 +463,8 @@ public partial class DesignCanvas : UserControl
             DesignTool.Text      => Cursors.IBeam,
             DesignTool.Pen       => Cursors.Pen,
             DesignTool.Rectangle or DesignTool.Ellipse or DesignTool.Line or DesignTool.Arrow => Cursors.Cross,
-            DesignTool.Image     => Cursors.Cross,
-            _ => HitTestElement(pos) != null ? Cursors.SizeAll : Cursors.Arrow
+            DesignTool.Image or DesignTool.Table => Cursors.Cross,
+            _ => HitTestElement(pos) != null && !(HitTestElement(pos)?.IsLocked ?? false) ? Cursors.SizeAll : Cursors.Arrow
         };
     }
 
@@ -489,8 +503,14 @@ public partial class DesignCanvas : UserControl
 
     // ── Context menu handlers ─────────────────────────────────────────────────
 
+    private void Copy_Click(object sender, RoutedEventArgs e)      => VM?.CopySelected();
+    private void Paste_Click(object sender, RoutedEventArgs e)     => VM?.PasteClipboard();
+    private void Duplicate_Click(object sender, RoutedEventArgs e) => VM?.DuplicateSelected();
     private void BringForward_Click(object sender, RoutedEventArgs e) => VM?.BringForward();
     private void SendBackward_Click(object sender, RoutedEventArgs e) => VM?.SendBackward();
+    private void BringToFront_Click(object sender, RoutedEventArgs e) => VM?.BringToFront();
+    private void SendToBack_Click(object sender, RoutedEventArgs e)   => VM?.SendToBack();
+    private void LockElement_Click(object sender, RoutedEventArgs e)  { if (VM?.SelectedElement != null) VM.SelectedElement.IsLocked = !VM.SelectedElement.IsLocked; }
     private void DeleteElement_Click(object sender, RoutedEventArgs e) { VM?.DeleteSelected(); HideHandles(); }
     private void SelectAll_Click(object sender, RoutedEventArgs e)    => VM?.SelectAll();
 
@@ -509,10 +529,14 @@ public partial class DesignCanvas : UserControl
             e.Handled = true;
         }
         else if (e.Key == Key.Escape) { VM.ClearSelection(); HideHandles(); }
-        else if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control) { VM.Undo(); }
-        else if (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control) { VM.Redo(); }
+        else if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control) { VM.Undo(); e.Handled = true; }
+        else if (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control) { VM.Redo(); e.Handled = true; }
+        else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) { VM.CopySelected(); e.Handled = true; }
+        else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control) { VM.PasteClipboard(); e.Handled = true; }
+        else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control) { VM.DuplicateSelected(); e.Handled = true; }
+        else if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control) { VM.SelectAll(); e.Handled = true; }
         // Nudge selected with arrow keys
-        else if (VM.SelectedElement is DesignElement sel && new[] { Key.Left, Key.Right, Key.Up, Key.Down }.Contains(e.Key))
+        else if (VM.SelectedElement is DesignElement sel && !sel.IsLocked && new[] { Key.Left, Key.Right, Key.Up, Key.Down }.Contains(e.Key))
         {
             double step = Keyboard.Modifiers == ModifierKeys.Shift ? 10 : 1;
             if (e.Key == Key.Left)  sel.X -= step;

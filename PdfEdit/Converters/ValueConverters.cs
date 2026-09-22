@@ -115,3 +115,13 @@ public class BoolToTextDecorationConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value != null;
 }
+
+/// <summary>Converts opacity 0.0–1.0 to percent 0–100 for spinners.</summary>
+public class PercentConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is double d ? Math.Round(d * 100) : 100.0;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is double d ? Math.Clamp(d / 100.0, 0.0, 1.0) : 1.0;
+}

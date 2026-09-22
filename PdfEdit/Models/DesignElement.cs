@@ -8,12 +8,12 @@ namespace PdfEdit.Models;
 
 public enum DesignTool
 {
-    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image
+    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table
 }
 
 public enum DesignElementType
 {
-    Text, Rectangle, Ellipse, Line, Arrow, Image, Freehand
+    Text, Rectangle, Ellipse, Line, Arrow, Image, Freehand, Table
 }
 
 public abstract class DesignElement : INotifyPropertyChanged
@@ -31,6 +31,11 @@ public abstract class DesignElement : INotifyPropertyChanged
     public double Height { get => _height; set { _height = Math.Max(4, value); OnPropertyChanged(); } }
     public bool IsSelected { get => _isSelected; set { _isSelected = value; OnPropertyChanged(); } }
     public int ZOrder { get => _zOrder; set { _zOrder = value; OnPropertyChanged(); } }
+
+    private double _opacity = 1.0;
+    private bool _isLocked;
+    public double Opacity  { get => _opacity;   set { _opacity   = Math.Clamp(value, 0.0, 1.0); OnPropertyChanged(); } }
+    public bool   IsLocked { get => _isLocked;  set { _isLocked  = value; OnPropertyChanged(); } }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -107,6 +112,88 @@ public class FreehandDesignElement : DesignElement
     public List<List<Point>> Strokes { get; set; } = new();
     public Color Color { get => _color; set { _color = value; OnPropertyChanged(); } }
     public double Thickness { get => _thickness; set { _thickness = value; OnPropertyChanged(); } }
+}
+
+public class TableDesignElement : DesignElement
+{
+    private int _rows = 3;
+    private int _columns = 3;
+    private Color _borderColor = Colors.Black;
+    private Color _headerBgColor = Color.FromArgb(255, 220, 230, 245);
+    private Color _cellBgColor = Colors.White;
+    private double _borderThickness = 1;
+    private List<List<string>> _cells = new();
+
+    public override DesignElementType ElementType => DesignElementType.Table;
+
+    public int Rows
+    {
+        get => _rows;
+        set
+        {
+            _rows = Math.Max(1, value);
+            ResizeCells();
+            OnPropertyChanged();
+        }
+    }
+
+    public int Columns
+    {
+        get => _columns;
+        set
+        {
+            _columns = Math.Max(1, value);
+            ResizeCells();
+            OnPropertyChanged();
+        }
+    }
+
+    public Color BorderColor  { get => _borderColor;   set { _borderColor   = value; OnPropertyChanged(); } }
+    public Color HeaderBgColor{ get => _headerBgColor; set { _headerBgColor = value; OnPropertyChanged(); } }
+    public Color CellBgColor  { get => _cellBgColor;   set { _cellBgColor   = value; OnPropertyChanged(); } }
+    public double BorderThickness { get => _borderThickness; set { _borderThickness = value; OnPropertyChanged(); } }
+
+    public List<List<string>> Cells
+    {
+        get => _cells;
+        set { _cells = value; OnPropertyChanged(); }
+    }
+
+    public string GetCell(int row, int col)
+    {
+        if (row < _cells.Count && col < _cells[row].Count) return _cells[row][col];
+        return string.Empty;
+    }
+
+    public void SetCell(int row, int col, string text)
+    {
+        ResizeCells();
+        if (row < _cells.Count && col < _cells[row].Count)
+        {
+            _cells[row][col] = text;
+            OnPropertyChanged(nameof(Cells));
+        }
+    }
+
+    private void ResizeCells()
+    {
+        while (_cells.Count < _rows) _cells.Add(new List<string>());
+        while (_cells.Count > _rows) _cells.RemoveAt(_cells.Count - 1);
+        foreach (var row in _cells)
+        {
+            while (row.Count < _columns) row.Add(string.Empty);
+            while (row.Count > _columns) row.RemoveAt(row.Count - 1);
+        }
+    }
+
+    public TableDesignElement()
+    {
+        Width = 300;
+        Height = 120;
+        ResizeCells();
+        // Default header labels
+        for (int c = 0; c < _columns; c++) _cells[0][c] = $"Header {c + 1}";
+    }
 }
 
 public enum DesignPageSize { A4, Letter, A3, Custom }
