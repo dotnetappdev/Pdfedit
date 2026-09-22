@@ -22,6 +22,15 @@ A native WPF application for viewing, editing, and filling PDF forms — styled 
 ### Themed Dialogs & Toast Notifications
 ![Dialogs](docs/screenshots/dialogs.png)
 
+### Settings — Appearance & Theme
+![Settings Appearance](docs/screenshots/settings.png)
+
+### Settings — AI Assistant (API keys & connection status)
+![Settings AI](docs/screenshots/settings-ai.png)
+
+### Settings — Accessibility & Keyboard Shortcuts
+![Settings Accessibility](docs/screenshots/settings-accessibility.png)
+
 ---
 
 ## Features
@@ -94,6 +103,14 @@ A native WPF application for viewing, editing, and filling PDF forms — styled 
 - **Themed Dialogs** — Error (expandable stack trace + Copy Details), Confirm (danger mode), and Info — all styled to match the active theme
 - **UI Scale** — Increase/decrease the overall interface scale (independent of zoom)
 - **Drag & Drop to Open** — Drag a PDF file onto the window to open it
+
+### Preferences & Settings
+- **Settings Window** — Tabbed preferences dialog (File → Settings or toolbar)
+- **Appearance tab** — Theme selector with visual preview tiles; UI scale slider (75 % – 200 %)
+- **Fonts tab** — Per-area font size control (Ribbon, Form Fields, AI Chat, Thumbnails, Status Bar, Dialogs, Properties); live preview; reset to defaults
+- **Editor tab** — Default annotation font family, size, and color; date-stamp format (four formats); force-uppercase default toggle
+- **AI Assistant tab** — Claude and OpenAI API key management; connection status badge; keys stored locally, passwords never stored
+- **Accessibility tab** — High-contrast focus indicators toggle; keyboard shortcuts reference
 
 ### Sample PDFs
 The `Samples/` folder includes:
