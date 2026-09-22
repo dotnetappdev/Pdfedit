@@ -61,6 +61,11 @@ public partial class PdfViewerControl : UserControl
     private Point _highlightDragStart;
     private Rectangle? _highlightRubberBand;
 
+    // Redaction drag state
+    private bool _isDrawingRedact;
+    private Point _redactDragStart;
+    private Rectangle? _redactRubberBand;
+
     // Adobe-style field selection chrome
     private Border?    _fieldChromeBorder;
     private TextBlock? _fieldChromeLabel;
@@ -400,6 +405,8 @@ public partial class PdfViewerControl : UserControl
             HighlightCanvas.Height = h;
             HlAnnotCanvas.Width = w;
             HlAnnotCanvas.Height = h;
+            RdAnnotCanvas.Width = w;
+            RdAnnotCanvas.Height = h;
             AnnotationCanvas.Width = w;
             AnnotationCanvas.Height = h;
 
@@ -411,6 +418,7 @@ public partial class PdfViewerControl : UserControl
             _vm.RefreshCurrentPageFields();
             BuildFieldOverlay(_vm.CurrentPageFields, _vm.HighlightFields);
             BuildHighlightAnnotationOverlay(_vm.GetHighlightAnnotationsForCurrentPage());
+            BuildRedactAnnotationOverlay(_vm.GetRedactRegionsForCurrentPage());
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
         }
@@ -932,6 +940,50 @@ public partial class PdfViewerControl : UserControl
         catch { return Colors.Yellow; }
     }
 
+    // ── Redaction annotation overlay ──────────────────────────────────────────
+
+    private void BuildRedactAnnotationOverlay(IEnumerable<Models.RedactRegion> regions)
+    {
+        RdAnnotCanvas.Children.Clear();
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var r in regions)
+            PlaceRedactVisual(r, pageH);
+    }
+
+    private void PlaceRedactVisual(Models.RedactRegion r, double pageH)
+    {
+        double x = r.Left * Scale;
+        double y = (pageH - r.Bottom - r.Height) * Scale;
+        double w = r.Width * Scale;
+        double h = r.Height * Scale;
+
+        var rect = new Rectangle
+        {
+            Width = w, Height = h,
+            Fill = new SolidColorBrush(Color.FromArgb(200, 20, 20, 20)),
+            Stroke = new SolidColorBrush(Colors.Red),
+            StrokeThickness = 1.5,
+            ToolTip = "Redaction — right-click to remove",
+        };
+        Canvas.SetLeft(rect, x);
+        Canvas.SetTop(rect, y);
+
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = "Remove Redaction Box" };
+        delItem.Click += (_, _) =>
+        {
+            _vm!.RemoveRedactRegion(r);
+            RdAnnotCanvas.Children.Remove(rect);
+        };
+        cm.Items.Add(delItem);
+        rect.ContextMenu = cm;
+
+        RdAnnotCanvas.Children.Add(rect);
+    }
+
     // ── Free-text annotation overlay ──────────────────────────────────────────
 
     private void BuildAnnotationOverlay(IEnumerable<FreeTextAnnotation> annotations)
@@ -1207,7 +1259,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool == ActiveTool.Highlight)
+        if (tool is ActiveTool.Highlight or ActiveTool.Underline or ActiveTool.Strikethrough)
         {
             var posOnPage = e.GetPosition(HlAnnotCanvas);
             if (!IsOnPage(posOnPage)) return;
@@ -1224,6 +1276,28 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetLeft(_highlightRubberBand, posOnPage.X);
             Canvas.SetTop(_highlightRubberBand, posOnPage.Y);
             HlAnnotCanvas.Children.Add(_highlightRubberBand);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.Redact)
+        {
+            var posOnPage = e.GetPosition(RdAnnotCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingRedact = true;
+            _redactDragStart = posOnPage;
+            _redactRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(160, 20, 20, 20)),
+                Stroke = new SolidColorBrush(Colors.Red),
+                StrokeThickness = 1.5,
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_redactRubberBand, posOnPage.X);
+            Canvas.SetTop(_redactRubberBand, posOnPage.Y);
+            RdAnnotCanvas.Children.Add(_redactRubberBand);
             CaptureMouse();
             e.Handled = true;
         }
@@ -1262,6 +1336,12 @@ public partial class PdfViewerControl : UserControl
                     if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
                     {
                         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        var kind = _vm.ActiveTool switch
+                        {
+                            ActiveTool.Underline      => Models.HighlightKind.Underline,
+                            ActiveTool.Strikethrough  => Models.HighlightKind.Strikethrough,
+                            _                         => Models.HighlightKind.Highlight,
+                        };
                         var hl = new Models.HighlightAnnotation
                         {
                             Left    = canvasX / Scale,
@@ -1270,11 +1350,48 @@ public partial class PdfViewerControl : UserControl
                             Height  = rectH / Scale,
                             Color   = "#FFFF00",
                             Opacity = 0.4f,
-                            Kind    = Models.HighlightKind.Highlight,
+                            Kind    = kind,
                         };
                         _vm.AddHighlightAnnotation(hl);
                         PlaceHighlightAnnotationVisual(hl, pageH);
-                        _vm.StatusText = "Highlight added. Right-click to delete.";
+                        _vm.StatusText = $"{kind} added. Right-click to delete.";
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingRedact)
+        {
+            _isDrawingRedact = false;
+            ReleaseMouseCapture();
+
+            if (_redactRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _redactRubberBand.Width;
+                double rectH = _redactRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_redactRubberBand);
+                double canvasY = Canvas.GetTop(_redactRubberBand);
+                RdAnnotCanvas.Children.Remove(_redactRubberBand);
+                _redactRubberBand = null;
+
+                if (rectW > 4 && rectH > 4)
+                {
+                    int pageNum = _vm.CurrentPageIndex + 1;
+                    if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                    {
+                        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        var r = new Models.RedactRegion
+                        {
+                            Left   = canvasX / Scale,
+                            Bottom = pageH - (canvasY / Scale) - (rectH / Scale),
+                            Width  = rectW / Scale,
+                            Height = rectH / Scale,
+                        };
+                        _vm.AddRedactRegion(r);
+                        PlaceRedactVisual(r, pageH);
+                        _vm.StatusText = "Redaction box added. Click 'Apply Redactions' to burn in.";
                     }
                 }
             }
@@ -1303,6 +1420,20 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetTop(_highlightRubberBand, y);
             _highlightRubberBand.Width  = w;
             _highlightRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingRedact && _redactRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(RdAnnotCanvas);
+            double x = Math.Min(pos.X, _redactDragStart.X);
+            double y = Math.Min(pos.Y, _redactDragStart.Y);
+            double w = Math.Abs(pos.X - _redactDragStart.X);
+            double h = Math.Abs(pos.Y - _redactDragStart.Y);
+            Canvas.SetLeft(_redactRubberBand, x);
+            Canvas.SetTop(_redactRubberBand, y);
+            _redactRubberBand.Width  = w;
+            _redactRubberBand.Height = h;
         }
     }
 

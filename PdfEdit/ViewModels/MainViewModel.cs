@@ -55,6 +55,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
     public ObservableCollection<Models.HighlightAnnotation> HighlightAnnotations { get; } = new();
+    public ObservableCollection<Models.RedactRegion> RedactionRegions { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
     public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
@@ -594,6 +595,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand FindReplaceFieldsCommand { get; }
     public ICommand ExportPdfACommand { get; }
     public ICommand ValidateRequiredFieldsCommand { get; }
+    public ICommand ApplyRedactionsCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -730,6 +732,8 @@ public class MainViewModel : INotifyPropertyChanged
         FindReplaceFieldsCommand    = new RelayCommand(FindReplaceFields, () => HasDocument && AllFields.Count > 0);
         ExportPdfACommand           = new AsyncRelayCommand(ExportPdfAAsync, () => HasDocument);
         ValidateRequiredFieldsCommand = new RelayCommand(ValidateRequiredFields, () => HasDocument);
+        ApplyRedactionsCommand        = new AsyncRelayCommand(ApplyRedactionsAsync,
+            () => HasDocument && RedactionRegions.Count > 0);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -870,6 +874,24 @@ public class MainViewModel : INotifyPropertyChanged
     public IEnumerable<Models.HighlightAnnotation> GetHighlightAnnotationsForCurrentPage()
         => HighlightAnnotations.Where(h => h.PageNumber == _currentPageIndex + 1);
 
+    public void AddRedactRegion(Models.RedactRegion r)
+    {
+        r.PageNumber = _currentPageIndex + 1;
+        RedactionRegions.Add(r);
+        OnPropertyChanged(nameof(ApplyRedactionsCommand));
+        PageChanged?.Invoke();
+    }
+
+    public void RemoveRedactRegion(Models.RedactRegion r)
+    {
+        RedactionRegions.Remove(r);
+        OnPropertyChanged(nameof(ApplyRedactionsCommand));
+        PageChanged?.Invoke();
+    }
+
+    public IEnumerable<Models.RedactRegion> GetRedactRegionsForCurrentPage()
+        => RedactionRegions.Where(r => r.PageNumber == _currentPageIndex + 1);
+
     // ── Private Commands ─────────────────────────────────────────────────────
 
     private void DeleteSelectedAnnotation()
@@ -911,6 +933,7 @@ public class MainViewModel : INotifyPropertyChanged
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
             HighlightAnnotations.Clear();
+            RedactionRegions.Clear();
             Bookmarks.Clear();
 
             foreach (var f in Document.FormFields)
@@ -1134,6 +1157,7 @@ public class MainViewModel : INotifyPropertyChanged
         FreeTextAnnotations.Clear();
         PlacedSignatures.Clear();
         HighlightAnnotations.Clear();
+        RedactionRegions.Clear();
         _pageRotations.Clear();
         SelectedField = null;
         SelectedAnnotation = null;
@@ -1517,6 +1541,40 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Dialogs.AppDialog.ShowError("PDF/A conversion failed.", ex);
             StatusText = "PDF/A conversion failed.";
+        }
+    }
+
+    private async Task ApplyRedactionsAsync()
+    {
+        if (_currentFilePath == null || RedactionRegions.Count == 0) return;
+
+        bool confirm = Dialogs.AppDialog.ShowConfirm(
+            $"Apply {RedactionRegions.Count} redaction(s) to the document?\n\n" +
+            "This permanently burns black boxes over the selected areas and saves the file. This action cannot be undone.",
+            "Apply Redactions", isDanger: true);
+        if (!confirm) return;
+
+        StatusText = "Applying redactions…";
+        try
+        {
+            var regions = RedactionRegions
+                .Select(r => (r.PageNumber, (float)r.Left, (float)r.Bottom, (float)r.Width, (float)r.Height))
+                .ToList();
+
+            string tmp = _currentFilePath + ".tmp";
+            await Task.Run(() => _formService.ApplyRedactions(_currentFilePath, tmp, regions));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+
+            RedactionRegions.Clear();
+            StatusText = "Redactions applied. Reloading document…";
+            ToastService.Instance.Success($"Redactions applied successfully.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Redaction failed.", ex);
+            StatusText = "Redaction failed.";
         }
     }
 

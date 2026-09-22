@@ -1044,8 +1044,53 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Highlight"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Highlight Tool (I)"
+                                         ToolTip="Highlight — drag to draw yellow highlight (I)"
                                          AutomationProperties.Name="Highlight tool"/>
+                    <Fluent:ToggleButton Header="Underline"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Underline, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Underline"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Underline — drag to draw underline annotation"
+                                         AutomationProperties.Name="Underline annotation tool"/>
+                    <Fluent:ToggleButton Header="Strikethrough"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Strikethrough, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Strikethrough"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Strikethrough — drag to draw strikethrough annotation"
+                                         AutomationProperties.Name="Strikethrough annotation tool"/>
+                    <Fluent:ToggleButton Header="Redact"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Redact, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Redact"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Redact — drag to mark sensitive areas for permanent removal"
+                                         AutomationProperties.Name="Redaction tool">
+                        <Fluent:ToggleButton.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="14" Height="10" Fill="#CC1A1A" Margin="0,0,4,0"/>
+                                <TextBlock Text="Redact"/>
+                            </StackPanel>
+                        </Fluent:ToggleButton.Header>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Apply&#x0a;Redactions"
+                                   Command="{Binding ApplyRedactionsCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Permanently burn all redaction boxes into the PDF (irreversible)"
+                                   AutomationProperties.Name="Apply redactions">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32">
+                                <StackPanel>
+                                    <Rectangle Width="24" Height="16" Fill="#CC1A1A"/>
+                                    <TextBlock Text="APPLY" FontSize="7" Foreground="White" HorizontalAlignment="Center" Margin="0,-14,0,0"/>
+                                </StackPanel>
+                            </Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Sign & Date group -->

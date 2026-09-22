@@ -79,6 +79,10 @@
                         <Canvas x:Name="HlAnnotCanvas"
                                 IsHitTestVisible="True"/>
 
+                        <!-- Pending redaction boxes (applied permanently on Apply Redactions) -->
+                        <Canvas x:Name="RdAnnotCanvas"
+                                IsHitTestVisible="True"/>
+
                         <!-- AcroForm field overlay — live WPF controls -->
                         <Canvas x:Name="FieldOverlayCanvas"
                                 IsHitTestVisible="True"
