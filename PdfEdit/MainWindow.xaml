@@ -1118,8 +1118,15 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Stamp"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Stamp Tool (M)"
+                                         ToolTip="Rubber Stamp — click page to place stamp (M)"
                                          AutomationProperties.Name="Stamp tool"/>
+                    <ComboBox ItemsSource="{Binding AvailableStamps}"
+                              SelectedItem="{Binding SelectedStamp, Mode=TwoWay}"
+                              IsEnabled="{Binding HasDocument}"
+                              Width="110" Height="22" FontSize="11"
+                              VerticalAlignment="Center" Margin="0,2,0,0"
+                              ToolTip="Choose stamp text"
+                              AutomationProperties.Name="Stamp text selector"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Marks group -->

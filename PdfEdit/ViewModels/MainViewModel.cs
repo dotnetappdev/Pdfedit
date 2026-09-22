@@ -74,6 +74,19 @@ public class MainViewModel : INotifyPropertyChanged
         "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
     };
 
+    public IList<string> AvailableStamps { get; } = new List<string>
+    {
+        "APPROVED", "CONFIDENTIAL", "DRAFT", "FINAL", "FOR REVIEW",
+        "NOT APPROVED", "RECEIVED", "REJECTED", "REVISED", "VOID"
+    };
+
+    private string _selectedStamp = "APPROVED";
+    public string SelectedStamp
+    {
+        get => _selectedStamp;
+        set { _selectedStamp = value; OnPropertyChanged(); }
+    }
+
     // ── Bindable Properties ──────────────────────────────────────────────────
 
     public PdfDocumentInfo? Document
@@ -2164,6 +2177,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         var q = query.ToLowerInvariant();
 
+        // Search form field names and values
         foreach (var f in AllFields)
         {
             if (f.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
@@ -2180,6 +2194,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
         }
 
+        // Search free-text annotation content
         foreach (var ann in FreeTextAnnotations)
         {
             if (ann.Text.Contains(q, StringComparison.OrdinalIgnoreCase))
@@ -2192,6 +2207,30 @@ public class MainViewModel : INotifyPropertyChanged
                     PageNumber = ann.PageNumber,
                     Annotation = ann
                 });
+            }
+        }
+
+        // Search page text content
+        if (_currentFilePath != null && _document != null)
+        {
+            for (int pg = 1; pg <= _document.PageCount; pg++)
+            {
+                var pageText = Services.PdfTextExtractorService.GetPageText(_currentFilePath, pg);
+                if (pageText.Contains(query, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Find a snippet around the match
+                    int idx = pageText.IndexOf(query, StringComparison.OrdinalIgnoreCase);
+                    int start = Math.Max(0, idx - 20);
+                    int len = Math.Min(60, pageText.Length - start);
+                    string snippet = "…" + pageText.Substring(start, len).Replace('\n', ' ') + "…";
+                    SearchResults.Add(new SearchResult
+                    {
+                        Label = $"Page {pg}",
+                        Detail = snippet,
+                        Kind = "Page Text",
+                        PageNumber = pg,
+                    });
+                }
             }
         }
     }

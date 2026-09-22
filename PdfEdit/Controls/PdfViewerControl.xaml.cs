@@ -1281,6 +1281,16 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        if (tool == ActiveTool.Stamp)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            FinalizeAnnotationBox();
+            PlaceRubberStampAnnotation(posOnPage);
+            e.Handled = true;
+            return;
+        }
+
         if (tool == ActiveTool.Redact)
         {
             var posOnPage = e.GetPosition(RdAnnotCanvas);
@@ -1528,6 +1538,90 @@ public partial class PdfViewerControl : UserControl
 
         _vm.StatusText = $"Stamp '{stampText}' placed.";
         ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
+    }
+
+    // ── Rubber stamp (APPROVED / CONFIDENTIAL / etc.) ─────────────────────────
+
+    private void PlaceRubberStampAnnotation(Point posOnCanvas)
+    {
+        if (_vm?.Document == null) return;
+
+        string label = _vm.SelectedStamp;
+        int pageNum  = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
+
+        string colorHex = label switch
+        {
+            "APPROVED"     => "#1B5E20",
+            "CONFIDENTIAL" => "#B71C1C",
+            "DRAFT"        => "#1565C0",
+            "FINAL"        => "#1B5E20",
+            "VOID"         => "#B71C1C",
+            "REJECTED"     => "#B71C1C",
+            "NOT APPROVED" => "#B71C1C",
+            _              => "#7B1FA2",
+        };
+        Color c = ParseColor(colorHex);
+
+        double dispW = 130 * Scale;
+        double dispH = 34 * Scale;
+
+        double pdfX = posOnCanvas.X / Scale;
+        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (dispH / Scale);
+
+        var ann = new FreeTextAnnotation
+        {
+            PageNumber  = pageNum,
+            Left        = pdfX,
+            Bottom      = pdfY,
+            Width       = dispW / Scale,
+            Height      = dispH / Scale,
+            Text        = label,
+            FontSize    = 18,
+            FontFamily  = "Arial",
+            IsBold      = true,
+            FontColor   = colorHex,
+            TextAlignment = System.Windows.TextAlignment.Center,
+            RotationAngle = -15,
+        };
+        _vm.FreeTextAnnotations.Add(ann);
+
+        // Visual rubber stamp border
+        var tb = new TextBox
+        {
+            Width = dispW, Height = dispH,
+            Text = label,
+            FontSize = Math.Max(8, 18 * Scale / PdfRenderService.PointsToDips),
+            FontWeight = FontWeights.Bold,
+            FontFamily = new FontFamily("Arial"),
+            Foreground = new SolidColorBrush(c),
+            Background = Brushes.Transparent,
+            BorderBrush = new SolidColorBrush(Color.FromArgb(180, c.R, c.G, c.B)),
+            BorderThickness = new Thickness(2),
+            IsReadOnly = true,
+            TextAlignment = System.Windows.TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            ToolTip = $"Rubber stamp: {label} — right-click to delete",
+        };
+        tb.LayoutTransform = new RotateTransform(-15);
+
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = $"Delete Stamp \"{label}\"" };
+        delItem.Click += (_, _) =>
+        {
+            _vm.RemoveFreeTextAnnotation(ann);
+            AnnotationCanvas.Children.Remove(tb);
+        };
+        cm.Items.Add(delItem);
+        tb.ContextMenu = cm;
+
+        Canvas.SetLeft(tb, posOnCanvas.X);
+        Canvas.SetTop(tb, posOnCanvas.Y);
+        AnnotationCanvas.Children.Add(tb);
+
+        _vm.StatusText = $"'{label}' stamp placed. Right-click to delete.";
+        ToastService.Instance.Success($"'{label}' stamp placed.");
     }
 
     // ── Free-text TextBox placement ───────────────────────────────────────────
