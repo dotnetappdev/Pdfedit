@@ -556,11 +556,15 @@ public class MainViewModel : INotifyPropertyChanged
     public HashSet<string> DeletedFieldNames { get; } = new();
 
     public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
+    public ObservableCollection<Models.PdfAttachmentInfo> Attachments { get; } = new();
 
     public ICommand NavigateToBookmarkCommand { get; }
     public ICommand NavigateToPageCommand { get; }
     public ICommand UndoAnnotationCommand { get; }
     public ICommand RedoAnnotationCommand { get; }
+    public ICommand AddAttachmentCommand { get; }
+    public ICommand RemoveAttachmentCommand { get; }
+    public ICommand ExtractAttachmentCommand { get; }
 
     // ── Commands ─────────────────────────────────────────────────────────────
 
@@ -818,6 +822,9 @@ public class MainViewModel : INotifyPropertyChanged
         RemovePasswordCommand         = new AsyncRelayCommand(RemovePasswordAsync,  () => HasDocument);
         BatesNumberCommand            = new AsyncRelayCommand(BatesNumberAsync,     () => HasDocument);
         AddBookmarkCommand            = new AsyncRelayCommand(AddBookmarkAsync,      () => HasDocument);
+        AddAttachmentCommand          = new AsyncRelayCommand(AddAttachmentAsync,    () => HasDocument);
+        RemoveAttachmentCommand       = new AsyncRelayCommand(p => RemoveAttachmentAsync(p as Models.PdfAttachmentInfo), p => HasDocument && p is Models.PdfAttachmentInfo);
+        ExtractAttachmentCommand      = new AsyncRelayCommand(p => ExtractAttachmentAsync(p as Models.PdfAttachmentInfo), p => HasDocument && p is Models.PdfAttachmentInfo);
         CropPagesCommand              = new AsyncRelayCommand(CropPagesAsync,        () => HasDocument);
         ExportTextCommand             = new AsyncRelayCommand(ExportTextAsync,       () => HasDocument);
         AddTextFieldCommand   = new RelayCommand(() => ActiveTool = ActiveTool.AddTextField,  () => HasDocument);
@@ -1122,6 +1129,7 @@ public class MainViewModel : INotifyPropertyChanged
             ShapeAnnotations.Clear();
             _undoService.Clear();
             Bookmarks.Clear();
+            Attachments.Clear();
 
             foreach (var f in Document.FormFields)
             {
@@ -1154,7 +1162,7 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CurrentPageRotation));
             RefreshCurrentPageFields();
 
-            // Load bookmarks in background
+            // Load bookmarks and attachments in background
             _ = Task.Run(() =>
             {
                 try
@@ -1163,6 +1171,18 @@ public class MainViewModel : INotifyPropertyChanged
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         foreach (var bm in bms) Bookmarks.Add(bm);
+                    });
+                }
+                catch { /* non-critical */ }
+            });
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var atts = _formService.GetAttachments(path);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var a in atts) Attachments.Add(a);
                     });
                 }
                 catch { /* non-critical */ }
@@ -1352,6 +1372,7 @@ public class MainViewModel : INotifyPropertyChanged
         ShapeAnnotations.Clear();
         _undoService.Clear();
         _pageRotations.Clear();
+        Attachments.Clear();
         SelectedField = null;
         SelectedAnnotation = null;
         StatusText = "Document closed.";
@@ -1917,6 +1938,98 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
         }
+    }
+
+    private async Task AddAttachmentAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Choose file to attach",
+            Filter = "All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string filePath = dlg.FileName;
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddAttachment(_currentFilePath, tmp, filePath));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await RefreshAttachmentsAsync();
+            ToastService.Instance.Success($"Attached: {System.IO.Path.GetFileName(filePath)}");
+            StatusText = $"File attached: {System.IO.Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not attach file.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task RemoveAttachmentAsync(Models.PdfAttachmentInfo? att)
+    {
+        if (_currentFilePath == null || att == null) return;
+        bool confirm = Dialogs.AppDialog.ShowConfirm($"Remove attachment '{att.Name}'?", "Remove Attachment");
+        if (!confirm) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.RemoveAttachment(_currentFilePath, tmp, att.Name));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await RefreshAttachmentsAsync();
+            ToastService.Instance.Success($"Attachment removed: {att.Name}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not remove attachment.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExtractAttachmentAsync(Models.PdfAttachmentInfo? att)
+    {
+        if (_currentFilePath == null || att == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save attachment as",
+            FileName = att.Name,
+            Filter = "All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            byte[] data = await Task.Run(() => _formService.ExtractAttachment(_currentFilePath, att.Name));
+            await System.IO.File.WriteAllBytesAsync(dlg.FileName, data);
+            ToastService.Instance.Success($"Saved: {System.IO.Path.GetFileName(dlg.FileName)}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not extract attachment.", ex);
+        }
+    }
+
+    private async Task RefreshAttachmentsAsync()
+    {
+        if (_currentFilePath == null) return;
+        try
+        {
+            var list = await Task.Run(() => _formService.GetAttachments(_currentFilePath));
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Attachments.Clear();
+                foreach (var a in list) Attachments.Add(a);
+            });
+        }
+        catch { /* non-critical */ }
     }
 
     private async Task BatesNumberAsync()

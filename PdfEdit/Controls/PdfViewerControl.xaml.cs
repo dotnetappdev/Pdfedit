@@ -1471,6 +1471,15 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        if (tool == ActiveTool.Eraser)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            EraseAnnotationsNear(pos, eraserRadius: 16);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
         if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -1503,6 +1512,13 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
+        if (_vm?.ActiveTool == ActiveTool.Eraser && IsMouseCaptured)
+        {
+            ReleaseMouseCapture();
+            e.Handled = true;
+            return;
+        }
+
         if (_isPanning)
         {
             _isPanning = false;
@@ -1900,6 +1916,13 @@ public partial class PdfViewerControl : UserControl
         {
             var pos = e.GetPosition(AnnotationCanvas);
             _freehandPolyline.Points.Add(pos);
+            return;
+        }
+
+        if (_vm?.ActiveTool == ActiveTool.Eraser && e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            EraseAnnotationsNear(pos, eraserRadius: 16);
             return;
         }
 
@@ -2432,6 +2455,7 @@ public partial class PdfViewerControl : UserControl
                 StrokeThickness = shape.LineWidth,
                 StrokeEndLineCap = PenLineCap.Triangle,
             };
+            line.Tag = shape;
             line.ToolTip = "Arrow annotation (right-click to delete)";
             var ctxLine = new ContextMenu();
             var delLine = new MenuItem { Header = "Delete Arrow" };
@@ -2451,6 +2475,7 @@ public partial class PdfViewerControl : UserControl
                 : new Rectangle { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth };
             Canvas.SetLeft(sh, left);
             Canvas.SetTop(sh,  top);
+            sh.Tag = shape;
             sh.ToolTip = $"{shape.Kind} annotation (right-click to delete)";
             var ctx = new ContextMenu();
             var del = new MenuItem { Header = $"Delete {shape.Kind}" };
@@ -2461,6 +2486,41 @@ public partial class PdfViewerControl : UserControl
         }
 
         AnnotationCanvas.Children.Add(visual);
+    }
+
+    private void EraseAnnotationsNear(Point canvasPos, double eraserRadius)
+    {
+        if (_vm == null) return;
+
+        // Erase shape annotations (Rectangle, Ellipse, Arrow, Freehand polylines)
+        var toRemoveUi    = new List<UIElement>();
+        var toRemoveModel = new List<Models.ShapeAnnotation>();
+
+        foreach (UIElement child in AnnotationCanvas.Children)
+        {
+            if (child is System.Windows.Shapes.Shape sh)
+            {
+                var bounds = sh.RenderedGeometry?.Bounds ?? Rect.Empty;
+                var offset = sh.TranslatePoint(new Point(0, 0), AnnotationCanvas);
+                bounds.Offset(offset.X, offset.Y);
+                bounds.Inflate(eraserRadius, eraserRadius);
+                if (bounds.Contains(canvasPos))
+                {
+                    if (sh.Tag is Models.ShapeAnnotation ann)
+                    {
+                        toRemoveUi.Add(sh);
+                        toRemoveModel.Add(ann);
+                    }
+                    else if (sh is Polyline)
+                    {
+                        toRemoveUi.Add(sh);
+                    }
+                }
+            }
+        }
+
+        foreach (var ui in toRemoveUi) AnnotationCanvas.Children.Remove(ui);
+        foreach (var ann in toRemoveModel) _vm.RemoveShapeAnnotation(ann);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

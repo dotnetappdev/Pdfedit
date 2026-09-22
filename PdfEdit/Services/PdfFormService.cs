@@ -1252,6 +1252,113 @@ public class PdfFormService
         return result;
     }
 
+    // ── Attachments ───────────────────────────────────────────────────────────
+
+    public List<Models.PdfAttachmentInfo> GetAttachments(string pdfPath)
+    {
+        var result = new List<Models.PdfAttachmentInfo>();
+        using var reader = new PdfReader(pdfPath);
+        using var doc    = new PdfDocument(reader);
+
+        var catalog = doc.GetCatalog();
+        var names   = catalog.GetPdfObject().GetAsDictionary(PdfName.Names);
+        if (names == null) return result;
+        var embeddedFiles = names.GetAsDictionary(new PdfName("EmbeddedFiles"));
+        if (embeddedFiles == null) return result;
+        var namesArr = embeddedFiles.GetAsArray(PdfName.Names);
+        if (namesArr == null) return result;
+
+        for (int i = 0; i < namesArr.Size() - 1; i += 2)
+        {
+            var nameStr = namesArr.GetAsString(i)?.ToUnicodeString() ?? $"Attachment {i / 2 + 1}";
+            var fileSpec = namesArr.GetAsDictionary(i + 1);
+            if (fileSpec == null) continue;
+            var ef = fileSpec.GetAsDictionary(PdfName.EF);
+            long size = 0;
+            string? desc = null;
+            if (ef != null)
+            {
+                var stream = ef.GetAsStream(PdfName.F) ?? ef.GetAsStream(new PdfName("UF"));
+                if (stream != null)
+                    size = stream.GetAsNumber(PdfName.DL)?.LongValue() ?? 0;
+            }
+            var descObj = fileSpec.GetAsString(new PdfName("Desc"));
+            if (descObj != null) desc = descObj.ToUnicodeString();
+
+            result.Add(new Models.PdfAttachmentInfo { Name = nameStr, FileSizeBytes = size, Description = desc ?? string.Empty });
+        }
+        return result;
+    }
+
+    public void AddAttachment(string inputPath, string outputPath, string filePath, string? displayName = null)
+    {
+        string name = displayName ?? System.IO.Path.GetFileName(filePath);
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var doc    = new PdfDocument(reader, writer);
+
+        byte[] bytes = System.IO.File.ReadAllBytes(filePath);
+        var fileSpec = iText.Kernel.Pdf.Filespec.PdfFileSpec.CreateEmbeddedFileSpec(
+            doc, bytes, name, name, null, null, null);
+        doc.AddFileAttachment(name, fileSpec);
+    }
+
+    public void RemoveAttachment(string inputPath, string outputPath, string attachmentName)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var doc    = new PdfDocument(reader, writer);
+
+        var catalog = doc.GetCatalog();
+        var names   = catalog.GetPdfObject().GetAsDictionary(PdfName.Names);
+        if (names == null) return;
+        var embeddedFiles = names.GetAsDictionary(new PdfName("EmbeddedFiles"));
+        if (embeddedFiles == null) return;
+        var namesArr = embeddedFiles.GetAsArray(PdfName.Names);
+        if (namesArr == null) return;
+
+        for (int i = 0; i < namesArr.Size() - 1; i += 2)
+        {
+            var nameStr = namesArr.GetAsString(i)?.ToUnicodeString();
+            if (nameStr == attachmentName)
+            {
+                namesArr.Remove(i + 1);
+                namesArr.Remove(i);
+                embeddedFiles.Put(PdfName.Names, namesArr);
+                break;
+            }
+        }
+    }
+
+    public byte[] ExtractAttachment(string pdfPath, string attachmentName)
+    {
+        using var reader = new PdfReader(pdfPath);
+        using var doc    = new PdfDocument(reader);
+
+        var catalog = doc.GetCatalog();
+        var names   = catalog.GetPdfObject().GetAsDictionary(PdfName.Names);
+        if (names == null) throw new InvalidOperationException("No attachments in document.");
+        var embeddedFiles = names.GetAsDictionary(new PdfName("EmbeddedFiles"));
+        if (embeddedFiles == null) throw new InvalidOperationException("No attachments in document.");
+        var namesArr = embeddedFiles.GetAsArray(PdfName.Names);
+        if (namesArr == null) throw new InvalidOperationException("No attachments in document.");
+
+        for (int i = 0; i < namesArr.Size() - 1; i += 2)
+        {
+            var nameStr = namesArr.GetAsString(i)?.ToUnicodeString();
+            if (nameStr == attachmentName)
+            {
+                var fileSpec = namesArr.GetAsDictionary(i + 1);
+                var ef = fileSpec?.GetAsDictionary(PdfName.EF);
+                if (ef == null) throw new InvalidOperationException($"Attachment '{attachmentName}' has no embedded data.");
+                var stream = ef.GetAsStream(PdfName.F) ?? ef.GetAsStream(new PdfName("UF"));
+                if (stream == null) throw new InvalidOperationException($"Attachment '{attachmentName}' stream not found.");
+                return stream.GetBytes();
+            }
+        }
+        throw new KeyNotFoundException($"Attachment '{attachmentName}' not found.");
+    }
+
     private static FieldType GetFieldType(PdfFormField field)
     {
         if (field is PdfTextFormField) return FieldType.Text;

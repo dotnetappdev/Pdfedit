@@ -1184,6 +1184,20 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Attachments group -->
+                <Fluent:RibbonGroupBox Header="Attachments"
+                                        AutomationProperties.Name="File attachments group">
+                    <Fluent:Button Header="Attach File"
+                                   Command="{Binding AddAttachmentCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Attach a file to this PDF document"
+                                   AutomationProperties.Name="Attach file to PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
@@ -1348,6 +1362,18 @@
                                          AutomationProperties.Name="Draw arrow annotation">
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Eraser"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Eraser"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Eraser — click or drag over annotations to erase them"
+                                         AutomationProperties.Name="Eraser tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
@@ -2661,6 +2687,70 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Attachments tab -->
+                        <TabItem Header="Attachments"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="PDF file attachments">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="ATTACHMENTS"
+                                               Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                    <Button Grid.Column="1" Content="+ Attach" FontSize="10" Height="22" Margin="4,6,8,4"
+                                            Command="{Binding AddAttachmentCommand}"
+                                            IsEnabled="{Binding HasDocument}"
+                                            ToolTip="Attach a file to this PDF"
+                                            Background="{DynamicResource AccentBrush}" Foreground="White"
+                                            BorderThickness="0" Padding="6,0"/>
+                                </Grid>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Attachments}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="4,2" Padding="6,4"
+                                                        Background="{DynamicResource InputBgBrush}"
+                                                        CornerRadius="3">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding SizeDisplay}" FontSize="9"
+                                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" Content="Save" FontSize="9" Height="20" Margin="4,0,2,0"
+                                                                Command="{Binding DataContext.ExtractAttachmentCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="Save attachment to disk"
+                                                                Padding="4,0" Background="Transparent"/>
+                                                        <Button Grid.Column="2" Content="✕" FontSize="9" Height="20" Margin="0,0,0,0"
+                                                                Command="{Binding DataContext.RemoveAttachmentCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="Remove this attachment"
+                                                                Padding="4,0" Background="Transparent"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </ScrollViewer>
                             </Grid>
                         </TabItem>
