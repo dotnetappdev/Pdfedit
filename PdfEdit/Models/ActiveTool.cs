@@ -23,5 +23,9 @@ public enum ActiveTool
     Circle,
     Link,
     DrawFreehand,
-    Eraser
+    Eraser,
+    AddTextField,
+    AddCheckbox,
+    AddComboBox,
+    AddRadioButton
 }

@@ -943,6 +943,99 @@ public class PdfFormService
         page.AddAnnotation(annot);
     }
 
+    /// <summary>
+    /// Adds a new text form field to the specified page at the given location.
+    /// fieldName must be unique within the document.
+    /// </summary>
+    public void AddTextFormField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height,
+        string fieldName, string defaultValue = "", float fontSize = 10f)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var page = pdf.GetPage(pageNumber);
+        var rect = new Rectangle(left, bottom, width, height);
+        var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+
+        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(rect)
+            .CreateText();
+        field.SetValue(defaultValue);
+        field.SetFont(font).SetFontSize(fontSize);
+        form.AddField(field, page);
+    }
+
+    /// <summary>
+    /// Adds a new checkbox form field.
+    /// </summary>
+    public void AddCheckboxField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float size,
+        string fieldName, bool defaultChecked = false)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var page = pdf.GetPage(pageNumber);
+        var rect = new Rectangle(left, bottom, size, size);
+
+        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(rect)
+            .CreateCheckBox();
+        if (defaultChecked) field.SetValue("Yes");
+        form.AddField(field, page);
+    }
+
+    /// <summary>
+    /// Adds a new combo box (dropdown) form field with given choices.
+    /// </summary>
+    public void AddComboBoxField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height,
+        string fieldName, IEnumerable<string> choices, float fontSize = 10f)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var page = pdf.GetPage(pageNumber);
+        var rect = new Rectangle(left, bottom, width, height);
+        var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+
+        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(rect)
+            .CreateComboBox();
+        field.SetFont(font).SetFontSize(fontSize);
+        var choiceList = choices.ToList();
+        if (choiceList.Count > 0)
+            (field as iText.Forms.Fields.PdfChoiceFormField)?.SetOptions(choiceList.ToArray());
+        form.AddField(field, page);
+    }
+
+    /// <summary>Exports all extractable text from each page to a UTF-8 text file.</summary>
+    public void ExportTextToFile(string inputPath, string outputPath)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var pdf    = new PdfDocument(reader);
+        using var sw     = new System.IO.StreamWriter(outputPath, false, System.Text.Encoding.UTF8);
+        int total = pdf.GetNumberOfPages();
+        for (int i = 1; i <= total; i++)
+        {
+            var strategy = new iText.Kernel.Pdf.Canvas.Parser.Listener.LocationTextExtractionStrategy();
+            string text  = iText.Kernel.Pdf.Canvas.Parser.PdfTextExtractor.GetTextFromPage(pdf.GetPage(i), strategy);
+            sw.WriteLine($"--- Page {i} of {total} ---");
+            sw.WriteLine(text);
+            sw.WriteLine();
+        }
+    }
+
     private static FieldType GetFieldType(PdfFormField field)
     {
         if (field is PdfTextFormField) return FieldType.Text;

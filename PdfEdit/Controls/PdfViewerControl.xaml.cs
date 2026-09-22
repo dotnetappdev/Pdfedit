@@ -76,6 +76,12 @@ public partial class PdfViewerControl : UserControl
     private Polyline? _freehandPolyline;
     private List<Point> _freehandPoints = new();
 
+    // Form field placement drag state
+    private bool _isDrawingFormField;
+    private Point _formFieldDragStart;
+    private Rectangle? _formFieldRubberBand;
+    private ActiveTool _formFieldTool;
+
     // Adobe-style field selection chrome
     private Border?    _fieldChromeBorder;
     private TextBlock? _fieldChromeLabel;
@@ -1404,6 +1410,33 @@ public partial class PdfViewerControl : UserControl
             AnnotationCanvas.Children.Add(_freehandPolyline);
             CaptureMouse();
             e.Handled = true;
+            return;
+        }
+
+        if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingFormField = true;
+            _formFieldTool = tool;
+            _formFieldDragStart = posOnPage;
+            var strokeColor = tool == ActiveTool.AddCheckbox
+                ? Color.FromArgb(200, 30, 160, 30)
+                : Color.FromArgb(200, 30, 90, 220);
+            _formFieldRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(30, strokeColor.R, strokeColor.G, strokeColor.B)),
+                Stroke = new SolidColorBrush(strokeColor),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 2 },
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_formFieldRubberBand, posOnPage.X);
+            Canvas.SetTop(_formFieldRubberBand, posOnPage.Y);
+            AnnotationCanvas.Children.Add(_formFieldRubberBand);
+            CaptureMouse();
+            e.Handled = true;
         }
     }
 
@@ -1607,6 +1640,73 @@ public partial class PdfViewerControl : UserControl
             _freehandPolyline = null;
             _freehandPoints.Clear();
             e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingFormField)
+        {
+            _isDrawingFormField = false;
+            ReleaseMouseCapture();
+
+            if (_formFieldRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _formFieldRubberBand.Width;
+                double rectH = _formFieldRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_formFieldRubberBand);
+                double canvasY = Canvas.GetTop(_formFieldRubberBand);
+                AnnotationCanvas.Children.Remove(_formFieldRubberBand);
+                _formFieldRubberBand = null;
+
+                if (rectW > 8 && rectH > 8)
+                {
+                    var nameDlg = new Dialogs.FieldNameDialog
+                    {
+                        Owner = Window.GetWindow(this),
+                        FieldType = _formFieldTool == ActiveTool.AddCheckbox ? "Checkbox"
+                                  : _formFieldTool == ActiveTool.AddComboBox ? "Combo Box"
+                                  : "Text Field",
+                    };
+                    if (nameDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(nameDlg.FieldName))
+                    {
+                        int pageNum = _vm.CurrentPageIndex + 1;
+                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                        {
+                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                            float left   = (float)(canvasX / Scale);
+                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
+                            float width  = (float)(rectW / Scale);
+                            float height = (float)(rectH / Scale);
+                            string fname = nameDlg.FieldName;
+                            ActiveTool fTool = _formFieldTool;
+                            string srcPath = _vm.CurrentFilePath!;
+                            string tmpPath = srcPath + ".tmp";
+                            try
+                            {
+                                var svc = new PdfEdit.Services.PdfFormService();
+                                if (fTool == ActiveTool.AddCheckbox)
+                                    svc.AddCheckboxField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname);
+                                else if (fTool == ActiveTool.AddComboBox)
+                                    svc.AddComboBoxField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname, nameDlg.ComboChoices ?? Array.Empty<string>());
+                                else
+                                    svc.AddTextFormField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname);
+                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
+                                _vm.StatusText = $"Field '{fname}' added to page {pageNum}.";
+                                PdfEdit.Services.ToastService.Instance.Success($"Form field '{fname}' added.");
+                                _ = _vm.ReloadCurrentFileAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                Dialogs.AppDialog.ShowError("Add form field failed.", ex);
+                            }
+                            finally
+                            {
+                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
+                            }
+                        }
+                    }
+                }
+            }
+            e.Handled = true;
         }
     }
 
@@ -1666,6 +1766,20 @@ public partial class PdfViewerControl : UserControl
         {
             var pos = e.GetPosition(AnnotationCanvas);
             _freehandPolyline.Points.Add(pos);
+            return;
+        }
+
+        if (_isDrawingFormField && _formFieldRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            double x = Math.Min(pos.X, _formFieldDragStart.X);
+            double y = Math.Min(pos.Y, _formFieldDragStart.Y);
+            double w = Math.Abs(pos.X - _formFieldDragStart.X);
+            double h = Math.Abs(pos.Y - _formFieldDragStart.Y);
+            Canvas.SetLeft(_formFieldRubberBand, x);
+            Canvas.SetTop(_formFieldRubberBand, y);
+            _formFieldRubberBand.Width  = w;
+            _formFieldRubberBand.Height = h;
         }
     }
 

@@ -938,6 +938,57 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Export Text"
+                                   Command="{Binding ExportTextCommand}"
+                                   KeyTip="ET"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Extract all text from the PDF and save to a .txt file"
+                                   AutomationProperties.Name="Export PDF text to TXT file">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Form Field Creator group -->
+                <Fluent:RibbonGroupBox Header="Add Form Field"
+                                        AutomationProperties.Name="Add new form fields to PDF">
+                    <Fluent:ToggleButton Header="Text Field"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddTextField, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddTextField"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Text Field — drag a rectangle on the page to add a new editable text form field"
+                                         AutomationProperties.Name="Add text form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xF003;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Checkbox"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddCheckbox, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddCheckbox"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Checkbox — drag a square on the page to add a new checkbox form field"
+                                         AutomationProperties.Name="Add checkbox form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Combo Box"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddComboBox, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddComboBox"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Combo Box — drag a rectangle on the page to add a new dropdown field"
+                                         AutomationProperties.Name="Add combo box form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>

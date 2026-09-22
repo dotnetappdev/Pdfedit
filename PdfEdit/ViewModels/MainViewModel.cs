@@ -629,6 +629,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand RemovePasswordCommand { get; }
     public ICommand BatesNumberCommand { get; }
     public ICommand CropPagesCommand { get; }
+    public ICommand ExportTextCommand { get; }
+    public ICommand AddTextFieldCommand { get; }
+    public ICommand AddCheckboxFieldCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -773,6 +776,9 @@ public class MainViewModel : INotifyPropertyChanged
         RemovePasswordCommand         = new AsyncRelayCommand(RemovePasswordAsync,  () => HasDocument);
         BatesNumberCommand            = new AsyncRelayCommand(BatesNumberAsync,     () => HasDocument);
         CropPagesCommand              = new AsyncRelayCommand(CropPagesAsync,        () => HasDocument);
+        ExportTextCommand             = new AsyncRelayCommand(ExportTextAsync,       () => HasDocument);
+        AddTextFieldCommand   = new RelayCommand(() => ActiveTool = ActiveTool.AddTextField,  () => HasDocument);
+        AddCheckboxFieldCommand = new RelayCommand(() => ActiveTool = ActiveTool.AddCheckbox, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1793,6 +1799,31 @@ public class MainViewModel : INotifyPropertyChanged
         finally
         {
             if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExportTextAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export PDF Text",
+            Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_text.txt",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string outPath = dlg.FileName;
+        try
+        {
+            await Task.Run(() => _formService.ExportTextToFile(_currentFilePath, outPath));
+            StatusText = $"Text exported to {System.IO.Path.GetFileName(outPath)}.";
+            ToastService.Instance.Success("PDF text exported successfully.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Text export failed.", ex);
         }
     }
 
