@@ -528,6 +528,16 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Page Numbers"
+                                   Command="{Binding AddPageNumbersCommand}"
+                                   KeyTip="PN"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add 'Page N of M' footer to all pages and save as a new file"
+                                   AutomationProperties.Name="Add page numbers footer">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -1445,6 +1455,20 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Business card template">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8AA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Resume"
+                                   Tag="Resume" Click="DesignTemplate_Click"
+                                   ToolTip="Load a professional resume/CV template"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Resume template">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Flyer"
+                                   Tag="Flyer" Click="DesignTemplate_Click"
+                                   ToolTip="Load a promotional flyer template"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Flyer template">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

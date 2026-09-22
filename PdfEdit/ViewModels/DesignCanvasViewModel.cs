@@ -551,6 +551,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             case "BusinessCard": LoadBusinessCardTemplate(); break;
             case "Certificate":  LoadCertificateTemplate(); break;
             case "Form":         LoadFormTemplate(); break;
+            case "Resume":       LoadResumeTemplate(); break;
+            case "Flyer":        LoadFlyerTemplate(); break;
         }
     }
 
@@ -646,6 +648,78 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
         Elements.Add(new TextDesignElement { X = 30, Y = 365, Width = 200, Height = 20, Text = "Comments:", FontSize = 11, Bold = true, Color = Color.FromRgb(60, 60, 60) });
         Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 30, Y = 390, Width = w - 60, Height = 80, FillColor = Colors.White, StrokeColor = Color.FromRgb(180, 180, 180), StrokeThickness = 1 });
+        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
+    }
+
+    private void LoadResumeTemplate()
+    {
+        PageSize = DesignPageSize.A4;
+        double w = PageWidth; double h = PageHeight;
+
+        // Left sidebar
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = 175, Height = h, FillColor = Color.FromRgb(35, 55, 90), StrokeColor = Colors.Transparent });
+        // Photo placeholder
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = 37, Y = 30, Width = 100, Height = 100, FillColor = Color.FromArgb(60, 255, 255, 255), StrokeColor = Color.FromArgb(120, 255, 255, 255), StrokeThickness = 2 });
+        Elements.Add(new TextDesignElement { X = 10, Y = 145, Width = 155, Height = 28, Text = "Your Name", FontSize = 18, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 10, Y = 175, Width = 155, Height = 18, Text = "UX / Product Designer", FontSize = 10, Color = Color.FromArgb(180, 255, 255, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 20, Y = 204, Width = 135, Height = 1, StrokeColor = Color.FromArgb(80, 255, 255, 255), StrokeThickness = 1 });
+
+        // Sidebar section headers
+        foreach (var (text, y) in new[] { ("CONTACT", 218), ("SKILLS", 340), ("LANGUAGES", 480) })
+            Elements.Add(new TextDesignElement { X = 14, Y = y, Width = 148, Height = 16, Text = text, FontSize = 8, Bold = true, Color = Color.FromRgb(200, 180, 100), Alignment = TextAlignment.Left });
+
+        Elements.Add(new TextDesignElement { X = 14, Y = 240, Width = 148, Height = 72, Text = "📧 you@example.com\n📞 +1 555 000 0000\n🌐 linkedin.com/in/you\n📍 City, Country", FontSize = 9, Color = Color.FromArgb(200, 255, 255, 255) });
+
+        var skills = new[] { "Figma", "Adobe XD", "Prototyping", "User Research" };
+        for (int i = 0; i < skills.Length; i++)
+        {
+            Elements.Add(new TextDesignElement { X = 14, Y = 360 + i * 24, Width = 100, Height = 18, Text = skills[i], FontSize = 9, Color = Color.FromArgb(220, 255, 255, 255) });
+            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = 148, Height = 5, FillColor = Color.FromArgb(40, 255, 255, 255), StrokeColor = Colors.Transparent });
+            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = (float)(148 * (0.95 - i * 0.12)), Height = 5, FillColor = Color.FromRgb(200, 180, 100), StrokeColor = Colors.Transparent });
+        }
+
+        // Main content area
+        Elements.Add(new TextDesignElement { X = 195, Y = 30, Width = w - 215, Height = 30, Text = "PROFESSIONAL SUMMARY", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 62, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
+        Elements.Add(new TextDesignElement { X = 195, Y = 70, Width = w - 215, Height = 55, Text = "Passionate designer with 5+ years of experience crafting intuitive digital products. Focused on user-centered design and delivering measurable results.", FontSize = 10, Color = Color.FromRgb(60, 60, 60) });
+
+        Elements.Add(new TextDesignElement { X = 195, Y = 145, Width = w - 215, Height = 24, Text = "EXPERIENCE", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 170, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
+        foreach (var (company, role, dates, y2) in new[] {
+            ("Acme Corp", "Lead UX Designer", "2021–Present", 180),
+            ("Beta Studio", "Product Designer", "2018–2021", 250) })
+        {
+            Elements.Add(new TextDesignElement { X = 195, Y = y2, Width = w - 215, Height = 18, Text = role, FontSize = 11, Bold = true, Color = Color.FromRgb(40, 40, 40) });
+            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 18, Width = 200, Height = 16, Text = company, FontSize = 9, Color = Color.FromRgb(35, 55, 90) });
+            Elements.Add(new TextDesignElement { X = w - 215 - 80, Y = y2 + 18, Width = 80, Height = 16, Text = dates, FontSize = 9, Color = Color.FromRgb(120, 120, 120), Alignment = TextAlignment.Right });
+            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 36, Width = w - 215, Height = 36, Text = "• Designed and iterated on key product features\n• Led cross-functional design sprints", FontSize = 9, Color = Color.FromRgb(80, 80, 80) });
+        }
+
+        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
+    }
+
+    private void LoadFlyerTemplate()
+    {
+        PageSize = DesignPageSize.A4;
+        double w = PageWidth; double h = PageHeight;
+
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = w, Height = h, FillColor = Color.FromRgb(15, 15, 35), StrokeColor = Colors.Transparent });
+        // Accent circles
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = -60, Y = -60, Width = 240, Height = 240, FillColor = Color.FromArgb(60, 0, 180, 255), StrokeColor = Colors.Transparent });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = w - 120, Y = h - 160, Width = 200, Height = 200, FillColor = Color.FromArgb(50, 255, 80, 180), StrokeColor = Colors.Transparent });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = 80, Width = w - 60, Height = 30, Text = "SPECIAL EVENT", FontSize = 12, Bold = true, Color = Color.FromRgb(0, 200, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 30, Y = 120, Width = w - 60, Height = 80, Text = "AMAZING\nCONFERENCE\n2026", FontSize = 42, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = (w - 60) / 2 - 25, Y = 240, Width = 90, Height = 4, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = 270, Width = w - 60, Height = 30, Text = "The Future of Technology & Innovation", FontSize = 14, Italic = true, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 30, Y = 330, Width = w - 60, Height = 25, Text = "📅 15–17 June 2026   📍 Convention Center, New York", FontSize = 12, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
+
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = w / 2 - 90, Y = 400, Width = 180, Height = 44, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent, CornerRadius = 22 });
+        Elements.Add(new TextDesignElement { X = w / 2 - 90, Y = 412, Width = 180, Height = 24, Text = "REGISTER NOW", FontSize = 13, Bold = true, Color = Color.FromRgb(15, 15, 35), Alignment = TextAlignment.Center });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = h - 80, Width = w - 60, Height = 20, Text = "www.amazingconf.example.com", FontSize = 11, Color = Color.FromArgb(160, 255, 255, 255), Alignment = TextAlignment.Center });
+
         foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
     }
 

@@ -580,6 +580,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AnalyzeContractCommand { get; }
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
+    public ICommand AddPageNumbersCommand { get; }
     public ICommand WatermarkCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
@@ -699,6 +700,7 @@ public class MainViewModel : INotifyPropertyChanged
         RotateAllPagesCCWCommand = new RelayCommand(() => RotateAllPages(-90), () => HasDocument);
         SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
         WatermarkCommand         = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
+        AddPageNumbersCommand    = new AsyncRelayCommand(AddPageNumbersAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1185,6 +1187,34 @@ public class MainViewModel : INotifyPropertyChanged
         string dir = degrees > 0 ? "clockwise" : "counter-clockwise";
         StatusText = $"All {_document.PageCount} pages rotated 90° {dir}.";
         ToastService.Instance.Success($"All {_document.PageCount} pages rotated 90° {dir}.");
+    }
+
+    private async Task AddPageNumbersAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save PDF with Page Numbers",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_numbered.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Adding page numbers…";
+            string outPath = dlgSave.FileName;
+            await Task.Run(() => _formService.AddPageNumbers(_currentFilePath, outPath));
+            StatusText = $"Page numbers added: {System.IO.Path.GetFileName(outPath)}";
+            ToastService.Instance.Success("Page numbers added.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not add page numbers.", ex);
+            StatusText = "Page numbering failed.";
+        }
     }
 
     private async Task WatermarkAsync()

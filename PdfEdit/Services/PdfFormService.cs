@@ -463,6 +463,45 @@ public class PdfFormService
         return result;
     }
 
+    /// <summary>Add page numbers (footer) to every page of a PDF.</summary>
+    public void AddPageNumbers(string inputPath, string outputPath,
+        string format = "Page {n} of {total}",
+        float fontSize = 9f, float marginPt = 18f, string position = "BottomCenter")
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var font  = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+        int total = pdf.GetNumberOfPages();
+        var gray  = new DeviceRgb(0.4f, 0.4f, 0.4f);
+
+        for (int i = 1; i <= total; i++)
+        {
+            var page = pdf.GetPage(i);
+            var size = page.GetPageSize();
+            string text = format.Replace("{n}", i.ToString()).Replace("{total}", total.ToString());
+            float textWidth = font.GetWidth(text, fontSize);
+
+            float x = position switch
+            {
+                "BottomLeft"  => marginPt,
+                "BottomRight" => size.GetWidth() - textWidth - marginPt,
+                _             => (size.GetWidth() - textWidth) / 2 // BottomCenter
+            };
+            float y = marginPt;
+
+            var canvas = new PdfCanvas(page);
+            canvas.SaveState();
+            canvas.SetFillColor(gray);
+            canvas.BeginText();
+            canvas.SetFontAndSize(font, fontSize);
+            canvas.SetTextMatrix(1, 0, 0, 1, x, y);
+            canvas.ShowText(text);
+            canvas.EndText();
+            canvas.RestoreState();
+        }
+    }
+
     private static bool ParseHexColor(string hex, out float r, out float g, out float b)
     {
         r = g = b = 0f;
