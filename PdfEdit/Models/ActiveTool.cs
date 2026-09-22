@@ -8,6 +8,9 @@ public enum ActiveTool
     CheckboxToggle,
     Signature,
     Highlight,
+    Underline,
+    Strikethrough,
+    Redact,
     Zoom,
     Stamp,
     AddText,
@@ -17,5 +20,17 @@ public enum ActiveTool
     XMark,
     Dot,
     Line,
-    Circle
+    Circle,
+    Link,
+    DrawFreehand,
+    Eraser,
+    AddTextField,
+    AddCheckbox,
+    AddComboBox,
+    AddRadioButton,
+    StickyNote,
+    DrawRectangle,
+    DrawEllipse,
+    DrawArrow,
+    DrawCallout
 }

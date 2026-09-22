@@ -1,0 +1,79 @@
+<Window x:Class="PdfEdit.Dialogs.ShortcutsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Keyboard Shortcuts"
+        Width="560" Height="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <Style x:Key="Hdr" TargetType="TextBlock">
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="Margin"      Value="0,16,0,4"/>
+            <Setter Property="Foreground"  Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style x:Key="Key" TargetType="TextBlock">
+            <Setter Property="FontFamily"  Value="Consolas"/>
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="Width"       Value="170"/>
+            <Setter Property="Foreground"  Value="{DynamicResource ForegroundBrush}"/>
+        </Style>
+        <Style x:Key="Desc" TargetType="TextBlock">
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="Foreground"  Value="{DynamicResource DimForegroundBrush}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+            <StackPanel>
+
+                <TextBlock Style="{StaticResource Hdr}" Text="GENERAL"/>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+O"/><TextBlock Style="{StaticResource Desc}" Text="Open PDF"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+S"/><TextBlock Style="{StaticResource Desc}" Text="Save"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Shift+S"/><TextBlock Style="{StaticResource Desc}" Text="Save As"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+W"/><TextBlock Style="{StaticResource Desc}" Text="Close document"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Z / Ctrl+Y"/><TextBlock Style="{StaticResource Desc}" Text="Undo / Redo (Design canvas)"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+F"/><TextBlock Style="{StaticResource Desc}" Text="Find text in PDF"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+P"/><TextBlock Style="{StaticResource Desc}" Text="Print document"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="F1"/><TextBlock Style="{StaticResource Desc}" Text="This shortcuts dialog"/></StackPanel>
+
+                <TextBlock Style="{StaticResource Hdr}" Text="NAVIGATION"/>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Home / Ctrl+End"/><TextBlock Style="{StaticResource Desc}" Text="First / Last page"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Page Up / Page Down"/><TextBlock Style="{StaticResource Desc}" Text="Previous / Next page"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+0"/><TextBlock Style="{StaticResource Desc}" Text="Zoom to fit page"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl++ / Ctrl+−"/><TextBlock Style="{StaticResource Desc}" Text="Zoom in / Zoom out"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+[  /  Ctrl+]"/><TextBlock Style="{StaticResource Desc}" Text="Rotate page CCW / CW"/></StackPanel>
+
+                <TextBlock Style="{StaticResource Hdr}" Text="DESIGN CANVAS"/>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="V"/><TextBlock Style="{StaticResource Desc}" Text="Select tool"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="T  /  R  /  E  /  L"/><TextBlock Style="{StaticResource Desc}" Text="Text / Rect / Ellipse / Line tool"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="A  /  P  /  I"/><TextBlock Style="{StaticResource Desc}" Text="Arrow / Pen / Image tool"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+A"/><TextBlock Style="{StaticResource Desc}" Text="Select all elements"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+C / Ctrl+V"/><TextBlock Style="{StaticResource Desc}" Text="Copy / Paste element"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+D"/><TextBlock Style="{StaticResource Desc}" Text="Duplicate element"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Delete / Backspace"/><TextBlock Style="{StaticResource Desc}" Text="Delete selected element"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Escape"/><TextBlock Style="{StaticResource Desc}" Text="Deselect / cancel tool"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Arrow keys"/><TextBlock Style="{StaticResource Desc}" Text="Nudge 1 px  (Shift = 10 px)"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Arrow"/><TextBlock Style="{StaticResource Desc}" Text="Resize element (1 px / Shift = 10 px)"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Shift+Click"/><TextBlock Style="{StaticResource Desc}" Text="Add to / remove from selection"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Drag on empty canvas"/><TextBlock Style="{StaticResource Desc}" Text="Rubber-band multi-select"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Double-click text"/><TextBlock Style="{StaticResource Desc}" Text="Edit text in-place"/></StackPanel>
+
+                <TextBlock Style="{StaticResource Hdr}" Text="ANNOTATIONS"/>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Z / Ctrl+Y"/><TextBlock Style="{StaticResource Desc}" Text="Undo / Redo annotation"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Shift+E"/><TextBlock Style="{StaticResource Desc}" Text="Export annotations as XFDF"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+Shift+I"/><TextBlock Style="{StaticResource Desc}" Text="Import annotations from XFDF"/></StackPanel>
+
+                <TextBlock Style="{StaticResource Hdr}" Text="FILL &amp; SIGN"/>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Tab"/><TextBlock Style="{StaticResource Desc}" Text="Move to next form field"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Space / Enter"/><TextBlock Style="{StaticResource Desc}" Text="Toggle checkbox / radio"/></StackPanel>
+
+                <Separator Margin="0,16"/>
+                <Button Content="Close" IsCancel="True" Width="80" HorizontalAlignment="Right"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

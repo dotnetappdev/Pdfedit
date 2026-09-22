@@ -1,9 +1,13 @@
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.RegularExpressions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 
 namespace PdfEdit.Services;
+
+public readonly record struct TextMatch(int PageNumber, float Left, float Bottom, float Width, float Height);
 
 public static class PdfTextExtractorService
 {
@@ -48,5 +52,43 @@ public static class PdfTextExtractorService
     {
         foreach (var key in _pageCache.Keys.Where(k => k.path == pdfPath).ToList())
             _pageCache.TryRemove(key, out _);
+    }
+
+    // Returns all bounding-box matches for the given query across all pages (or a specific page).
+    public static List<TextMatch> FindTextPositions(string pdfPath, string query, int specificPage = 0)
+    {
+        var results = new List<TextMatch>();
+        if (string.IsNullOrWhiteSpace(query)) return results;
+
+        try
+        {
+            string pattern = Regex.Escape(query);
+            using var reader = new PdfReader(pdfPath);
+            using var doc    = new PdfDocument(reader);
+
+            int from = specificPage > 0 ? specificPage : 1;
+            int to   = specificPage > 0 ? specificPage : doc.GetNumberOfPages();
+
+            for (int pg = from; pg <= to; pg++)
+            {
+                var strategy  = new RegexBasedLocationExtractionStrategy(pattern);
+                var processor = new PdfCanvasProcessor(strategy);
+                processor.ProcessPageContent(doc.GetPage(pg));
+
+                foreach (var loc in strategy.GetResultantLocations())
+                {
+                    var rect = loc.GetRectangle();
+                    results.Add(new TextMatch(
+                        PageNumber: pg,
+                        Left:   (float)rect.GetX(),
+                        Bottom: (float)rect.GetY(),
+                        Width:  (float)rect.GetWidth(),
+                        Height: (float)rect.GetHeight()));
+                }
+            }
+        }
+        catch { /* silently skip inaccessible pages */ }
+
+        return results;
     }
 }

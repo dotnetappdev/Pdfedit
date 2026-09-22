@@ -1,0 +1,72 @@
+<Window x:Class="PdfEdit.Dialogs.FindReplaceFieldsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Find &amp; Replace in Fields"
+        Width="420" Height="260"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                   Text="Search and replace text across all text form field values."
+                   FontSize="11" Foreground="{DynamicResource DimForegroundBrush}"
+                   TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+        <TextBlock Grid.Row="1" Grid.Column="0"
+                   Text="Find:"
+                   FontSize="11" FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+        <TextBox Grid.Row="1" Grid.Column="1"
+                 x:Name="FindBox"
+                 FontSize="11" Padding="4,3" Margin="0,0,0,8"/>
+
+        <TextBlock Grid.Row="2" Grid.Column="0"
+                   Text="Replace:"
+                   FontSize="11" FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+        <TextBox Grid.Row="2" Grid.Column="1"
+                 x:Name="ReplaceBox"
+                 FontSize="11" Padding="4,3" Margin="0,0,0,12"/>
+
+        <CheckBox Grid.Row="3" Grid.Column="1"
+                  x:Name="CaseCheck"
+                  Content="Match case"
+                  FontSize="11" Margin="0,0,0,8"
+                  Foreground="{DynamicResource ForegroundBrush}"/>
+
+        <!-- Field count info -->
+        <TextBlock Grid.Row="4" Grid.ColumnSpan="2"
+                   x:Name="InfoLabel"
+                   FontSize="10"
+                   Foreground="{DynamicResource DimForegroundBrush}"
+                   Margin="0,0,0,4"/>
+
+        <StackPanel Grid.Row="6" Grid.ColumnSpan="2"
+                    Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="ReplaceButton"
+                    Content="Replace All"
+                    Width="90" IsDefault="True"
+                    Click="ReplaceButton_Click"
+                    Margin="0,0,8,0"/>
+            <Button Content="Cancel" Width="70"
+                    IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

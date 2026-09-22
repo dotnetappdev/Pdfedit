@@ -1,0 +1,109 @@
+<Window x:Class="PdfEdit.Dialogs.DocumentPropertiesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Document Properties"
+        Width="500" Height="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <Style x:Key="LblStyle" TargetType="TextBlock">
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground"  Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="Margin"      Value="0,0,8,0"/>
+        </Style>
+        <Style x:Key="ValStyle" TargetType="TextBox">
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="Padding"     Value="4,3"/>
+            <Setter Property="Margin"      Value="0,0,0,8"/>
+        </Style>
+        <Style x:Key="ROStyle" TargetType="TextBlock">
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="Foreground"  Value="{DynamicResource DimForegroundBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin"      Value="0,0,0,8"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Text="Edit PDF Metadata"
+                   FontSize="14" FontWeight="SemiBold"
+                   Foreground="{DynamicResource AccentBrush}"
+                   Margin="0,0,0,12"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" Style="{StaticResource LblStyle}"/>
+                <TextBox   Grid.Row="0" Grid.Column="1" x:Name="TitleBox"    Style="{StaticResource ValStyle}"/>
+
+                <!-- Author -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Author" Style="{StaticResource LblStyle}"/>
+                <TextBox   Grid.Row="1" Grid.Column="1" x:Name="AuthorBox"   Style="{StaticResource ValStyle}"/>
+
+                <!-- Subject -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Subject" Style="{StaticResource LblStyle}"/>
+                <TextBox   Grid.Row="2" Grid.Column="1" x:Name="SubjectBox"  Style="{StaticResource ValStyle}"/>
+
+                <!-- Keywords -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Keywords" Style="{StaticResource LblStyle}"/>
+                <TextBox   Grid.Row="3" Grid.Column="1" x:Name="KeywordsBox" Style="{StaticResource ValStyle}"
+                           ToolTip="Comma-separated keywords for search indexing"/>
+
+                <!-- Creator (read-only display) -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Creator" Style="{StaticResource LblStyle}"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="CreatorLabel" Style="{StaticResource ROStyle}"/>
+
+                <!-- Producer (read-only) -->
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Producer" Style="{StaticResource LblStyle}"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="ProducerLabel" Style="{StaticResource ROStyle}"/>
+
+                <!-- Separator -->
+                <Separator Grid.Row="6" Grid.ColumnSpan="2" Margin="0,4,0,8"/>
+
+                <!-- Page count (read-only) -->
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Pages" Style="{StaticResource LblStyle}"/>
+                <TextBlock Grid.Row="7" Grid.Column="1" x:Name="PagesLabel" Style="{StaticResource ROStyle}"/>
+
+                <!-- File size (read-only) -->
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="File Size" Style="{StaticResource LblStyle}"/>
+                <TextBlock Grid.Row="8" Grid.Column="1" x:Name="SizeLabel" Style="{StaticResource ROStyle}"/>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="OkButton" Content="Apply" Width="80"
+                    IsDefault="True" Click="OkButton_Click" Margin="0,0,8,0"/>
+            <Button Content="Cancel" Width="80"
+                    IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

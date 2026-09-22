@@ -23,10 +23,12 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private Color _fillColor = Colors.Transparent;
     private Color _strokeColor = Colors.Black;
     private double _strokeThickness = 2;
+    private double _cornerRadius;
     private string _fontFamily = "Segoe UI";
     private double _fontSize = 14;
     private bool _bold, _italic, _underline;
     private Color _textColor = Colors.Black;
+    private Color _textBgColor = Colors.Transparent;
     private TextAlignment _textAlignment = TextAlignment.Left;
     private Color _penColor = Colors.Black;
     private double _penThickness = 2;
@@ -34,6 +36,13 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private double _elementOpacity = 1.0;
     private bool _elementLocked;
     private DesignElement? _clipboard;
+
+    private bool _snapToGrid;
+    private double _gridSize = 20;
+    private Color _pageBackground = Colors.White;
+
+    // Multi-selection
+    private readonly HashSet<DesignElement> _multiSelection = new();
 
     private readonly Stack<List<DesignElement>> _undoStack = new();
     private readonly Stack<List<DesignElement>> _redoStack = new();
@@ -103,6 +112,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SelectedIsText));
             OnPropertyChanged(nameof(SelectedIsShape));
+            NotifyPositionProperties();
             SyncFormatFromSelection();
         }
     }
@@ -143,6 +153,17 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _strokeThickness = value;
             OnPropertyChanged();
             if (_selectedElement is ShapeDesignElement s) s.StrokeThickness = value;
+        }
+    }
+
+    public double CornerRadius
+    {
+        get => _cornerRadius;
+        set
+        {
+            _cornerRadius = Math.Max(0, value);
+            OnPropertyChanged();
+            if (_selectedElement is ShapeDesignElement s) s.CornerRadius = _cornerRadius;
         }
     }
 
@@ -212,6 +233,17 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         }
     }
 
+    public Color TextBgColor
+    {
+        get => _textBgColor;
+        set
+        {
+            _textBgColor = value;
+            OnPropertyChanged();
+            if (_selectedElement is TextDesignElement t) t.BgColor = value;
+        }
+    }
+
     public TextAlignment TextAlignment
     {
         get => _textAlignment;
@@ -225,6 +257,77 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     public Color PenColor     { get => _penColor;     set { _penColor     = value; OnPropertyChanged(); } }
     public double PenThickness { get => _penThickness; set { _penThickness = value; OnPropertyChanged(); } }
+
+    public bool SnapToGrid
+    {
+        get => _snapToGrid;
+        set { _snapToGrid = value; OnPropertyChanged(); }
+    }
+
+    public double GridSize
+    {
+        get => _gridSize;
+        set { _gridSize = Math.Max(4, value); OnPropertyChanged(); }
+    }
+
+    public Color PageBackground
+    {
+        get => _pageBackground;
+        set { _pageBackground = value; OnPropertyChanged(); }
+    }
+
+    // ── Multi-selection ───────────────────────────────────────────────────────
+
+    public IReadOnlySet<DesignElement> MultiSelection => _multiSelection;
+    public bool HasMultiSelection => _multiSelection.Count > 1;
+
+    public void SetMultiSelection(IEnumerable<DesignElement> elements)
+    {
+        foreach (var e in _multiSelection) e.IsSelected = false;
+        _multiSelection.Clear();
+        foreach (var e in elements) { e.IsSelected = true; _multiSelection.Add(e); }
+        SelectedElement = _multiSelection.LastOrDefault();
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    public void AddToMultiSelection(DesignElement element)
+    {
+        if (_multiSelection.Contains(element))
+        {
+            element.IsSelected = false;
+            _multiSelection.Remove(element);
+        }
+        else
+        {
+            element.IsSelected = true;
+            _multiSelection.Add(element);
+        }
+        SelectedElement = _multiSelection.LastOrDefault();
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    public void MoveMultiSelection(double dx, double dy)
+    {
+        foreach (var e in _multiSelection)
+        {
+            e.X = Snap(Math.Max(0, e.X + dx));
+            e.Y = Snap(Math.Max(0, e.Y + dy));
+        }
+    }
+
+    public void DeleteMultiSelection()
+    {
+        if (_multiSelection.Count == 0) return;
+        SaveUndo();
+        foreach (var e in _multiSelection.ToList()) Elements.Remove(e);
+        _multiSelection.Clear();
+        SelectedElement = null;
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
+    /// <summary>Snap a coordinate to the nearest grid point when SnapToGrid is enabled.</summary>
+    public double Snap(double value) =>
+        _snapToGrid && _gridSize > 0 ? Math.Round(value / _gridSize) * _gridSize : value;
 
     public double ElementOpacity
     {
@@ -250,6 +353,36 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     public bool HasUnlockedSelection => _selectedElement != null && !_selectedElement.IsLocked;
 
+    // Precise position / size properties (bound to ribbon spinners)
+    public double SelectedX
+    {
+        get => _selectedElement?.X ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.X = value; } }
+    }
+    public double SelectedY
+    {
+        get => _selectedElement?.Y ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Y = value; } }
+    }
+    public double SelectedWidth
+    {
+        get => _selectedElement?.Width ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Width = Math.Max(4, value); } }
+    }
+    public double SelectedHeight
+    {
+        get => _selectedElement?.Height ?? 0;
+        set { if (_selectedElement != null && !_selectedElement.IsLocked) { SaveUndo(); _selectedElement.Height = Math.Max(4, value); } }
+    }
+
+    public void NotifyPositionProperties()
+    {
+        OnPropertyChanged(nameof(SelectedX));
+        OnPropertyChanged(nameof(SelectedY));
+        OnPropertyChanged(nameof(SelectedWidth));
+        OnPropertyChanged(nameof(SelectedHeight));
+    }
+
     // ── Element operations ────────────────────────────────────────────────────
 
     public void AddElement(DesignElement element)
@@ -262,22 +395,46 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     public void DeleteSelected()
     {
+        if (_multiSelection.Count > 1)
+        {
+            DeleteMultiSelection();
+            return;
+        }
         if (_selectedElement == null) return;
         SaveUndo();
         Elements.Remove(_selectedElement);
         SelectedElement = null;
     }
 
+    public void SaveDesign(string path)
+        => Services.DesignSerializerService.Save(Elements, _pageSize, _customPageWidth, _customPageHeight, _pageBackground, path);
+
+    public void LoadDesign(string path)
+    {
+        var (elems, ps, cw, ch, bg) = Services.DesignSerializerService.Load(path);
+        SaveUndo();
+        Elements.Clear();
+        SelectedElement = null;
+        _multiSelection.Clear();
+        foreach (var e in elems) Elements.Add(e);
+        PageSize = ps;
+        CustomPageWidth = cw;
+        CustomPageHeight = ch;
+        PageBackground = bg;
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
     public void SelectAll()
     {
-        foreach (var e in Elements) e.IsSelected = true;
-        SelectedElement = Elements.LastOrDefault();
+        SetMultiSelection(Elements);
     }
 
     public void ClearSelection()
     {
         foreach (var e in Elements) e.IsSelected = false;
+        _multiSelection.Clear();
         SelectedElement = null;
+        OnPropertyChanged(nameof(HasMultiSelection));
     }
 
     public void BringForward()
@@ -407,6 +564,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             case "BusinessCard": LoadBusinessCardTemplate(); break;
             case "Certificate":  LoadCertificateTemplate(); break;
             case "Form":         LoadFormTemplate(); break;
+            case "Resume":       LoadResumeTemplate(); break;
+            case "Flyer":        LoadFlyerTemplate(); break;
         }
     }
 
@@ -505,6 +664,78 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
     }
 
+    private void LoadResumeTemplate()
+    {
+        PageSize = DesignPageSize.A4;
+        double w = PageWidth; double h = PageHeight;
+
+        // Left sidebar
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = 175, Height = h, FillColor = Color.FromRgb(35, 55, 90), StrokeColor = Colors.Transparent });
+        // Photo placeholder
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = 37, Y = 30, Width = 100, Height = 100, FillColor = Color.FromArgb(60, 255, 255, 255), StrokeColor = Color.FromArgb(120, 255, 255, 255), StrokeThickness = 2 });
+        Elements.Add(new TextDesignElement { X = 10, Y = 145, Width = 155, Height = 28, Text = "Your Name", FontSize = 18, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 10, Y = 175, Width = 155, Height = 18, Text = "UX / Product Designer", FontSize = 10, Color = Color.FromArgb(180, 255, 255, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 20, Y = 204, Width = 135, Height = 1, StrokeColor = Color.FromArgb(80, 255, 255, 255), StrokeThickness = 1 });
+
+        // Sidebar section headers
+        foreach (var (text, y) in new[] { ("CONTACT", 218), ("SKILLS", 340), ("LANGUAGES", 480) })
+            Elements.Add(new TextDesignElement { X = 14, Y = y, Width = 148, Height = 16, Text = text, FontSize = 8, Bold = true, Color = Color.FromRgb(200, 180, 100), Alignment = TextAlignment.Left });
+
+        Elements.Add(new TextDesignElement { X = 14, Y = 240, Width = 148, Height = 72, Text = "📧 you@example.com\n📞 +1 555 000 0000\n🌐 linkedin.com/in/you\n📍 City, Country", FontSize = 9, Color = Color.FromArgb(200, 255, 255, 255) });
+
+        var skills = new[] { "Figma", "Adobe XD", "Prototyping", "User Research" };
+        for (int i = 0; i < skills.Length; i++)
+        {
+            Elements.Add(new TextDesignElement { X = 14, Y = 360 + i * 24, Width = 100, Height = 18, Text = skills[i], FontSize = 9, Color = Color.FromArgb(220, 255, 255, 255) });
+            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = 148, Height = 5, FillColor = Color.FromArgb(40, 255, 255, 255), StrokeColor = Colors.Transparent });
+            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = (float)(148 * (0.95 - i * 0.12)), Height = 5, FillColor = Color.FromRgb(200, 180, 100), StrokeColor = Colors.Transparent });
+        }
+
+        // Main content area
+        Elements.Add(new TextDesignElement { X = 195, Y = 30, Width = w - 215, Height = 30, Text = "PROFESSIONAL SUMMARY", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 62, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
+        Elements.Add(new TextDesignElement { X = 195, Y = 70, Width = w - 215, Height = 55, Text = "Passionate designer with 5+ years of experience crafting intuitive digital products. Focused on user-centered design and delivering measurable results.", FontSize = 10, Color = Color.FromRgb(60, 60, 60) });
+
+        Elements.Add(new TextDesignElement { X = 195, Y = 145, Width = w - 215, Height = 24, Text = "EXPERIENCE", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 170, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
+        foreach (var (company, role, dates, y2) in new[] {
+            ("Acme Corp", "Lead UX Designer", "2021–Present", 180),
+            ("Beta Studio", "Product Designer", "2018–2021", 250) })
+        {
+            Elements.Add(new TextDesignElement { X = 195, Y = y2, Width = w - 215, Height = 18, Text = role, FontSize = 11, Bold = true, Color = Color.FromRgb(40, 40, 40) });
+            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 18, Width = 200, Height = 16, Text = company, FontSize = 9, Color = Color.FromRgb(35, 55, 90) });
+            Elements.Add(new TextDesignElement { X = w - 215 - 80, Y = y2 + 18, Width = 80, Height = 16, Text = dates, FontSize = 9, Color = Color.FromRgb(120, 120, 120), Alignment = TextAlignment.Right });
+            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 36, Width = w - 215, Height = 36, Text = "• Designed and iterated on key product features\n• Led cross-functional design sprints", FontSize = 9, Color = Color.FromRgb(80, 80, 80) });
+        }
+
+        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
+    }
+
+    private void LoadFlyerTemplate()
+    {
+        PageSize = DesignPageSize.A4;
+        double w = PageWidth; double h = PageHeight;
+
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = w, Height = h, FillColor = Color.FromRgb(15, 15, 35), StrokeColor = Colors.Transparent });
+        // Accent circles
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = -60, Y = -60, Width = 240, Height = 240, FillColor = Color.FromArgb(60, 0, 180, 255), StrokeColor = Colors.Transparent });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = w - 120, Y = h - 160, Width = 200, Height = 200, FillColor = Color.FromArgb(50, 255, 80, 180), StrokeColor = Colors.Transparent });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = 80, Width = w - 60, Height = 30, Text = "SPECIAL EVENT", FontSize = 12, Bold = true, Color = Color.FromRgb(0, 200, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 30, Y = 120, Width = w - 60, Height = 80, Text = "AMAZING\nCONFERENCE\n2026", FontSize = 42, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = (w - 60) / 2 - 25, Y = 240, Width = 90, Height = 4, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = 270, Width = w - 60, Height = 30, Text = "The Future of Technology & Innovation", FontSize = 14, Italic = true, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
+        Elements.Add(new TextDesignElement { X = 30, Y = 330, Width = w - 60, Height = 25, Text = "📅 15–17 June 2026   📍 Convention Center, New York", FontSize = 12, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
+
+        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = w / 2 - 90, Y = 400, Width = 180, Height = 44, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent, CornerRadius = 22 });
+        Elements.Add(new TextDesignElement { X = w / 2 - 90, Y = 412, Width = 180, Height = 24, Text = "REGISTER NOW", FontSize = 13, Bold = true, Color = Color.FromRgb(15, 15, 35), Alignment = TextAlignment.Center });
+
+        Elements.Add(new TextDesignElement { X = 30, Y = h - 80, Width = w - 60, Height = 20, Text = "www.amazingconf.example.com", FontSize = 11, Color = Color.FromArgb(160, 255, 255, 255), Alignment = TextAlignment.Center });
+
+        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
+    }
+
     public void ZoomIn()  => Zoom = Math.Min(5.0, _zoom + 0.1);
     public void ZoomOut() => Zoom = Math.Max(0.1, _zoom - 0.1);
     public void ZoomFit(double availableWidth, double availableHeight)
@@ -537,11 +768,13 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     private void RestoreState(List<DesignElement> state)
     {
+        _multiSelection.Clear();
         SelectedElement = null;
         Elements.Clear();
         foreach (var e in state) Elements.Add(e);
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
+        OnPropertyChanged(nameof(HasMultiSelection));
     }
 
     private static DesignElement CloneElement(DesignElement src) => src switch
@@ -613,14 +846,16 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _bold       = t.Bold;         OnPropertyChanged(nameof(Bold));
             _italic     = t.Italic;       OnPropertyChanged(nameof(Italic));
             _underline  = t.Underline;    OnPropertyChanged(nameof(Underline));
-            _textColor  = t.Color;        OnPropertyChanged(nameof(TextColor));
-            _textAlignment = t.Alignment; OnPropertyChanged(nameof(TextAlignment));
+            _textColor   = t.Color;        OnPropertyChanged(nameof(TextColor));
+            _textBgColor = t.BgColor;      OnPropertyChanged(nameof(TextBgColor));
+            _textAlignment = t.Alignment;  OnPropertyChanged(nameof(TextAlignment));
         }
         else if (_selectedElement is ShapeDesignElement sh)
         {
             _fillColor        = sh.FillColor;       OnPropertyChanged(nameof(FillColor));
             _strokeColor      = sh.StrokeColor;     OnPropertyChanged(nameof(StrokeColor));
             _strokeThickness  = sh.StrokeThickness; OnPropertyChanged(nameof(StrokeThickness));
+            _cornerRadius     = sh.CornerRadius;    OnPropertyChanged(nameof(CornerRadius));
         }
     }
 

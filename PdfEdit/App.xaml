@@ -28,6 +28,7 @@
             <conv:BoolToFontStyleConverter x:Key="BoolToFontStyleConverter"/>
             <conv:BoolToTextDecorationConverter x:Key="BoolToTextDecoration"/>
             <conv:PercentConverter x:Key="PercentConverter"/>
+            <conv:OpacityPercentConverter x:Key="OpacityPercentConverter"/>
 
             <!-- Per-area interface font sizes (defaults; overridden live by FontService
                  from the user's settings). Controls bind via DynamicResource. -->

@@ -44,6 +44,11 @@
         <KeyBinding Key="G" Modifiers="Control" Command="{Binding GoToPageCommand}"/>
         <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoAnnotationCommand}"/>
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoAnnotationCommand}"/>
+        <KeyBinding Key="E" Modifiers="Control+Shift" Command="{Binding ExportXfdfCommand}"/>
+        <KeyBinding Key="I" Modifiers="Control+Shift" Command="{Binding ImportXfdfCommand}"/>
+        <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
         <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
         <KeyBinding Key="K" Command="{Binding SetToolCommand}" CommandParameter="Checkmark"/>
         <KeyBinding Key="H" Command="{Binding SetToolCommand}" CommandParameter="Hand"/>
@@ -110,8 +115,18 @@
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Close document"/>
 
+                    <Fluent:MenuItem Header="Document Properties…"
+                                                KeyTip="R"
+                                                Command="{Binding DocumentPropertiesCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Document properties metadata"/>
+
                     <Separator/>
 
+                    <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
+                                                KeyTip="K"
+                                                Command="{Binding ShowShortcutsCommand}"
+                                                AutomationProperties.Name="Keyboard shortcuts reference"/>
                     <Fluent:MenuItem Header="About PdfEdit…"
                                                 KeyTip="B"
                                                 Command="{Binding ShowAboutCommand}"
@@ -564,6 +579,38 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Delete Range"
+                                   Command="{Binding DeletePageRangeCommand}"
+                                   Size="Middle"
+                                   KeyTip="DR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Delete a range of pages from the document (first–last)"
+                                   AutomationProperties.Name="Delete page range">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Extract Range"
+                                   Command="{Binding ExtractPageRangeCommand}"
+                                   Size="Middle"
+                                   KeyTip="ER"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Extract a range of pages to a new PDF file"
+                                   AutomationProperties.Name="Extract page range">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Compare PDFs"
+                                   Command="{Binding ComparePdfsCommand}"
+                                   KeyTip="CF"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Compare this PDF with another file and show text differences page by page"
+                                   AutomationProperties.Name="Compare PDFs">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Thumbnails"
                                    Command="{Binding ToggleThumbnailsCommand}"
                                    Size="Middle"
@@ -573,6 +620,126 @@
                         <Fluent:Button.Icon>
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Watermark"
+                                   Command="{Binding WatermarkCommand}"
+                                   KeyTip="WM"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add a diagonal text watermark (e.g. DRAFT, CONFIDENTIAL) to all pages"
+                                   AutomationProperties.Name="Add watermark to PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Page Numbers"
+                                   Command="{Binding AddPageNumbersCommand}"
+                                   KeyTip="PN"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add 'Page N of M' footer to all pages and save as a new file"
+                                   AutomationProperties.Name="Add page numbers footer">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Compress"
+                                   Command="{Binding CompressPdfCommand}"
+                                   KeyTip="CZ"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Re-save with maximum compression to reduce file size"
+                                   AutomationProperties.Name="Compress PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export&#x0a;as Images"
+                                   Command="{Binding ExportPagesAsImagesCommand}"
+                                   KeyTip="EI"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export every page as a PNG image file into a chosen folder"
+                                   AutomationProperties.Name="Export pages as PNG images">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Document group -->
+                <Fluent:RibbonGroupBox Header="Document"
+                                        AutomationProperties.Name="Document metadata group">
+                    <Fluent:Button Header="Properties"
+                                   Command="{Binding DocumentPropertiesCommand}"
+                                   KeyTip="DP2"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Edit document metadata: title, author, subject, keywords"
+                                   AutomationProperties.Name="Document properties">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Duplicate&#x0a;Page"
+                                   Command="{Binding DuplicatePageCommand}"
+                                   KeyTip="DUP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Duplicate the current page and insert the copy immediately after it"
+                                   AutomationProperties.Name="Duplicate current page">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Header /&#x0a;Footer"
+                                   Command="{Binding AddHeaderFooterCommand}"
+                                   KeyTip="HF"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add custom header and/or footer text to every page"
+                                   AutomationProperties.Name="Add header and footer">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Bates&#x0a;Numbers"
+                                   Command="{Binding BatesNumberCommand}"
+                                   KeyTip="BN"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add sequential Bates numbers (with prefix/suffix) to every page for legal document identification"
+                                   AutomationProperties.Name="Add Bates numbers">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Crop&#x0a;Pages"
+                                   Command="{Binding CropPagesCommand}"
+                                   KeyTip="CP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Trim page margins by setting crop box margins (in points) on all pages"
+                                   AutomationProperties.Name="Crop pages">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Security group -->
+                <Fluent:RibbonGroupBox Header="Security"
+                                        AutomationProperties.Name="Security group">
+                    <Fluent:Button Header="Password&#x0a;Protect"
+                                   Command="{Binding PasswordProtectCommand}"
+                                   KeyTip="PP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Encrypt the PDF with an open password and set permissions (printing, copying)"
+                                   AutomationProperties.Name="Password protect PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Remove&#x0a;Password"
+                                   Command="{Binding RemovePasswordCommand}"
+                                   KeyTip="RP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Remove encryption from a PDF (requires the PDF to already be open/unlocked)"
+                                   AutomationProperties.Name="Remove PDF password">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE785;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -775,6 +942,24 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Undo Ann."
+                                   Command="{Binding UndoAnnotationCommand}"
+                                   Size="Middle"
+                                   ToolTip="Undo annotation (Ctrl+Z)"
+                                   AutomationProperties.Name="Undo annotation">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Redo Ann."
+                                   Command="{Binding RedoAnnotationCommand}"
+                                   Size="Middle"
+                                   ToolTip="Redo annotation (Ctrl+Y)"
+                                   AutomationProperties.Name="Redo annotation">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Annotations"
@@ -786,6 +971,15 @@
                                    AutomationProperties.Name="Delete selected annotation">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Find &amp;&#x0a;Highlight"
+                                   Command="{Binding FindAndHighlightCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Search for text in the PDF and add yellow highlight annotations on every match"
+                                   AutomationProperties.Name="Find text and highlight all occurrences">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Clear All Fields"
@@ -809,6 +1003,16 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Import&#x0a;from JSON"
+                                   Command="{Binding ImportFormDataFromJsonCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Fill form fields from a JSON file with {fieldName: value} pairs"
+                                   AutomationProperties.Name="Import form data from JSON">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Export Data"
                                    Command="{Binding ExportDataCommand}"
                                    KeyTip="E"
@@ -830,6 +1034,104 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Find & Replace + Validate group -->
+                <Fluent:RibbonGroupBox Header="Tools"
+                                        AutomationProperties.Name="Form field tools group">
+                    <Fluent:Button Header="Find &amp; Replace"
+                                   Command="{Binding FindReplaceFieldsCommand}"
+                                   KeyTip="FR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Find and replace text within form field values"
+                                   AutomationProperties.Name="Find and replace in form fields">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Validate&#x0a;Required"
+                                   Command="{Binding ValidateRequiredFieldsCommand}"
+                                   KeyTip="VR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Check that all required fields are filled in"
+                                   AutomationProperties.Name="Validate required fields">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Archive (PDF/A)"
+                                   Command="{Binding ExportPdfACommand}"
+                                   KeyTip="PA"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save as PDF 1.4 with archival metadata (PDF/A-like)"
+                                   AutomationProperties.Name="Save as PDF/A archival format">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export Text"
+                                   Command="{Binding ExportTextCommand}"
+                                   KeyTip="ET"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Extract all text from the PDF and save to a .txt file"
+                                   AutomationProperties.Name="Export PDF text to TXT file">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Form Field Creator group -->
+                <Fluent:RibbonGroupBox Header="Add Form Field"
+                                        AutomationProperties.Name="Add new form fields to PDF">
+                    <Fluent:ToggleButton Header="Text Field"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddTextField, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddTextField"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Text Field — drag a rectangle on the page to add a new editable text form field"
+                                         AutomationProperties.Name="Add text form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xF003;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Checkbox"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddCheckbox, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddCheckbox"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Checkbox — drag a square on the page to add a new checkbox form field"
+                                         AutomationProperties.Name="Add checkbox form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Combo Box"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddComboBox, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddComboBox"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Combo Box — drag a rectangle on the page to add a new dropdown field"
+                                         AutomationProperties.Name="Add combo box form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Radio Button"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddRadioButton, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="AddRadioButton"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Add Radio Button — drag to add a radio button field (same group name = same group)"
+                                         AutomationProperties.Name="Add radio button form field">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE915;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -970,6 +1272,81 @@
                     </StackPanel>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Bookmarks group -->
+                <Fluent:RibbonGroupBox Header="Bookmarks"
+                                        AutomationProperties.Name="Bookmarks management group">
+                    <Fluent:Button Header="Add Bookmark"
+                                   Command="{Binding AddBookmarkCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add a bookmark for the current page"
+                                   AutomationProperties.Name="Add bookmark to current page">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Attachments group -->
+                <Fluent:RibbonGroupBox Header="Attachments"
+                                        AutomationProperties.Name="File attachments group">
+                    <Fluent:Button Header="Attach File"
+                                   Command="{Binding AddAttachmentCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Attach a file to this PDF document"
+                                   AutomationProperties.Name="Attach file to PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Annotations interchange group -->
+                <Fluent:RibbonGroupBox Header="Annotations"
+                                        AutomationProperties.Name="Annotation export and import group">
+                    <Fluent:Button Header="Export&#x0a;XFDF"
+                                   Command="{Binding ExportXfdfCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export all annotations to an XFDF file — compatible with Adobe Acrobat and Foxit PDF"
+                                   AutomationProperties.Name="Export annotations as XFDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Import&#x0a;XFDF"
+                                   Command="{Binding ImportXfdfCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Import annotations from an XFDF file exported by another PDF viewer"
+                                   AutomationProperties.Name="Import annotations from XFDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Ann. Summary"
+                                   Command="{Binding ExportAnnotationSummaryCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export a CSV summary of all annotations for review workflows"
+                                   AutomationProperties.Name="Export annotation summary as CSV">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Document Statistics group -->
+                <Fluent:RibbonGroupBox Header="Document"
+                                        AutomationProperties.Name="Document information group">
+                    <Fluent:Button Header="Document&#x0a;Statistics"
+                                   Command="{Binding DocumentStatisticsCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Show page count, word count, annotation count, and file size"
+                                   AutomationProperties.Name="Show document statistics">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
@@ -1012,8 +1389,154 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Highlight"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Highlight Tool (I)"
+                                         ToolTip="Highlight — drag to draw yellow highlight (I)"
                                          AutomationProperties.Name="Highlight tool"/>
+                    <Fluent:ToggleButton Header="Underline"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Underline, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Underline"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Underline — drag to draw underline annotation"
+                                         AutomationProperties.Name="Underline annotation tool"/>
+                    <Fluent:ToggleButton Header="Strikethrough"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Strikethrough, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Strikethrough"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Strikethrough — drag to draw strikethrough annotation"
+                                         AutomationProperties.Name="Strikethrough annotation tool"/>
+                    <Fluent:ToggleButton Header="Redact"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Redact, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Redact"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Redact — drag to mark sensitive areas for permanent removal"
+                                         AutomationProperties.Name="Redaction tool">
+                        <Fluent:ToggleButton.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="14" Height="10" Fill="#CC1A1A" Margin="0,0,4,0"/>
+                                <TextBlock Text="Redact"/>
+                            </StackPanel>
+                        </Fluent:ToggleButton.Header>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Apply&#x0a;Redactions"
+                                   Command="{Binding ApplyRedactionsCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Permanently burn all redaction boxes into the PDF (irreversible)"
+                                   AutomationProperties.Name="Apply redactions">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32">
+                                <StackPanel>
+                                    <Rectangle Width="24" Height="16" Fill="#CC1A1A"/>
+                                    <TextBlock Text="APPLY" FontSize="7" Foreground="White" HorizontalAlignment="Center" Margin="0,-14,0,0"/>
+                                </StackPanel>
+                            </Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Drawing tools group -->
+                <Fluent:RibbonGroupBox Header="Drawing"
+                                        AutomationProperties.Name="Drawing tools group">
+                    <Fluent:ToggleButton Header="Freehand"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawFreehand, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawFreehand"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Freehand Draw — drag to draw ink strokes on the page"
+                                         AutomationProperties.Name="Freehand draw tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED63;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Link"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Link, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Link"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Link — drag a rectangle, then enter a URL to create a clickable hyperlink annotation"
+                                         AutomationProperties.Name="Hyperlink annotation tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Sticky Note"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=StickyNote, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="StickyNote"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Sticky Note — click page to place a comment annotation"
+                                         AutomationProperties.Name="Sticky note tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Rectangle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawRectangle, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawRectangle"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Rectangle — drag to draw a rectangle annotation"
+                                         AutomationProperties.Name="Draw rectangle annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Ellipse"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawEllipse, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawEllipse"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Ellipse — drag to draw an ellipse annotation"
+                                         AutomationProperties.Name="Draw ellipse annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEA3A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Arrow"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawArrow, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawArrow"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Arrow — drag to draw an arrow annotation"
+                                         AutomationProperties.Name="Draw arrow annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Callout"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawCallout, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawCallout"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Callout — drag a box, then type text for a callout annotation"
+                                         AutomationProperties.Name="Draw callout annotation">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Eraser"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Eraser"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Eraser — click or drag over annotations to erase them"
+                                         AutomationProperties.Name="Eraser tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Sign & Date group -->
@@ -1041,8 +1564,20 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Stamp"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Stamp Tool (M)"
+                                         ToolTip="Rubber Stamp — click page to place stamp (M)"
                                          AutomationProperties.Name="Stamp tool"/>
+                    <ComboBox ItemsSource="{Binding AvailableStamps}"
+                              SelectedItem="{Binding SelectedStamp, Mode=TwoWay}"
+                              IsEnabled="{Binding HasDocument}"
+                              Width="110" Height="22" FontSize="11"
+                              VerticalAlignment="Center" Margin="0,2,0,0"
+                              ToolTip="Choose stamp text"
+                              AutomationProperties.Name="Stamp text selector"/>
+                    <Fluent:Button Header="Custom&#x0a;Stamp"
+                                   Command="{Binding AddCustomStampCommand}"
+                                   Size="Middle"
+                                   ToolTip="Create a custom stamp with your own text"
+                                   AutomationProperties.Name="Add custom stamp text"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Marks group -->
@@ -1076,6 +1611,138 @@
                             </StackPanel>
                         </Fluent:ToggleButton.Header>
                     </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Highlight color picker -->
+                <Fluent:RibbonGroupBox Header="Highlight Color"
+                                        AutomationProperties.Name="Highlight annotation color group">
+                    <StackPanel Orientation="Vertical" Margin="2,4">
+                        <TextBlock Text="Color:" FontSize="11" Margin="0,0,0,3"/>
+                        <ComboBox Width="110" Height="22" FontSize="11"
+                                  SelectedValue="{Binding CurrentHighlightColor, Mode=TwoWay}"
+                                  IsEnabled="{Binding HasDocument}"
+                                  ToolTip="Highlight color"
+                                  AutomationProperties.Name="Highlight color picker">
+                            <ComboBoxItem Tag="#FFFF00" IsSelected="True">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFFF00" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Yellow"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#90EE90">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#90EE90" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Green"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#ADD8E6">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#ADD8E6" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Blue"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FFB6C1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFB6C1" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Pink"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FFA500">
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="16" Height="12" Fill="#FFA500" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Orange"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                        </ComboBox>
+                        <TextBlock Text="Opacity:" FontSize="11" Margin="0,6,0,3"/>
+                        <Fluent:Spinner Value="{Binding CurrentHighlightOpacity, Mode=TwoWay, Converter={StaticResource OpacityPercentConverter}}"
+                                        Minimum="10" Maximum="100" Format="0'%'"
+                                        IsEnabled="{Binding HasDocument}"
+                                        Width="72" Height="22"
+                                        ToolTip="Highlight opacity (10%–100%)"
+                                        AutomationProperties.Name="Highlight opacity"/>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Stroke Width group -->
+                <Fluent:RibbonGroupBox Header="Stroke Width"
+                                        AutomationProperties.Name="Drawing stroke width group">
+                    <StackPanel Orientation="Vertical" Margin="2,4">
+                        <TextBlock Text="Width (pt):" FontSize="11" Margin="0,0,0,3"/>
+                        <Fluent:Spinner Value="{Binding CurrentStrokeWidth, Mode=TwoWay}"
+                                        Minimum="0.5" Maximum="20" Format="0.0"
+                                        IsEnabled="{Binding HasDocument}"
+                                        Width="72" Height="22"
+                                        ToolTip="Stroke width for shapes, arrows and freehand drawing"
+                                        AutomationProperties.Name="Drawing stroke width"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <Button Width="24" Height="20" FontSize="10" Content="1" Margin="0,0,2,0"
+                                    Tag="1" Click="SetStrokeWidth_Click" ToolTip="Thin (1pt)"
+                                    AutomationProperties.Name="1pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="2" Margin="0,0,2,0"
+                                    Tag="2" Click="SetStrokeWidth_Click" ToolTip="Normal (2pt)"
+                                    AutomationProperties.Name="2pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="4" Margin="0,0,2,0"
+                                    Tag="4" Click="SetStrokeWidth_Click" ToolTip="Thick (4pt)"
+                                    AutomationProperties.Name="4pt stroke"/>
+                            <Button Width="24" Height="20" FontSize="10" Content="8"
+                                    Tag="8" Click="SetStrokeWidth_Click" ToolTip="Very thick (8pt)"
+                                    AutomationProperties.Name="8pt stroke"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Drawing Color group -->
+                <Fluent:RibbonGroupBox Header="Drawing Color"
+                                        AutomationProperties.Name="Drawing color group">
+                    <StackPanel Orientation="Vertical" Margin="2,2">
+                        <TextBlock Text="Stroke:" FontSize="11" Margin="0,0,0,2"/>
+                        <WrapPanel Width="90" Margin="0,0,0,4">
+                            <Button Width="22" Height="22" Margin="1" Background="#C62828" ToolTip="Red"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#C62828"
+                                    AutomationProperties.Name="Drawing color red"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#1565C0" ToolTip="Blue"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#1565C0"
+                                    AutomationProperties.Name="Drawing color blue"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#2E7D32" ToolTip="Green"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#2E7D32"
+                                    AutomationProperties.Name="Drawing color green"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#000000" ToolTip="Black"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#000000"
+                                    AutomationProperties.Name="Drawing color black"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FF6F00" ToolTip="Orange"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#FF6F00"
+                                    AutomationProperties.Name="Drawing color orange"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#6A1B9A" ToolTip="Purple"
+                                    Command="{Binding SetDrawingColorCommand}" CommandParameter="#6A1B9A"
+                                    AutomationProperties.Name="Drawing color purple"/>
+                        </WrapPanel>
+                        <TextBlock Text="Fill:" FontSize="11" Margin="0,0,0,2"/>
+                        <WrapPanel Width="90">
+                            <Button Width="22" Height="22" Margin="1" ToolTip="No fill (transparent)"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter=""
+                                    AutomationProperties.Name="No fill">
+                                <TextBlock Text="∅" FontSize="10"/>
+                            </Button>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFEBEE" ToolTip="Light red fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFEBEE"
+                                    AutomationProperties.Name="Light red fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#E3F2FD" ToolTip="Light blue fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#E3F2FD"
+                                    AutomationProperties.Name="Light blue fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#E8F5E9" ToolTip="Light green fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#E8F5E9"
+                                    AutomationProperties.Name="Light green fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFFDE7" ToolTip="Light yellow fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFFDE7"
+                                    AutomationProperties.Name="Light yellow fill"/>
+                            <Button Width="22" Height="22" Margin="1" Background="#FFFFFF" ToolTip="White (opaque) fill"
+                                    Command="{Binding SetFillColorCommand}" CommandParameter="#FFFFFF"
+                                    AutomationProperties.Name="White fill">
+                                <TextBlock Text="W" FontSize="8"/>
+                            </Button>
+                        </WrapPanel>
+                    </StackPanel>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text annotation tools -->
@@ -1464,6 +2131,28 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Save / Load Design -->
+                <Fluent:RibbonGroupBox Header="Design File"
+                                        AutomationProperties.Name="Design file group">
+                    <Fluent:Button Header="Save Design"
+                                   Click="SaveDesign_Click"
+                                   ToolTip="Save canvas as a .pdfdesign file (all elements preserved)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Save design">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Load Design"
+                                   Click="LoadDesign_Click"
+                                   ToolTip="Open a previously saved .pdfdesign file"
+                                   AutomationProperties.Name="Load design">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Templates -->
                 <Fluent:RibbonGroupBox Header="Templates"
                                         IsEnabled="{Binding IsDesignMode}"
@@ -1503,6 +2192,20 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Business card template">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8AA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Resume"
+                                   Tag="Resume" Click="DesignTemplate_Click"
+                                   ToolTip="Load a professional resume/CV template"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Resume template">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Flyer"
+                                   Tag="Flyer" Click="DesignTemplate_Click"
+                                   ToolTip="Load a promotional flyer template"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Flyer template">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -1625,6 +2328,14 @@
                     <Fluent:Button Header="Right"   Size="Middle" Tag="Right"   Click="TextAlign_Click" AutomationProperties.Name="Align right">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Text Color" Size="Middle" Tag="TextColor" Click="DesignColor_Click"
+                                   ToolTip="Set text color" AutomationProperties.Name="Text color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Highlight" Size="Middle" Tag="TextBgColor" Click="DesignColor_Click"
+                                   ToolTip="Set text highlight / background color" AutomationProperties.Name="Text highlight color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Shape format -->
@@ -1636,12 +2347,26 @@
                                     Minimum="0.5" Maximum="20" Increment="0.5"
                                     Width="60"
                                     AutomationProperties.Name="Stroke thickness"/>
+                    <Fluent:Spinner Header="Corner Radius"
+                                    Value="{Binding DesignCanvas.CornerRadius}"
+                                    Minimum="0" Maximum="200" Increment="2"
+                                    Width="60"
+                                    ToolTip="Rectangle corner radius"
+                                    AutomationProperties.Name="Corner radius"/>
                     <Fluent:Spinner Header="Opacity %"
                                     Value="{Binding DesignCanvas.ElementOpacity, Converter={StaticResource PercentConverter}}"
                                     Minimum="0" Maximum="100" Increment="5"
                                     Width="60"
                                     ToolTip="Element opacity (0=transparent, 100=opaque)"
                                     AutomationProperties.Name="Element opacity"/>
+                    <Fluent:Button Header="Fill Color"   Size="Middle" Tag="FillColor"   Click="DesignColor_Click"
+                                   ToolTip="Set shape fill color" AutomationProperties.Name="Fill color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE771;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Stroke Color" Size="Middle" Tag="StrokeColor" Click="DesignColor_Click"
+                                   ToolTip="Set shape stroke (border) color" AutomationProperties.Name="Stroke color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:ToggleButton Header="Lock"
                                          IsChecked="{Binding DesignCanvas.ElementLocked}"
                                          Size="Middle"
@@ -1649,6 +2374,22 @@
                                          AutomationProperties.Name="Lock element">
                         <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Pen Format -->
+                <Fluent:RibbonGroupBox Header="Pen Format"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Pen formatting group">
+                    <Fluent:Spinner Header="Pen Size"
+                                    Value="{Binding DesignCanvas.PenThickness}"
+                                    Minimum="1" Maximum="50" Increment="1"
+                                    Width="60"
+                                    ToolTip="Freehand pen stroke thickness"
+                                    AutomationProperties.Name="Pen thickness"/>
+                    <Fluent:Button Header="Pen Color" Size="Middle" Click="DesignPenColor_Click"
+                                   ToolTip="Set freehand pen color" AutomationProperties.Name="Pen color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Align -->
@@ -1722,15 +2463,72 @@
                     <Fluent:ToggleButton Header="Grid"
                                          IsChecked="{Binding DesignCanvas.ShowGrid}"
                                          Size="Middle"
-                                         ToolTip="Toggle grid overlay"
+                                         ToolTip="Toggle grid overlay (20px)"
                                          AutomationProperties.Name="Toggle grid">
                         <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Snap"
+                                         IsChecked="{Binding DesignCanvas.SnapToGrid}"
+                                         Size="Middle"
+                                         ToolTip="Snap elements to grid while dragging"
+                                         AutomationProperties.Name="Snap to grid">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7EF;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Bg Color" Click="DesignBgColor_Click" Size="Middle"
+                                   ToolTip="Set the page background color"
+                                   AutomationProperties.Name="Page background color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Zoom In"   Click="DesignZoomIn_Click"  Size="Middle" AutomationProperties.Name="Design zoom in">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"  Click="DesignZoomOut_Click" Size="Middle" AutomationProperties.Name="Design zoom out">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Fit"       Click="DesignZoomFit_Click" Size="Middle" ToolTip="Fit canvas to window" AutomationProperties.Name="Design zoom fit">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Position / Size -->
+                <Fluent:RibbonGroupBox Header="Position &amp; Size"
+                                        IsEnabled="{Binding DesignCanvas.HasSelection}"
+                                        AutomationProperties.Name="Position and size group">
+                    <Fluent:Spinner Header="X"
+                                    Value="{Binding DesignCanvas.SelectedX, Mode=TwoWay}"
+                                    Minimum="-9999" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Horizontal position (px)"
+                                    AutomationProperties.Name="Element X position"/>
+                    <Fluent:Spinner Header="Y"
+                                    Value="{Binding DesignCanvas.SelectedY, Mode=TwoWay}"
+                                    Minimum="-9999" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Vertical position (px)"
+                                    AutomationProperties.Name="Element Y position"/>
+                    <Fluent:Spinner Header="W"
+                                    Value="{Binding DesignCanvas.SelectedWidth, Mode=TwoWay}"
+                                    Minimum="4" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Element width (px)"
+                                    AutomationProperties.Name="Element width"/>
+                    <Fluent:Spinner Header="H"
+                                    Value="{Binding DesignCanvas.SelectedHeight, Mode=TwoWay}"
+                                    Minimum="4" Maximum="9999" Increment="1"
+                                    Width="64" ToolTip="Element height (px)"
+                                    AutomationProperties.Name="Element height"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Export Image -->
+                <Fluent:RibbonGroupBox Header="Export Image"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Design image export group">
+                    <Fluent:Button Header="PNG" Size="Large" Click="DesignExportPng_Click"
+                                   ToolTip="Export design canvas as PNG image"
+                                   AutomationProperties.Name="Export design as PNG">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="JPEG" Size="Large" Click="DesignExportJpeg_Click"
+                                   ToolTip="Export design canvas as JPEG image"
+                                   AutomationProperties.Name="Export design as JPEG">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -1765,7 +2563,7 @@
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
 
-                        <!-- ── Document area: PDF Viewer OR Design Canvas ─── -->
+                        <!-- ── Document area: Live View + Design as separate tabs ─── -->
                         <avalonDock:LayoutDocumentPaneGroup>
                             <avalonDock:LayoutDocumentPane>
                                 <!-- PDF viewer (visible in PDF mode) -->
@@ -1803,7 +2601,7 @@
                                                                                FontSize="13" Margin="0,0,6,0"
                                                                                Foreground="{DynamicResource ForegroundBrush}"
                                                                                VerticalAlignment="Center"/>
-                                                                    <TextBlock Text="PDF View" FontSize="12"
+                                                                    <TextBlock Text="Live View" FontSize="12"
                                                                                Foreground="{DynamicResource ForegroundBrush}"
                                                                                VerticalAlignment="Center"/>
                                                                 </StackPanel>
@@ -2031,6 +2829,284 @@
                             </ScrollViewer>
                         </TabItem>
 
+                        <!-- Design Layers tab -->
+                        <TabItem Header="Layers"
+                                 Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="Design elements layers">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="DESIGN ELEMENTS"
+                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding DesignCanvas.Elements}"
+                                         SelectedItem="{Binding DesignCanvas.SelectedElement, Mode=TwoWay}"
+                                         AutomationProperties.Name="Design elements list">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="2,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding ElementType}"
+                                                           FontSize="11"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding ZOrder}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource DimForegroundBrush}"
+                                                           Margin="4,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Bookmarks tab -->
+                        <TabItem Header="Bookmarks"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="PDF bookmarks outline">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="BOOKMARKS"
+                                               Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                    <Button Grid.Column="1" Content="+ Add" FontSize="10" Height="22" Margin="4,6,8,4"
+                                            Command="{Binding AddBookmarkCommand}"
+                                            IsEnabled="{Binding HasDocument}"
+                                            ToolTip="Add a bookmark for the current page"
+                                            Background="{DynamicResource AccentBrush}" Foreground="White"
+                                            BorderThickness="0" Padding="6,0"/>
+                                </Grid>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <TreeView ItemsSource="{Binding Bookmarks}"
+                                              FontSize="11"
+                                              AutomationProperties.Name="Bookmarks tree">
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <TextBlock Text="{Binding Title}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Cursor="Hand"
+                                                           Foreground="{DynamicResource ForegroundBrush}"
+                                                           ToolTip="{Binding Title}">
+                                                    <TextBlock.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.NavigateToBookmarkCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=TreeView}}"
+                                                                      CommandParameter="{Binding}"/>
+                                                    </TextBlock.InputBindings>
+                                                </TextBlock>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Comments/Annotations tab -->
+                        <TabItem Header="Comments"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="Annotation comments list">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="COMMENTS &amp; ANNOTATIONS"
+                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <!-- Sticky Notes -->
+                                        <ItemsControl ItemsSource="{Binding StickyNotes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="Sticky Note" FontSize="10" FontWeight="Bold"
+                                                                           Foreground="{DynamicResource AccentBrush}"/>
+                                                                <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                           FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Text}" FontSize="10"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       Margin="0,2,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Highlights -->
+                                        <ItemsControl ItemsSource="{Binding HighlightAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🖍" FontSize="11" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                            <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                       FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Shape annotations -->
+                                        <ItemsControl ItemsSource="{Binding ShapeAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="◻" FontSize="11" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                            <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                       FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Free text annotations -->
+                                        <ItemsControl ItemsSource="{Binding FreeTextAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="T" FontSize="11" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="Text" FontSize="10" FontWeight="Bold"
+                                                                           Foreground="{DynamicResource AccentBrush}"/>
+                                                                <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                           FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Text}" FontSize="10"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       Margin="0,2,0,0"
+                                                                       MaxHeight="36"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Attachments tab -->
+                        <TabItem Header="Attachments"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="PDF file attachments">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="ATTACHMENTS"
+                                               Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                    <Button Grid.Column="1" Content="+ Attach" FontSize="10" Height="22" Margin="4,6,8,4"
+                                            Command="{Binding AddAttachmentCommand}"
+                                            IsEnabled="{Binding HasDocument}"
+                                            ToolTip="Attach a file to this PDF"
+                                            Background="{DynamicResource AccentBrush}" Foreground="White"
+                                            BorderThickness="0" Padding="6,0"/>
+                                </Grid>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Attachments}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="4,2" Padding="6,4"
+                                                        Background="{DynamicResource InputBgBrush}"
+                                                        CornerRadius="3">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding SizeDisplay}" FontSize="9"
+                                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" Content="Save" FontSize="9" Height="20" Margin="4,0,2,0"
+                                                                Command="{Binding DataContext.ExtractAttachmentCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="Save attachment to disk"
+                                                                Padding="4,0" Background="Transparent"/>
+                                                        <Button Grid.Column="2" Content="✕" FontSize="9" Height="20" Margin="0,0,0,0"
+                                                                Command="{Binding DataContext.RemoveAttachmentCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="Remove this attachment"
+                                                                Padding="4,0" Background="Transparent"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
+
                                     </TabControl>
                                 </avalonDock:LayoutAnchorable>
 
@@ -2181,6 +3257,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
@@ -2228,6 +3305,19 @@
             <StatusBarItem Grid.Column="4" Margin="8,0">
                 <TextBlock Text="{Binding UiScale, StringFormat='Scale: {0:P0}'}"
                            AutomationProperties.Name="Interface scale"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="5" Margin="8,0"
+                           Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock AutomationProperties.Name="Design element position and size">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="X:{0:F0} Y:{1:F0}  W:{2:F0} H:{3:F0}">
+                            <Binding Path="DesignCanvas.SelectedX"/>
+                            <Binding Path="DesignCanvas.SelectedY"/>
+                            <Binding Path="DesignCanvas.SelectedWidth"/>
+                            <Binding Path="DesignCanvas.SelectedHeight"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
             </StatusBarItem>
         </StatusBar>
 

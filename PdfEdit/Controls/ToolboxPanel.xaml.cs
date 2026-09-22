@@ -8,6 +8,7 @@ using PdfEdit.Dialogs;
 using PdfEdit.Models;
 using PdfEdit.Services;
 using PdfEdit.ViewModels;
+using DesignTool = PdfEdit.Models.DesignTool;
 
 namespace PdfEdit.Controls;
 
@@ -28,13 +29,27 @@ public partial class ToolboxPanel : UserControl
 
     // ── Tool selection ────────────────────────────────────────────────────────
 
+    // Live-View tools: set ActiveTool and switch to Live View tab
     private void Tool_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is RadioButton rb && rb.Tag is string toolName
             && Enum.TryParse<ActiveTool>(toolName, out var tool)
             && VM is MainViewModel vm)
         {
+            vm.IsDesignMode = false;
             vm.ActiveTool = tool;
+        }
+    }
+
+    // Design-Canvas tools: set DesignCanvas.ActiveTool and switch to Design tab
+    private void DesignTool_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string toolName
+            && Enum.TryParse<DesignTool>(toolName, out var tool)
+            && VM is MainViewModel vm)
+        {
+            vm.IsDesignMode = true;
+            vm.DesignCanvas.ActiveTool = tool;
         }
     }
 
@@ -176,6 +191,7 @@ public partial class ToolboxPanel : UserControl
             SigPopup.IsOpen = false;
             if (VM is MainViewModel vm)
             {
+                vm.IsDesignMode = false;
                 vm.PendingLibrarySignature = sig.ImageBytes;
                 vm.ActiveTool = ActiveTool.Signature;
                 ToastService.Instance.Info($"'{sig.Name}' selected — click the page to place.");

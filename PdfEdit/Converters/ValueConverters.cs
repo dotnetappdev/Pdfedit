@@ -125,3 +125,13 @@ public class PercentConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is double d ? Math.Clamp(d / 100.0, 0.0, 1.0) : 1.0;
 }
+
+/// <summary>Converts float opacity 0.0f–1.0f to percent 0–100 for spinners (and back to float).</summary>
+public class OpacityPercentConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is float f ? Math.Round(f * 100.0) : (value is double d ? Math.Round(d * 100.0) : 100.0);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is double dv ? (float)Math.Clamp(dv / 100.0, 0.1, 1.0) : 0.4f;
+}

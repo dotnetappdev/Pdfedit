@@ -61,9 +61,39 @@ public partial class PdfViewerControl : UserControl
     private double _scrollHStart, _scrollVStart;
 
     // Highlight drag state
+    private bool _isDrawingHighlight;
     private bool _isDraggingHighlight;
     private Point _highlightDragStart;
+    private Rectangle? _highlightRubberBand;
     private Rectangle? _highlightPreview;
+
+    // Redaction drag state
+    private bool _isDrawingRedact;
+    private Point _redactDragStart;
+    private Rectangle? _redactRubberBand;
+
+    // Link drag state
+    private bool _isDrawingLink;
+    private Point _linkDragStart;
+    private Rectangle? _linkRubberBand;
+
+    // Freehand draw state
+    private bool _isDrawingFreehand;
+    private Polyline? _freehandPolyline;
+    private List<Point> _freehandPoints = new();
+
+    // Form field placement drag state
+    private bool _isDrawingFormField;
+    private Point _formFieldDragStart;
+    private Rectangle? _formFieldRubberBand;
+    private ActiveTool _formFieldTool;
+
+    // Shape drawing drag state (Rectangle / Ellipse / Arrow / Callout)
+    private bool _isDrawingShape;
+    private Point _shapeDragStart;
+    private ActiveTool _shapeTool;
+    private System.Windows.Shapes.Shape? _shapeRubberBand;
+    private System.Windows.Shapes.Line?  _arrowRubberBand;
 
     // Common stamp preset texts
     private static readonly string[] StampPresets =
@@ -584,6 +614,10 @@ public partial class PdfViewerControl : UserControl
             FieldOverlayCanvas.Height = h;
             HighlightCanvas.Width = w;
             HighlightCanvas.Height = h;
+            HlAnnotCanvas.Width = w;
+            HlAnnotCanvas.Height = h;
+            RdAnnotCanvas.Width = w;
+            RdAnnotCanvas.Height = h;
             AnnotationCanvas.Width = w;
             AnnotationCanvas.Height = h;
 
@@ -594,8 +628,12 @@ public partial class PdfViewerControl : UserControl
 
             _vm.RefreshCurrentPageFields();
             BuildFieldOverlay(_vm.CurrentPageFields, _vm.HighlightFields);
+            BuildHighlightAnnotationOverlay(_vm.GetHighlightAnnotationsForCurrentPage());
+            BuildRedactAnnotationOverlay(_vm.GetRedactRegionsForCurrentPage());
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
+            BuildStickyNoteOverlay(_vm.GetStickyNotesForCurrentPage());
+            BuildShapeOverlay(_vm.GetShapeAnnotationsForCurrentPage());
         }
         catch (Exception ex)
         {
@@ -1074,6 +1112,130 @@ public partial class PdfViewerControl : UserControl
         FieldOverlayCanvas.Children.Add(_fieldChromeBorder);
     }
 
+    // ── Highlight annotation overlay ──────────────────────────────────────────
+
+    private void BuildHighlightAnnotationOverlay(IEnumerable<Models.HighlightAnnotation> highlights)
+    {
+        HlAnnotCanvas.Children.Clear();
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var hl in highlights)
+            PlaceHighlightAnnotationVisual(hl, pageH);
+    }
+
+    private void PlaceHighlightAnnotationVisual(Models.HighlightAnnotation hl, double pageH)
+    {
+        double x = hl.Left * Scale;
+        double y = (pageH - hl.Bottom - hl.Height) * Scale;
+        double w = hl.Width * Scale;
+        double h = hl.Height * Scale;
+
+        Color c = ParseColor(hl.Color);
+        byte alpha = (byte)(hl.Opacity * 200);
+
+        FrameworkElement elem;
+        if (hl.Kind == Models.HighlightKind.Highlight)
+        {
+            var rect = new Rectangle
+            {
+                Width = w, Height = h,
+                Fill = new SolidColorBrush(Color.FromArgb(alpha, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y);
+            elem = rect;
+        }
+        else if (hl.Kind == Models.HighlightKind.Underline)
+        {
+            double lineH = Math.Max(2, h * 0.1);
+            var rect = new Rectangle
+            {
+                Width = w, Height = lineH,
+                Fill = new SolidColorBrush(Color.FromArgb(220, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y + h - lineH);
+            elem = rect;
+        }
+        else // Strikethrough
+        {
+            double lineH = Math.Max(2, h * 0.1);
+            var rect = new Rectangle
+            {
+                Width = w, Height = lineH,
+                Fill = new SolidColorBrush(Color.FromArgb(220, c.R, c.G, c.B)),
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y + (h - lineH) / 2);
+            elem = rect;
+        }
+
+        elem.ToolTip = "Right-click to delete highlight";
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = "Delete Highlight" };
+        delItem.Click += (_, _) =>
+        {
+            _vm!.RemoveHighlightAnnotation(hl);
+            HlAnnotCanvas.Children.Remove(elem);
+        };
+        cm.Items.Add(delItem);
+        elem.ContextMenu = cm;
+
+        HlAnnotCanvas.Children.Add(elem);
+    }
+
+    private static Color ParseColor(string hex)
+    {
+        try { return (Color)ColorConverter.ConvertFromString(hex); }
+        catch { return Colors.Yellow; }
+    }
+
+    // ── Redaction annotation overlay ──────────────────────────────────────────
+
+    private void BuildRedactAnnotationOverlay(IEnumerable<Models.RedactRegion> regions)
+    {
+        RdAnnotCanvas.Children.Clear();
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var r in regions)
+            PlaceRedactVisual(r, pageH);
+    }
+
+    private void PlaceRedactVisual(Models.RedactRegion r, double pageH)
+    {
+        double x = r.Left * Scale;
+        double y = (pageH - r.Bottom - r.Height) * Scale;
+        double w = r.Width * Scale;
+        double h = r.Height * Scale;
+
+        var rect = new Rectangle
+        {
+            Width = w, Height = h,
+            Fill = new SolidColorBrush(Color.FromArgb(200, 20, 20, 20)),
+            Stroke = new SolidColorBrush(Colors.Red),
+            StrokeThickness = 1.5,
+            ToolTip = "Redaction — right-click to remove",
+        };
+        Canvas.SetLeft(rect, x);
+        Canvas.SetTop(rect, y);
+
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = "Remove Redaction Box" };
+        delItem.Click += (_, _) =>
+        {
+            _vm!.RemoveRedactRegion(r);
+            RdAnnotCanvas.Children.Remove(rect);
+        };
+        cm.Items.Add(delItem);
+        rect.ContextMenu = cm;
+
+        RdAnnotCanvas.Children.Add(rect);
+    }
+
     // ── Free-text annotation overlay ──────────────────────────────────────────
 
     private void BuildAnnotationOverlay(IEnumerable<FreeTextAnnotation> annotations)
@@ -1098,6 +1260,45 @@ public partial class PdfViewerControl : UserControl
 
     private void PlaceAnnotationVisual(FreeTextAnnotation ann, double pageHeightPts)
     {
+        // Handle ink stroke annotations stored as __INK__:<color>:<pts>
+        if (ann.Text.StartsWith("__INK__:", StringComparison.Ordinal))
+        {
+            var parts = ann.Text.Split(':', 3);
+            if (parts.Length == 3)
+            {
+                var poly = new Polyline
+                {
+                    Stroke = new SolidColorBrush(ParseColor(parts[1])),
+                    StrokeThickness = 2,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    IsHitTestVisible = true,
+                    ToolTip = "Ink stroke — right-click to delete"
+                };
+                foreach (var ptStr in parts[2].Split(';'))
+                {
+                    var xy = ptStr.Split(',');
+                    if (xy.Length == 2 &&
+                        double.TryParse(xy[0], System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out double ptX) &&
+                        double.TryParse(xy[1], System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out double ptY))
+                    {
+                        poly.Points.Add(new Point(ptX * Scale, (pageHeightPts - ptY) * Scale));
+                    }
+                }
+                poly.MouseRightButtonDown += (_, re) =>
+                {
+                    _vm?.FreeTextAnnotations.Remove(ann);
+                    AnnotationCanvas.Children.Remove(poly);
+                    re.Handled = true;
+                };
+                AnnotationCanvas.Children.Add(poly);
+            }
+            return;
+        }
+
         double x = ann.Left * Scale;
         double y = (pageHeightPts - ann.Bottom - ann.Height) * Scale;
         double w = ann.Width * Scale;
@@ -1560,23 +1761,23 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool == ActiveTool.Highlight)
+        if (tool is ActiveTool.Highlight or ActiveTool.Underline or ActiveTool.Strikethrough)
         {
-            var posOnPage = e.GetPosition(AnnotationCanvas);
+            var posOnPage = e.GetPosition(HlAnnotCanvas);
             if (!IsOnPage(posOnPage)) return;
-            _isDraggingHighlight = true;
+            _isDrawingHighlight = true;
             _highlightDragStart = posOnPage;
-
-            _highlightPreview = new Rectangle
+            _highlightRubberBand = new Rectangle
             {
-                Fill = new SolidColorBrush(Color.FromArgb(100, 255, 240, 0)),
-                Stroke = new SolidColorBrush(Color.FromArgb(180, 200, 180, 0)),
+                Fill = new SolidColorBrush(Color.FromArgb(100, 255, 255, 0)),
+                Stroke = new SolidColorBrush(Color.FromArgb(180, 200, 150, 0)),
                 StrokeThickness = 1,
-                IsHitTestVisible = false,
+                Width = 0,
+                Height = 0,
             };
-            Canvas.SetLeft(_highlightPreview, posOnPage.X);
-            Canvas.SetTop(_highlightPreview, posOnPage.Y);
-            AnnotationCanvas.Children.Add(_highlightPreview);
+            Canvas.SetLeft(_highlightRubberBand, posOnPage.X);
+            Canvas.SetTop(_highlightRubberBand, posOnPage.Y);
+            HlAnnotCanvas.Children.Add(_highlightRubberBand);
             CaptureMouse();
             e.Handled = true;
             return;
@@ -1586,9 +1787,167 @@ public partial class PdfViewerControl : UserControl
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
-            ShowStampMenu(posOnPage);
+            FinalizeAnnotationBox();
+            PlaceRubberStampAnnotation(posOnPage);
             e.Handled = true;
             return;
+        }
+
+        if (tool == ActiveTool.Redact)
+        {
+            var posOnPage = e.GetPosition(RdAnnotCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingRedact = true;
+            _redactDragStart = posOnPage;
+            _redactRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(160, 20, 20, 20)),
+                Stroke = new SolidColorBrush(Colors.Red),
+                StrokeThickness = 1.5,
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_redactRubberBand, posOnPage.X);
+            Canvas.SetTop(_redactRubberBand, posOnPage.Y);
+            RdAnnotCanvas.Children.Add(_redactRubberBand);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.Link)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingLink = true;
+            _linkDragStart = posOnPage;
+            _linkRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(40, 0, 100, 255)),
+                Stroke = new SolidColorBrush(Color.FromArgb(200, 0, 80, 220)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 2 },
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_linkRubberBand, posOnPage.X);
+            Canvas.SetTop(_linkRubberBand, posOnPage.Y);
+            AnnotationCanvas.Children.Add(_linkRubberBand);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.DrawFreehand)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingFreehand = true;
+            _freehandPoints.Clear();
+            _freehandPoints.Add(posOnPage);
+            _freehandPolyline = new Polyline
+            {
+                Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentDrawingColor ?? "#1A1A1A")),
+                StrokeThickness = _vm?.CurrentStrokeWidth ?? 2.0,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            };
+            _freehandPolyline.Points.Add(posOnPage);
+            AnnotationCanvas.Children.Add(_freehandPolyline);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.StickyNote)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            PlaceStickyNote(posOnPage);
+            e.Handled = true;
+            return;
+        }
+
+        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingShape = true;
+            _shapeDragStart = posOnPage;
+            _shapeTool = tool;
+            string colorHex = _vm?.CurrentDrawingColor ?? "#C62828";
+            var strokeBrush = new SolidColorBrush(ParseColor(colorHex));
+            string fillHex = _vm?.CurrentFillColor ?? "";
+            Brush shapeFill = string.IsNullOrEmpty(fillHex)
+                ? new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B))
+                : new SolidColorBrush(ParseColor(fillHex));
+
+            double sw = _vm?.CurrentStrokeWidth ?? 2.0;
+            if (tool == ActiveTool.DrawArrow)
+            {
+                _arrowRubberBand = new System.Windows.Shapes.Line
+                {
+                    Stroke = strokeBrush,
+                    StrokeThickness = sw,
+                    X1 = posOnPage.X, Y1 = posOnPage.Y,
+                    X2 = posOnPage.X, Y2 = posOnPage.Y,
+                };
+                AnnotationCanvas.Children.Add(_arrowRubberBand);
+            }
+            else
+            {
+                System.Windows.Shapes.Shape rb = tool == ActiveTool.DrawEllipse
+                    ? new System.Windows.Shapes.Ellipse()
+                    : new Rectangle();
+                rb.Fill = shapeFill;
+                rb.Stroke = strokeBrush;
+                rb.StrokeThickness = sw;
+                rb.Width  = 0;
+                rb.Height = 0;
+                Canvas.SetLeft(rb, posOnPage.X);
+                Canvas.SetTop(rb,  posOnPage.Y);
+                _shapeRubberBand = rb;
+                AnnotationCanvas.Children.Add(rb);
+            }
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.Eraser)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            EraseAnnotationsNear(pos, eraserRadius: 16);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox or ActiveTool.AddRadioButton)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingFormField = true;
+            _formFieldTool = tool;
+            _formFieldDragStart = posOnPage;
+            var strokeColor = tool == ActiveTool.AddCheckbox ? Color.FromArgb(200, 30, 160, 30)
+                            : tool == ActiveTool.AddRadioButton ? Color.FromArgb(200, 160, 80, 0)
+                            : Color.FromArgb(200, 30, 90, 220);
+            _formFieldRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(30, strokeColor.R, strokeColor.G, strokeColor.B)),
+                Stroke = new SolidColorBrush(strokeColor),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 2 },
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_formFieldRubberBand, posOnPage.X);
+            Canvas.SetTop(_formFieldRubberBand, posOnPage.Y);
+            AnnotationCanvas.Children.Add(_formFieldRubberBand);
+            CaptureMouse();
+            e.Handled = true;
         }
     }
 
@@ -1601,11 +1960,384 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
+        if (_vm?.ActiveTool == ActiveTool.Eraser && IsMouseCaptured)
+        {
+            ReleaseMouseCapture();
+            e.Handled = true;
+            return;
+        }
+
         if (_isPanning)
         {
             _isPanning = false;
             ReleaseMouseCapture();
             Cursor = Cursors.Arrow;
+            return;
+        }
+
+        if (_isDrawingHighlight)
+        {
+            _isDrawingHighlight = false;
+            ReleaseMouseCapture();
+
+            if (_highlightRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _highlightRubberBand.Width;
+                double rectH = _highlightRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_highlightRubberBand);
+                double canvasY = Canvas.GetTop(_highlightRubberBand);
+                HlAnnotCanvas.Children.Remove(_highlightRubberBand);
+                _highlightRubberBand = null;
+
+                if (rectW > 4 && rectH > 4)
+                {
+                    int pageNum = _vm.CurrentPageIndex + 1;
+                    if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                    {
+                        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        var kind = _vm.ActiveTool switch
+                        {
+                            ActiveTool.Underline      => Models.HighlightKind.Underline,
+                            ActiveTool.Strikethrough  => Models.HighlightKind.Strikethrough,
+                            _                         => Models.HighlightKind.Highlight,
+                        };
+                        var hl = new Models.HighlightAnnotation
+                        {
+                            Left    = canvasX / Scale,
+                            Bottom  = pageH - (canvasY / Scale) - (rectH / Scale),
+                            Width   = rectW / Scale,
+                            Height  = rectH / Scale,
+                            Color   = _vm.CurrentHighlightColor,
+                            Opacity = _vm.CurrentHighlightOpacity,
+                            Kind    = kind,
+                        };
+                        _vm.AddHighlightAnnotation(hl);
+                        PlaceHighlightAnnotationVisual(hl, pageH);
+                        _vm.StatusText = $"{kind} added. Right-click to delete.";
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingRedact)
+        {
+            _isDrawingRedact = false;
+            ReleaseMouseCapture();
+
+            if (_redactRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _redactRubberBand.Width;
+                double rectH = _redactRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_redactRubberBand);
+                double canvasY = Canvas.GetTop(_redactRubberBand);
+                RdAnnotCanvas.Children.Remove(_redactRubberBand);
+                _redactRubberBand = null;
+
+                if (rectW > 4 && rectH > 4)
+                {
+                    int pageNum = _vm.CurrentPageIndex + 1;
+                    if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                    {
+                        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        var r = new Models.RedactRegion
+                        {
+                            Left   = canvasX / Scale,
+                            Bottom = pageH - (canvasY / Scale) - (rectH / Scale),
+                            Width  = rectW / Scale,
+                            Height = rectH / Scale,
+                        };
+                        _vm.AddRedactRegion(r);
+                        PlaceRedactVisual(r, pageH);
+                        _vm.StatusText = "Redaction box added. Click 'Apply Redactions' to burn in.";
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingLink)
+        {
+            _isDrawingLink = false;
+            ReleaseMouseCapture();
+
+            if (_linkRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _linkRubberBand.Width;
+                double rectH = _linkRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_linkRubberBand);
+                double canvasY = Canvas.GetTop(_linkRubberBand);
+                AnnotationCanvas.Children.Remove(_linkRubberBand);
+                _linkRubberBand = null;
+
+                if (rectW > 6 && rectH > 6)
+                {
+                    var uriDlg = new Dialogs.LinkUriDialog { Owner = Window.GetWindow(this) };
+                    if (uriDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(uriDlg.Uri))
+                    {
+                        int pageNum = _vm.CurrentPageIndex + 1;
+                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                        {
+                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                            float left   = (float)(canvasX / Scale);
+                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
+                            float width  = (float)(rectW / Scale);
+                            float height = (float)(rectH / Scale);
+                            string uri   = uriDlg.Uri;
+                            string srcPath = _vm.CurrentFilePath!;
+                            string tmpPath = srcPath + ".tmp";
+                            try
+                            {
+                                var svc = new PdfEdit.Services.PdfFormService();
+                                svc.AddLinkAnnotation(srcPath, tmpPath, pageNum, left, bottom, width, height, uri);
+                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
+                                _vm.StatusText = $"Link added to page {pageNum}.";
+                                PdfEdit.Services.ToastService.Instance.Success("Hyperlink annotation added.");
+                                _ = _vm.ReloadCurrentFileAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                Dialogs.AppDialog.ShowError("Add link failed.", ex);
+                            }
+                            finally
+                            {
+                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
+                            }
+                        }
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingFreehand)
+        {
+            _isDrawingFreehand = false;
+            ReleaseMouseCapture();
+
+            if (_freehandPolyline != null && _freehandPolyline.Points.Count >= 2 && _vm?.Document != null)
+            {
+                // Store the freehand polyline as a FreeTextAnnotation so it saves with the PDF.
+                // The visual representation is kept on AnnotationCanvas; the VM stores it in FreeTextAnnotations
+                // as a special "Ink" annotation type that gets serialized on save.
+                int pageNum = _vm.CurrentPageIndex + 1;
+                if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                {
+                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                    // Compute bounding box of points
+                    var xs = _freehandPolyline.Points.Select(p => p.X);
+                    var ys = _freehandPolyline.Points.Select(p => p.Y);
+                    double minX = xs.Min(), maxX = xs.Max();
+                    double minY = ys.Min(), maxY = ys.Max();
+
+                    // Encode path as a compact string stored as annotation content
+                    string encodedPts = string.Join(";", _freehandPolyline.Points.Select(p =>
+                        $"{p.X / Scale:F2},{(pageH - p.Y / Scale):F2}"));
+                    string colorHex = _vm.CurrentDrawingColor ?? "#000000";
+
+                    var annot = new Models.FreeTextAnnotation
+                    {
+                        PageNumber = pageNum,
+                        Left       = minX / Scale,
+                        Bottom     = pageH - (maxY / Scale),
+                        Width      = Math.Max((maxX - minX) / Scale, 2),
+                        Height     = Math.Max((maxY - minY) / Scale, 2),
+                        Text       = $"__INK__:{colorHex}:{encodedPts}",
+                        FontSize   = 0,
+                        FontFamily = "Ink",
+                        FontColor  = colorHex,
+                        IsBold     = false, IsItalic = false, IsUnderline = false,
+                    };
+                    _vm.FreeTextAnnotations.Add(annot);
+                    _vm.StatusText = "Ink stroke added.";
+                }
+            }
+            else if (_freehandPolyline != null)
+            {
+                AnnotationCanvas.Children.Remove(_freehandPolyline);
+            }
+            _freehandPolyline = null;
+            _freehandPoints.Clear();
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingFormField)
+        {
+            _isDrawingFormField = false;
+            ReleaseMouseCapture();
+
+            if (_formFieldRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _formFieldRubberBand.Width;
+                double rectH = _formFieldRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_formFieldRubberBand);
+                double canvasY = Canvas.GetTop(_formFieldRubberBand);
+                AnnotationCanvas.Children.Remove(_formFieldRubberBand);
+                _formFieldRubberBand = null;
+
+                if (rectW > 8 && rectH > 8)
+                {
+                    var nameDlg = new Dialogs.FieldNameDialog
+                    {
+                        Owner = Window.GetWindow(this),
+                        FieldType = _formFieldTool == ActiveTool.AddCheckbox ? "Checkbox"
+                                  : _formFieldTool == ActiveTool.AddComboBox ? "Combo Box"
+                                  : _formFieldTool == ActiveTool.AddRadioButton ? "Radio Button"
+                                  : "Text Field",
+                    };
+                    if (nameDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(nameDlg.FieldName))
+                    {
+                        int pageNum = _vm.CurrentPageIndex + 1;
+                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                        {
+                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                            float left   = (float)(canvasX / Scale);
+                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
+                            float width  = (float)(rectW / Scale);
+                            float height = (float)(rectH / Scale);
+                            string fname = nameDlg.FieldName;
+                            ActiveTool fTool = _formFieldTool;
+                            string srcPath = _vm.CurrentFilePath!;
+                            string tmpPath = srcPath + ".tmp";
+                            try
+                            {
+                                var svc = new PdfEdit.Services.PdfFormService();
+                                if (fTool == ActiveTool.AddCheckbox)
+                                    svc.AddCheckboxField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname);
+                                else if (fTool == ActiveTool.AddComboBox)
+                                    svc.AddComboBoxField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname, nameDlg.ComboChoices ?? Array.Empty<string>());
+                                else if (fTool == ActiveTool.AddRadioButton)
+                                    svc.AddRadioButtonField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname, fname);
+                                else
+                                    svc.AddTextFormField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname);
+                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
+                                _vm.StatusText = $"Field '{fname}' added to page {pageNum}.";
+                                PdfEdit.Services.ToastService.Instance.Success($"Form field '{fname}' added.");
+                                _ = _vm.ReloadCurrentFileAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                Dialogs.AppDialog.ShowError("Add form field failed.", ex);
+                            }
+                            finally
+                            {
+                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
+                            }
+                        }
+                    }
+                }
+            }
+            e.Handled = true;
+        }
+
+        if (_isDrawingShape)
+        {
+            _isDrawingShape = false;
+            ReleaseMouseCapture();
+
+            if (_vm?.Document != null)
+            {
+                int pageNum = _vm.CurrentPageIndex + 1;
+                if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                {
+                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                    string colorHex = _vm.CurrentDrawingColor ?? "#C62828";
+                    string fillHex  = _vm.CurrentFillColor ?? "";
+                    double strokeW = _vm.CurrentStrokeWidth;
+
+                    if (_arrowRubberBand != null)
+                    {
+                        double dx = Math.Abs(_arrowRubberBand.X2 - _arrowRubberBand.X1);
+                        double dy = Math.Abs(_arrowRubberBand.Y2 - _arrowRubberBand.Y1);
+                        if (dx > 4 || dy > 4)
+                        {
+                            var shape = new Models.ShapeAnnotation
+                            {
+                                Kind        = Models.ShapeKind.Arrow,
+                                X1          = _arrowRubberBand.X1 / Scale,
+                                Y1          = pageH - _arrowRubberBand.Y1 / Scale,
+                                X2          = _arrowRubberBand.X2 / Scale,
+                                Y2          = pageH - _arrowRubberBand.Y2 / Scale,
+                                StrokeColor = colorHex,
+                                LineWidth   = strokeW,
+                            };
+                            _vm.AddShapeAnnotation(shape);
+                            PlaceShapeVisual(shape, pageH);
+                            _vm.StatusText = "Arrow annotation added. Right-click to delete.";
+                        }
+                        AnnotationCanvas.Children.Remove(_arrowRubberBand);
+                        _arrowRubberBand = null;
+                    }
+                    else if (_shapeRubberBand != null)
+                    {
+                        double rectW = _shapeRubberBand.Width;
+                        double rectH2 = _shapeRubberBand.Height;
+                        double canvasX = Canvas.GetLeft(_shapeRubberBand);
+                        double canvasY = Canvas.GetTop(_shapeRubberBand);
+                        bool isEllipse = _shapeRubberBand is System.Windows.Shapes.Ellipse;
+                        bool isCallout = _shapeTool == ActiveTool.DrawCallout;
+                        AnnotationCanvas.Children.Remove(_shapeRubberBand);
+                        _shapeRubberBand = null;
+
+                        if (rectW > 4 && rectH2 > 4)
+                        {
+                            double left   = canvasX / Scale;
+                            double bottom = pageH - (canvasY + rectH2) / Scale;
+
+                            if (isCallout)
+                            {
+                                var dlg = new Dialogs.InputDialog("Callout Text", "Enter the text for the callout:", "");
+                                if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.InputText))
+                                {
+                                    string defaultFill = string.IsNullOrEmpty(fillHex) ? "#FFFDE7" : fillHex;
+                                    var shape = new Models.ShapeAnnotation
+                                    {
+                                        Kind        = Models.ShapeKind.Callout,
+                                        X1          = left,
+                                        Y1          = bottom,
+                                        X2          = left + rectW / Scale,
+                                        Y2          = bottom + rectH2 / Scale,
+                                        StrokeColor = colorHex,
+                                        FillColor   = defaultFill,
+                                        LineWidth   = strokeW,
+                                        CalloutText = dlg.InputText.Trim(),
+                                    };
+                                    _vm.AddShapeAnnotation(shape);
+                                    PlaceCalloutVisual(shape, pageH);
+                                    _vm.StatusText = "Callout annotation added. Right-click to delete.";
+                                }
+                            }
+                            else
+                            {
+                                var shape = new Models.ShapeAnnotation
+                                {
+                                    Kind        = isEllipse ? Models.ShapeKind.Ellipse : Models.ShapeKind.Rectangle,
+                                    X1          = left,
+                                    Y1          = bottom,
+                                    X2          = left + rectW / Scale,
+                                    Y2          = bottom + rectH2 / Scale,
+                                    StrokeColor = colorHex,
+                                    FillColor   = fillHex,
+                                    LineWidth   = strokeW,
+                                };
+                                _vm.AddShapeAnnotation(shape);
+                                PlaceShapeVisual(shape, pageH);
+                                _vm.StatusText = $"{(isEllipse ? "Ellipse" : "Rectangle")} annotation added. Right-click to delete.";
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (_arrowRubberBand  != null) { AnnotationCanvas.Children.Remove(_arrowRubberBand);  _arrowRubberBand  = null; }
+                if (_shapeRubberBand  != null) { AnnotationCanvas.Children.Remove(_shapeRubberBand);  _shapeRubberBand  = null; }
+            }
+            e.Handled = true;
         }
 
         if (_isDraggingHighlight)
@@ -1656,6 +2388,97 @@ public partial class PdfViewerControl : UserControl
             var pos = e.GetPosition(this);
             PdfScrollViewer.ScrollToHorizontalOffset(_scrollHStart + (_panStart.X - pos.X));
             PdfScrollViewer.ScrollToVerticalOffset(_scrollVStart + (_panStart.Y - pos.Y));
+            return;
+        }
+
+        if (_isDrawingHighlight && _highlightRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(HlAnnotCanvas);
+            double x = Math.Min(pos.X, _highlightDragStart.X);
+            double y = Math.Min(pos.Y, _highlightDragStart.Y);
+            double w = Math.Abs(pos.X - _highlightDragStart.X);
+            double h = Math.Abs(pos.Y - _highlightDragStart.Y);
+            Canvas.SetLeft(_highlightRubberBand, x);
+            Canvas.SetTop(_highlightRubberBand, y);
+            _highlightRubberBand.Width  = w;
+            _highlightRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingRedact && _redactRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(RdAnnotCanvas);
+            double x = Math.Min(pos.X, _redactDragStart.X);
+            double y = Math.Min(pos.Y, _redactDragStart.Y);
+            double w = Math.Abs(pos.X - _redactDragStart.X);
+            double h = Math.Abs(pos.Y - _redactDragStart.Y);
+            Canvas.SetLeft(_redactRubberBand, x);
+            Canvas.SetTop(_redactRubberBand, y);
+            _redactRubberBand.Width  = w;
+            _redactRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingLink && _linkRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            double x = Math.Min(pos.X, _linkDragStart.X);
+            double y = Math.Min(pos.Y, _linkDragStart.Y);
+            double w = Math.Abs(pos.X - _linkDragStart.X);
+            double h = Math.Abs(pos.Y - _linkDragStart.Y);
+            Canvas.SetLeft(_linkRubberBand, x);
+            Canvas.SetTop(_linkRubberBand, y);
+            _linkRubberBand.Width  = w;
+            _linkRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingFreehand && _freehandPolyline != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            _freehandPolyline.Points.Add(pos);
+            return;
+        }
+
+        if (_vm?.ActiveTool == ActiveTool.Eraser && e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            EraseAnnotationsNear(pos, eraserRadius: 16);
+            return;
+        }
+
+        if (_isDrawingFormField && _formFieldRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            double x = Math.Min(pos.X, _formFieldDragStart.X);
+            double y = Math.Min(pos.Y, _formFieldDragStart.Y);
+            double w = Math.Abs(pos.X - _formFieldDragStart.X);
+            double h = Math.Abs(pos.Y - _formFieldDragStart.Y);
+            Canvas.SetLeft(_formFieldRubberBand, x);
+            Canvas.SetTop(_formFieldRubberBand, y);
+            _formFieldRubberBand.Width  = w;
+            _formFieldRubberBand.Height = h;
+        }
+
+        if (_isDrawingShape && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            if (_arrowRubberBand != null)
+            {
+                _arrowRubberBand.X2 = pos.X;
+                _arrowRubberBand.Y2 = pos.Y;
+            }
+            else if (_shapeRubberBand != null)
+            {
+                double x = Math.Min(pos.X, _shapeDragStart.X);
+                double y = Math.Min(pos.Y, _shapeDragStart.Y);
+                double w = Math.Abs(pos.X - _shapeDragStart.X);
+                double h = Math.Abs(pos.Y - _shapeDragStart.Y);
+                Canvas.SetLeft(_shapeRubberBand, x);
+                Canvas.SetTop(_shapeRubberBand,  y);
+                _shapeRubberBand.Width  = w;
+                _shapeRubberBand.Height = h;
+            }
         }
 
         if (_isDraggingHighlight && e.LeftButton == MouseButtonState.Pressed && _highlightPreview != null)
@@ -1944,6 +2767,90 @@ public partial class PdfViewerControl : UserControl
         ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
     }
 
+    // ── Rubber stamp (APPROVED / CONFIDENTIAL / etc.) ─────────────────────────
+
+    private void PlaceRubberStampAnnotation(Point posOnCanvas)
+    {
+        if (_vm?.Document == null) return;
+
+        string label = _vm.SelectedStamp;
+        int pageNum  = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
+
+        string colorHex = label switch
+        {
+            "APPROVED"     => "#1B5E20",
+            "CONFIDENTIAL" => "#B71C1C",
+            "DRAFT"        => "#1565C0",
+            "FINAL"        => "#1B5E20",
+            "VOID"         => "#B71C1C",
+            "REJECTED"     => "#B71C1C",
+            "NOT APPROVED" => "#B71C1C",
+            _              => "#7B1FA2",
+        };
+        Color c = ParseColor(colorHex);
+
+        double dispW = 130 * Scale;
+        double dispH = 34 * Scale;
+
+        double pdfX = posOnCanvas.X / Scale;
+        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (dispH / Scale);
+
+        var ann = new FreeTextAnnotation
+        {
+            PageNumber  = pageNum,
+            Left        = pdfX,
+            Bottom      = pdfY,
+            Width       = dispW / Scale,
+            Height      = dispH / Scale,
+            Text        = label,
+            FontSize    = 18,
+            FontFamily  = "Arial",
+            IsBold      = true,
+            FontColor   = colorHex,
+            TextAlignment = System.Windows.TextAlignment.Center,
+            RotationAngle = -15,
+        };
+        _vm.FreeTextAnnotations.Add(ann);
+
+        // Visual rubber stamp border
+        var tb = new TextBox
+        {
+            Width = dispW, Height = dispH,
+            Text = label,
+            FontSize = Math.Max(8, 18 * Scale / PdfRenderService.PointsToDips),
+            FontWeight = FontWeights.Bold,
+            FontFamily = new FontFamily("Arial"),
+            Foreground = new SolidColorBrush(c),
+            Background = Brushes.Transparent,
+            BorderBrush = new SolidColorBrush(Color.FromArgb(180, c.R, c.G, c.B)),
+            BorderThickness = new Thickness(2),
+            IsReadOnly = true,
+            TextAlignment = System.Windows.TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            ToolTip = $"Rubber stamp: {label} — right-click to delete",
+        };
+        tb.LayoutTransform = new RotateTransform(-15);
+
+        var cm = new ContextMenu();
+        var delItem = new MenuItem { Header = $"Delete Stamp \"{label}\"" };
+        delItem.Click += (_, _) =>
+        {
+            _vm.RemoveFreeTextAnnotation(ann);
+            AnnotationCanvas.Children.Remove(tb);
+        };
+        cm.Items.Add(delItem);
+        tb.ContextMenu = cm;
+
+        Canvas.SetLeft(tb, posOnCanvas.X);
+        Canvas.SetTop(tb, posOnCanvas.Y);
+        AnnotationCanvas.Children.Add(tb);
+
+        _vm.StatusText = $"'{label}' stamp placed. Right-click to delete.";
+        ToastService.Instance.Success($"'{label}' stamp placed.");
+    }
+
     // ── Free-text TextBox placement ───────────────────────────────────────────
 
     private void PlaceNewAnnotationBox(Point posOnCanvas, bool vertical, string? prefilledText)
@@ -2152,6 +3059,286 @@ public partial class PdfViewerControl : UserControl
             var pdf = files.FirstOrDefault(f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
             if (pdf != null && _vm != null) await _vm.OpenFileAsync(pdf);
         }
+    }
+
+    // ── Sticky note overlay ───────────────────────────────────────────────────
+
+    private void BuildStickyNoteOverlay(IEnumerable<Models.StickyNoteAnnotation> notes)
+    {
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var note in notes)
+            PlaceStickyNoteVisual(note, pageH);
+    }
+
+    private void PlaceStickyNoteVisual(Models.StickyNoteAnnotation note, double pageH)
+    {
+        double x = note.Left * Scale;
+        double y = (pageH - note.Bottom) * Scale;
+
+        var border = new Border
+        {
+            Width = 28, Height = 28,
+            Background = new SolidColorBrush(ParseColor(note.Color)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(200, 100, 80, 0)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(3, 3, 0, 3),
+            Cursor = Cursors.Hand,
+            ToolTip = $"📌 {note.Author}: {note.Text}",
+        };
+
+        var icon = new TextBlock
+        {
+            Text = "📌",
+            FontSize = 14,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        border.Child = icon;
+
+        var cm = new ContextMenu();
+        var viewItem = new MenuItem { Header = "View Note" };
+        viewItem.Click += (_, _) =>
+            MessageBox.Show(note.Text, $"Sticky Note — {note.Author}",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        var delItem = new MenuItem { Header = "Delete Note" };
+        delItem.Click += (_, _) =>
+        {
+            _vm?.RemoveStickyNote(note);
+            AnnotationCanvas.Children.Remove(border);
+        };
+        cm.Items.Add(viewItem);
+        cm.Items.Add(delItem);
+        border.ContextMenu = cm;
+
+        Canvas.SetLeft(border, x - 14);
+        Canvas.SetTop(border, y - 28);
+        AnnotationCanvas.Children.Add(border);
+    }
+
+    private void PlaceStickyNote(Point posOnCanvas)
+    {
+        if (_vm?.Document == null) return;
+        var dlg = new Dialogs.StickyNoteDialog { Owner = Window.GetWindow(this) };
+        if (dlg.ShowDialog() != true) return;
+
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+
+        var note = new Models.StickyNoteAnnotation
+        {
+            Left   = posOnCanvas.X / Scale,
+            Bottom = pageH - (posOnCanvas.Y / Scale),
+            Text   = dlg.NoteText,
+            Author = dlg.Author,
+            Color  = dlg.NoteColor,
+        };
+        _vm.AddStickyNote(note);
+        PlaceStickyNoteVisual(note, pageH);
+        _vm.StatusText = "Sticky note added. Right-click to delete or view.";
+        ToastService.Instance.Success("Sticky note added.");
+    }
+
+    // ── Shape Annotation Overlay ──────────────────────────────────────────────
+
+    private void BuildShapeOverlay(IEnumerable<Models.ShapeAnnotation> shapes)
+    {
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var shape in shapes)
+            PlaceShapeVisual(shape, pageH);
+    }
+
+    private void PlaceShapeVisual(Models.ShapeAnnotation shape, double pageH)
+    {
+        if (shape.Kind == Models.ShapeKind.Callout)
+        {
+            PlaceCalloutVisual(shape, pageH);
+            return;
+        }
+        var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
+        Brush fillBrush;
+        if (shape.FillColor == "")
+            fillBrush = System.Windows.Media.Brushes.Transparent;
+        else if (!string.IsNullOrEmpty(shape.FillColor))
+            fillBrush = new SolidColorBrush(ParseColor(shape.FillColor));
+        else
+            fillBrush = new SolidColorBrush(Color.FromArgb(30, strokeBrush.Color.R, strokeBrush.Color.G, strokeBrush.Color.B));
+
+        System.Windows.UIElement visual;
+
+        if (shape.Kind == Models.ShapeKind.Arrow)
+        {
+            double x1c = shape.X1 * Scale;
+            double y1c = (pageH - shape.Y1) * Scale;
+            double x2c = shape.X2 * Scale;
+            double y2c = (pageH - shape.Y2) * Scale;
+            var line = new System.Windows.Shapes.Line
+            {
+                X1 = x1c, Y1 = y1c, X2 = x2c, Y2 = y2c,
+                Stroke = strokeBrush,
+                StrokeThickness = shape.LineWidth,
+                StrokeEndLineCap = PenLineCap.Triangle,
+            };
+            line.Tag = shape;
+            line.ToolTip = "Arrow annotation (right-click to delete)";
+            var ctxLine = new ContextMenu();
+            var delLine = new MenuItem { Header = "Delete Arrow" };
+            delLine.Click += (_, _) => { AnnotationCanvas.Children.Remove(line); _vm?.RemoveShapeAnnotation(shape); };
+            ctxLine.Items.Add(delLine);
+            line.ContextMenu = ctxLine;
+            visual = line;
+        }
+        else
+        {
+            double left   = shape.X1 * Scale;
+            double top    = (pageH - shape.Y2) * Scale;
+            double width  = (shape.X2 - shape.X1) * Scale;
+            double height = (shape.Y2 - shape.Y1) * Scale;
+            System.Windows.Shapes.Shape sh = shape.Kind == Models.ShapeKind.Ellipse
+                ? new System.Windows.Shapes.Ellipse { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth }
+                : new Rectangle { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth };
+            Canvas.SetLeft(sh, left);
+            Canvas.SetTop(sh,  top);
+            sh.Tag = shape;
+            sh.ToolTip = $"{shape.Kind} annotation (right-click to delete)";
+            var ctx = new ContextMenu();
+            var del = new MenuItem { Header = $"Delete {shape.Kind}" };
+            del.Click += (_, _) => { AnnotationCanvas.Children.Remove(sh); _vm?.RemoveShapeAnnotation(shape); };
+            ctx.Items.Add(del);
+            sh.ContextMenu = ctx;
+            visual = sh;
+        }
+
+        AnnotationCanvas.Children.Add(visual);
+    }
+
+    private void PlaceCalloutVisual(Models.ShapeAnnotation shape, double pageH)
+    {
+        double left   = shape.X1 * Scale;
+        double top    = (pageH - shape.Y2) * Scale;
+        double width  = (shape.X2 - shape.X1) * Scale;
+        double height = (shape.Y2 - shape.Y1) * Scale;
+
+        var strokeBrush = new SolidColorBrush(ParseColor(shape.StrokeColor));
+        var fillBrush   = string.IsNullOrEmpty(shape.FillColor)
+            ? new SolidColorBrush(Color.FromArgb(240, 255, 253, 231))
+            : new SolidColorBrush(ParseColor(shape.FillColor));
+
+        const double tipLen = 22.0;
+
+        var cv = new Canvas
+        {
+            Width   = width,
+            Height  = height + tipLen,
+            Tag     = shape,
+            ToolTip = $"Callout: {shape.CalloutText}\n(right-click to delete)",
+        };
+        Canvas.SetLeft(cv, left);
+        Canvas.SetTop(cv,  top);
+
+        var box = new Rectangle
+        {
+            Width           = width,
+            Height          = height,
+            Fill            = fillBrush,
+            Stroke          = strokeBrush,
+            StrokeThickness = shape.LineWidth,
+            RadiusX         = 3,
+            RadiusY         = 3,
+        };
+        Canvas.SetLeft(box, 0);
+        Canvas.SetTop(box,  0);
+        cv.Children.Add(box);
+
+        var tb = new TextBlock
+        {
+            Text         = shape.CalloutText,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground   = strokeBrush,
+            FontSize     = 11,
+            Width        = Math.Max(width - 10, 10),
+            MaxHeight    = Math.Max(height - 10, 10),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        Canvas.SetLeft(tb, 5);
+        Canvas.SetTop(tb,  5);
+        cv.Children.Add(tb);
+
+        double mid = width / 2.0;
+        var pointer = new Polygon
+        {
+            Points = new PointCollection
+            {
+                new Point(mid - 8, height),
+                new Point(mid + 8, height),
+                new Point(mid,     height + tipLen),
+            },
+            Fill            = fillBrush,
+            Stroke          = strokeBrush,
+            StrokeThickness = shape.LineWidth,
+        };
+        cv.Children.Add(pointer);
+
+        var ctx = new ContextMenu();
+        var del = new MenuItem { Header = "Delete Callout" };
+        del.Click += (_, _) => { AnnotationCanvas.Children.Remove(cv); _vm?.RemoveShapeAnnotation(shape); };
+        ctx.Items.Add(del);
+        cv.ContextMenu = ctx;
+        cv.MouseRightButtonDown += (s2, e2) => { ctx.IsOpen = true; e2.Handled = true; };
+
+        AnnotationCanvas.Children.Add(cv);
+    }
+
+    private void EraseAnnotationsNear(Point canvasPos, double eraserRadius)
+    {
+        if (_vm == null) return;
+
+        // Erase shape annotations (Rectangle, Ellipse, Arrow, Freehand polylines, Callout canvases)
+        var toRemoveUi    = new List<UIElement>();
+        var toRemoveModel = new List<Models.ShapeAnnotation>();
+
+        foreach (UIElement child in AnnotationCanvas.Children)
+        {
+            if (child is System.Windows.Shapes.Shape sh)
+            {
+                var bounds = sh.RenderedGeometry?.Bounds ?? Rect.Empty;
+                var offset = sh.TranslatePoint(new Point(0, 0), AnnotationCanvas);
+                bounds.Offset(offset.X, offset.Y);
+                bounds.Inflate(eraserRadius, eraserRadius);
+                if (bounds.Contains(canvasPos))
+                {
+                    if (sh.Tag is Models.ShapeAnnotation ann)
+                    {
+                        toRemoveUi.Add(sh);
+                        toRemoveModel.Add(ann);
+                    }
+                    else if (sh is Polyline)
+                    {
+                        toRemoveUi.Add(sh);
+                    }
+                }
+            }
+            else if (child is Canvas cv && cv.Tag is Models.ShapeAnnotation calloutAnn)
+            {
+                double cvLeft = Canvas.GetLeft(cv);
+                double cvTop  = Canvas.GetTop(cv);
+                var bounds = new Rect(cvLeft - eraserRadius, cvTop - eraserRadius,
+                    cv.Width + eraserRadius * 2, cv.Height + eraserRadius * 2);
+                if (bounds.Contains(canvasPos))
+                {
+                    toRemoveUi.Add(cv);
+                    toRemoveModel.Add(calloutAnn);
+                }
+            }
+        }
+
+        foreach (var ui in toRemoveUi) AnnotationCanvas.Children.Remove(ui);
+        foreach (var ann in toRemoveModel) _vm.RemoveShapeAnnotation(ann);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

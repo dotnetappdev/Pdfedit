@@ -13,6 +13,7 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
     private readonly PdfRenderService _renderService = new();
+    private readonly Services.AnnotationUndoService _undoService = new();
 
     private PdfDocumentInfo? _document;
     private int _currentPageIndex;
@@ -62,6 +63,10 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<FreeTextAnnotation> FreeTextAnnotations { get; } = new();
     public ObservableCollection<PlacedSignature> PlacedSignatures { get; } = new();
+    public ObservableCollection<Models.HighlightAnnotation> HighlightAnnotations { get; } = new();
+    public ObservableCollection<Models.RedactRegion> RedactionRegions { get; } = new();
+    public ObservableCollection<Models.StickyNoteAnnotation> StickyNotes { get; } = new();
+    public ObservableCollection<Models.ShapeAnnotation> ShapeAnnotations { get; } = new();
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
     public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
@@ -81,6 +86,21 @@ public class MainViewModel : INotifyPropertyChanged
         "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
     };
 
+    private static readonly string[] _builtInStamps =
+    {
+        "APPROVED", "CONFIDENTIAL", "DRAFT", "FINAL", "FOR REVIEW",
+        "NOT APPROVED", "RECEIVED", "REJECTED", "REVISED", "VOID"
+    };
+
+    public System.Collections.ObjectModel.ObservableCollection<string> AvailableStamps { get; } = new();
+
+    private string _selectedStamp = "APPROVED";
+    public string SelectedStamp
+    {
+        get => _selectedStamp;
+        set { _selectedStamp = value; OnPropertyChanged(); }
+    }
+
     // ── Bindable Properties ──────────────────────────────────────────────────
 
     public PdfDocumentInfo? Document
@@ -97,6 +117,13 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     public bool HasDocument => _document != null;
+    public string? CurrentFilePath => _currentFilePath;
+
+    public async Task ReloadCurrentFileAsync()
+    {
+        if (_currentFilePath != null)
+            await LoadDocumentAsync(_currentFilePath);
+    }
 
     public int CurrentPageIndex
     {
@@ -210,6 +237,41 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _highlightFields;
         set { _highlightFields = value; OnPropertyChanged(); PageChanged?.Invoke(); }
+    }
+
+    private string _currentHighlightColor = "#FFFF00";
+    public string CurrentHighlightColor
+    {
+        get => _currentHighlightColor;
+        set { _currentHighlightColor = value; OnPropertyChanged(); }
+    }
+
+    private string _currentDrawingColor = "#C62828";
+    public string CurrentDrawingColor
+    {
+        get => _currentDrawingColor;
+        set { _currentDrawingColor = value; OnPropertyChanged(); }
+    }
+
+    private string _currentFillColor = "";
+    public string CurrentFillColor
+    {
+        get => _currentFillColor;
+        set { _currentFillColor = value; OnPropertyChanged(); }
+    }
+
+    private float _currentHighlightOpacity = 0.4f;
+    public float CurrentHighlightOpacity
+    {
+        get => _currentHighlightOpacity;
+        set { _currentHighlightOpacity = Math.Max(0.1f, Math.Min(1.0f, value)); OnPropertyChanged(); }
+    }
+
+    private double _currentStrokeWidth = 2.0;
+    public double CurrentStrokeWidth
+    {
+        get => _currentStrokeWidth;
+        set { _currentStrokeWidth = Math.Max(0.5, Math.Min(20.0, value)); OnPropertyChanged(); }
     }
 
     public bool ShowAiPanel
@@ -525,6 +587,17 @@ public class MainViewModel : INotifyPropertyChanged
     // Names of existing fields the user has deleted; stripped from the PDF on save.
     public HashSet<string> DeletedFieldNames { get; } = new();
 
+    public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
+    public ObservableCollection<Models.PdfAttachmentInfo> Attachments { get; } = new();
+
+    public ICommand NavigateToBookmarkCommand { get; }
+    public ICommand NavigateToPageCommand { get; }
+    public ICommand UndoAnnotationCommand { get; }
+    public ICommand RedoAnnotationCommand { get; }
+    public ICommand AddAttachmentCommand { get; }
+    public ICommand RemoveAttachmentCommand { get; }
+    public ICommand ExtractAttachmentCommand { get; }
+
     // ── Undo / Redo ───────────────────────────────────────────────────────────
 
     private readonly Stack<(Action Undo, Action Redo)> _undoStack = new();
@@ -640,6 +713,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand NavigateToResultCommand { get; }
     public ICommand OpenRecentCommand { get; }
     public ICommand ShowAboutCommand { get; }
+    public ICommand ShowShortcutsCommand { get; }
     public ICommand SendAiChatCommand { get; }
     public ICommand ClearAiChatCommand { get; }
     public ICommand DeleteCurrentPageCommand { get; }
@@ -663,11 +737,46 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AnalyzeContractCommand { get; }
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
+    public ICommand CompressPdfCommand { get; }
+    public ICommand AddPageNumbersCommand { get; }
+    public ICommand WatermarkCommand { get; }
+    public ICommand DocumentPropertiesCommand { get; }
+    public ICommand ExportPagesAsImagesCommand { get; }
+    public ICommand FindReplaceFieldsCommand { get; }
+    public ICommand ExportPdfACommand { get; }
+    public ICommand ValidateRequiredFieldsCommand { get; }
+    public ICommand ApplyRedactionsCommand { get; }
+    public ICommand DuplicatePageCommand { get; }
+    public ICommand AddHeaderFooterCommand { get; }
+    public ICommand PasswordProtectCommand { get; }
+    public ICommand RemovePasswordCommand { get; }
+    public ICommand BatesNumberCommand { get; }
+    public ICommand AddBookmarkCommand { get; }
+    public ICommand CropPagesCommand { get; }
+    public ICommand ExportTextCommand { get; }
+    public ICommand AddTextFieldCommand { get; }
+    public ICommand AddCheckboxFieldCommand { get; }
+    public ICommand DeletePageRangeCommand { get; }
+    public ICommand ExtractPageRangeCommand { get; }
+    public ICommand ComparePdfsCommand { get; }
+    public ICommand StickyNoteCommand { get; }
+    public ICommand DrawRectangleCommand { get; }
+    public ICommand DrawEllipseCommand { get; }
+    public ICommand DrawArrowCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand CloseDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
     public ICommand ExportPageAsImageCommand { get; }
+    public ICommand ExportXfdfCommand { get; }
+    public ICommand ImportXfdfCommand { get; }
+    public ICommand ExportAnnotationSummaryCommand { get; }
+    public ICommand FindAndHighlightCommand { get; }
+    public ICommand SetDrawingColorCommand { get; }
+    public ICommand SetFillColorCommand { get; }
+    public ICommand AddCustomStampCommand { get; }
+    public ICommand DocumentStatisticsCommand { get; }
+    public ICommand ImportFormDataFromJsonCommand { get; }
 
     // ── Design Canvas ─────────────────────────────────────────────────────────
     private bool _isDesignMode;
@@ -687,10 +796,39 @@ public class MainViewModel : INotifyPropertyChanged
         _currentFontFamily = AppSettings.Current.DefaultFontFamily;
         _currentFontSize = AppSettings.Current.DefaultFontSize;
         _currentFontColor = AppSettings.Current.DefaultFontColor;
+        _currentDrawingColor = AppSettings.Current.DefaultDrawingColor;
         _forceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
         _aiProvider = AppSettings.Current.AiProvider;
         _aiModel = AppSettings.Current.AiModel;
         SyncAiModels();
+        SyncStamps();
+
+        NavigateToBookmarkCommand = new RelayCommand(p =>
+        {
+            if (p is Models.BookmarkItem bm && bm.PageNumber > 0)
+                CurrentPageIndex = bm.PageNumber - 1;
+        });
+
+        NavigateToPageCommand = new RelayCommand(p =>
+        {
+            if (p is int pageNum && pageNum > 0)
+                CurrentPageIndex = pageNum - 1;
+        });
+
+        UndoAnnotationCommand = new RelayCommand(() =>
+        {
+            _undoService.Undo();
+            PageChanged?.Invoke();
+            OnPropertyChanged(nameof(UndoAnnotationCommand));
+            OnPropertyChanged(nameof(RedoAnnotationCommand));
+        }, () => _undoService.CanUndo);
+        RedoAnnotationCommand = new RelayCommand(() =>
+        {
+            _undoService.Redo();
+            PageChanged?.Invoke();
+            OnPropertyChanged(nameof(UndoAnnotationCommand));
+            OnPropertyChanged(nameof(RedoAnnotationCommand));
+        }, () => _undoService.CanRedo);
 
         UndoCommand = new RelayCommand(Undo, () => CanUndo);
         RedoCommand = new RelayCommand(Redo, () => CanRedo);
@@ -767,6 +905,11 @@ public class MainViewModel : INotifyPropertyChanged
             var dlg = new Dialogs.AboutDialog { Owner = Application.Current.MainWindow };
             dlg.ShowDialog();
         });
+        ShowShortcutsCommand = new RelayCommand(() =>
+        {
+            var dlg = new Dialogs.ShortcutsDialog { Owner = Application.Current.MainWindow };
+            dlg.ShowDialog();
+        });
         SendAiChatCommand = new AsyncRelayCommand(SendAiChatAsync, () => !_isAiRunning);
         ClearAiChatCommand = new RelayCommand(() =>
         {
@@ -786,6 +929,46 @@ public class MainViewModel : INotifyPropertyChanged
         RotateAllPagesCWCommand  = new RelayCommand(() => RotateAllPages(+90), () => HasDocument);
         RotateAllPagesCCWCommand = new RelayCommand(() => RotateAllPages(-90), () => HasDocument);
         SplitPdfCommand          = new AsyncRelayCommand(SplitPdfAsync, () => HasDocument);
+        WatermarkCommand            = new AsyncRelayCommand(WatermarkAsync, () => HasDocument);
+        AddPageNumbersCommand       = new AsyncRelayCommand(AddPageNumbersAsync, () => HasDocument);
+        CompressPdfCommand          = new AsyncRelayCommand(CompressPdfAsync, () => HasDocument);
+        DocumentPropertiesCommand   = new AsyncRelayCommand(DocumentPropertiesAsync, () => HasDocument);
+        ExportPagesAsImagesCommand  = new AsyncRelayCommand(ExportPagesAsImagesAsync, () => HasDocument);
+        FindReplaceFieldsCommand    = new RelayCommand(FindReplaceFields, () => HasDocument && AllFields.Count > 0);
+        ExportPdfACommand           = new AsyncRelayCommand(ExportPdfAAsync, () => HasDocument);
+        ValidateRequiredFieldsCommand = new RelayCommand(ValidateRequiredFields, () => HasDocument);
+        ApplyRedactionsCommand        = new AsyncRelayCommand(ApplyRedactionsAsync,
+            () => HasDocument && RedactionRegions.Count > 0);
+        DuplicatePageCommand          = new AsyncRelayCommand(DuplicatePageAsync, () => HasDocument);
+        AddHeaderFooterCommand        = new AsyncRelayCommand(AddHeaderFooterAsync, () => HasDocument);
+        PasswordProtectCommand        = new AsyncRelayCommand(PasswordProtectAsync, () => HasDocument);
+        RemovePasswordCommand         = new AsyncRelayCommand(RemovePasswordAsync,  () => HasDocument);
+        BatesNumberCommand            = new AsyncRelayCommand(BatesNumberAsync,     () => HasDocument);
+        AddBookmarkCommand            = new AsyncRelayCommand(AddBookmarkAsync,      () => HasDocument);
+        AddAttachmentCommand          = new AsyncRelayCommand(AddAttachmentAsync,    () => HasDocument);
+        RemoveAttachmentCommand       = new AsyncRelayCommand(p => RemoveAttachmentAsync(p as Models.PdfAttachmentInfo), p => HasDocument && p is Models.PdfAttachmentInfo);
+        ExtractAttachmentCommand      = new AsyncRelayCommand(p => ExtractAttachmentAsync(p as Models.PdfAttachmentInfo), p => HasDocument && p is Models.PdfAttachmentInfo);
+        CropPagesCommand              = new AsyncRelayCommand(CropPagesAsync,        () => HasDocument);
+        ExportTextCommand             = new AsyncRelayCommand(ExportTextAsync,       () => HasDocument);
+        AddTextFieldCommand   = new RelayCommand(() => ActiveTool = ActiveTool.AddTextField,  () => HasDocument);
+        AddCheckboxFieldCommand = new RelayCommand(() => ActiveTool = ActiveTool.AddCheckbox, () => HasDocument);
+        DeletePageRangeCommand    = new AsyncRelayCommand(DeletePageRangeAsync,
+            () => HasDocument && (_document?.PageCount ?? 1) > 1);
+        ExtractPageRangeCommand   = new AsyncRelayCommand(ExtractPageRangeAsync, () => HasDocument);
+        ComparePdfsCommand        = new AsyncRelayCommand(ComparePdfsAsync,       () => HasDocument);
+        StickyNoteCommand         = new RelayCommand(() => ActiveTool = ActiveTool.StickyNote, () => HasDocument);
+        DrawRectangleCommand      = new RelayCommand(() => ActiveTool = ActiveTool.DrawRectangle, () => HasDocument);
+        DrawEllipseCommand        = new RelayCommand(() => ActiveTool = ActiveTool.DrawEllipse, () => HasDocument);
+        DrawArrowCommand          = new RelayCommand(() => ActiveTool = ActiveTool.DrawArrow, () => HasDocument);
+        ExportXfdfCommand         = new AsyncRelayCommand(ExportXfdfAsync,         () => HasDocument);
+        ImportXfdfCommand         = new AsyncRelayCommand(ImportXfdfAsync,         () => HasDocument);
+        ExportAnnotationSummaryCommand = new AsyncRelayCommand(ExportAnnotationSummaryAsync, () => HasDocument);
+        FindAndHighlightCommand   = new AsyncRelayCommand(FindAndHighlightAsync,   () => HasDocument);
+        SetDrawingColorCommand    = new RelayCommand(p => { if (p is string c) { CurrentDrawingColor = c; AppSettings.Current.DefaultDrawingColor = c; AppSettings.Current.Save(); } });
+        SetFillColorCommand       = new RelayCommand(p => { if (p is string c) CurrentFillColor = c; });
+        AddCustomStampCommand     = new RelayCommand(AddCustomStamp);
+        DocumentStatisticsCommand = new AsyncRelayCommand(ShowDocumentStatisticsAsync, () => HasDocument);
+        ImportFormDataFromJsonCommand = new AsyncRelayCommand(ImportFormDataFromJsonAsync, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -821,7 +1004,7 @@ public class MainViewModel : INotifyPropertyChanged
             try
             {
                 await Task.Run(() => Services.DesignExportService.ExportToPdf(
-                    DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, tmp));
+                    DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, tmp, DesignCanvas.PageBackground));
                 IsDesignMode = false;
                 await LoadDocumentAsync(tmp);
                 StatusText = "Design exported and opened as PDF.";
@@ -914,6 +1097,13 @@ public class MainViewModel : INotifyPropertyChanged
             ForceUpperCase = _forceUpperCase,
         };
         FreeTextAnnotations.Add(ann);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Add text",
+            Execute     = () => FreeTextAnnotations.Add(ann),
+            Undo        = () => { FreeTextAnnotations.Remove(ann); if (_selectedAnnotation == ann) SelectedAnnotation = null; },
+        });
+        RefreshUndoCanExecute();
         return ann;
     }
 
@@ -921,6 +1111,13 @@ public class MainViewModel : INotifyPropertyChanged
     {
         FreeTextAnnotations.Remove(ann);
         if (_selectedAnnotation == ann) SelectedAnnotation = null;
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete text",
+            Execute     = () => { FreeTextAnnotations.Remove(ann); if (_selectedAnnotation == ann) SelectedAnnotation = null; },
+            Undo        = () => FreeTextAnnotations.Add(ann),
+        });
+        RefreshUndoCanExecute();
     }
 
     public IEnumerable<FreeTextAnnotation> GetAnnotationsForCurrentPage()
@@ -931,6 +1128,114 @@ public class MainViewModel : INotifyPropertyChanged
 
     public IEnumerable<PlacedSignature> GetSignaturesForCurrentPage()
         => PlacedSignatures.Where(s => s.PageNumber == _currentPageIndex + 1);
+
+    public void AddHighlightAnnotation(Models.HighlightAnnotation hl)
+    {
+        hl.PageNumber = _currentPageIndex + 1;
+        HighlightAnnotations.Add(hl);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Add {hl.Kind}",
+            Execute     = () => HighlightAnnotations.Add(hl),
+            Undo        = () => HighlightAnnotations.Remove(hl),
+        });
+        RefreshUndoCanExecute();
+        PageChanged?.Invoke();
+    }
+
+    public void RemoveHighlightAnnotation(Models.HighlightAnnotation hl)
+    {
+        HighlightAnnotations.Remove(hl);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete highlight",
+            Execute     = () => HighlightAnnotations.Remove(hl),
+            Undo        = () => HighlightAnnotations.Add(hl),
+        });
+        RefreshUndoCanExecute();
+        PageChanged?.Invoke();
+    }
+
+    public IEnumerable<Models.HighlightAnnotation> GetHighlightAnnotationsForCurrentPage()
+        => HighlightAnnotations.Where(h => h.PageNumber == _currentPageIndex + 1);
+
+    public void AddRedactRegion(Models.RedactRegion r)
+    {
+        r.PageNumber = _currentPageIndex + 1;
+        RedactionRegions.Add(r);
+        OnPropertyChanged(nameof(ApplyRedactionsCommand));
+        PageChanged?.Invoke();
+    }
+
+    public void RemoveRedactRegion(Models.RedactRegion r)
+    {
+        RedactionRegions.Remove(r);
+        OnPropertyChanged(nameof(ApplyRedactionsCommand));
+        PageChanged?.Invoke();
+    }
+
+    public IEnumerable<Models.RedactRegion> GetRedactRegionsForCurrentPage()
+        => RedactionRegions.Where(r => r.PageNumber == _currentPageIndex + 1);
+
+    public void AddStickyNote(Models.StickyNoteAnnotation note)
+    {
+        note.PageNumber = _currentPageIndex + 1;
+        StickyNotes.Add(note);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Add sticky note",
+            Execute     = () => StickyNotes.Add(note),
+            Undo        = () => StickyNotes.Remove(note),
+        });
+        RefreshUndoCanExecute();
+    }
+
+    public void RemoveStickyNote(Models.StickyNoteAnnotation note)
+    {
+        StickyNotes.Remove(note);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete sticky note",
+            Execute     = () => StickyNotes.Remove(note),
+            Undo        = () => StickyNotes.Add(note),
+        });
+        RefreshUndoCanExecute();
+    }
+
+    public IEnumerable<Models.StickyNoteAnnotation> GetStickyNotesForCurrentPage()
+        => StickyNotes.Where(n => n.PageNumber == _currentPageIndex + 1);
+
+    public void AddShapeAnnotation(Models.ShapeAnnotation shape)
+    {
+        shape.PageNumber = _currentPageIndex + 1;
+        ShapeAnnotations.Add(shape);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Add {shape.Kind}",
+            Execute     = () => ShapeAnnotations.Add(shape),
+            Undo        = () => ShapeAnnotations.Remove(shape),
+        });
+        RefreshUndoCanExecute();
+    }
+    public void RemoveShapeAnnotation(Models.ShapeAnnotation shape)
+    {
+        ShapeAnnotations.Remove(shape);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Delete {shape.Kind}",
+            Execute     = () => ShapeAnnotations.Remove(shape),
+            Undo        = () => ShapeAnnotations.Add(shape),
+        });
+        RefreshUndoCanExecute();
+    }
+    public IEnumerable<Models.ShapeAnnotation> GetShapeAnnotationsForCurrentPage()
+        => ShapeAnnotations.Where(s => s.PageNumber == _currentPageIndex + 1);
+
+    private void RefreshUndoCanExecute()
+    {
+        OnPropertyChanged(nameof(UndoAnnotationCommand));
+        OnPropertyChanged(nameof(RedoAnnotationCommand));
+    }
 
     // ── Private Commands ─────────────────────────────────────────────────────
 
@@ -973,6 +1278,13 @@ public class MainViewModel : INotifyPropertyChanged
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
+            HighlightAnnotations.Clear();
+            RedactionRegions.Clear();
+            StickyNotes.Clear();
+            ShapeAnnotations.Clear();
+            _undoService.Clear();
+            Bookmarks.Clear();
+            Attachments.Clear();
             _undoStack.Clear();
             _redoStack.Clear();
             OnPropertyChanged(nameof(CanUndo));
@@ -1017,6 +1329,32 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CurrentPageIndex));
             OnPropertyChanged(nameof(CurrentPageRotation));
             RefreshCurrentPageFields();
+
+            // Load bookmarks and attachments in background
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var bms = _formService.GetBookmarks(path);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var bm in bms) Bookmarks.Add(bm);
+                    });
+                }
+                catch { /* non-critical */ }
+            });
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var atts = _formService.GetAttachments(path);
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var a in atts) Attachments.Add(a);
+                    });
+                }
+                catch { /* non-critical */ }
+            });
 
             // Record in recent files
             AppSettings.Current.AddRecentFile(path);
@@ -1063,7 +1401,9 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath, tmp, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -1108,7 +1448,9 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
@@ -1146,7 +1488,9 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var errors = _formService.SaveFull(_currentFilePath!, dlg.FileName, FieldValues,
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
-                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave());
+                deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
+                highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
+                shapeAnnotations: ShapeAnnotations);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1193,7 +1537,13 @@ public class MainViewModel : INotifyPropertyChanged
         CurrentPageFields.Clear();
         FreeTextAnnotations.Clear();
         PlacedSignatures.Clear();
+        HighlightAnnotations.Clear();
+        RedactionRegions.Clear();
+        StickyNotes.Clear();
+        ShapeAnnotations.Clear();
+        _undoService.Clear();
         _pageRotations.Clear();
+        Attachments.Clear();
         _undoStack.Clear();
         _redoStack.Clear();
         OnPropertyChanged(nameof(CanUndo));
@@ -1297,6 +1647,764 @@ public class MainViewModel : INotifyPropertyChanged
         string dir = degrees > 0 ? "clockwise" : "counter-clockwise";
         StatusText = $"All {_document.PageCount} pages rotated 90° {dir}.";
         ToastService.Instance.Success($"All {_document.PageCount} pages rotated 90° {dir}.");
+    }
+
+    private async Task CompressPdfAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Compressed PDF",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_compressed.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Compressing PDF…";
+            string outPath = dlgSave.FileName;
+            var (orig, comp) = await Task.Run(() => _formService.CompressPdf(_currentFilePath, outPath));
+            double savings = orig > 0 ? (1.0 - (double)comp / orig) * 100 : 0;
+            string msg = $"Compressed {FormatBytes(orig)} → {FormatBytes(comp)} ({savings:F0}% saved)";
+            StatusText = msg;
+            ToastService.Instance.Success(msg);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not compress PDF.", ex);
+            StatusText = "Compression failed.";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1_000_000) return $"{bytes / 1_000_000.0:F1} MB";
+        if (bytes >= 1_000)     return $"{bytes / 1_000.0:F0} KB";
+        return $"{bytes} B";
+    }
+
+    private async Task AddPageNumbersAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save PDF with Page Numbers",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_numbered.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Adding page numbers…";
+            string outPath = dlgSave.FileName;
+            await Task.Run(() => _formService.AddPageNumbers(_currentFilePath, outPath));
+            StatusText = $"Page numbers added: {System.IO.Path.GetFileName(outPath)}";
+            ToastService.Instance.Success("Page numbers added.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not add page numbers.", ex);
+            StatusText = "Page numbering failed.";
+        }
+    }
+
+    private async Task WatermarkAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        // Simple watermark dialog — collect text, opacity, angle, font size
+        var dlg = new Dialogs.WatermarkDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        var opt = dlg.Options;
+        var dlgSave = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Watermarked PDF",
+            Filter = "PDF files|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_watermark.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlgSave.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Applying watermark…";
+            string outPath = dlgSave.FileName;
+            await Task.Run(() => Services.WatermarkService.Apply(_currentFilePath, outPath, opt));
+            StatusText = $"Watermarked PDF saved: {System.IO.Path.GetFileName(outPath)}";
+            ToastService.Instance.Success("Watermark applied.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not apply watermark.", ex);
+            StatusText = "Watermark failed.";
+        }
+    }
+
+    private async Task DocumentPropertiesAsync()
+    {
+        if (_currentFilePath == null) return;
+        try
+        {
+            var meta = await Task.Run(() => _formService.GetMetadata(_currentFilePath));
+            var dlg  = new Dialogs.DocumentPropertiesDialog(meta)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            var updated = dlg.Result!;
+            var tmp = _currentFilePath + ".ptmp";
+            try
+            {
+                await Task.Run(() => _formService.SetMetadata(_currentFilePath, tmp, updated));
+                System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+                // Refresh the document info so the title bar / status reflects the change
+                if (_document != null)
+                {
+                    _document.Title   = updated.Title;
+                    _document.Author  = updated.Author;
+                    _document.Subject = updated.Subject;
+                }
+                ToastService.Instance.Success("Document properties saved.");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+            }
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not update document properties.", ex);
+        }
+    }
+
+    private async Task ExportPagesAsImagesAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlg = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "Choose folder to save page images",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string folder   = dlg.FolderName;
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath);
+        int total       = _document.PageCount;
+
+        StatusText = $"Exporting {total} page(s) as images…";
+        try
+        {
+            var renderer = new Services.PdfRenderService();
+            await renderer.LoadAsync(_currentFilePath);
+
+            for (int i = 0; i < total; i++)
+            {
+                StatusText = $"Exporting page {i + 1} of {total}…";
+                var bmp = await renderer.RenderPageAsync(i, zoom: 2.0); // 192 DPI
+
+                string outPath = System.IO.Path.Combine(folder, $"{baseName}_p{i + 1:D3}.png");
+                await Task.Run(() =>
+                {
+                    var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                    using var stream = System.IO.File.Create(outPath);
+                    enc.Save(stream);
+                });
+            }
+
+            StatusText = $"Exported {total} image(s) to {System.IO.Path.GetFileName(folder)}";
+            ToastService.Instance.Success($"Exported {total} PNG image(s).");
+            Dialogs.AppDialog.ShowInfo(
+                $"Exported {total} page image(s) to:\n{folder}",
+                "Export Complete");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Export failed.", ex);
+            StatusText = "Export failed.";
+        }
+    }
+
+    private void FindReplaceFields()
+    {
+        var dlg = new Dialogs.FindReplaceFieldsDialog(AllFields.ToList())
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string find    = dlg.FindText;
+        string replace = dlg.ReplaceText;
+        bool caseSens  = dlg.CaseSensitive;
+
+        int count = 0;
+        var comparison = caseSens
+            ? StringComparison.Ordinal
+            : StringComparison.OrdinalIgnoreCase;
+
+        foreach (var field in AllFields)
+        {
+            if (field.FieldType == Models.FieldType.Text &&
+                FieldValues.TryGetValue(field.Name, out var current) &&
+                current.Contains(find, comparison))
+            {
+                string newVal = caseSens
+                    ? current.Replace(find, replace, StringComparison.Ordinal)
+                    : ReplaceIgnoreCase(current, find, replace);
+                UpdateFieldValue(field.Name, newVal);
+                count++;
+            }
+        }
+
+        PageChanged?.Invoke();
+        if (count > 0)
+            ToastService.Instance.Success($"Replaced {count} field value(s).");
+        else
+            ToastService.Instance.Info("No matching field values found.");
+    }
+
+    private static string ReplaceIgnoreCase(string source, string find, string replace)
+    {
+        int idx = source.IndexOf(find, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return source;
+        var sb = new System.Text.StringBuilder();
+        int prev = 0;
+        while (idx >= 0)
+        {
+            sb.Append(source, prev, idx - prev);
+            sb.Append(replace);
+            prev = idx + find.Length;
+            idx = source.IndexOf(find, prev, StringComparison.OrdinalIgnoreCase);
+        }
+        sb.Append(source, prev, source.Length - prev);
+        return sb.ToString();
+    }
+
+    private async Task ExportPdfAAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save as PDF/A-1b",
+            Filter = "PDF/A files (*.pdf)|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_pdfa.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        StatusText = "Converting to PDF/A-1b…";
+        try
+        {
+            await Task.Run(() => _formService.ConvertToPdfA(_currentFilePath, dlg.FileName));
+            StatusText = $"PDF/A-1b saved: {System.IO.Path.GetFileName(dlg.FileName)}";
+            ToastService.Instance.Success("PDF/A conversion complete.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("PDF/A conversion failed.", ex);
+            StatusText = "PDF/A conversion failed.";
+        }
+    }
+
+    private async Task ApplyRedactionsAsync()
+    {
+        if (_currentFilePath == null || RedactionRegions.Count == 0) return;
+
+        bool confirm = Dialogs.AppDialog.ShowConfirm(
+            $"Apply {RedactionRegions.Count} redaction(s) to the document?\n\n" +
+            "This permanently burns black boxes over the selected areas and saves the file. This action cannot be undone.",
+            "Apply Redactions", isDanger: true);
+        if (!confirm) return;
+
+        StatusText = "Applying redactions…";
+        try
+        {
+            var regions = RedactionRegions
+                .Select(r => (r.PageNumber, (float)r.Left, (float)r.Bottom, (float)r.Width, (float)r.Height))
+                .ToList();
+
+            string tmp = _currentFilePath + ".tmp";
+            await Task.Run(() => _formService.ApplyRedactions(_currentFilePath, tmp, regions));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+
+            RedactionRegions.Clear();
+            StatusText = "Redactions applied. Reloading document…";
+            ToastService.Instance.Success($"Redactions applied successfully.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Redaction failed.", ex);
+            StatusText = "Redaction failed.";
+        }
+    }
+
+    private async Task DuplicatePageAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int idx = _currentPageIndex;
+            await Task.Run(() => _formService.DuplicatePage(_currentFilePath, tmp, idx));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+            StatusText = $"Page {idx + 1} duplicated.";
+            ToastService.Instance.Success($"Page {idx + 1} duplicated.");
+            await OpenFileAsync(_currentFilePath);
+            CurrentPageIndex = idx + 1;
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Duplicate page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task AddHeaderFooterAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.HeaderFooterDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+        if (string.IsNullOrWhiteSpace(dlg.HeaderText) && string.IsNullOrWhiteSpace(dlg.FooterText))
+        {
+            ToastService.Instance.Info("No header or footer text entered.");
+            return;
+        }
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddHeaderFooter(
+                _currentFilePath, tmp,
+                string.IsNullOrWhiteSpace(dlg.HeaderText) ? null : dlg.HeaderText,
+                string.IsNullOrWhiteSpace(dlg.FooterText) ? null : dlg.FooterText,
+                dlg.FontSize, 18f, dlg.Alignment));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            System.IO.File.Delete(tmp);
+            StatusText = "Header/footer added.";
+            ToastService.Instance.Success("Header/footer added to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add header/footer failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task PasswordProtectAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.PasswordProtectDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            string userPwd  = dlg.UserPassword;
+            string ownerPwd = dlg.OwnerPassword;
+            bool print = dlg.AllowPrinting;
+            bool copy  = dlg.AllowCopying;
+            await Task.Run(() => _formService.EncryptPdf(_currentFilePath, tmp, userPwd, ownerPwd, print, copy));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            ToastService.Instance.Success("PDF password-protected successfully.");
+            StatusText = "PDF protected with password.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Password protection failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task RemovePasswordAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.RemoveEncryption(_currentFilePath, tmp));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            ToastService.Instance.Success("PDF password removed.");
+            StatusText = "PDF password removed.";
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Remove password failed. If the PDF is encrypted, open it with the password first.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task AddBookmarkAsync()
+    {
+        if (_currentFilePath == null) return;
+        int pageNum = _currentPageIndex + 1;
+        string defaultTitle = $"Page {pageNum}";
+        var dlg = new Dialogs.InputDialog("Add Bookmark", $"Enter bookmark title for page {pageNum}:", defaultTitle)
+        { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+
+        string title = dlg.InputText.Trim();
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddBookmark(_currentFilePath, tmp, title, pageNum));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+
+            var bms = _formService.GetBookmarks(_currentFilePath);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Bookmarks.Clear();
+                foreach (var bm in bms) Bookmarks.Add(bm);
+            });
+            StatusText = $"Bookmark '{title}' added at page {pageNum}.";
+            ToastService.Instance.Success($"Bookmark added: {title}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add bookmark failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task AddAttachmentAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Choose file to attach",
+            Filter = "All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string filePath = dlg.FileName;
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.AddAttachment(_currentFilePath, tmp, filePath));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await RefreshAttachmentsAsync();
+            ToastService.Instance.Success($"Attached: {System.IO.Path.GetFileName(filePath)}");
+            StatusText = $"File attached: {System.IO.Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not attach file.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task RemoveAttachmentAsync(Models.PdfAttachmentInfo? att)
+    {
+        if (_currentFilePath == null || att == null) return;
+        bool confirm = Dialogs.AppDialog.ShowConfirm($"Remove attachment '{att.Name}'?", "Remove Attachment");
+        if (!confirm) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.RemoveAttachment(_currentFilePath, tmp, att.Name));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await RefreshAttachmentsAsync();
+            ToastService.Instance.Success($"Attachment removed: {att.Name}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not remove attachment.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExtractAttachmentAsync(Models.PdfAttachmentInfo? att)
+    {
+        if (_currentFilePath == null || att == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save attachment as",
+            FileName = att.Name,
+            Filter = "All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            byte[] data = await Task.Run(() => _formService.ExtractAttachment(_currentFilePath, att.Name));
+            await System.IO.File.WriteAllBytesAsync(dlg.FileName, data);
+            ToastService.Instance.Success($"Saved: {System.IO.Path.GetFileName(dlg.FileName)}");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not extract attachment.", ex);
+        }
+    }
+
+    private async Task RefreshAttachmentsAsync()
+    {
+        if (_currentFilePath == null) return;
+        try
+        {
+            var list = await Task.Run(() => _formService.GetAttachments(_currentFilePath));
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Attachments.Clear();
+                foreach (var a in list) Attachments.Add(a);
+            });
+        }
+        catch { /* non-critical */ }
+    }
+
+    private async Task BatesNumberAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.BatesNumberDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int    start    = dlg.StartNumber;
+            int    padding  = dlg.Padding;
+            string prefix   = dlg.Prefix;
+            string suffix   = dlg.Suffix;
+            float  fontSize = dlg.FontSize;
+            string position = dlg.Position;
+            await Task.Run(() => _formService.AddBatesNumbers(
+                _currentFilePath, tmp, start, padding, prefix, suffix, fontSize, 18f, position));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = "Bates numbers added.";
+            ToastService.Instance.Success("Bates numbers added to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add Bates numbers failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task CropPagesAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.CropPageDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        if (dlg.LeftMargin == 0 && dlg.RightMargin == 0 && dlg.TopMargin == 0 && dlg.BottomMargin == 0)
+        {
+            ToastService.Instance.Info("No crop margins specified.");
+            return;
+        }
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            float l = dlg.LeftMargin, r = -dlg.RightMargin, t = -dlg.TopMargin, b = dlg.BottomMargin;
+            await Task.Run(() => _formService.CropAllPages(_currentFilePath, tmp, l, b, r, t));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = "Pages cropped.";
+            ToastService.Instance.Success("Crop applied to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Crop failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExportTextAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export PDF Text",
+            Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_text.txt",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string outPath = dlg.FileName;
+        try
+        {
+            await Task.Run(() => _formService.ExportTextToFile(_currentFilePath, outPath));
+            StatusText = $"Text exported to {System.IO.Path.GetFileName(outPath)}.";
+            ToastService.Instance.Success("PDF text exported successfully.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Text export failed.", ex);
+        }
+    }
+
+    private async Task DeletePageRangeAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        int currentPage = _currentPageIndex + 1;
+        var dlg = new Dialogs.PageRangeDialog(currentPage, _document.PageCount,
+            "Delete", $"Delete pages from this PDF (total: {_document.PageCount} pages). This cannot be undone.");
+        dlg.Owner = Application.Current.MainWindow;
+        if (dlg.ShowDialog() != true) return;
+
+        int totalAfter = _document.PageCount - (dlg.LastPage - dlg.FirstPage + 1);
+        if (totalAfter < 1)
+        {
+            Dialogs.AppDialog.ShowInfo("Cannot delete all pages — at least one page must remain.", "Delete Pages");
+            return;
+        }
+        if (!Dialogs.AppDialog.Confirm($"Delete pages {dlg.FirstPage}–{dlg.LastPage}?\n\nThis operation cannot be undone.", "Delete Pages"))
+            return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int fp = dlg.FirstPage, lp = dlg.LastPage;
+            await Task.Run(() => _formService.DeletePageRange(_currentFilePath, tmp, fp, lp));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = $"Pages {fp}–{lp} deleted.";
+            ToastService.Instance.Success($"Deleted pages {fp}–{lp}.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Delete page range failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExtractPageRangeAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        int currentPage = _currentPageIndex + 1;
+        var dlg = new Dialogs.PageRangeDialog(currentPage, _document.PageCount,
+            "Extract", $"Extract a range of pages to a new PDF (total: {_document.PageCount} pages).");
+        dlg.Owner = Application.Current.MainWindow;
+        if (dlg.ShowDialog() != true) return;
+
+        var saveDlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Extracted Pages",
+            Filter = "PDF files (*.pdf)|*.pdf",
+            FileName = $"{System.IO.Path.GetFileNameWithoutExtension(_currentFilePath)}_p{dlg.FirstPage}-{dlg.LastPage}.pdf",
+        };
+        if (saveDlg.ShowDialog() != true) return;
+
+        string outPath = saveDlg.FileName;
+        try
+        {
+            int fp = dlg.FirstPage, lp = dlg.LastPage;
+            await Task.Run(() => _formService.ExtractPageRange(_currentFilePath, outPath, fp, lp));
+            StatusText = $"Pages {fp}–{lp} extracted.";
+            ToastService.Instance.Success($"Pages {fp}–{lp} extracted to {System.IO.Path.GetFileName(outPath)}.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Extract page range failed.", ex);
+        }
+    }
+
+    private async Task ComparePdfsAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Compare with…",
+            Filter = "PDF files (*.pdf)|*.pdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string fileB = dlg.FileName;
+        StatusText = "Comparing PDFs…";
+        try
+        {
+            var diffs = await Task.Run(() => _formService.ComparePdfs(_currentFilePath, fileB));
+            var resultDlg = new Dialogs.ComparePdfsDialog(_currentFilePath, fileB, diffs)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            resultDlg.ShowDialog();
+            StatusText = $"Comparison complete — {diffs.Count(d => d.HasDifferences)} page(s) differ.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("PDF comparison failed.", ex);
+            StatusText = "Comparison failed.";
+        }
+    }
+
+    private void ValidateRequiredFields()
+    {
+        var empty = AllFields
+            .Where(f => f.IsRequired &&
+                        (!FieldValues.TryGetValue(f.Name, out var v) || string.IsNullOrWhiteSpace(v)))
+            .Select(f => f.Name)
+            .ToList();
+
+        if (empty.Count == 0)
+        {
+            ToastService.Instance.Success("All required fields are filled.");
+        }
+        else
+        {
+            string list = string.Join("\n• ", empty.Take(15));
+            Dialogs.AppDialog.ShowInfo(
+                $"The following {empty.Count} required field(s) are empty:\n\n• {list}" +
+                (empty.Count > 15 ? $"\n…and {empty.Count - 15} more." : ""),
+                "Required Fields");
+            // Navigate to the page containing the first empty required field
+            var first = AllFields.FirstOrDefault(f => f.Name == empty[0]);
+            if (first != null && first.PageNumber > 0)
+                CurrentPageIndex = first.PageNumber - 1;
+        }
     }
 
     private async Task SplitPdfAsync()
@@ -1882,6 +2990,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         var q = query.ToLowerInvariant();
 
+        // Search form field names and values
         foreach (var f in AllFields)
         {
             if (f.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
@@ -1898,6 +3007,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
         }
 
+        // Search free-text annotation content
         foreach (var ann in FreeTextAnnotations)
         {
             if (ann.Text.Contains(q, StringComparison.OrdinalIgnoreCase))
@@ -1944,6 +3054,214 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task ExportXfdfAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Annotations as XFDF",
+            Filter = "XFDF annotation files (*.xfdf)|*.xfdf",
+            DefaultExt = ".xfdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + ".xfdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            string path = dlg.FileName;
+            await Task.Run(() => Services.XfdfService.Export(
+                path, _currentFilePath,
+                HighlightAnnotations, StickyNotes, FreeTextAnnotations, ShapeAnnotations));
+            int total = HighlightAnnotations.Count + StickyNotes.Count
+                      + FreeTextAnnotations.Count + ShapeAnnotations.Count;
+            ToastService.Instance.Success($"Exported {total} annotation(s) to XFDF.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("XFDF export failed.", ex); }
+    }
+
+    private async Task ImportXfdfAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import Annotations from XFDF",
+            Filter = "XFDF annotation files (*.xfdf)|*.xfdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var result = await Task.Run(() => Services.XfdfService.Import(dlg.FileName));
+
+            int added = 0;
+            foreach (var hl in result.Highlights)   { HighlightAnnotations.Add(hl); added++; }
+            foreach (var sn in result.StickyNotes)  { StickyNotes.Add(sn);          added++; }
+            foreach (var ft in result.FreeTexts)    { FreeTextAnnotations.Add(ft);  added++; }
+            foreach (var sh in result.Shapes)       { ShapeAnnotations.Add(sh);     added++; }
+
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Imported {added} annotation(s) from XFDF.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("XFDF import failed.", ex); }
+    }
+
+    private async Task ImportFormDataFromJsonAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import Form Data from JSON",
+            Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            string json = await Task.Run(() => System.IO.File.ReadAllText(dlg.FileName));
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(json);
+            if (dict == null || dict.Count == 0)
+            {
+                ToastService.Instance.Info("No data found in the JSON file.");
+                return;
+            }
+
+            int filled = 0;
+            foreach (var kvp in dict)
+            {
+                var field = AllFields.FirstOrDefault(f =>
+                    string.Equals(f.Name, kvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(f.Name.Replace(" ", "_"), kvp.Key.Replace(" ", "_"), StringComparison.OrdinalIgnoreCase));
+
+                if (field == null) continue;
+
+                string val = kvp.Value.ValueKind switch
+                {
+                    System.Text.Json.JsonValueKind.String  => kvp.Value.GetString() ?? "",
+                    System.Text.Json.JsonValueKind.Number  => kvp.Value.GetRawText(),
+                    System.Text.Json.JsonValueKind.True    => "true",
+                    System.Text.Json.JsonValueKind.False   => "false",
+                    _                                      => kvp.Value.GetRawText(),
+                };
+
+                field.Value = val;
+                filled++;
+            }
+
+            OnPropertyChanged(nameof(AllFields));
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Filled {filled} field(s) from {System.IO.Path.GetFileName(dlg.FileName)}.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Import form data failed.", ex); }
+    }
+
+    private async Task ExportAnnotationSummaryAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Annotation Summary",
+            Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt",
+            DefaultExt = ".csv",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_annotations.csv",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            await Task.Run(() =>
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Type,Page,Left,Bottom,Width,Height,Color,Text/Value");
+
+                foreach (var hl in HighlightAnnotations)
+                    sb.AppendLine($"{hl.Kind},{ hl.PageNumber},{hl.Left:F1},{hl.Bottom:F1},{hl.Width:F1},{hl.Height:F1},{hl.Color},");
+
+                foreach (var sn in StickyNotes)
+                    sb.AppendLine($"StickyNote,{sn.PageNumber},{sn.Left:F1},{sn.Bottom:F1},,,{sn.Color},{CsvEscape(sn.Text)}");
+
+                foreach (var ft in FreeTextAnnotations)
+                    sb.AppendLine($"FreeText,{ft.PageNumber},{ft.Left:F1},{ft.Bottom:F1},{ft.Width:F1},{ft.Height:F1},,{CsvEscape(ft.Text)}");
+
+                foreach (var sh in ShapeAnnotations)
+                {
+                    double w = Math.Abs(sh.X2 - sh.X1);
+                    double h = Math.Abs(sh.Y2 - sh.Y1);
+                    sb.AppendLine($"{sh.Kind},{sh.PageNumber},{Math.Min(sh.X1, sh.X2):F1},{Math.Min(sh.Y1, sh.Y2):F1},{w:F1},{h:F1},{sh.StrokeColor},");
+                }
+
+                System.IO.File.WriteAllText(dlg.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+            });
+
+            int total = HighlightAnnotations.Count + StickyNotes.Count
+                      + FreeTextAnnotations.Count + ShapeAnnotations.Count;
+            ToastService.Instance.Success($"Annotation summary: {total} item(s) exported.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Annotation summary export failed.", ex); }
+    }
+
+    private static string CsvEscape(string s)
+    {
+        if (s.Contains(',') || s.Contains('"') || s.Contains('\n'))
+            return "\"" + s.Replace("\"", "\"\"") + "\"";
+        return s;
+    }
+
+    private async Task FindAndHighlightAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlg = new Dialogs.InputDialog(
+            "Find and Highlight",
+            "Enter text to search and create highlight annotations on all matches:");
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+
+        string query = dlg.InputText.Trim();
+        StatusText = $"Searching for \"{query}\"…";
+
+        try
+        {
+            var matches = await Task.Run(() =>
+                Services.PdfTextExtractorService.FindTextPositions(_currentFilePath, query));
+
+            if (matches.Count == 0)
+            {
+                ToastService.Instance.Info($"No matches found for \"{query}\".");
+                StatusText = "Ready";
+                return;
+            }
+
+            foreach (var m in matches)
+            {
+                var hl = new Models.HighlightAnnotation
+                {
+                    PageNumber = m.PageNumber,
+                    Left   = m.Left,
+                    Bottom = m.Bottom,
+                    Width  = m.Width,
+                    Height = Math.Max(m.Height, 6),
+                    Color  = CurrentHighlightColor,
+                    Opacity = CurrentHighlightOpacity,
+                    Kind   = Models.HighlightKind.Highlight,
+                };
+                // Add directly — AddHighlightAnnotation would overwrite PageNumber
+                HighlightAnnotations.Add(hl);
+            }
+            float capturedOpacity = CurrentHighlightOpacity;
+            _undoService.Push(new Services.AnnotationAction
+            {
+                Description = $"Find & highlight \"{query}\" ({matches.Count})",
+                Execute     = () => { foreach (var m in matches) HighlightAnnotations.Add(new Models.HighlightAnnotation { PageNumber = m.PageNumber, Left = m.Left, Bottom = m.Bottom, Width = m.Width, Height = Math.Max(m.Height, 6), Color = CurrentHighlightColor, Opacity = capturedOpacity }); },
+                Undo        = () => { for (int i = 0; i < matches.Count; i++) { if (HighlightAnnotations.Count > 0) HighlightAnnotations.RemoveAt(HighlightAnnotations.Count - 1); } },
+            });
+            RefreshUndoCanExecute();
+
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Highlighted {matches.Count} occurrence(s) of \"{query}\".");
+            StatusText = $"Found and highlighted {matches.Count} matches.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Find and highlight failed.", ex);
+            StatusText = "Ready";
+        }
+    }
+
     private async Task ExportDesignAsync()
     {
         var dlg = new Microsoft.Win32.SaveFileDialog
@@ -1957,7 +3275,7 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             await Task.Run(() => Services.DesignExportService.ExportToPdf(
-                DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, dlg.FileName));
+                DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, dlg.FileName, DesignCanvas.PageBackground));
             ToastService.Instance.Success($"Design exported to {System.IO.Path.GetFileName(dlg.FileName)}");
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
@@ -2136,6 +3454,78 @@ public class MainViewModel : INotifyPropertyChanged
             AiModels.Add(m);
         if (AiModels.Count > 0 && !AiModels.Contains(_aiModel))
             _aiModel = AiModels[0];
+    }
+
+    private void SyncStamps()
+    {
+        AvailableStamps.Clear();
+        foreach (var s in _builtInStamps)
+            AvailableStamps.Add(s);
+        foreach (var s in AppSettings.Current.CustomStamps)
+            AvailableStamps.Add(s);
+    }
+
+    private void AddCustomStamp()
+    {
+        var dlg = new Dialogs.InputDialog("Custom Stamp", "Enter the text for the custom stamp:", "");
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+        string text = dlg.InputText.Trim().ToUpperInvariant();
+        if (AvailableStamps.Contains(text)) { SelectedStamp = text; return; }
+        AppSettings.Current.CustomStamps.Add(text);
+        AppSettings.Current.Save();
+        AvailableStamps.Add(text);
+        SelectedStamp = text;
+    }
+
+    private async Task ShowDocumentStatisticsAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        StatusText = "Computing document statistics…";
+        try
+        {
+            var fileInfo = new System.IO.FileInfo(_currentFilePath);
+            int pageCount = _document.PageCount;
+            int fieldCount = AllFields.Count;
+            int highlightCount = HighlightAnnotations.Count;
+            int stickyCount = StickyNotes.Count;
+            int freeTextCount = FreeTextAnnotations.Count(f => !f.Text.StartsWith("__INK__:"));
+            int inkCount = FreeTextAnnotations.Count(f => f.Text.StartsWith("__INK__:"));
+            int shapeCount = ShapeAnnotations.Count;
+            int totalAnnotations = highlightCount + stickyCount + freeTextCount + inkCount + shapeCount;
+            int bookmarkCount = Bookmarks.Count;
+            string docText = await Task.Run(() => Services.PdfTextExtractorService.GetDocumentText(_currentFilePath, 200000));
+            int wordCount = string.IsNullOrWhiteSpace(docText) ? 0
+                : docText.Split(new[] {' ', '\t', '\r', '\n'}, StringSplitOptions.RemoveEmptyEntries).Length;
+            int charCount = docText.Replace("\n", "").Replace("\r", "").Length;
+
+            string sizeStr = fileInfo.Length switch
+            {
+                < 1024 => $"{fileInfo.Length} B",
+                < 1024 * 1024 => $"{fileInfo.Length / 1024.0:F1} KB",
+                _ => $"{fileInfo.Length / (1024.0 * 1024):F2} MB"
+            };
+
+            string msg = $"Pages:               {pageCount}\n" +
+                         $"File size:           {sizeStr}\n" +
+                         $"Bookmarks:           {bookmarkCount}\n" +
+                         $"\n" +
+                         $"Form fields:         {fieldCount}\n" +
+                         $"\n" +
+                         $"Total annotations:   {totalAnnotations}\n" +
+                         $"  Highlights/marks:  {highlightCount}\n" +
+                         $"  Sticky notes:      {stickyCount}\n" +
+                         $"  Free text:         {freeTextCount}\n" +
+                         $"  Ink strokes:       {inkCount}\n" +
+                         $"  Shapes:            {shapeCount}\n" +
+                         $"\n" +
+                         $"Word count:          {wordCount:N0}\n" +
+                         $"Character count:     {charCount:N0}";
+
+            System.Windows.MessageBox.Show(msg, "Document Statistics",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not compute statistics.", ex); }
+        finally { StatusText = "Ready"; }
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

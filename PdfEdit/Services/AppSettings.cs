@@ -33,6 +33,10 @@ public class AppSettings
     public bool ForceUpperCaseDefault { get; set; }
     public string DateFormat { get; set; } = "MMMM d, yyyy";
     public string LastActiveTool { get; set; } = "Hand";
+    public string DefaultDrawingColor { get; set; } = "#C62828";
+
+    // ── Custom stamps ────────────────────────────────────────────────────────
+    public List<string> CustomStamps { get; set; } = new();
 
     // ── AI ───────────────────────────────────────────────────────────────────
     public string ClaudeApiKey { get; set; } = string.Empty;
