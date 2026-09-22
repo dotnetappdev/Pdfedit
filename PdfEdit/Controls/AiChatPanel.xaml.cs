@@ -30,6 +30,7 @@ public partial class AiChatPanel : UserControl
 
         RefreshModelList();
         RefreshConnectionStatus();
+        UpdateDocContextBadge();
     }
 
     private void OnHistoryChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -44,6 +45,8 @@ public partial class AiChatPanel : UserControl
         {
             bool running = _vm?.IsAiRunning == true;
             ThinkingIndicator.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+            CancelBtn.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+            SendBtn.Visibility   = running ? Visibility.Collapsed : Visibility.Visible;
             if (running)
                 Dispatcher.BeginInvoke(() => ChatScroll.ScrollToBottom());
         }
@@ -56,6 +59,16 @@ public partial class AiChatPanel : UserControl
             RefreshModelList();
             RefreshPopupStatus();
         }
+        else if (e.PropertyName == nameof(MainViewModel.DocumentContextReady))
+        {
+            UpdateDocContextBadge();
+        }
+    }
+
+    private void UpdateDocContextBadge()
+    {
+        bool ready = _vm?.DocumentContextReady == true;
+        DocContextBadge.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
     }
 
     // ── Model picker ────────────────────────────────────────────────────────
@@ -214,31 +227,42 @@ public partial class AiChatPanel : UserControl
 
     // ── Presets ──────────────────────────────────────────────────────────────
 
-    private static readonly Dictionary<string, string> Presets = new()
+    // Tags that go through AnalyzeDocumentAsync (document-context presets)
+    private static readonly HashSet<string> AnalysisPresets = new()
+        { "summarize", "extract", "contract", "pii", "translate", "smartfill" };
+
+    // Tags that populate the chat input for the user to edit then send
+    private static readonly Dictionary<string, string> InputPresets = new()
     {
-        ["fill"]      = "Please fill in the form fields appropriately based on the document context.",
-        ["summarize"] = "Summarize the main content, purpose, and key points of this PDF document.",
-        ["extract"]   = "Extract and list all key data: names, dates, addresses, numbers, and any important details from this PDF.",
-        ["qa"]        = "I'll ask questions about this PDF. Please answer based on the document content.",
-        ["redact"]    = "Identify all personally identifiable information (PII) — names, addresses, phone numbers, email addresses, SSNs, financial data — that should be redacted for privacy compliance.",
-        ["translate"] = "Translate the main content of this PDF into English (or specify a target language)."
+        ["fill"] = "Please fill in the form fields based on the document.",
+        ["qa"]   = "I have a question about this document: ",
     };
 
     private void Preset_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag is string tag && Presets.TryGetValue(tag, out var prompt))
+        if (sender is not Button btn || btn.Tag is not string tag || _vm == null) return;
+
+        if (AnalysisPresets.Contains(tag))
         {
-            if (tag == "fill" && _vm?.AllFields.Count > 0)
+            // Run analysis directly — no need to type in the chat box
+            _ = _vm.RunAnalysisPresetAsync(tag);
+        }
+        else if (InputPresets.TryGetValue(tag, out var prompt))
+        {
+            if (tag == "fill" && _vm.AllFields.Count > 0)
             {
                 var names = string.Join(", ", _vm.AllFields.Select(f => f.Name));
-                prompt = $"Please fill in the following form fields: {names}. Provide appropriate values based on the document context.";
+                prompt = $"Fill these form fields with appropriate values: {names}";
             }
-
-            if (_vm != null)
-                _vm.AiChatInput = prompt;
-
+            _vm.AiChatInput = prompt;
             InputBox.Focus();
         }
+    }
+
+    private void CancelBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm?.CancelAiCommand?.CanExecute(null) == true)
+            _vm.CancelAiCommand.Execute(null);
     }
 
     // ── Send / Clear / Keyboard ──────────────────────────────────────────────

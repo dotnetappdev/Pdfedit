@@ -13,6 +13,9 @@ A native WPF application for viewing, editing, and filling PDF forms — styled 
 ### AI Assistant & Model Picker
 ![AI Connections](docs/screenshots/ai-connections.png)
 
+### Document AI — Smart Fill, Summarize, Contract Analysis, Find PII
+![AI Features](docs/screenshots/ai-features.png)
+
 ### Page Management & Thumbnails
 ![Page Management](docs/screenshots/page-management.png)
 
@@ -29,12 +32,21 @@ A native WPF application for viewing, editing, and filling PDF forms — styled 
 - **Import / Export** — Save and reload all form values as TSV files
 - **Flatten & Save** — Bake filled values into a non-editable PDF
 
-### AI-Assisted Filling
-- **Built-in AI Chat** — Converse with an AI model to fill fields, navigate the form, or answer questions about the document
+### AI-Assisted Filling & Document Analysis
+- **Built-in AI Chat** — Converse with an AI model to fill fields, navigate the form, or ask questions; the AI has the document's full text as context
+- **Smart Fill** — AI reads the entire PDF text and fills all form fields intelligently from the document content — no manual prompting needed
+- **Summarize** — Structured AI summary: overview, key parties, key dates, key amounts, main points
+- **Extract Key Data** — Extract all names, dates, addresses, amounts, reference numbers, and contact info in a clean list
+- **Contract Analysis** — Identify parties, obligations, payment terms, termination clauses, risks, and missing standard clauses
+- **Find PII** — Locate all personally identifiable information (names, IDs, financial data, contact info) for redaction review
+- **Translate** — Translate the document content to English (or another language you specify)
+- **Q&A** — Ask any question about the document; answers are grounded in the actual PDF text
 - **Multi-Provider Support** — Connect your own **Anthropic (Claude)** or **OpenAI (ChatGPT)** API key
-- **Model Selection** — Choose from Claude Haiku 4.5 (fast), Claude Sonnet 5 (recommended), or Claude Opus 5 (most capable) — and GPT-4o equivalents for OpenAI
-- **Secure Key Storage** — API keys are stored locally in `%AppData%\PdfEdit\settings.json`; **passwords are never stored**
-- **User Profiles** — Save named sets of personal data (name, address, employer, etc.) and auto-fill matching fields
+- **Model Selection** — Claude Haiku 4.5 (fast), Sonnet 5 (recommended), Opus 5 (most capable), GPT-4o mini, GPT-4o
+- **Cancel** — Stop any in-progress AI response with one click
+- **Document Context Indicator** — Green "📄 Doc context" badge confirms the AI has read the PDF
+- **Secure Key Storage** — API keys stored locally in `%AppData%\PdfEdit\settings.json`; **passwords are never stored**
+- **User Profiles** — Save named sets of personal data (name, address, employer, etc.) and auto-fill matching fields with Quick Fill
 
 ### Page Management
 - **Rotate Current Page** — Clockwise or counter-clockwise, with accurate display of the absolute rotation (PDF rotation + session delta)
@@ -102,7 +114,8 @@ dotnet test
 | `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
 | `Services/PdfFormService` | Reads/writes AcroForm fields, splits, reorders, and inserts pages via iText 7 |
 | `Services/ToastService` | Singleton event-based toast notification bus |
-| `Services/AiChatService` | HTTP client for Anthropic and OpenAI chat completions |
+| `Services/AiProviderService` | Streaming and non-streaming HTTP client for Claude and OpenAI; document analysis prompts |
+| `Services/PdfTextExtractorService` | Extracts text from PDF pages using iText7 for AI document context |
 | `Services/SettingsService` | Loads/saves `%AppData%\PdfEdit\settings.json` (API keys, profiles, theme) |
 | `ViewModels/MainViewModel` | MVVM view model — all commands, page state, rotation, field values |
 | `Controls/PdfViewerControl` | Renders the page image and overlays live form controls (TextBox, PasswordBox, CheckBox, …) |

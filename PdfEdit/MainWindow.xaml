@@ -1122,7 +1122,7 @@
                                         AutomationProperties.Name="AI chat group">
                     <Fluent:Button Header="Open Chat"
                                    Command="{Binding ToggleAiPanelCommand}"
-                                   ToolTip="Show AI Chat panel (right sidebar → AI Chat tab)"
+                                   ToolTip="Show AI Chat panel"
                                    AutomationProperties.Name="Open AI chat panel">
                         <Fluent:Button.LargeIcon>
                             <TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
@@ -1137,8 +1137,39 @@
                                    Command="{Binding RunAiFillCommand}"
                                    Size="Middle"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Use AI to auto-fill form fields (uses the AI Fill tab prompt)"
+                                   ToolTip="AI fill using the prompt you typed"
                                    AutomationProperties.Name="Run AI form fill"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Document AI"
+                                        AutomationProperties.Name="Document AI analysis group">
+                    <Fluent:Button Header="Smart Fill"
+                                   Command="{Binding SmartFillFromDocCommand}"
+                                   ToolTip="AI reads the document text and fills all form fields intelligently"
+                                   AutomationProperties.Name="Smart fill from document">
+                        <Fluent:Button.LargeIcon>
+                            <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="20"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Summarize"
+                                   Command="{Binding SummarizeDocumentCommand}"
+                                   Size="Middle"
+                                   ToolTip="AI summarizes the document — parties, dates, key points"
+                                   AutomationProperties.Name="Summarize document"/>
+                    <Fluent:Button Header="Extract Data"
+                                   Command="{Binding ExtractKeyDataCommand}"
+                                   Size="Middle"
+                                   ToolTip="Extract names, dates, addresses, amounts and reference numbers"
+                                   AutomationProperties.Name="Extract key data"/>
+                    <Fluent:Button Header="Contract"
+                                   Command="{Binding AnalyzeContractCommand}"
+                                   Size="Middle"
+                                   ToolTip="Analyze as a contract — parties, obligations, risks, missing clauses"
+                                   AutomationProperties.Name="Analyze contract"/>
+                    <Fluent:Button Header="Find PII"
+                                   Command="{Binding FindPiiCommand}"
+                                   Size="Middle"
+                                   ToolTip="Identify personally identifiable information that should be redacted"
+                                   AutomationProperties.Name="Find PII"/>
                 </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Provider"
                                         AutomationProperties.Name="AI provider group">

@@ -258,6 +258,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Model picker button -->
@@ -284,7 +285,7 @@
                 </Button>
 
                 <!-- Connections cog -->
-                <Button Grid.Column="1"
+                <Button Grid.Column="2"
                         x:Name="ConnectionsBtn"
                         Style="{StaticResource IconBtn}"
                         Margin="4,0,0,0"
@@ -294,8 +295,21 @@
                     <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                 </Button>
 
+                <!-- Document context badge -->
+                <Border x:Name="DocContextBadge"
+                        Grid.Column="1"
+                        Visibility="Collapsed"
+                        Background="#1A3A1A" BorderBrush="#2A5A2A" BorderThickness="1"
+                        CornerRadius="8" Padding="6,3" Margin="6,0,0,0"
+                        ToolTip="Document text loaded — AI can read and analyze this PDF">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📄" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="Doc context" FontSize="10" Foreground="#4ACA6A" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Clear chat -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         x:Name="ClearBtn"
                         Style="{StaticResource IconBtn}"
                         Margin="2,0,0,0"
@@ -585,24 +599,38 @@
                 BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="6,6">
             <WrapPanel>
-                <Button Style="{StaticResource PresetChip}" Tag="fill"
-                        Click="Preset_Click" ToolTip="Fill form fields automatically"
-                        AutomationProperties.Name="Fill form preset">📝 Fill Form</Button>
+                <Button Style="{StaticResource PresetChip}" Tag="smartfill"
+                        Click="Preset_Click"
+                        ToolTip="AI reads the document and fills all form fields intelligently"
+                        AutomationProperties.Name="Smart fill from document">📄 Smart Fill</Button>
                 <Button Style="{StaticResource PresetChip}" Tag="summarize"
-                        Click="Preset_Click" ToolTip="Summarize the document"
+                        Click="Preset_Click"
+                        ToolTip="Summarize the document — key parties, dates, amounts, main points"
                         AutomationProperties.Name="Summarize preset">📋 Summarize</Button>
                 <Button Style="{StaticResource PresetChip}" Tag="extract"
-                        Click="Preset_Click" ToolTip="Extract key data from the PDF"
+                        Click="Preset_Click"
+                        ToolTip="Extract structured data: names, dates, addresses, amounts, references"
                         AutomationProperties.Name="Extract data preset">🔍 Extract Data</Button>
+                <Button Style="{StaticResource PresetChip}" Tag="contract"
+                        Click="Preset_Click"
+                        ToolTip="Analyze this as a contract — parties, obligations, risks, missing clauses"
+                        AutomationProperties.Name="Contract analysis preset">🔎 Contract</Button>
                 <Button Style="{StaticResource PresetChip}" Tag="qa"
-                        Click="Preset_Click" ToolTip="Ask questions about the PDF"
+                        Click="Preset_Click"
+                        ToolTip="Ask questions about the PDF"
                         AutomationProperties.Name="Q and A preset">💬 Q&amp;A</Button>
-                <Button Style="{StaticResource PresetChip}" Tag="redact"
-                        Click="Preset_Click" ToolTip="Find PII that should be redacted"
-                        AutomationProperties.Name="Redact suggestions preset">🔒 Redact PII</Button>
+                <Button Style="{StaticResource PresetChip}" Tag="pii"
+                        Click="Preset_Click"
+                        ToolTip="Find all PII (names, IDs, addresses, financials) that should be redacted"
+                        AutomationProperties.Name="Find PII preset">🔒 Find PII</Button>
                 <Button Style="{StaticResource PresetChip}" Tag="translate"
-                        Click="Preset_Click" ToolTip="Translate document content"
+                        Click="Preset_Click"
+                        ToolTip="Translate document content to English"
                         AutomationProperties.Name="Translate preset">🌐 Translate</Button>
+                <Button Style="{StaticResource PresetChip}" Tag="fill"
+                        Click="Preset_Click"
+                        ToolTip="Describe how to fill the form fields"
+                        AutomationProperties.Name="Fill form preset">📝 Fill Fields</Button>
             </WrapPanel>
         </Border>
 
@@ -683,6 +711,37 @@
                         IsEnabled="{Binding IsAiRunning, Converter={StaticResource InverseBoolConverter}, FallbackValue=True}"
                         Click="Send_Click"
                         AutomationProperties.Name="Send message"/>
+
+                <!-- Cancel button — shown only while AI is running -->
+                <Button Grid.Column="1"
+                        x:Name="CancelBtn"
+                        Visibility="Collapsed"
+                        Width="42" Height="36"
+                        Margin="6,0,0,0"
+                        Background="#CC4444"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontSize="13"
+                        FontFamily="Segoe MDL2 Assets"
+                        Content="&#xE711;"
+                        Click="CancelBtn_Click"
+                        ToolTip="Stop generating"
+                        AutomationProperties.Name="Stop AI generation">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="5"
+                                    Padding="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#AA3333"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
             </Grid>
         </Border>
     </Grid>

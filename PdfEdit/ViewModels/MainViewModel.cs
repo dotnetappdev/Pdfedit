@@ -375,6 +375,9 @@ public class MainViewModel : INotifyPropertyChanged
     private string _aiModel = "claude-haiku-4-5-20251001";
     private CancellationTokenSource? _aiCts;
     private PersonalProfile? _selectedProfile;
+    private string _documentText = string.Empty;  // extracted text for AI context
+
+    public bool DocumentContextReady => !string.IsNullOrEmpty(_documentText);
 
     public string AiChatInput
     {
@@ -570,6 +573,12 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand MovePageUpCommand { get; }
     public ICommand MovePageDownCommand { get; }
     public ICommand InsertPageBeforeCommand { get; }
+    public ICommand CancelAiCommand { get; }
+    public ICommand SummarizeDocumentCommand { get; }
+    public ICommand SmartFillFromDocCommand { get; }
+    public ICommand AnalyzeContractCommand { get; }
+    public ICommand ExtractKeyDataCommand { get; }
+    public ICommand FindPiiCommand { get; }
 
     public MainViewModel()
     {
@@ -677,6 +686,13 @@ public class MainViewModel : INotifyPropertyChanged
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
             () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
         InsertPageBeforeCommand = new AsyncRelayCommand(InsertPageBeforeAsync, () => HasDocument);
+
+        CancelAiCommand = new RelayCommand(() => { _aiCts?.Cancel(); }, () => _isAiRunning);
+        SummarizeDocumentCommand    = new AsyncRelayCommand(() => RunAnalysisPresetAsync("summarize"),  () => HasDocument && !_isAiRunning);
+        SmartFillFromDocCommand     = new AsyncRelayCommand(() => RunAnalysisPresetAsync("smartfill"),  () => HasDocument && !_isAiRunning);
+        AnalyzeContractCommand      = new AsyncRelayCommand(() => RunAnalysisPresetAsync("contract"),   () => HasDocument && !_isAiRunning);
+        ExtractKeyDataCommand       = new AsyncRelayCommand(() => RunAnalysisPresetAsync("extract"),    () => HasDocument && !_isAiRunning);
+        FindPiiCommand              = new AsyncRelayCommand(() => RunAnalysisPresetAsync("pii"),        () => HasDocument && !_isAiRunning);
 
         // Pre-select first profile if any exist
         if (Services.PersonalProfileStore.All.Count > 0)
@@ -847,6 +863,20 @@ public class MainViewModel : INotifyPropertyChanged
                          $"{Document.PageCount} page(s), {Document.FormFields.Count} field(s).";
             StatusText = msg;
             ToastService.Instance.Success($"Opened {System.IO.Path.GetFileName(path)}");
+
+            // Extract text in background so AI has document context
+            _documentText = string.Empty;
+            OnPropertyChanged(nameof(DocumentContextReady));
+            var extractPath = path;
+            _ = Task.Run(() =>
+            {
+                var text = Services.PdfTextExtractorService.GetDocumentText(extractPath);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _documentText = text;
+                    OnPropertyChanged(nameof(DocumentContextReady));
+                });
+            });
         }
         catch (Exception ex)
         {
@@ -989,6 +1019,8 @@ public class MainViewModel : INotifyPropertyChanged
         SaveDocumentState();
         _currentFilePath = null;
         Document = null;
+        _documentText = string.Empty;
+        OnPropertyChanged(nameof(DocumentContextReady));
         FieldValues.Clear();
         AllFields.Clear();
         CurrentPageFields.Clear();
@@ -1302,7 +1334,8 @@ public class MainViewModel : INotifyPropertyChanged
             var sysPrompt = _selectedProfile != null
                 ? Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile) : null;
             var result = await Services.AiProviderService.FillFormFieldsAsync(
-                AiPrompt, fieldNames, _aiModel, key, systemPrompt: sysPrompt);
+                AiPrompt, fieldNames, _aiProvider, _aiModel, key,
+                systemPrompt: sysPrompt, documentText: _documentText);
             int count = 0;
             foreach (var (k, v) in result)
             {
@@ -1355,8 +1388,16 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             var history = AiChatHistory.Take(AiChatHistory.Count - 1).ToList();
-            var sysPrompt = _selectedProfile != null
-                ? Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile) : null;
+
+            // Build system prompt: profile context + document context
+            var sysParts = new System.Text.StringBuilder();
+            sysParts.Append("You are a helpful assistant for PDF documents. ");
+            if (_selectedProfile != null)
+                sysParts.Append(Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile)).Append("\n\n");
+            if (!string.IsNullOrEmpty(_documentText))
+                sysParts.Append("The user has the following PDF document open:\n\n").Append(_documentText);
+            var sysPrompt = sysParts.Length > 35 ? sysParts.ToString() : null;
+
             await Services.AiProviderService.SendStreamingAsync(
                 history, _aiProvider, _aiModel, key,
                 chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
@@ -1374,6 +1415,145 @@ public class MainViewModel : INotifyPropertyChanged
         {
             reply.Content = $"Error: {ex.Message}";
             ToastService.Instance.Error("AI error — check your API key.");
+        }
+        finally
+        {
+            IsAiRunning = false;
+        }
+    }
+
+    // Called by AiChatPanel preset chips and by the new AI commands
+    public async Task RunAnalysisPresetAsync(string analysisType, string? overridePrompt = null)
+    {
+        var key = _aiProvider == "OpenAI"
+            ? AppSettings.Current.OpenAiApiKey
+            : AppSettings.Current.ClaudeApiKey;
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            ToastService.Instance.Warning($"No {_aiProvider} API key — add it via the ⚙ icon in the AI panel.");
+            return;
+        }
+
+        if (analysisType is "summarize" or "extract" or "contract" or "pii" or "translate" or "smartfill")
+        {
+            if (string.IsNullOrEmpty(_documentText))
+            {
+                ToastService.Instance.Warning("Waiting for document text to load — try again in a moment.");
+                return;
+            }
+        }
+
+        // For smart fill, use the special JSON-extract path
+        if (analysisType == "smartfill")
+        {
+            await SmartFillFromDocAsync(key);
+            return;
+        }
+
+        // For all other analysis types: stream into chat
+        var labelMap = new Dictionary<string, string>
+        {
+            ["summarize"] = "📋 Summarize this document",
+            ["extract"]   = "🔍 Extract key data from this document",
+            ["contract"]  = "🔎 Analyze this as a contract",
+            ["pii"]       = "🔒 Find PII that should be redacted",
+            ["translate"] = "🌐 Translate this document",
+            ["qa"]        = overridePrompt ?? "💬 What is this document about?",
+        };
+
+        var userMsg = overridePrompt ?? (labelMap.TryGetValue(analysisType, out var lbl) ? lbl : analysisType);
+        AiChatHistory.Add(new AiChatMessage { Role = "user", Content = userMsg });
+
+        var reply = new AiChatMessage { Role = "assistant", Content = "" };
+        AiChatHistory.Add(reply);
+
+        ShowAiPanel = true;
+        IsAiRunning = true;
+        _aiCts?.Cancel();
+        _aiCts = new CancellationTokenSource();
+
+        try
+        {
+            var fieldNames = AllFields.Select(f => f.Name);
+            await Services.AiProviderService.AnalyzeDocumentAsync(
+                _documentText, analysisType, _aiProvider, _aiModel, key,
+                chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
+                _aiCts.Token,
+                fieldNames: fieldNames);
+
+            if (string.IsNullOrEmpty(reply.Content))
+                reply.Content = "(No response — check your API key and model selection.)";
+        }
+        catch (OperationCanceledException)
+        {
+            reply.Content = "(Cancelled)";
+        }
+        catch (Exception ex)
+        {
+            reply.Content = $"Error: {ex.Message}";
+            ToastService.Instance.Error("AI analysis failed.");
+        }
+        finally
+        {
+            IsAiRunning = false;
+        }
+    }
+
+    private async Task SmartFillFromDocAsync(string apiKey)
+    {
+        if (string.IsNullOrEmpty(_documentText)) return;
+
+        var userMsg = "📄 Smart Fill — fill all fields from document content";
+        AiChatHistory.Add(new AiChatMessage { Role = "user", Content = userMsg });
+
+        var reply = new AiChatMessage { Role = "assistant", Content = "Analysing document and filling fields…" };
+        AiChatHistory.Add(reply);
+
+        ShowAiPanel = true;
+        IsAiRunning = true;
+        _aiCts?.Cancel();
+        _aiCts = new CancellationTokenSource();
+
+        try
+        {
+            var fieldNames = AllFields.Select(f => f.Name).ToList();
+            var result = await Services.AiProviderService.FillFormFieldsAsync(
+                "Fill these form fields using the information found in the document.",
+                fieldNames, _aiProvider, _aiModel, apiKey,
+                _aiCts.Token,
+                documentText: _documentText);
+
+            int filled = 0;
+            var filledList = new System.Text.StringBuilder();
+            foreach (var (k, v) in result)
+            {
+                if (FieldValues.ContainsKey(k) && !string.IsNullOrEmpty(v))
+                {
+                    UpdateFieldValue(k, v);
+                    filledList.AppendLine($"• **{k}**: {v}");
+                    filled++;
+                }
+            }
+            PageChanged?.Invoke();
+
+            reply.Content = filled > 0
+                ? $"✓ Smart Fill complete — filled {filled} field(s) from document content:\n\n{filledList}"
+                : "No fields could be confidently filled from this document's content. Try using a profile or the AI chat.";
+
+            if (filled > 0)
+                ToastService.Instance.Success($"Smart Fill: {filled} field(s) filled from document.");
+            else
+                ToastService.Instance.Info("Smart Fill: no matching fields found.");
+        }
+        catch (OperationCanceledException)
+        {
+            reply.Content = "(Cancelled)";
+        }
+        catch (Exception ex)
+        {
+            reply.Content = $"Error: {ex.Message}";
+            ToastService.Instance.Error("Smart Fill failed.");
         }
         finally
         {
