@@ -1,135 +1,207 @@
-# PdfEdit — WPF PDF Form Filler & Editor
+# PdfEdit — PDF Designer, Form Filler & Editor
 
-A native WPF application for viewing, editing, and filling PDF forms — styled after Adobe Acrobat Pro with a modern Fluent ribbon, AI-powered document analysis, full page management, and live theme switching.
+A professional WPF desktop application for designing, editing, and filling PDF documents. Build PDFs from scratch with the design canvas, fill any form with AI assistance, annotate, sign, and manage pages — all in a native Windows application with an Office-style ribbon UI.
 
 ## Demo
 
 ![PdfEdit Demo](docs/screenshots/demo.gif)
 
-*Full workflow: open a PDF → fill form fields → AI Smart Fill → page management → theme switching*
+*Open a PDF → fill form fields → AI Smart Fill → page management → theme switching*
 
 ---
 
 ## Screenshots
 
-### Ribbon — Clipboard, Navigation & AI Controls
-![Ribbon Icons](docs/screenshots/ribbon-icons.png)
+| Ribbon — Clipboard, Navigation & AI | Form Filling with AI Smart Fill |
+|------|------|
+| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | ![Form Filling](docs/screenshots/form-filling.png) |
 
-### Dark Theme — Form Filling
-![Dark Theme](docs/screenshots/dark-theme.png)
+| Dark Theme | Light Theme (IRS W-4) |
+|------|------|
+| ![Dark Theme](docs/screenshots/dark-theme.png) | ![Light Theme](docs/screenshots/light-theme.png) |
 
-### AI Smart Fill — All Fields Filled Automatically
-![Form Filling with AI](docs/screenshots/form-filling.png)
-
-### Light Theme (IRS W-4)
-![Light Theme](docs/screenshots/light-theme.png)
-
-### Document AI — Smart Fill, Summarize, Contract Analysis, Find PII
-![AI Features](docs/screenshots/ai-features.png)
-
-### AI Assistant & Model Picker
-![AI Connections](docs/screenshots/ai-connections.png)
-
-### Page Management & Thumbnails
-![Page Management](docs/screenshots/page-management.png)
-
-### Themed Dialogs & Toast Notifications
-![Dialogs](docs/screenshots/dialogs.png)
-
-### Settings — Appearance & Theme
-![Settings Appearance](docs/screenshots/settings.png)
-
-### Settings — AI Assistant (API keys & connection status)
-![Settings AI](docs/screenshots/settings-ai.png)
-
-### Settings — Accessibility & Keyboard Shortcuts
-![Settings Accessibility](docs/screenshots/settings-accessibility.png)
+| AI Features | Settings |
+|------|------|
+| ![AI Features](docs/screenshots/ai-features.png) | ![Settings](docs/screenshots/settings.png) |
 
 ---
 
-## Features
+## Why PdfEdit?
+
+| Feature | PdfEdit | Adobe Acrobat | PDFfiller | Foxit PDF |
+|---------|---------|---------------|-----------|-----------|
+| Design canvas (build from scratch) | ✅ | ✅ | ❌ | ✅ |
+| AI Smart Fill (auto-fill all fields) | ✅ Claude + GPT | ❌ | ❌ | ❌ |
+| Built-in templates (Invoice, Letter…) | ✅ | Limited | ✅ | ❌ |
+| Table element | ✅ | ✅ | ❌ | ✅ |
+| Free (open source) | ✅ | ❌ | ❌ | ❌ |
+| WPF native (no browser) | ✅ | ✅ | ❌ | ✅ |
+| Bring your own AI key | ✅ | ❌ | ❌ | ❌ |
+
+---
+
+## Feature Overview
+
+### Design Canvas
+
+Build PDFs from scratch with a word-processor-style canvas — no existing PDF required.
+
+**Drawing Tools**
+- **Text Box** — Click to place editable text; double-click to edit in-place; supports font family, size, bold/italic/underline, colour, background colour, and text alignment
+- **Rectangle / Ellipse** — Draw filled or stroked shapes with configurable fill colour, stroke colour, stroke width, and corner radius
+- **Line / Arrow** — Draw straight lines and arrows between points
+- **Table** — Insert configurable tables with N rows × M columns; header row styled separately; border colour, thickness, and cell text editable
+- **Pen (Freehand)** — Draw smooth freehand strokes at any thickness and colour
+- **Image** — Insert PNG, JPG, BMP, GIF, or TIFF images; drag to resize
+
+**Element Operations**
+- **Select & Move** — Click any element to select it; drag to reposition; arrow keys for 1px nudge (Shift+arrow = 10px)
+- **Resize** — 8-handle resize (NW/N/NE/W/E/SW/S/SE) with drag handles on the selection border
+- **Copy / Paste** — Ctrl+C / Ctrl+V; paste creates an offset clone ready to position
+- **Duplicate** — Ctrl+D to duplicate-in-place with 20px offset
+- **Delete** — Del key or ribbon button
+- **Undo / Redo** — Ctrl+Z / Ctrl+Y; unlimited history via state snapshot stacks
+- **Select All** — Ctrl+A
+
+**Alignment (relative to page)**
+- Align Left Edge, Right Edge, Center Horizontally
+- Align Top Edge, Bottom Edge, Center Vertically
+
+**Layer Order**
+- Bring Forward, Send Backward (one step)
+- Bring to Front, Send to Back (full stack jump)
+
+**Element Properties**
+- **Opacity** — 0–100% slider per element; rendered in PDF export via ExtGState
+- **Lock** — Prevent accidental move or resize; element still selectable
+- **ZOrder** — Automatic layer tracking
+
+**Templates** — One-click pre-built document layouts:
+- **Invoice** — Logo, billing info, line-item table, total row, payment terms
+- **Letter** — Professional letter with sender, date, recipient, and body sections
+- **Form** — Labelled input fields for applications and surveys
+- **Certificate** — Decorative bordered certificate with gold accents and signature lines
+- **Business Card** — 85×54 mm card with two-tone background and contact details
+
+**Pages & View**
+- Page size: A4, Letter, A3, or Custom dimensions
+- Grid overlay for alignment guides (20 px spacing)
+- Zoom in/out (0.1× – 5×)
+- Canvas scroll area with drop shadow and white page surface
+
+**Export**
+- **Export PDF** — Saves the full canvas to a PDF file via iText7
+- **Open as PDF** — Exports to a temp file and immediately opens in the PDF viewer for filling/annotation
+- Coordinate transform: WPF (Y-down) → PDF (Y-up) handled automatically
+
+---
 
 ### PDF Form Filling
-- **Visual Form Overlay** — Click any AcroForm field directly on the rendered page to fill it in-place
-- **All Field Types** — Text, checkboxes, radio buttons, combo boxes, list boxes, signature fields, and **password fields** (masked input via `PasswordBox`)
-- **Existing AcroFields** — Open any PDF with pre-placed form fields and fill them immediately; field positions are read from the PDF
+
+- **Visual Form Overlay** — Click any AcroForm field directly on the rendered page
+- **All Field Types** — Text, checkboxes, radio buttons, combo boxes, list boxes, signature fields, password fields
 - **Field Highlights** — Blue = optional, red = required, blue border = focused
-- **Clear All Fields** — Reset all field values in one click
-- **Delete Field** — Remove individual AcroForm fields; stripped from the PDF on save
+- **Clear All Fields** — Reset all values in one click
+- **Delete Field** — Remove individual AcroForm fields from the document
 - **Import / Export** — Save and reload all field values as TSV files
 - **Flatten & Save** — Bake filled values into a non-editable PDF
 
+---
+
 ### AI-Powered Document Analysis
-- **PDF Text Extraction** — Full document text extracted automatically on open (via iText7); used as AI context
-- **Document Context Badge** — Green "📄 Doc context" indicator confirms the AI has read the PDF
-- **Smart Fill** — AI reads the entire PDF and fills all form fields from the document content — no prompting needed
+
+- **Smart Fill** — AI reads the entire PDF and fills all form fields automatically — no prompting needed
 - **Summarize** — Structured summary: overview, key parties, key dates, key amounts, main points
-- **Extract Key Data** — All names, dates, addresses, amounts, reference numbers, and contact info in a clean list
-- **Contract Analysis** — Parties, obligations, payment terms, termination, risks, and missing standard clauses
-- **Find PII** — Locate all personally identifiable information (names, IDs, financial data) for redaction review
+- **Extract Key Data** — Names, dates, addresses, amounts, reference numbers, contact info
+- **Contract Analysis** — Parties, obligations, payment terms, termination clauses, risks
+- **Find PII** — Locate all personally identifiable information for redaction review
 - **Translate** — Translate document content to English or another target language
-- **AI Chat with Document Context** — Ask any question; answers are grounded in the actual PDF text
-- **Multi-Provider** — Connect **Anthropic (Claude)** or **OpenAI (ChatGPT)** with your own API key
-- **Model Selection** — Claude Haiku 4.5 (fast) · Sonnet 5 (recommended) · Opus 5 (powerful) · GPT-4o mini · GPT-4o
+- **AI Chat with Document Context** — Ask any question grounded in the actual PDF text
+- **Multi-Provider** — Connect Claude (Anthropic) or ChatGPT (OpenAI) with your own API key
+- **Model Selection** — Claude Haiku 4.5 · Sonnet 5 · Opus 5 · GPT-4o mini · GPT-4o
 - **Cancel** — Stop any in-progress AI response instantly
-- **User Profiles** — Save named sets of personal data and fill matching fields with **Quick Fill** (no AI needed)
-- **Secure Key Storage** — API keys stored locally in `%AppData%\PdfEdit\settings.json`; **passwords are never stored**
+- **User Profiles** — Save personal data sets and auto-fill matching fields (no AI needed)
+- **Secure Key Storage** — API keys stored in `%AppData%\PdfEdit\settings.json`; **passwords are never stored**
 
-### Free-Text Annotations
-- **Add Text Anywhere** — Place a free-text annotation at any position on any page
-- **Rich Formatting** — Font family, size, bold, italic, underline, colour, and text alignment per annotation
-- **Vertical Text** — Rotate annotations −90° for vertical labels
-- **Force Uppercase** — Optional uppercase mode for all-caps fields
-- **Delete Annotation** — Remove individual annotations before saving
+---
 
-### Signatures
-- **Signature Library** — Draw, type, or load signature images; preview thumbnails in the picker
-- **Place Signature** — Click to place a saved signature anywhere on a page
-- **Remove Signature** — Delete placed signatures before saving
+### Annotations & Signatures
+
+**Free-Text Annotations**
+- Add text anywhere on any page; rich formatting (font, size, bold, italic, underline, colour)
+- Vertical text rotation (−90°); force uppercase mode
+- Delete individual annotations before saving
+
+**Signatures**
+- Draw, type, or load signature images; preview thumbnails in the signature picker
+- Place signatures anywhere on a page; remove before saving
+
+---
 
 ### Page Management
-- **Rotate Page** — Clockwise or counter-clockwise; status bar shows absolute rotation (PDF-stored + session delta)
-- **Rotate All Pages** — Apply a 90° rotation to every page at once
-- **Move Page Up / Down** — Reorder pages via ribbon buttons
-- **Insert Page Before** — Insert a blank page before the current page
+
+- **Rotate Page** — CW / CCW; status bar shows cumulative rotation
+- **Rotate All Pages** — Apply 90° rotation to every page at once
+- **Move Page Up / Down** — Reorder pages via ribbon
+- **Insert Page Before / After** — Add blank pages at any position
 - **Delete Page** — Remove the current page (disabled on single-page documents)
 - **Extract Page** — Save the current page as a standalone PDF
-- **Merge PDF** — Append one or more PDFs to the end of the current document
-- **Insert PDF** — Insert another PDF at a chosen position: beginning, before/after the current page, or end of document
-- **Split PDF** — Split every page into individual files (saved to `{name}_split/`)
-- **Drag-and-Drop Reorder** — Drag thumbnails to reorder pages; PDF is rewritten automatically
-- **Right-Click Thumbnails** — Context menu: Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract
+- **Merge PDF** — Append one or more PDFs to the current document
+- **Insert PDF** — Insert another PDF at beginning, before/after current page, or end
+- **Split PDF** — Split every page into individual files
+- **Drag-and-Drop Reorder** — Drag thumbnails in the left panel to reorder pages
+- **Right-Click Thumbnails** — Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract
+
+---
 
 ### Navigation & Viewing
-- **Page Thumbnails** — Toggle the left thumbnail panel; click to jump to any page
-- **Zoom** — Ctrl+Scroll, ribbon buttons, fit-to-window, and actual-size shortcuts
-- **Page Navigation** — First, Previous, Next, Last buttons; type a page number directly
-- **Recent Files** — File menu lists recently opened PDFs for quick re-open
-- **Document State** — Last page and zoom level are remembered per file and restored on re-open
-- **Search** — Global search across field names, field values, and annotation text; click a result to jump to it
-- **Print** — Send the current page to the system print dialog
+
+- Page thumbnails panel (toggle from ribbon)
+- Zoom: Ctrl+Scroll, ribbon buttons, fit-to-window, actual-size
+- Page navigation: First, Previous, Next, Last, type page number directly
+- Recent files in File menu
+- Document state remembered per file (last page + zoom)
+- Global search across field names, values, and annotations
+- Print via system dialog
+
+---
 
 ### UI & Themes
-- **Three Live Themes** — Dark, Light, and High Contrast; switch from the ribbon with no restart
-- **Fluent Ribbon** — Home, View, Forms, Tools, and AI Assistant tabs
-- **Dockable Panels** — Properties, page thumbnails, and AI Chat via AvalonDock
-- **Toast Notifications** — Success, info, warning, and error toasts with auto-dismiss
-- **Themed Dialogs** — Error (expandable stack trace + Copy Details), Confirm (danger mode), and Info — all styled to match the active theme
-- **UI Scale** — Increase/decrease the overall interface scale (independent of zoom)
-- **Drag & Drop to Open** — Drag a PDF file onto the window to open it
 
-### Preferences & Settings
-- **Settings Window** — Tabbed preferences dialog (File → Settings or toolbar)
-- **Appearance tab** — Theme selector with visual preview tiles; UI scale slider (75 % – 200 %)
-- **Fonts tab** — Per-area font size control (Ribbon, Form Fields, AI Chat, Thumbnails, Status Bar, Dialogs, Properties); live preview; reset to defaults
-- **Editor tab** — Default annotation font family, size, and color; date-stamp format (four formats); force-uppercase default toggle
-- **AI Assistant tab** — Claude and OpenAI API key management; connection status badge; keys stored locally, passwords never stored
-- **Accessibility tab** — High-contrast focus indicators toggle; keyboard shortcuts reference
+- **Three Live Themes** — Dark, Light, and High Contrast (no restart required)
+- **Fluent Ribbon** — Home, Fill & Sign, Forms, Tools, AI Assistant, **Design** tabs
+- **Dockable Panels** — Properties, thumbnails, AI Chat via AvalonDock
+- **Toast Notifications** — Success/info/warning/error with auto-dismiss
+- **Themed Dialogs** — Error (expandable stack trace), Confirm (danger mode), Info
+- **UI Scale** — Independent of zoom; 75%–200%
+- **Drag & Drop** — Drag a PDF onto the window to open it
 
-### Sample PDFs
-The `Samples/` folder includes:
-- `all-field-types.pdf` — Exercises every AcroForm field type (text, checkbox, radio, combo, listbox)
-- `irs-w4.pdf` — Real IRS W-4 form for realistic testing
+---
+
+### Keyboard Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Open | Ctrl+O |
+| Save | Ctrl+S |
+| Save As | Ctrl+Shift+S |
+| Close | Ctrl+W |
+| Print | Ctrl+P |
+| Undo (design) | Ctrl+Z |
+| Redo (design) | Ctrl+Y |
+| Copy element | Ctrl+C |
+| Paste element | Ctrl+V |
+| Duplicate | Ctrl+D |
+| Select All | Ctrl+A |
+| Delete element | Del |
+| Nudge 1px | Arrow keys |
+| Nudge 10px | Shift+Arrow |
+| Next page | Ctrl+Right |
+| Previous page | Ctrl+Left |
+| Zoom in | Ctrl+Add |
+| Zoom out | Ctrl+Subtract |
+| Fit to window | Ctrl+0 |
+| Global search | Ctrl+Shift+F |
 
 ---
 
@@ -140,7 +212,7 @@ The `Samples/` folder includes:
 
 ## Building
 
-```
+```bash
 cd PdfEdit
 dotnet restore
 dotnet build -c Release
@@ -151,7 +223,7 @@ Or open `PdfEdit.sln` in Visual Studio 2022 and press **F5**.
 
 ## Running Tests
 
-```
+```bash
 cd PdfEdit.Tests
 dotnet test
 ```
@@ -160,19 +232,21 @@ dotnet test
 
 ## Usage
 
-1. **Open a PDF** — `File → Open` (Ctrl+O) or drag a PDF onto the window
-2. **Fill fields** — Click any form field on the rendered page and type / select a value
-3. **Smart Fill** — Go to the **AI Assistant** tab → click **Smart Fill** to let AI fill all fields from the document text
-4. **AI Chat** — Open the AI panel, connect an API key via ⚙, then use presets (Summarize, Contract, Find PII…) or type a question
-5. **Annotate** — Select the **Add Text** tool and click anywhere to place a free-text annotation
-6. **Navigate pages** — Ribbon navigation buttons, click thumbnails, or type a page number
-7. **Rotate pages** — Home → Rotate Page CW/CCW, or right-click a thumbnail
-8. **Reorder pages** — Drag thumbnails, or use Move Up / Move Down in the ribbon
-9. **Split PDF** — Home → Split PDF (saves each page as a separate file)
-10. **Switch theme** — View → Theme → Dark / Light / High Contrast
-11. **Save** — `Ctrl+S` keeps fields editable; **Flatten & Save** bakes them in permanently
-12. **Export data** — Forms → Export Data (TSV)
-13. **Import data** — Forms → Import Data (TSV bulk-fill)
+**Filling an existing PDF:**
+1. `File → Open` (Ctrl+O) or drag a PDF onto the window
+2. Click any form field on the page and type or select a value
+3. For AI-powered fill: **AI Assistant** tab → **Smart Fill**
+4. Add text annotations: **Fill & Sign** tab → **Add Text** → click anywhere
+5. Add your signature: **Fill & Sign** tab → **Signatures** → draw or type → place on page
+6. Save with Ctrl+S (fields remain editable) or **Flatten & Save** to bake them in permanently
+
+**Building a PDF from scratch:**
+1. Click the **Design** tab in the ribbon
+2. Click **New Design** to open the canvas
+3. Choose a **Template** (Invoice, Letter, Form, Certificate, Business Card) or start blank
+4. Add elements: **Text Box**, **Rectangle**, **Ellipse**, **Table**, **Image**, **Pen**
+5. Select, move, and resize elements; use **Align** tools to position precisely
+6. **Export PDF** or **Open as PDF** to view and fill in the PDF viewer
 
 ---
 
@@ -181,27 +255,22 @@ dotnet test
 | Layer | Description |
 |-------|-------------|
 | `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
-| `Services/PdfFormService` | Reads/writes AcroForm fields, splits, merges, reorders, rotates, and inserts pages via iText 7 |
-| `Services/PdfTextExtractorService` | Extracts text from PDF pages using iText7; cached per page for AI context |
+| `Services/PdfFormService` | Reads/writes AcroForm fields, splits, merges, reorders, rotates, inserts pages via iText7 |
+| `Services/PdfTextExtractorService` | Extracts text from PDF pages via iText7; cached per page for AI context |
 | `Services/AiProviderService` | Streaming HTTP client for Claude and OpenAI; document analysis prompt builder |
+| `Services/DesignExportService` | Renders DesignCanvas elements to a PDF page via iText7; handles WPF→PDF coordinate transform, opacity, and table layout |
 | `Services/ToastService` | Singleton event-based toast notification bus |
 | `Services/AppSettings` | Loads/saves `%AppData%\PdfEdit\settings.json` (API keys, theme, recent files, UI scale) |
 | `Services/PersonalProfileStore` | Profile storage and keyword-based field matching for Quick Fill |
-| `ViewModels/MainViewModel` | MVVM view model — all commands, page state, rotation, field values, AI orchestration |
-| `Controls/PdfViewerControl` | Renders the page image and overlays live form controls (TextBox, PasswordBox, CheckBox, …) |
-| `Controls/PageThumbnailsPanel` | Left thumbnail strip with drag-and-drop reorder and right-click context menu |
-| `Controls/AiChatPanel` | AI chat UI — model picker, provider tabs, preset chips, streaming chat, doc-context badge |
-| `Controls/ToolboxPanel` | Right-side Fill & Sign tool selector with accent-bar active state |
-| `Dialogs/AppDialog` | Static service replacing `MessageBox.Show` — `ShowError`, `ShowConfirm`, `ShowInfo` |
-| `Dialogs/ThemedErrorDialog` | Error dialog with expandable stack trace and Copy Details button |
-| `Dialogs/ThemedConfirmDialog` | Confirm dialog with optional danger mode (red button) |
-| `Dialogs/ThemedInfoDialog` | Info dialog with accent icon |
-| `Resources/AppTheme.xaml` | Shared styles using `DynamicResource` tokens for live theme switching |
-| `Themes/DarkTheme.xaml` | Dark palette tokens |
-| `Themes/LightTheme.xaml` | Light palette tokens |
-| `Themes/HighContrastTheme.xaml` | High-contrast accessibility tokens |
-| `Models/` | `FormFieldInfo`, `PdfDocumentInfo`, `AiChatMessage`, `PersonalProfile`, `FieldType`, `ActiveTool` |
-| `PdfEdit.Tests/` | xUnit tests — field types, round-trips, rotation, stamps, settings |
+| `ViewModels/MainViewModel` | MVVM — all commands, page state, rotation, field values, AI orchestration, design mode |
+| `ViewModels/DesignCanvasViewModel` | Design canvas state: elements, tools, selection, format, undo/redo, alignment, templates |
+| `Models/DesignElement` | Element hierarchy: `TextDesignElement`, `ShapeDesignElement`, `ImageDesignElement`, `FreehandDesignElement`, `TableDesignElement` |
+| `Controls/DesignCanvas` | WPF canvas with ItemsControl, InkCanvas, 8-handle resize thumbs, rubber-band preview, mouse draw |
+| `Controls/PdfViewerControl` | Renders the page image and overlays live form controls |
+| `Controls/PageThumbnailsPanel` | Left thumbnail strip with drag-and-drop reorder |
+| `Controls/AiChatPanel` | AI chat UI — model picker, provider tabs, preset chips, streaming |
+| `Dialogs/AppDialog` | Themed dialogs replacing `MessageBox.Show` |
+| `Resources/AppTheme.xaml` | `DynamicResource` token-based style system for live theme switching |
 
 ---
 
@@ -209,9 +278,9 @@ dotnet test
 
 | Package | Use |
 |---------|-----|
-| `itext7` v8 | PDF AcroForm reading/writing, text extraction, page manipulation |
+| `itext7` v8 | PDF AcroForm, text extraction, page manipulation, canvas drawing |
 | `Fluent.Ribbon` v10 | Office-style ribbon toolbar |
-| `AvalonDock` (Dirkster) v5 | Dockable panels layout |
+| `AvalonDock` (Dirkster) v5 | Dockable panels |
 | `Windows.Data.Pdf` (built-in) | High-quality PDF page rendering |
 | `System.Text.Json` (built-in) | Settings and AI API serialisation |
 | `xunit` v2 | Unit test framework |
@@ -220,7 +289,7 @@ dotnet test
 
 ## Security
 
-- API keys are stored in `%AppData%\PdfEdit\settings.json` on the local machine only
-- **Passwords are never stored** — password-type PDF fields use a `PasswordBox` (masked input); values are written only to the PDF at save time
-- Keys are sent only to the respective AI provider (Anthropic / OpenAI); they are never shared with third parties
-- The app makes no network requests other than to the selected AI provider's public API endpoints
+- API keys stored in `%AppData%\PdfEdit\settings.json` (local machine only)
+- **Passwords are never stored** — password-type PDF fields use a `PasswordBox`; values written only to the PDF at save time
+- Keys sent only to the selected AI provider's public API endpoints; never shared with third parties
+- No telemetry; no analytics; no network requests other than to the AI provider you configure
