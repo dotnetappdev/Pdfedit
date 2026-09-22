@@ -658,6 +658,24 @@ public partial class DesignCanvas : UserControl
         else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control) { VM.PasteClipboard(); e.Handled = true; }
         else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control) { VM.DuplicateSelected(); e.Handled = true; }
         else if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control) { VM.SelectAll(); e.Handled = true; }
+        // Tool shortcuts (no modifier, not editing text)
+        else if (Keyboard.Modifiers == ModifierKeys.None && VM.SelectedElement is not TextDesignElement { IsEditing: true })
+        {
+            DesignTool? tool = e.Key switch
+            {
+                Key.V => DesignTool.Select,
+                Key.T => DesignTool.Text,
+                Key.R => DesignTool.Rectangle,
+                Key.E => DesignTool.Ellipse,
+                Key.L => DesignTool.Line,
+                Key.A => DesignTool.Arrow,
+                Key.P => DesignTool.Pen,
+                Key.I => DesignTool.Image,
+                Key.B => DesignTool.Table,
+                _     => null
+            };
+            if (tool.HasValue) { VM.ActiveTool = tool.Value; e.Handled = true; }
+        }
         // Nudge selected with arrow keys (1px; 10px with Shift; Ctrl+arrow = resize)
         else if (VM.SelectedElement is DesignElement sel && !sel.IsLocked && new[] { Key.Left, Key.Right, Key.Up, Key.Down }.Contains(e.Key))
         {

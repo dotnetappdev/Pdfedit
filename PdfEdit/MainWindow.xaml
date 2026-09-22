@@ -2003,6 +2003,44 @@
                             </ScrollViewer>
                         </TabItem>
 
+                        <!-- Design Layers tab -->
+                        <TabItem Header="Layers"
+                                 Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="Design elements layers">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="DESIGN ELEMENTS"
+                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding DesignCanvas.Elements}"
+                                         SelectedItem="{Binding DesignCanvas.SelectedElement, Mode=TwoWay}"
+                                         AutomationProperties.Name="Design elements list">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="2,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding ElementType}"
+                                                           FontSize="11"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding ZOrder}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource DimForegroundBrush}"
+                                                           Margin="4,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </TabItem>
+
                         <!-- AI Chat tab -->
                         <TabItem Header="AI Chat"
                                  AutomationProperties.Name="AI chat assistant">
