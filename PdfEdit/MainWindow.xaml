@@ -840,6 +840,41 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Find & Replace + Validate group -->
+                <Fluent:RibbonGroupBox Header="Tools"
+                                        AutomationProperties.Name="Form field tools group">
+                    <Fluent:Button Header="Find &amp; Replace"
+                                   Command="{Binding FindReplaceFieldsCommand}"
+                                   KeyTip="FR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Find and replace text within form field values"
+                                   AutomationProperties.Name="Find and replace in form fields">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Validate&#x0a;Required"
+                                   Command="{Binding ValidateRequiredFieldsCommand}"
+                                   KeyTip="VR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Check that all required fields are filled in"
+                                   AutomationProperties.Name="Validate required fields">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Archive (PDF/A)"
+                                   Command="{Binding ExportPdfACommand}"
+                                   KeyTip="PA"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Save as PDF 1.4 with archival metadata (PDF/A-like)"
+                                   AutomationProperties.Name="Save as PDF/A archival format">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── VIEW TAB ──────────────────────────────────────────────── -->

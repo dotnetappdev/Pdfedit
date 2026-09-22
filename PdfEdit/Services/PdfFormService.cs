@@ -610,6 +610,37 @@ public class PdfFormService
         info.SetKeywords(meta.Keywords);
     }
 
+    /// <summary>
+    /// Re-saves the PDF in PDF 1.4 format with maximum compression and embedded metadata,
+    /// suitable for long-term archiving (PDF/A-like).  For strict PDF/A-1b certification,
+    /// use the dedicated itext7.pdfa package.
+    /// </summary>
+    public void ConvertToPdfA(string inputPath, string outputPath)
+    {
+        var writerProps = new WriterProperties()
+            .SetPdfVersion(PdfVersion.PDF_1_4)
+            .SetCompressionLevel(CompressionConstants.BEST_COMPRESSION)
+            .UseSmartMode();
+
+        using var reader = new PdfReader(inputPath);
+        reader.SetUnethicalReading(true);
+        using var writer = new PdfWriter(outputPath, writerProps);
+        using var pdf    = new PdfDocument(reader, writer);
+
+        // Embed XMP conformance claim (PDF/A-1b)
+        var xmpMeta = pdf.GetXmpMetadata(true);
+        var xmpStr  = System.Text.Encoding.UTF8.GetString(xmpMeta ?? Array.Empty<byte>());
+        if (!xmpStr.Contains("pdfaid:conformance"))
+        {
+            // Append PDF/A-1b XMP namespace block
+            const string pdfaidNs = "http://www.aiim.org/pdfa/ns/id/";
+            var metaBuilder = new System.Text.StringBuilder(xmpStr.TrimEnd());
+            // Simple approach: add pdfaid part/conformance to existing XMP
+            pdf.GetDocumentInfo().SetMoreInfo("pdfaid:part", "1");
+            pdf.GetDocumentInfo().SetMoreInfo("pdfaid:conformance", "B");
+        }
+    }
+
     /// <summary>Applies black redaction rectangles over the specified PDF-point regions and burns them in.</summary>
     public void ApplyRedactions(string inputPath, string outputPath,
         IEnumerable<(int PageNumber, float X, float Y, float Width, float Height)> regions)

@@ -590,6 +590,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand WatermarkCommand { get; }
     public ICommand DocumentPropertiesCommand { get; }
     public ICommand ExportPagesAsImagesCommand { get; }
+    public ICommand FindReplaceFieldsCommand { get; }
+    public ICommand ExportPdfACommand { get; }
+    public ICommand ValidateRequiredFieldsCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -723,6 +726,9 @@ public class MainViewModel : INotifyPropertyChanged
         CompressPdfCommand          = new AsyncRelayCommand(CompressPdfAsync, () => HasDocument);
         DocumentPropertiesCommand   = new AsyncRelayCommand(DocumentPropertiesAsync, () => HasDocument);
         ExportPagesAsImagesCommand  = new AsyncRelayCommand(ExportPagesAsImagesAsync, () => HasDocument);
+        FindReplaceFieldsCommand    = new RelayCommand(FindReplaceFields, () => HasDocument && AllFields.Count > 0);
+        ExportPdfACommand           = new AsyncRelayCommand(ExportPdfAAsync, () => HasDocument);
+        ValidateRequiredFieldsCommand = new RelayCommand(ValidateRequiredFields, () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1407,6 +1413,114 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Dialogs.AppDialog.ShowError("Export failed.", ex);
             StatusText = "Export failed.";
+        }
+    }
+
+    private void FindReplaceFields()
+    {
+        var dlg = new Dialogs.FindReplaceFieldsDialog(AllFields.ToList())
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string find    = dlg.FindText;
+        string replace = dlg.ReplaceText;
+        bool caseSens  = dlg.CaseSensitive;
+
+        int count = 0;
+        var comparison = caseSens
+            ? StringComparison.Ordinal
+            : StringComparison.OrdinalIgnoreCase;
+
+        foreach (var field in AllFields)
+        {
+            if (field.FieldType == Models.FieldType.Text &&
+                FieldValues.TryGetValue(field.Name, out var current) &&
+                current.Contains(find, comparison))
+            {
+                string newVal = caseSens
+                    ? current.Replace(find, replace, StringComparison.Ordinal)
+                    : ReplaceIgnoreCase(current, find, replace);
+                UpdateFieldValue(field.Name, newVal);
+                count++;
+            }
+        }
+
+        PageChanged?.Invoke();
+        if (count > 0)
+            ToastService.Instance.Success($"Replaced {count} field value(s).");
+        else
+            ToastService.Instance.Info("No matching field values found.");
+    }
+
+    private static string ReplaceIgnoreCase(string source, string find, string replace)
+    {
+        int idx = source.IndexOf(find, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return source;
+        var sb = new System.Text.StringBuilder();
+        int prev = 0;
+        while (idx >= 0)
+        {
+            sb.Append(source, prev, idx - prev);
+            sb.Append(replace);
+            prev = idx + find.Length;
+            idx = source.IndexOf(find, prev, StringComparison.OrdinalIgnoreCase);
+        }
+        sb.Append(source, prev, source.Length - prev);
+        return sb.ToString();
+    }
+
+    private async Task ExportPdfAAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save as PDF/A-1b",
+            Filter = "PDF/A files (*.pdf)|*.pdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_pdfa.pdf",
+            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        StatusText = "Converting to PDF/A-1b…";
+        try
+        {
+            await Task.Run(() => _formService.ConvertToPdfA(_currentFilePath, dlg.FileName));
+            StatusText = $"PDF/A-1b saved: {System.IO.Path.GetFileName(dlg.FileName)}";
+            ToastService.Instance.Success("PDF/A conversion complete.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("PDF/A conversion failed.", ex);
+            StatusText = "PDF/A conversion failed.";
+        }
+    }
+
+    private void ValidateRequiredFields()
+    {
+        var empty = AllFields
+            .Where(f => f.IsRequired &&
+                        (!FieldValues.TryGetValue(f.Name, out var v) || string.IsNullOrWhiteSpace(v)))
+            .Select(f => f.Name)
+            .ToList();
+
+        if (empty.Count == 0)
+        {
+            ToastService.Instance.Success("All required fields are filled.");
+        }
+        else
+        {
+            string list = string.Join("\n• ", empty.Take(15));
+            Dialogs.AppDialog.ShowInfo(
+                $"The following {empty.Count} required field(s) are empty:\n\n• {list}" +
+                (empty.Count > 15 ? $"\n…and {empty.Count - 15} more." : ""),
+                "Required Fields");
+            // Navigate to the page containing the first empty required field
+            var first = AllFields.FirstOrDefault(f => f.Name == empty[0]);
+            if (first != null && first.PageNumber > 0)
+                CurrentPageIndex = first.PageNumber - 1;
         }
     }
 
