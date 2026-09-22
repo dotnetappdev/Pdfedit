@@ -35,12 +35,23 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 | Built-in templates (Invoice, Letter…) | ✅ 7 templates | Limited | ✅ | ❌ |
 | Table element | ✅ | ✅ | ❌ | ✅ |
 | Watermark / Page Numbers | ✅ | ✅ | ✅ | ✅ |
+| Bates Numbering | ✅ | ✅ | ❌ | ✅ |
 | Bookmarks / Outline panel | ✅ | ✅ | ❌ | ✅ |
 | Document Properties editor | ✅ | ✅ | ❌ | ✅ |
+| Password Protect / Encrypt (AES-256) | ✅ | ✅ | ✅ | ✅ |
+| Crop Pages | ✅ | ✅ | ❌ | ✅ |
+| Header / Footer | ✅ | ✅ | ✅ | ✅ |
+| Highlight / Underline / Strikethrough | ✅ | ✅ | ✅ | ✅ |
+| Redaction (burn-in) | ✅ | ✅ | ❌ | ✅ |
+| Freehand Ink Annotations | ✅ | ✅ | ✅ | ✅ |
+| Hyperlink Annotations | ✅ | ✅ | ❌ | ✅ |
+| Form Field Creator (draw new fields) | ✅ | ✅ | ❌ | ✅ |
 | Export pages as images (PNG) | ✅ | ✅ | ❌ | ✅ |
+| Export PDF text to TXT | ✅ | ✅ | ❌ | ✅ |
 | Find & Replace in form fields | ✅ | ✅ | ❌ | ✅ |
 | Required-field validation | ✅ | ✅ | ❌ | ❌ |
 | PDF/A archival export | ✅ | ✅ | ❌ | ✅ |
+| Rubber Stamps (APPROVED, DRAFT…) | ✅ 10 stamps | ✅ | ❌ | ✅ |
 | Free (open source) | ✅ | ❌ | ❌ | ❌ |
 | WPF native (no browser) | ✅ | ✅ | ❌ | ✅ |
 | Bring your own AI key | ✅ | ❌ | ❌ | ❌ |
@@ -117,6 +128,21 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Find & Replace** — Search and replace text across all form field values; case-sensitive option
 - **Validate Required Fields** — One-click check; lists empty required fields and navigates to the first one
 
+### Form Field Creator
+
+Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
+
+- **Text Field** — Drag a rectangle; enter field name; adds an editable AcroForm text field
+- **Checkbox** — Drag a square; enter field name; adds a checkbox field
+- **Combo Box** — Drag a rectangle; enter field name and dropdown choices (one per line)
+- All new fields are immediately saved to the PDF and available for filling
+
+### Security
+
+- **Password Protect** — Encrypt the PDF with AES-256; set open password (required to open), owner password (required to change permissions), and choose whether to allow printing and/or copying
+- **Remove Password** — Strip encryption from an already-open (unlocked) PDF
+- **Passwords are NEVER stored** — entered only at protect/open time, written to the PDF, never cached to disk
+
 ---
 
 ### AI-Powered Document Analysis
@@ -143,6 +169,29 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - Vertical text rotation (−90°); force uppercase mode
 - Delete individual annotations before saving
 
+**Highlight / Underline / Strikethrough**
+- Drag to draw; five colours: Yellow, Green, Blue, Pink, Orange (picker in ribbon)
+- Stored as standard PDF highlight/underline/strikethrough annotations on save
+- Right-click any highlight to delete it
+
+**Redaction**
+- Drag to mark sensitive regions with a black box
+- **Apply Redactions** permanently burns the boxes into the PDF (irreversible)
+- Right-click a redaction box to remove it before applying
+
+**Ink / Freehand Draw**
+- Draw smooth ink strokes with the Freehand tool
+- Colour follows the Highlight Color picker; stored as PDF ink annotations on save
+- Right-click any stroke to delete it
+
+**Rubber Stamps**
+- 10 built-in stamps: APPROVED, CONFIDENTIAL, DRAFT, FINAL, FOR REVIEW, NOT APPROVED, RECEIVED, REJECTED, REVISED, VOID
+- Placed as rotated free-text annotations on the page
+
+**Hyperlink Annotations**
+- Link tool: drag a rectangle, enter a URL — creates a clickable PDF link annotation
+- Supports http://, https://, and mailto: schemes
+
 **Signatures**
 - Draw, type, or load signature images; preview thumbnails in the signature picker
 - Place signatures anywhere on a page; remove before saving
@@ -154,6 +203,7 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Rotate Page** — CW / CCW; status bar shows cumulative rotation
 - **Rotate All Pages** — Apply 90° rotation to every page at once
 - **Move Page Up / Down** — Reorder pages via ribbon
+- **Duplicate Page** — Copies current page and inserts the copy immediately after it
 - **Insert Page Before / After** — Add blank pages at any position
 - **Delete Page** — Remove the current page (disabled on single-page documents)
 - **Extract Page** — Save the current page as a standalone PDF
@@ -164,8 +214,12 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Right-Click Thumbnails** — Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract
 - **Watermark** — Diagonal text watermark on all pages (text, opacity, angle, font size, colour)
 - **Page Numbers** — Footer on every page: "Page N of M" (left/centre/right, configurable format)
+- **Header / Footer** — Custom text top/bottom of every page; font size and alignment (L/C/R)
+- **Bates Numbers** — Sequential numbers (with prefix, suffix, digit padding) at any corner or centre; legal document workflow
+- **Crop Pages** — Set per-edge crop margins (in points) applied as CropBox on all pages
 - **Compress PDF** — Re-save with `BEST_COMPRESSION` + smart mode; reports before/after file size
 - **Export as Images** — Render every page to PNG at 192 DPI into a chosen folder
+- **Export Text** — Extract all text from the PDF and save to a UTF-8 `.txt` file
 - **Archive (PDF/A)** — Save as PDF 1.4 with archival conformance metadata
 
 ---
@@ -283,7 +337,7 @@ dotnet test
 | Layer | Description |
 |-------|-------------|
 | `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
-| `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; compression; metadata; bookmarks; redaction; PDF/A export via iText7 |
+| `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; header/footer; Bates numbers; crop; compress; metadata; bookmarks; redaction; encryption; form field creation; text export; PDF/A export via iText7 |
 | `Services/PdfTextExtractorService` | Extracts text from PDF pages via iText7; cached per page for AI context |
 | `Services/AiProviderService` | Streaming HTTP client for Claude and OpenAI; document analysis prompt builder |
 | `Services/DesignExportService` | Renders DesignCanvas elements to a PDF page via iText7; handles WPF→PDF coordinate transform, opacity, and table layout |
@@ -302,6 +356,12 @@ dotnet test
 | `Dialogs/FindReplaceFieldsDialog` | Find & replace text across form field values with case-sensitive option |
 | `Dialogs/WatermarkDialog` | Watermark configuration: text, font size, opacity, angle, colour |
 | `Dialogs/ShortcutsDialog` | Scrollable keyboard shortcut reference (F1) |
+| `Dialogs/HeaderFooterDialog` | Header/footer text, font size, alignment |
+| `Dialogs/BatesNumberDialog` | Bates prefix/suffix/start number/padding/position |
+| `Dialogs/PasswordProtectDialog` | Open/owner passwords + permissions; values never stored |
+| `Dialogs/CropPageDialog` | Per-edge crop margin entry (in points) |
+| `Dialogs/LinkUriDialog` | URL entry with http/https/mailto validation |
+| `Dialogs/FieldNameDialog` | New form field name + combo box choices |
 | `Models/BookmarkItem` | Hierarchical PDF outline node (title, page number, children) |
 | `Models/PdfMetadataInfo` | PDF metadata DTO (title, author, subject, keywords, creator, producer, page count) |
 | `Resources/AppTheme.xaml` | `DynamicResource` token-based style system for live theme switching |
