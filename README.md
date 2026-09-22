@@ -4,6 +4,45 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 
 ---
 
+## Demo
+
+![PdfEdit animated demo](docs/screenshots/demo.gif)
+
+> **Video walkthrough:** A full narrated product demo video is coming soon.
+> See [`docs/demo-video-script.md`](docs/demo-video-script.md) for the storyboard.
+> <!-- TODO: replace with real YouTube embed once recorded -->
+
+---
+
+## Download & Install
+
+| Installer | Platform | Notes |
+|-----------|----------|-------|
+| **EXE Setup** (`PdfEditSetup-1.0.0.exe`) | Windows 10/11 x64 | Detects & installs .NET 10 automatically |
+| **MSIX Package** (`PdfEdit-1.0.0.0.msix`) | Windows 10/11 x64 | Modern packaging; requires .NET 10 Desktop Runtime |
+
+### Requirements
+
+- Windows 10 v2004 (build 19041) or later, 64-bit
+- [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) — the EXE installer downloads it for you if missing
+
+### Building the installers yourself
+
+```powershell
+# Full build (publishes app + builds EXE + builds MSIX)
+pwsh installer\build-installer.ps1
+
+# EXE only
+pwsh installer\build-installer.ps1 -SkipMsix
+
+# MSIX only (skips dotnet publish if already done)
+pwsh installer\build-installer.ps1 -SkipPublish -SkipInno
+```
+
+Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the Windows SDK (`makeappx.exe`) for the MSIX.
+
+---
+
 ## Screenshots
 
 | Dark Theme — Form Filling | Light Theme (IRS W-4) |

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX Application Manifest for PdfEdit
+  Build with: pwsh installer\build-msix.ps1
+  Requires Windows SDK makeappx.exe and signtool.exe (or MakeCert for testing)
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap2 uap3 desktop desktop6 rescap">
+
+  <Identity
+    Name="PdfEdit.PdfFormFiller"
+    Publisher="CN=PdfEdit"
+    Version="1.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>PdfEdit</DisplayName>
+    <PublisherDisplayName>PdfEdit</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>A modern WPF PDF form filler and annotator powered by iText7</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+    <!-- .NET 10 Desktop Runtime framework dependency -->
+    <PackageDependency
+      Name="Microsoft.WindowsDesktop.App.Runtime.win-x64"
+      MinVersion="10.0.0.0"
+      Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="PdfEdit"
+      Executable="PdfEdit.exe"
+      EntryPoint="Windows.FullTrustApplication">
+
+      <uap:VisualElements
+        DisplayName="PdfEdit"
+        Description="PDF Form Filler &amp; Annotator"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png"
+          ShortName="PdfEdit"
+          ShowNameOnTiles="allLogos" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <!-- PDF file association -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="pdf" desktop2:UseUrl="false"
+            xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2">
+            <uap:SupportedFileTypes>
+              <uap:FileType>.pdf</uap:FileType>
+            </uap:SupportedFileTypes>
+            <uap:DisplayName>PDF Document</uap:DisplayName>
+            <uap:Logo>Assets\Square44x44Logo.png</uap:Logo>
+            <uap:InfoTip>Open with PdfEdit</uap:InfoTip>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+
+        <!-- Start Menu shortcut -->
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="pdfedit">
+            <uap:DisplayName>PdfEdit Protocol</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+
+        <!-- Full-trust desktop bridge -->
+        <desktop:Extension Category="windows.fullTrustProcess" Executable="PdfEdit.exe" />
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClient" />
+    <!-- File system access for opening/saving PDFs -->
+    <uap2:Capability Name="documentsLibrary" />
+    <uap3:Capability Name="userNotificationListener" />
+  </Capabilities>
+</Package>
