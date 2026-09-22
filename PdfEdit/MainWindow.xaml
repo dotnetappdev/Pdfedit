@@ -519,6 +519,38 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Delete Range"
+                                   Command="{Binding DeletePageRangeCommand}"
+                                   Size="Middle"
+                                   KeyTip="DR"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Delete a range of pages from the document (first–last)"
+                                   AutomationProperties.Name="Delete page range">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Extract Range"
+                                   Command="{Binding ExtractPageRangeCommand}"
+                                   Size="Middle"
+                                   KeyTip="ER"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Extract a range of pages to a new PDF file"
+                                   AutomationProperties.Name="Extract page range">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Compare PDFs"
+                                   Command="{Binding ComparePdfsCommand}"
+                                   KeyTip="CF"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Compare this PDF with another file and show text differences page by page"
+                                   AutomationProperties.Name="Compare PDFs">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Thumbnails"
                                    Command="{Binding ToggleThumbnailsCommand}"
                                    Size="Middle"

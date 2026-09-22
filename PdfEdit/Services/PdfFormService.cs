@@ -1036,6 +1036,85 @@ public class PdfFormService
         }
     }
 
+    /// <summary>
+    /// Deletes a range of pages (1-based, inclusive) from a PDF.
+    /// Returns the number of pages remaining after deletion.
+    /// </summary>
+    public int DeletePageRange(string inputPath, string outputPath, int firstPage, int lastPage)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var inDoc  = new PdfDocument(reader);
+        using var outDoc = new PdfDocument(writer);
+
+        int total = inDoc.GetNumberOfPages();
+        firstPage = Math.Clamp(firstPage, 1, total);
+        lastPage  = Math.Clamp(lastPage,  1, total);
+
+        for (int i = 1; i <= total; i++)
+        {
+            if (i < firstPage || i > lastPage)
+                inDoc.CopyPagesTo(i, i, outDoc);
+        }
+        return total - (lastPage - firstPage + 1);
+    }
+
+    /// <summary>
+    /// Extracts a range of pages (1-based, inclusive) to a new PDF.
+    /// </summary>
+    public void ExtractPageRange(string inputPath, string outputPath, int firstPage, int lastPage)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var inDoc  = new PdfDocument(reader);
+        using var outDoc = new PdfDocument(writer);
+
+        int total = inDoc.GetNumberOfPages();
+        firstPage = Math.Clamp(firstPage, 1, total);
+        lastPage  = Math.Clamp(lastPage,  1, total);
+        inDoc.CopyPagesTo(firstPage, lastPage, outDoc);
+    }
+
+    /// <summary>
+    /// Compares the extracted text of two PDFs page by page and returns a structured diff
+    /// where each entry describes a page and the lines added/removed compared to the other document.
+    /// </summary>
+    public List<PdfPageDiff> ComparePdfs(string pathA, string pathB)
+    {
+        var result = new List<PdfPageDiff>();
+
+        using var readerA = new PdfReader(pathA);
+        using var docA    = new PdfDocument(readerA);
+        using var readerB = new PdfReader(pathB);
+        using var docB    = new PdfDocument(readerB);
+
+        int totalA = docA.GetNumberOfPages();
+        int totalB = docB.GetNumberOfPages();
+        int maxPages = Math.Max(totalA, totalB);
+
+        for (int i = 1; i <= maxPages; i++)
+        {
+            string textA = i <= totalA
+                ? iText.Kernel.Pdf.Canvas.Parser.PdfTextExtractor.GetTextFromPage(docA.GetPage(i)) : string.Empty;
+            string textB = i <= totalB
+                ? iText.Kernel.Pdf.Canvas.Parser.PdfTextExtractor.GetTextFromPage(docB.GetPage(i)) : string.Empty;
+
+            var linesA = textA.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).Where(l => l.Length > 0).ToHashSet();
+            var linesB = textB.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).Where(l => l.Length > 0).ToHashSet();
+
+            result.Add(new PdfPageDiff
+            {
+                PageIndex = i,
+                OnlyInA   = linesA.Except(linesB).ToList(),
+                OnlyInB   = linesB.Except(linesA).ToList(),
+                CommonLineCount = linesA.Intersect(linesB).Count(),
+                ExistsInA = i <= totalA,
+                ExistsInB = i <= totalB,
+            });
+        }
+        return result;
+    }
+
     private static FieldType GetFieldType(PdfFormField field)
     {
         if (field is PdfTextFormField) return FieldType.Text;

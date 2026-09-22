@@ -632,6 +632,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ExportTextCommand { get; }
     public ICommand AddTextFieldCommand { get; }
     public ICommand AddCheckboxFieldCommand { get; }
+    public ICommand DeletePageRangeCommand { get; }
+    public ICommand ExtractPageRangeCommand { get; }
+    public ICommand ComparePdfsCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -779,6 +782,10 @@ public class MainViewModel : INotifyPropertyChanged
         ExportTextCommand             = new AsyncRelayCommand(ExportTextAsync,       () => HasDocument);
         AddTextFieldCommand   = new RelayCommand(() => ActiveTool = ActiveTool.AddTextField,  () => HasDocument);
         AddCheckboxFieldCommand = new RelayCommand(() => ActiveTool = ActiveTool.AddCheckbox, () => HasDocument);
+        DeletePageRangeCommand    = new AsyncRelayCommand(DeletePageRangeAsync,
+            () => HasDocument && (_document?.PageCount ?? 1) > 1);
+        ExtractPageRangeCommand   = new AsyncRelayCommand(ExtractPageRangeAsync, () => HasDocument);
+        ComparePdfsCommand        = new AsyncRelayCommand(ComparePdfsAsync,       () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1824,6 +1831,107 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("Text export failed.", ex);
+        }
+    }
+
+    private async Task DeletePageRangeAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        int currentPage = _currentPageIndex + 1;
+        var dlg = new Dialogs.PageRangeDialog(currentPage, _document.PageCount,
+            "Delete", $"Delete pages from this PDF (total: {_document.PageCount} pages). This cannot be undone.");
+        dlg.Owner = Application.Current.MainWindow;
+        if (dlg.ShowDialog() != true) return;
+
+        int totalAfter = _document.PageCount - (dlg.LastPage - dlg.FirstPage + 1);
+        if (totalAfter < 1)
+        {
+            Dialogs.AppDialog.ShowInfo("Cannot delete all pages — at least one page must remain.", "Delete Pages");
+            return;
+        }
+        if (!Dialogs.AppDialog.Confirm($"Delete pages {dlg.FirstPage}–{dlg.LastPage}?\n\nThis operation cannot be undone.", "Delete Pages"))
+            return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int fp = dlg.FirstPage, lp = dlg.LastPage;
+            await Task.Run(() => _formService.DeletePageRange(_currentFilePath, tmp, fp, lp));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = $"Pages {fp}–{lp} deleted.";
+            ToastService.Instance.Success($"Deleted pages {fp}–{lp}.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Delete page range failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task ExtractPageRangeAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        int currentPage = _currentPageIndex + 1;
+        var dlg = new Dialogs.PageRangeDialog(currentPage, _document.PageCount,
+            "Extract", $"Extract a range of pages to a new PDF (total: {_document.PageCount} pages).");
+        dlg.Owner = Application.Current.MainWindow;
+        if (dlg.ShowDialog() != true) return;
+
+        var saveDlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Extracted Pages",
+            Filter = "PDF files (*.pdf)|*.pdf",
+            FileName = $"{System.IO.Path.GetFileNameWithoutExtension(_currentFilePath)}_p{dlg.FirstPage}-{dlg.LastPage}.pdf",
+        };
+        if (saveDlg.ShowDialog() != true) return;
+
+        string outPath = saveDlg.FileName;
+        try
+        {
+            int fp = dlg.FirstPage, lp = dlg.LastPage;
+            await Task.Run(() => _formService.ExtractPageRange(_currentFilePath, outPath, fp, lp));
+            StatusText = $"Pages {fp}–{lp} extracted.";
+            ToastService.Instance.Success($"Pages {fp}–{lp} extracted to {System.IO.Path.GetFileName(outPath)}.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Extract page range failed.", ex);
+        }
+    }
+
+    private async Task ComparePdfsAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Compare with…",
+            Filter = "PDF files (*.pdf)|*.pdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        string fileB = dlg.FileName;
+        StatusText = "Comparing PDFs…";
+        try
+        {
+            var diffs = await Task.Run(() => _formService.ComparePdfs(_currentFilePath, fileB));
+            var resultDlg = new Dialogs.ComparePdfsDialog(_currentFilePath, fileB, diffs)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            resultDlg.ShowDialog();
+            StatusText = $"Comparison complete — {diffs.Count(d => d.HasDifferences)} page(s) differ.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("PDF comparison failed.", ex);
+            StatusText = "Comparison failed.";
         }
     }
 
