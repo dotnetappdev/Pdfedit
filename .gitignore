@@ -34,6 +34,14 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+## Installer build outputs
+dist/
+publish/
+publish_smoke/
+_msix_stage/
+*.msix
+*.appx
+
 ## OS generated
 .DS_Store
 Thumbs.db

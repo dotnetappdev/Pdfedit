@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [devmain, main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [devmain, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
+        run: dotnet restore PdfEdit/PdfEdit.csproj
+
+      - name: Build (Debug)
+        run: dotnet build PdfEdit/PdfEdit.csproj -c Debug --no-restore
+
+      - name: Build (Release)
+        run: dotnet build PdfEdit/PdfEdit.csproj -c Release --no-restore
+
+      - name: Verify publish (quick smoke-test)
+        run: |
+          dotnet publish PdfEdit/PdfEdit.csproj `
+            -c Release -r win-x64 `
+            --self-contained false `
+            -o publish_smoke `
+            /p:DebugType=none /p:DebugSymbols=false
+          Test-Path publish_smoke\PdfEdit.exe | Should -Be $true
+        shell: pwsh
+        continue-on-error: true

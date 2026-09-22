@@ -1,0 +1,358 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'      # e.g. v1.2.3
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'    # e.g. v1.2.3-beta.1
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.3). Leave blank to read from csproj.'
+        required: false
+        default: ''
+      prerelease:
+        description: 'Mark as pre-release?'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+      build_exe:
+        description: 'Build EXE installer?'
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+      build_msix:
+        description: 'Build MSIX package?'
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: write   # needed to create releases and upload assets
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  # ── Job 1: Resolve version and metadata ───────────────────────────────────
+  metadata:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version:     ${{ steps.ver.outputs.version }}
+      version4:    ${{ steps.ver.outputs.version4 }}
+      tag:         ${{ steps.ver.outputs.tag }}
+      prerelease:  ${{ steps.ver.outputs.prerelease }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          # Priority: tag > workflow_dispatch input > csproj
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
+            # Is it a pre-release? (has a hyphen suffix like -beta.1)
+            if [[ "$VERSION" == *-* ]]; then PRE=true; else PRE=false; fi
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
+            PRE="${{ github.event.inputs.prerelease }}"
+          else
+            VERSION=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            TAG="v${VERSION}"
+            PRE=false
+          fi
+
+          # Build 4-part version for MSIX (must be x.y.z.0)
+          BASE="${VERSION%%-*}"          # strip pre-release suffix
+          PARTS=$(echo "$BASE" | tr '.' '\n' | wc -l)
+          if [[ $PARTS -eq 3 ]]; then VERSION4="${BASE}.0"; else VERSION4="${BASE}"; fi
+
+          echo "version=$VERSION"    >> "$GITHUB_OUTPUT"
+          echo "version4=$VERSION4"  >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"            >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRE"     >> "$GITHUB_OUTPUT"
+          echo "Resolved: version=$VERSION  version4=$VERSION4  tag=$TAG  prerelease=$PRE"
+
+  # ── Job 2: Build, package, release ────────────────────────────────────────
+  build-and-release:
+    name: Build & Release
+    runs-on: windows-latest
+    needs: metadata
+
+    env:
+      VERSION:   ${{ needs.metadata.outputs.version }}
+      VERSION4:  ${{ needs.metadata.outputs.version4 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can compare commits for changelog
+
+      # ── .NET ────────────────────────────────────────────────────────────────
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Restore
+        run: dotnet restore PdfEdit/PdfEdit.csproj
+
+      - name: Build (Release)
+        run: |
+          dotnet build PdfEdit/PdfEdit.csproj `
+            -c Release --no-restore `
+            /p:Version=$env:VERSION `
+            /p:AssemblyVersion=$env:VERSION4 `
+            /p:FileVersion=$env:VERSION4
+
+      # ── Publish (framework-dependent, win-x64) ────────────────────────────
+      - name: Publish
+        run: |
+          dotnet publish PdfEdit/PdfEdit.csproj `
+            -c Release -r win-x64 `
+            --self-contained false `
+            --no-restore `
+            -o publish `
+            /p:Version=$env:VERSION `
+            /p:AssemblyVersion=$env:VERSION4 `
+            /p:FileVersion=$env:VERSION4 `
+            /p:PublishSingleFile=false `
+            /p:DebugType=none `
+            /p:DebugSymbols=false
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "publish\PdfEdit.exe")) {
+            throw "publish\PdfEdit.exe not found — publish step failed"
+          }
+          Write-Host "Publish OK. Contents:"
+          Get-ChildItem publish | Select-Object Name, Length | Format-Table
+
+      # ── Inno Setup EXE installer ─────────────────────────────────────────
+      - name: Install Inno Setup 6
+        if: ${{ github.event.inputs.build_exe != 'false' }}
+        run: choco install innosetup --version 6.4.3 -y --no-progress
+
+      - name: Build EXE installer
+        if: ${{ github.event.inputs.build_exe != 'false' }}
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "ISCC.exe" }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          & $iscc installer\PdfEditSetup.iss `
+            /DMyAppVersion=$env:VERSION `
+            "/O$((Resolve-Path dist).Path)"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+          # Rename to include version
+          $src = Get-ChildItem dist\*.exe | Select-Object -First 1
+          if ($src -and $src.BaseName -notmatch $env:VERSION) {
+            Rename-Item $src "PdfEditSetup-$env:VERSION.exe"
+          }
+          Write-Host "EXE installer: $(Get-ChildItem dist\*.exe)"
+
+      # ── MSIX package ────────────────────────────────────────────────────
+      - name: Find makeappx.exe
+        if: ${{ github.event.inputs.build_msix != 'false' }}
+        id: makeappx
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" `
+                 -ErrorAction SilentlyContinue |
+                 Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
+                 Select-Object -First 1
+          if (-not $exe) { throw "makeappx.exe not found. Windows SDK must be installed." }
+          echo "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          Write-Host "makeappx: $($exe.FullName)"
+
+      - name: Find signtool.exe
+        if: ${{ github.event.inputs.build_msix != 'false' }}
+        id: signtool
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" `
+                 -ErrorAction SilentlyContinue |
+                 Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
+                 Select-Object -First 1
+          if (-not $exe) { throw "signtool.exe not found." }
+          echo "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Build MSIX package
+        if: ${{ github.event.inputs.build_msix != 'false' }}
+        shell: pwsh
+        env:
+          MAKEAPPX: ${{ steps.makeappx.outputs.path }}
+          SIGNTOOL:  ${{ steps.signtool.outputs.path }}
+        run: |
+          # Stage layout
+          $stage = "_msix_stage"
+          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+          New-Item -ItemType Directory $stage | Out-Null
+
+          # Copy published app
+          Copy-Item "publish\*" $stage -Recurse -Force
+
+          # Patch version in manifest
+          $manifest = Get-Content installer\Package.appxmanifest -Raw
+          $manifest = $manifest -replace 'Version="[\d.]+"', "Version=`"$env:VERSION4`""
+          Set-Content "$stage\AppxManifest.xml" $manifest
+
+          # Generate tile assets
+          $assetsDir = "$stage\Assets"
+          New-Item -ItemType Directory -Force $assetsDir | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          $tiles = @{
+            "Square44x44Logo.png"   = @(44,  44)
+            "Square150x150Logo.png" = @(150, 150)
+            "Wide310x150Logo.png"   = @(310, 150)
+            "Square310x310Logo.png" = @(310, 310)
+            "StoreLogo.png"         = @(50,  50)
+            "SplashScreen.png"      = @(620, 300)
+          }
+          foreach ($tile in $tiles.GetEnumerator()) {
+            $dest = "$assetsDir\$($tile.Key)"
+            $src  = "PdfEdit\Resources\$($tile.Key)"
+            if (Test-Path $src) { Copy-Item $src $dest; continue }
+            $w, $h = $tile.Value
+            $bmp = New-Object System.Drawing.Bitmap($w, $h)
+            $g   = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.Clear([System.Drawing.Color]::FromArgb(40, 80, 160))
+            $br  = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
+            $fnt = New-Object System.Drawing.Font("Segoe UI", [Math]::Max(8, $w / 8), [System.Drawing.FontStyle]::Bold)
+            $sf  = New-Object System.Drawing.StringFormat
+            $sf.Alignment = [System.Drawing.StringAlignment]::Center
+            $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+            $g.DrawString("PDF", $fnt, $br, [System.Drawing.RectangleF]::new(0,0,$w,$h), $sf)
+            $bmp.Save($dest, [System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose(); $bmp.Dispose()
+          }
+
+          # Pack
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $msix = "dist\PdfEdit-$env:VERSION4.msix"
+          & $env:MAKEAPPX pack /d $stage /p $msix /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed" }
+
+          # Self-signed cert (CI test signing — users must trust before install)
+          $certSubject = "CN=PdfEdit"
+          $cert = New-SelfSignedCertificate `
+            -Subject $certSubject `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -KeyUsage DigitalSignature `
+            -Type CodeSigningCert `
+            -HashAlgorithm SHA256 `
+            -NotAfter (Get-Date).AddYears(2)
+
+          & $env:SIGNTOOL sign /fd SHA256 /sha1 $cert.Thumbprint $msix
+          if ($LASTEXITCODE -ne 0) { Write-Warning "signtool returned $LASTEXITCODE (non-fatal for test cert)" }
+
+          # Export the test cert so users can import and trust it
+          $pfxPass = ConvertTo-SecureString "PdfEditTestCert" -AsPlainText -Force
+          Export-PfxCertificate -Cert $cert -FilePath "dist\PdfEdit-TestCert.pfx" -Password $pfxPass
+          Export-Certificate   -Cert $cert -FilePath "dist\PdfEdit-TestCert.cer"
+
+          Remove-Item $stage -Recurse -Force
+          Write-Host "MSIX: $msix"
+
+      # ── Collect artifacts ────────────────────────────────────────────────
+      - name: List dist
+        shell: pwsh
+        run: |
+          if (Test-Path dist) {
+            Get-ChildItem dist | ForEach-Object {
+              Write-Host "$($_.Name)  $([Math]::Round($_.Length/1KB)) KB"
+            }
+          } else { Write-Host "No dist folder (all packaging steps skipped)" }
+
+      - name: Upload build artifacts (always kept for debugging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PdfEdit-${{ env.VERSION }}-artifacts
+          path: dist/
+          if-no-files-found: warn
+          retention-days: 30
+
+      # ── Generate changelog ───────────────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        shell: bash
+        run: |
+          # Compare with previous tag; fall back to last 20 commits
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "${{ needs.metadata.outputs.tag }}" | head -1)
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="${PREV_TAG}..${{ needs.metadata.outputs.tag }}"
+          else
+            RANGE="HEAD~20..HEAD"
+          fi
+          LOG=$(git log "$RANGE" --pretty="format:- %s (%h)" --no-merges 2>/dev/null | head -50 || true)
+          if [[ -z "$LOG" ]]; then LOG="- Initial release"; fi
+          echo "log<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$LOG"      >> "$GITHUB_OUTPUT"
+          echo "EOF"        >> "$GITHUB_OUTPUT"
+
+      # ── Create GitHub Release ────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name:   ${{ needs.metadata.outputs.tag }}
+          name:       PdfEdit ${{ env.VERSION }}
+          prerelease: ${{ needs.metadata.outputs.prerelease }}
+          draft:      false
+          body: |
+            ## PdfEdit ${{ env.VERSION }}
+
+            A professional WPF PDF form filler, editor, and design tool for Windows.
+
+            ### What's new
+            ${{ steps.changelog.outputs.log }}
+
+            ---
+
+            ### Installation
+
+            #### Option A — EXE Installer *(recommended)*
+            1. Download `PdfEditSetup-${{ env.VERSION }}.exe`
+            2. Run it — .NET 10 Desktop Runtime is downloaded automatically if missing
+
+            #### Option B — MSIX Package
+            1. Download `PdfEdit-${{ env.VERSION4 }}.msix`
+            2. Trust the test certificate first (one-time):
+               ```powershell
+               # Run as Administrator
+               Import-Certificate -FilePath PdfEdit-TestCert.cer `
+                 -CertStoreLocation Cert:\LocalMachine\TrustedPeople
+               ```
+            3. Double-click the `.msix` to install
+
+            > **Note:** The MSIX is signed with a self-signed test certificate for this open-source build.
+            > A production release would use an EV code-signing certificate.
+
+            ### System Requirements
+            - Windows 10 v2004 (build 19041) or later, 64-bit
+            - [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) *(EXE installer handles this)*
+
+          files: |
+            dist/PdfEditSetup-${{ env.VERSION }}.exe
+            dist/PdfEdit-${{ env.VERSION4 }}.msix
+            dist/PdfEdit-TestCert.cer
+          fail_on_unmatched_files: false

@@ -44,7 +44,7 @@ PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=..\dist
 OutputBaseFilename=PdfEditSetup-{#MyAppVersion}
-SetupIconFile=..\PdfEdit\Resources\app.ico
+; SetupIconFile=..\PdfEdit\Resources\app.ico   ; uncomment once app.ico is added to Resources\
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -75,7 +75,11 @@ Name: "quicklaunch"; Description: "Pin to taskbar after install"; GroupDescripti
 
 [Files]
 ; Main application — build output from: dotnet publish -c Release -r win-x64 --self-contained false
+; The publish path is relative to the ISS file location (installer\), so ..\ points to repo root.
+; CI passes /O for output dir; the publish folder is always at repo-root\publish\.
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Uncomment to bundle .NET installer when building with /DDOTNET_EMBEDDED=1:
+; Source: "dotnet-runtime-10-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: not IsDotNetInstalled
 
 #ifdef DOTNET_EMBEDDED
 ; Bundled .NET Desktop Runtime installer (download separately and place here)
