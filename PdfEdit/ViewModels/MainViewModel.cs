@@ -103,6 +103,13 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     public bool HasDocument => _document != null;
+    public string? CurrentFilePath => _currentFilePath;
+
+    public async Task ReloadCurrentFileAsync()
+    {
+        if (_currentFilePath != null)
+            await LoadDocumentAsync(_currentFilePath);
+    }
 
     public int CurrentPageIndex
     {
@@ -618,6 +625,10 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ApplyRedactionsCommand { get; }
     public ICommand DuplicatePageCommand { get; }
     public ICommand AddHeaderFooterCommand { get; }
+    public ICommand PasswordProtectCommand { get; }
+    public ICommand RemovePasswordCommand { get; }
+    public ICommand BatesNumberCommand { get; }
+    public ICommand CropPagesCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
@@ -758,6 +769,10 @@ public class MainViewModel : INotifyPropertyChanged
             () => HasDocument && RedactionRegions.Count > 0);
         DuplicatePageCommand          = new AsyncRelayCommand(DuplicatePageAsync, () => HasDocument);
         AddHeaderFooterCommand        = new AsyncRelayCommand(AddHeaderFooterAsync, () => HasDocument);
+        PasswordProtectCommand        = new AsyncRelayCommand(PasswordProtectAsync, () => HasDocument);
+        RemovePasswordCommand         = new AsyncRelayCommand(RemovePasswordAsync,  () => HasDocument);
+        BatesNumberCommand            = new AsyncRelayCommand(BatesNumberAsync,     () => HasDocument);
+        CropPagesCommand              = new AsyncRelayCommand(CropPagesAsync,        () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -1656,6 +1671,124 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("Add header/footer failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task PasswordProtectAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.PasswordProtectDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            string userPwd  = dlg.UserPassword;
+            string ownerPwd = dlg.OwnerPassword;
+            bool print = dlg.AllowPrinting;
+            bool copy  = dlg.AllowCopying;
+            await Task.Run(() => _formService.EncryptPdf(_currentFilePath, tmp, userPwd, ownerPwd, print, copy));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            ToastService.Instance.Success("PDF password-protected successfully.");
+            StatusText = "PDF protected with password.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Password protection failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task RemovePasswordAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            await Task.Run(() => _formService.RemoveEncryption(_currentFilePath, tmp));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            ToastService.Instance.Success("PDF password removed.");
+            StatusText = "PDF password removed.";
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Remove password failed. If the PDF is encrypted, open it with the password first.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task BatesNumberAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.BatesNumberDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            int    start    = dlg.StartNumber;
+            int    padding  = dlg.Padding;
+            string prefix   = dlg.Prefix;
+            string suffix   = dlg.Suffix;
+            float  fontSize = dlg.FontSize;
+            string position = dlg.Position;
+            await Task.Run(() => _formService.AddBatesNumbers(
+                _currentFilePath, tmp, start, padding, prefix, suffix, fontSize, 18f, position));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = "Bates numbers added.";
+            ToastService.Instance.Success("Bates numbers added to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Add Bates numbers failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task CropPagesAsync()
+    {
+        if (_currentFilePath == null) return;
+
+        var dlg = new Dialogs.CropPageDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        if (dlg.LeftMargin == 0 && dlg.RightMargin == 0 && dlg.TopMargin == 0 && dlg.BottomMargin == 0)
+        {
+            ToastService.Instance.Info("No crop margins specified.");
+            return;
+        }
+
+        string tmp = _currentFilePath + ".tmp";
+        try
+        {
+            float l = dlg.LeftMargin, r = -dlg.RightMargin, t = -dlg.TopMargin, b = dlg.BottomMargin;
+            await Task.Run(() => _formService.CropAllPages(_currentFilePath, tmp, l, b, r, t));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            StatusText = "Pages cropped.";
+            ToastService.Instance.Success("Crop applied to all pages.");
+            await OpenFileAsync(_currentFilePath);
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Crop failed.", ex);
         }
         finally
         {

@@ -66,6 +66,16 @@ public partial class PdfViewerControl : UserControl
     private Point _redactDragStart;
     private Rectangle? _redactRubberBand;
 
+    // Link drag state
+    private bool _isDrawingLink;
+    private Point _linkDragStart;
+    private Rectangle? _linkRubberBand;
+
+    // Freehand draw state
+    private bool _isDrawingFreehand;
+    private Polyline? _freehandPolyline;
+    private List<Point> _freehandPoints = new();
+
     // Adobe-style field selection chrome
     private Border?    _fieldChromeBorder;
     private TextBlock? _fieldChromeLabel;
@@ -1008,6 +1018,45 @@ public partial class PdfViewerControl : UserControl
 
     private void PlaceAnnotationVisual(FreeTextAnnotation ann, double pageHeightPts)
     {
+        // Handle ink stroke annotations stored as __INK__:<color>:<pts>
+        if (ann.Text.StartsWith("__INK__:", StringComparison.Ordinal))
+        {
+            var parts = ann.Text.Split(':', 3);
+            if (parts.Length == 3)
+            {
+                var poly = new Polyline
+                {
+                    Stroke = new SolidColorBrush(ParseColor(parts[1])),
+                    StrokeThickness = 2,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    IsHitTestVisible = true,
+                    ToolTip = "Ink stroke — right-click to delete"
+                };
+                foreach (var ptStr in parts[2].Split(';'))
+                {
+                    var xy = ptStr.Split(',');
+                    if (xy.Length == 2 &&
+                        double.TryParse(xy[0], System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out double ptX) &&
+                        double.TryParse(xy[1], System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture, out double ptY))
+                    {
+                        poly.Points.Add(new Point(ptX * Scale, (pageHeightPts - ptY) * Scale));
+                    }
+                }
+                poly.MouseRightButtonDown += (_, re) =>
+                {
+                    _vm?.FreeTextAnnotations.Remove(ann);
+                    AnnotationCanvas.Children.Remove(poly);
+                    re.Handled = true;
+                };
+                AnnotationCanvas.Children.Add(poly);
+            }
+            return;
+        }
+
         double x = ann.Left * Scale;
         double y = (pageHeightPts - ann.Bottom - ann.Height) * Scale;
         double w = ann.Width * Scale;
@@ -1310,6 +1359,51 @@ public partial class PdfViewerControl : UserControl
             RdAnnotCanvas.Children.Add(_redactRubberBand);
             CaptureMouse();
             e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.Link)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingLink = true;
+            _linkDragStart = posOnPage;
+            _linkRubberBand = new Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(40, 0, 100, 255)),
+                Stroke = new SolidColorBrush(Color.FromArgb(200, 0, 80, 220)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 2 },
+                Width = 0,
+                Height = 0,
+            };
+            Canvas.SetLeft(_linkRubberBand, posOnPage.X);
+            Canvas.SetTop(_linkRubberBand, posOnPage.Y);
+            AnnotationCanvas.Children.Add(_linkRubberBand);
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
+        if (tool == ActiveTool.DrawFreehand)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            _isDrawingFreehand = true;
+            _freehandPoints.Clear();
+            _freehandPoints.Add(posOnPage);
+            _freehandPolyline = new Polyline
+            {
+                Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentHighlightColor ?? "#1A1A1A")),
+                StrokeThickness = 2,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            };
+            _freehandPolyline.Points.Add(posOnPage);
+            AnnotationCanvas.Children.Add(_freehandPolyline);
+            CaptureMouse();
+            e.Handled = true;
         }
     }
 
@@ -1406,6 +1500,113 @@ public partial class PdfViewerControl : UserControl
                 }
             }
             e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingLink)
+        {
+            _isDrawingLink = false;
+            ReleaseMouseCapture();
+
+            if (_linkRubberBand != null && _vm?.Document != null)
+            {
+                double rectW = _linkRubberBand.Width;
+                double rectH = _linkRubberBand.Height;
+                double canvasX = Canvas.GetLeft(_linkRubberBand);
+                double canvasY = Canvas.GetTop(_linkRubberBand);
+                AnnotationCanvas.Children.Remove(_linkRubberBand);
+                _linkRubberBand = null;
+
+                if (rectW > 6 && rectH > 6)
+                {
+                    var uriDlg = new Dialogs.LinkUriDialog { Owner = Window.GetWindow(this) };
+                    if (uriDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(uriDlg.Uri))
+                    {
+                        int pageNum = _vm.CurrentPageIndex + 1;
+                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                        {
+                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                            float left   = (float)(canvasX / Scale);
+                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
+                            float width  = (float)(rectW / Scale);
+                            float height = (float)(rectH / Scale);
+                            string uri   = uriDlg.Uri;
+                            string srcPath = _vm.CurrentFilePath!;
+                            string tmpPath = srcPath + ".tmp";
+                            try
+                            {
+                                var svc = new PdfEdit.Services.PdfFormService();
+                                svc.AddLinkAnnotation(srcPath, tmpPath, pageNum, left, bottom, width, height, uri);
+                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
+                                _vm.StatusText = $"Link added to page {pageNum}.";
+                                PdfEdit.Services.ToastService.Instance.Success("Hyperlink annotation added.");
+                                _ = _vm.ReloadCurrentFileAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                Dialogs.AppDialog.ShowError("Add link failed.", ex);
+                            }
+                            finally
+                            {
+                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
+                            }
+                        }
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (_isDrawingFreehand)
+        {
+            _isDrawingFreehand = false;
+            ReleaseMouseCapture();
+
+            if (_freehandPolyline != null && _freehandPolyline.Points.Count >= 2 && _vm?.Document != null)
+            {
+                // Store the freehand polyline as a FreeTextAnnotation so it saves with the PDF.
+                // The visual representation is kept on AnnotationCanvas; the VM stores it in FreeTextAnnotations
+                // as a special "Ink" annotation type that gets serialized on save.
+                int pageNum = _vm.CurrentPageIndex + 1;
+                if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
+                {
+                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                    // Compute bounding box of points
+                    var xs = _freehandPolyline.Points.Select(p => p.X);
+                    var ys = _freehandPolyline.Points.Select(p => p.Y);
+                    double minX = xs.Min(), maxX = xs.Max();
+                    double minY = ys.Min(), maxY = ys.Max();
+
+                    // Encode path as a compact string stored as annotation content
+                    string encodedPts = string.Join(";", _freehandPolyline.Points.Select(p =>
+                        $"{p.X / Scale:F2},{(pageH - p.Y / Scale):F2}"));
+                    string colorHex = _vm.CurrentHighlightColor ?? "#000000";
+
+                    var annot = new Models.FreeTextAnnotation
+                    {
+                        PageNumber = pageNum,
+                        Left       = minX / Scale,
+                        Bottom     = pageH - (maxY / Scale),
+                        Width      = Math.Max((maxX - minX) / Scale, 2),
+                        Height     = Math.Max((maxY - minY) / Scale, 2),
+                        Text       = $"__INK__:{colorHex}:{encodedPts}",
+                        FontSize   = 0,
+                        FontFamily = "Ink",
+                        Color      = colorHex,
+                        Bold       = false, Italic = false, Underline = false,
+                    };
+                    _vm.FreeTextAnnotations.Add(annot);
+                    _vm.StatusText = "Ink stroke added.";
+                }
+            }
+            else if (_freehandPolyline != null)
+            {
+                AnnotationCanvas.Children.Remove(_freehandPolyline);
+            }
+            _freehandPolyline = null;
+            _freehandPoints.Clear();
+            e.Handled = true;
         }
     }
 
@@ -1444,6 +1645,27 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetTop(_redactRubberBand, y);
             _redactRubberBand.Width  = w;
             _redactRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingLink && _linkRubberBand != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            double x = Math.Min(pos.X, _linkDragStart.X);
+            double y = Math.Min(pos.Y, _linkDragStart.Y);
+            double w = Math.Abs(pos.X - _linkDragStart.X);
+            double h = Math.Abs(pos.Y - _linkDragStart.Y);
+            Canvas.SetLeft(_linkRubberBand, x);
+            Canvas.SetTop(_linkRubberBand, y);
+            _linkRubberBand.Width  = w;
+            _linkRubberBand.Height = h;
+            return;
+        }
+
+        if (_isDrawingFreehand && _freehandPolyline != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var pos = e.GetPosition(AnnotationCanvas);
+            _freehandPolyline.Points.Add(pos);
         }
     }
 

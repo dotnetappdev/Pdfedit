@@ -12,6 +12,7 @@ using iText.Kernel.Pdf.Xobject;
 using PdfEdit.Models;
 using Rectangle = iText.Kernel.Geom.Rectangle;
 using PdfDocumentInfo = PdfEdit.Models.PdfDocumentInfo;
+using EncryptionConstants = iText.Kernel.Pdf.EncryptionConstants;
 
 namespace PdfEdit.Services;
 
@@ -242,6 +243,39 @@ public class PdfFormService
             int pageNum = ann.PageNumber;
             if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
             var page = doc.GetPage(pageNum);
+
+            // Ink stroke — saved as PdfInkAnnotation
+            if (ann.Text.StartsWith("__INK__:", StringComparison.Ordinal))
+            {
+                var parts = ann.Text.Split(':', 3);
+                if (parts.Length == 3)
+                {
+                    bool colorOk = ParseHexColor(parts[1], out float ir, out float ig, out float ib);
+                    var inkArr = new PdfArray();
+                    var inkPts = new PdfArray();
+                    foreach (var ptStr in parts[2].Split(';'))
+                    {
+                        var xy = ptStr.Split(',');
+                        if (xy.Length == 2 &&
+                            float.TryParse(xy[0], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out float ptX) &&
+                            float.TryParse(xy[1], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out float ptY))
+                        {
+                            inkPts.Add(new PdfNumber(ptX));
+                            inkPts.Add(new PdfNumber(ptY));
+                        }
+                    }
+                    inkArr.Add(inkPts);
+                    var inkRect = new Rectangle((float)ann.Left, (float)ann.Bottom,
+                        (float)ann.Width, (float)ann.Height);
+                    var inkAnnot = new PdfInkAnnotation(inkRect, inkArr);
+                    if (colorOk) inkAnnot.SetColor(new DeviceRgb(ir, ig, ib));
+                    inkAnnot.SetBorderStyle(new PdfDictionary());
+                    page.AddAnnotation(inkAnnot);
+                }
+                continue;
+            }
 
             var rect = new Rectangle(
                 (float)ann.Left,
@@ -770,6 +804,143 @@ public class PdfFormService
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Encrypts a PDF with a user password (required to open) and an owner password (required to change permissions).
+    /// Passing null/empty for a password means no password of that type.
+    /// SECURITY: passwords are NEVER stored to disk — callers must not persist them.
+    /// </summary>
+    public void EncryptPdf(string inputPath, string outputPath,
+        string? userPassword, string? ownerPassword,
+        bool allowPrinting = true, bool allowCopying = false)
+    {
+        byte[]? userBytes  = string.IsNullOrEmpty(userPassword)  ? null : System.Text.Encoding.UTF8.GetBytes(userPassword);
+        byte[]? ownerBytes = string.IsNullOrEmpty(ownerPassword) ? null : System.Text.Encoding.UTF8.GetBytes(ownerPassword);
+
+        int perms = 0;
+        if (allowPrinting) perms |= EncryptionConstants.ALLOW_PRINTING;
+        if (allowCopying)  perms |= EncryptionConstants.ALLOW_COPY;
+
+        var writerProps = new WriterProperties()
+            .SetStandardEncryption(userBytes, ownerBytes,
+                perms, EncryptionConstants.ENCRYPTION_AES_256);
+
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath, writerProps);
+        using var pdf = new PdfDocument(reader, writer);
+    }
+
+    /// <summary>
+    /// Removes encryption from a PDF that was opened with the given password.
+    /// SECURITY: the password is NEVER stored to disk.
+    /// </summary>
+    public void RemoveEncryption(string inputPath, string outputPath, string? password = null)
+    {
+        var readerProps = new ReaderProperties();
+        if (!string.IsNullOrEmpty(password))
+            readerProps.SetPassword(System.Text.Encoding.UTF8.GetBytes(password));
+
+        using var reader = new PdfReader(inputPath, readerProps);
+        reader.SetUnethicalReading(true);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf = new PdfDocument(reader, writer);
+    }
+
+    /// <summary>
+    /// Adds Bates numbers to every page of a PDF.
+    /// format supports {n} (sequential number), {prefix}, {suffix}.
+    /// </summary>
+    public void AddBatesNumbers(string inputPath, string outputPath,
+        int startNumber = 1, int padding = 6,
+        string prefix = "", string suffix = "",
+        float fontSize = 8f, float marginPt = 18f,
+        string position = "BottomRight")
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        var font  = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.COURIER);
+        int total = pdf.GetNumberOfPages();
+        var gray  = new DeviceRgb(0.3f, 0.3f, 0.3f);
+
+        for (int i = 1; i <= total; i++)
+        {
+            var page = pdf.GetPage(i);
+            var size = page.GetPageSize();
+            string num  = (startNumber + i - 1).ToString().PadLeft(padding, '0');
+            string text = $"{prefix}{num}{suffix}";
+            float textWidth = font.GetWidth(text, fontSize);
+
+            float x = position switch
+            {
+                "BottomLeft"  => marginPt,
+                "BottomCenter"=> (size.GetWidth() - textWidth) / 2,
+                "TopLeft"     => marginPt,
+                "TopCenter"   => (size.GetWidth() - textWidth) / 2,
+                "TopRight"    => size.GetWidth() - textWidth - marginPt,
+                _             => size.GetWidth() - textWidth - marginPt // BottomRight
+            };
+            float y = position.StartsWith("Top")
+                ? size.GetHeight() - marginPt - fontSize
+                : marginPt;
+
+            var canvas = new PdfCanvas(page);
+            canvas.SaveState();
+            canvas.SetFillColor(gray);
+            canvas.BeginText();
+            canvas.SetFontAndSize(font, fontSize);
+            canvas.SetTextMatrix(1, 0, 0, 1, x, y);
+            canvas.ShowText(text);
+            canvas.EndText();
+            canvas.RestoreState();
+        }
+    }
+
+    /// <summary>
+    /// Crops every page to the specified crop box (in points, relative to the bottom-left of the media box).
+    /// Negative values for right/top use distance from page edge.
+    /// </summary>
+    public void CropAllPages(string inputPath, string outputPath,
+        float leftPt, float bottomPt, float rightPt, float topPt)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+        int total = pdf.GetNumberOfPages();
+
+        for (int i = 1; i <= total; i++)
+        {
+            var page = pdf.GetPage(i);
+            var media = page.GetMediaBox();
+            float l = media.GetLeft()   + leftPt;
+            float b = media.GetBottom() + bottomPt;
+            float r = rightPt  <= 0 ? media.GetRight()  + rightPt  : media.GetLeft() + rightPt;
+            float t = topPt    <= 0 ? media.GetTop()    + topPt    : media.GetBottom() + topPt;
+            page.SetCropBox(new Rectangle(l, b, r - l, t - b));
+        }
+    }
+
+    /// <summary>
+    /// Adds a URI link annotation to the specified page at the given location (in PDF points, bottom-left origin).
+    /// </summary>
+    public void AddLinkAnnotation(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height, string uri)
+    {
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(reader, writer);
+
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var page = pdf.GetPage(pageNumber);
+
+        var rect   = new Rectangle(left, bottom, width, height);
+        var action = iText.Kernel.Pdf.Action.PdfAction.CreateURI(uri);
+        var annot  = new iText.Kernel.Pdf.Annot.PdfLinkAnnotation(rect)
+            .SetAction(action)
+            .SetBorder(new iText.Kernel.Pdf.PdfArray(new float[] { 0, 0, 1 }))
+            .SetColor(new iText.Kernel.Pdf.PdfArray(new float[] { 0, 0, 1 }));
+        page.AddAnnotation(annot);
     }
 
     private static FieldType GetFieldType(PdfFormField field)

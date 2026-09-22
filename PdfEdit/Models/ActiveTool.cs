@@ -20,5 +20,8 @@ public enum ActiveTool
     XMark,
     Dot,
     Line,
-    Circle
+    Circle,
+    Link,
+    DrawFreehand,
+    Eraser
 }

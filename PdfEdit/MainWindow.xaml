@@ -604,6 +604,51 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Bates&#x0a;Numbers"
+                                   Command="{Binding BatesNumberCommand}"
+                                   KeyTip="BN"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Add sequential Bates numbers (with prefix/suffix) to every page for legal document identification"
+                                   AutomationProperties.Name="Add Bates numbers">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Crop&#x0a;Pages"
+                                   Command="{Binding CropPagesCommand}"
+                                   KeyTip="CP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Trim page margins by setting crop box margins (in points) on all pages"
+                                   AutomationProperties.Name="Crop pages">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Security group -->
+                <Fluent:RibbonGroupBox Header="Security"
+                                        AutomationProperties.Name="Security group">
+                    <Fluent:Button Header="Password&#x0a;Protect"
+                                   Command="{Binding PasswordProtectCommand}"
+                                   KeyTip="PP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Encrypt the PDF with an open password and set permissions (printing, copying)"
+                                   AutomationProperties.Name="Password protect PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Remove&#x0a;Password"
+                                   Command="{Binding RemovePasswordCommand}"
+                                   KeyTip="RP"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Remove encryption from a PDF (requires the PDF to already be open/unlocked)"
+                                   AutomationProperties.Name="Remove PDF password">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE785;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>
@@ -1111,6 +1156,35 @@
                             </Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Drawing tools group -->
+                <Fluent:RibbonGroupBox Header="Drawing"
+                                        AutomationProperties.Name="Drawing tools group">
+                    <Fluent:ToggleButton Header="Freehand"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawFreehand, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawFreehand"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Freehand Draw — drag to draw ink strokes on the page"
+                                         AutomationProperties.Name="Freehand draw tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED63;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Link"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Link, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Link"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Link — drag a rectangle, then enter a URL to create a clickable hyperlink annotation"
+                                         AutomationProperties.Name="Hyperlink annotation tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Sign & Date group -->
