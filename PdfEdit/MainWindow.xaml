@@ -40,6 +40,8 @@
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoAnnotationCommand}"/>
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoAnnotationCommand}"/>
+        <KeyBinding Key="E" Modifiers="Control+Shift" Command="{Binding ExportXfdfCommand}"/>
+        <KeyBinding Key="I" Modifiers="Control+Shift" Command="{Binding ImportXfdfCommand}"/>
         <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
         <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
         <KeyBinding Key="S" Command="{Binding SetToolCommand}" CommandParameter="Signature"/>
@@ -913,6 +915,15 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Find &amp;&#x0a;Highlight"
+                                   Command="{Binding FindAndHighlightCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Search for text in the PDF and add yellow highlight annotations on every match"
+                                   AutomationProperties.Name="Find text and highlight all occurrences">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Clear All Fields"
                                    Command="{Binding ClearAllFieldsCommand}"
                                    Size="Middle"
@@ -1207,6 +1218,39 @@
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Annotations interchange group -->
+                <Fluent:RibbonGroupBox Header="Annotations"
+                                        AutomationProperties.Name="Annotation export and import group">
+                    <Fluent:Button Header="Export&#x0a;XFDF"
+                                   Command="{Binding ExportXfdfCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export all annotations to an XFDF file — compatible with Adobe Acrobat and Foxit PDF"
+                                   AutomationProperties.Name="Export annotations as XFDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Import&#x0a;XFDF"
+                                   Command="{Binding ImportXfdfCommand}"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Import annotations from an XFDF file exported by another PDF viewer"
+                                   AutomationProperties.Name="Import annotations from XFDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Ann. Summary"
+                                   Command="{Binding ExportAnnotationSummaryCommand}"
+                                   Size="Middle"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Export a CSV summary of all annotations for review workflows"
+                                   AutomationProperties.Name="Export annotation summary as CSV">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

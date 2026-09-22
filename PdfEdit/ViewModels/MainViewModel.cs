@@ -660,6 +660,10 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand NewDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
+    public ICommand ExportXfdfCommand { get; }
+    public ICommand ImportXfdfCommand { get; }
+    public ICommand ExportAnnotationSummaryCommand { get; }
+    public ICommand FindAndHighlightCommand { get; }
 
     // ── Design Canvas ─────────────────────────────────────────────────────────
     private bool _isDesignMode;
@@ -837,6 +841,10 @@ public class MainViewModel : INotifyPropertyChanged
         DrawRectangleCommand      = new RelayCommand(() => ActiveTool = ActiveTool.DrawRectangle, () => HasDocument);
         DrawEllipseCommand        = new RelayCommand(() => ActiveTool = ActiveTool.DrawEllipse, () => HasDocument);
         DrawArrowCommand          = new RelayCommand(() => ActiveTool = ActiveTool.DrawArrow, () => HasDocument);
+        ExportXfdfCommand         = new AsyncRelayCommand(ExportXfdfAsync,         () => HasDocument);
+        ImportXfdfCommand         = new AsyncRelayCommand(ImportXfdfAsync,         () => HasDocument);
+        ExportAnnotationSummaryCommand = new AsyncRelayCommand(ExportAnnotationSummaryAsync, () => HasDocument);
+        FindAndHighlightCommand   = new AsyncRelayCommand(FindAndHighlightAsync,   () => HasDocument);
         MovePageUpCommand   = new AsyncRelayCommand(MovePageUpAsync,
             () => HasDocument && _currentPageIndex > 0);
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
@@ -2865,6 +2873,165 @@ public class MainViewModel : INotifyPropertyChanged
                     });
                 }
             }
+        }
+    }
+
+    private async Task ExportXfdfAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Annotations as XFDF",
+            Filter = "XFDF annotation files (*.xfdf)|*.xfdf",
+            DefaultExt = ".xfdf",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + ".xfdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            string path = dlg.FileName;
+            await Task.Run(() => Services.XfdfService.Export(
+                path, _currentFilePath,
+                HighlightAnnotations, StickyNotes, FreeTextAnnotations, ShapeAnnotations));
+            int total = HighlightAnnotations.Count + StickyNotes.Count
+                      + FreeTextAnnotations.Count + ShapeAnnotations.Count;
+            ToastService.Instance.Success($"Exported {total} annotation(s) to XFDF.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("XFDF export failed.", ex); }
+    }
+
+    private async Task ImportXfdfAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import Annotations from XFDF",
+            Filter = "XFDF annotation files (*.xfdf)|*.xfdf",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var result = await Task.Run(() => Services.XfdfService.Import(dlg.FileName));
+
+            int added = 0;
+            foreach (var hl in result.Highlights)   { HighlightAnnotations.Add(hl); added++; }
+            foreach (var sn in result.StickyNotes)  { StickyNotes.Add(sn);          added++; }
+            foreach (var ft in result.FreeTexts)    { FreeTextAnnotations.Add(ft);  added++; }
+            foreach (var sh in result.Shapes)       { ShapeAnnotations.Add(sh);     added++; }
+
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Imported {added} annotation(s) from XFDF.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("XFDF import failed.", ex); }
+    }
+
+    private async Task ExportAnnotationSummaryAsync()
+    {
+        if (_currentFilePath == null) return;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Annotation Summary",
+            Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt",
+            DefaultExt = ".csv",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_annotations.csv",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            await Task.Run(() =>
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Type,Page,Left,Bottom,Width,Height,Color,Text/Value");
+
+                foreach (var hl in HighlightAnnotations)
+                    sb.AppendLine($"{hl.Kind},{ hl.PageNumber},{hl.Left:F1},{hl.Bottom:F1},{hl.Width:F1},{hl.Height:F1},{hl.Color},");
+
+                foreach (var sn in StickyNotes)
+                    sb.AppendLine($"StickyNote,{sn.PageNumber},{sn.Left:F1},{sn.Bottom:F1},,,{sn.Color},{CsvEscape(sn.Text)}");
+
+                foreach (var ft in FreeTextAnnotations)
+                    sb.AppendLine($"FreeText,{ft.PageNumber},{ft.Left:F1},{ft.Bottom:F1},{ft.Width:F1},{ft.Height:F1},,{CsvEscape(ft.Text)}");
+
+                foreach (var sh in ShapeAnnotations)
+                {
+                    double w = Math.Abs(sh.X2 - sh.X1);
+                    double h = Math.Abs(sh.Y2 - sh.Y1);
+                    sb.AppendLine($"{sh.Kind},{sh.PageNumber},{Math.Min(sh.X1, sh.X2):F1},{Math.Min(sh.Y1, sh.Y2):F1},{w:F1},{h:F1},{sh.StrokeColor},");
+                }
+
+                System.IO.File.WriteAllText(dlg.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+            });
+
+            int total = HighlightAnnotations.Count + StickyNotes.Count
+                      + FreeTextAnnotations.Count + ShapeAnnotations.Count;
+            ToastService.Instance.Success($"Annotation summary: {total} item(s) exported.");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Annotation summary export failed.", ex); }
+    }
+
+    private static string CsvEscape(string s)
+    {
+        if (s.Contains(',') || s.Contains('"') || s.Contains('\n'))
+            return "\"" + s.Replace("\"", "\"\"") + "\"";
+        return s;
+    }
+
+    private async Task FindAndHighlightAsync()
+    {
+        if (_currentFilePath == null || _document == null) return;
+
+        var dlg = new Dialogs.InputDialog(
+            "Find and Highlight",
+            "Enter text to search and create highlight annotations on all matches:");
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+
+        string query = dlg.InputText.Trim();
+        StatusText = $"Searching for \"{query}\"…";
+
+        try
+        {
+            var matches = await Task.Run(() =>
+                Services.PdfTextExtractorService.FindTextPositions(_currentFilePath, query));
+
+            if (matches.Count == 0)
+            {
+                ToastService.Instance.Info($"No matches found for \"{query}\".");
+                StatusText = "Ready";
+                return;
+            }
+
+            foreach (var m in matches)
+            {
+                var hl = new Models.HighlightAnnotation
+                {
+                    PageNumber = m.PageNumber,
+                    Left   = m.Left,
+                    Bottom = m.Bottom,
+                    Width  = m.Width,
+                    Height = Math.Max(m.Height, 6),
+                    Color  = CurrentHighlightColor,
+                    Opacity = 0.4f,
+                    Kind   = Models.HighlightKind.Highlight,
+                };
+                // Add directly — AddHighlightAnnotation would overwrite PageNumber
+                HighlightAnnotations.Add(hl);
+            }
+            _undoService.Push(new Services.AnnotationAction
+            {
+                Description = $"Find & highlight \"{query}\" ({matches.Count})",
+                Execute     = () => { foreach (var m in matches) HighlightAnnotations.Add(new Models.HighlightAnnotation { PageNumber = m.PageNumber, Left = m.Left, Bottom = m.Bottom, Width = m.Width, Height = Math.Max(m.Height, 6), Color = CurrentHighlightColor, Opacity = 0.4f }); },
+                Undo        = () => { for (int i = 0; i < matches.Count; i++) { if (HighlightAnnotations.Count > 0) HighlightAnnotations.RemoveAt(HighlightAnnotations.Count - 1); } },
+            });
+            RefreshUndoCanExecute();
+
+            PageChanged?.Invoke();
+            ToastService.Instance.Success($"Highlighted {matches.Count} occurrence(s) of \"{query}\".");
+            StatusText = $"Found and highlighted {matches.Count} matches.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Find and highlight failed.", ex);
+            StatusText = "Ready";
         }
     }
 

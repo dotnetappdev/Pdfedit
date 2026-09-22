@@ -50,9 +50,17 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 | Export PDF text to TXT | ✅ | ✅ | ❌ | ✅ |
 | Delete / Extract page range | ✅ | ✅ | ✅ | ✅ |
 | Find & Replace in form fields | ✅ | ✅ | ❌ | ✅ |
+| Find text & highlight all matches | ✅ | ✅ | ❌ | ✅ |
+| XFDF annotation export / import | ✅ | ✅ | ❌ | ✅ |
+| Annotation summary (CSV export) | ✅ | ❌ | ❌ | ❌ |
 | Required-field validation | ✅ | ✅ | ❌ | ❌ |
 | PDF/A archival export | ✅ | ✅ | ❌ | ✅ |
 | Rubber Stamps (APPROVED, DRAFT…) | ✅ 10 stamps | ✅ | ❌ | ✅ |
+| File Attachments (embed/extract) | ✅ | ✅ | ❌ | ✅ |
+| Annotation Undo / Redo | ✅ | ✅ | ❌ | ✅ |
+| Shape annotations (rect/ellipse/arrow) | ✅ | ✅ | ❌ | ✅ |
+| Eraser tool | ✅ | ✅ | ❌ | ✅ |
+| Radio button form field creator | ✅ | ✅ | ❌ | ✅ |
 | Free (open source) | ✅ | ❌ | ❌ | ❌ |
 | WPF native (no browser/Electron) | ✅ | ✅ | ❌ | ✅ |
 | Bring your own AI key | ✅ | ❌ | ❌ | ❌ |
@@ -136,6 +144,7 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - **Text Field** — Drag a rectangle; enter field name; adds an editable AcroForm text field
 - **Checkbox** — Drag a square; enter field name; adds a checkbox field
 - **Combo Box** — Drag a rectangle; enter field name and dropdown choices (one per line)
+- **Radio Button** — Drag a square; enter a group name; multiple fields with the same group name form an exclusive radio group
 - All new fields are immediately saved to the PDF and available for filling
 
 ### Security
@@ -194,6 +203,16 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - 10 built-in stamps: APPROVED, CONFIDENTIAL, DRAFT, FINAL, FOR REVIEW, NOT APPROVED, RECEIVED, REJECTED, REVISED, VOID
 - Placed as rotated free-text annotations on the page
 
+**Shape Annotations**
+- **Rectangle / Ellipse** — Drag to draw stroked shape annotations; configurable stroke colour and width
+- **Arrow** — Drag to draw arrow annotations; saved as PDF line annotations with arrowhead
+- Right-click any shape to delete it
+- Supports annotation Undo/Redo (Ctrl+Z / Ctrl+Y)
+
+**Eraser Tool**
+- Click or drag over any annotation to erase it
+- Works on freehand ink strokes, shape annotations, and placed glyphs
+
 **Hyperlink Annotations**
 - Link tool: drag a rectangle, enter a URL — creates a clickable PDF link annotation
 - Supports http://, https://, and mailto: schemes
@@ -204,6 +223,20 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 **Signatures**
 - Draw, type, or load signature images; preview thumbnails in the signature picker
 - Place signatures anywhere on a page; remove before saving
+
+**XFDF Annotation Export / Import**
+- Export all annotations (highlights, sticky notes, free text, shapes) to an XFDF file — the industry-standard Adobe annotation interchange format
+- Import XFDF files from Adobe Acrobat, Foxit PDF, or other compliant PDF viewers
+- Keyboard shortcuts: Ctrl+Shift+E (export), Ctrl+Shift+I (import)
+
+**Annotation Summary Export**
+- Export all annotations to a CSV file for review workflows, auditing, or further processing in Excel
+- Includes type, page number, coordinates, colour, and text content
+
+**Find Text and Highlight**
+- Search for any text string across the entire PDF and instantly create highlight annotations on every match
+- Accurate position extraction using iText7's `RegexBasedLocationExtractionStrategy`
+- All matches are added as a single undo-able action
 
 ---
 
@@ -235,6 +268,16 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - **Archive (PDF/A)** — Save as PDF 1.4 with archival conformance metadata
 
 ---
+
+### File Attachments
+
+Embed and manage attached files within the PDF document:
+
+- **Attach File** — Embed any file into the PDF's portable attachment collection (View tab → Attachments)
+- **Extract File** — Save an embedded attachment to disk
+- **Remove Attachment** — Delete an embedded file from the PDF
+- Attachments panel in the sidebar shows name, file size, and per-attachment actions
+- Embedded files travel with the PDF — useful for attaching source data, supporting documents, or reference files
 
 ### Document Management
 
@@ -275,8 +318,8 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 | Save As | Ctrl+Shift+S |
 | Close | Ctrl+W |
 | Print | Ctrl+P |
-| Undo (design) | Ctrl+Z |
-| Redo (design) | Ctrl+Y |
+| Undo annotation | Ctrl+Z |
+| Redo annotation | Ctrl+Y |
 | Copy element | Ctrl+C |
 | Paste element | Ctrl+V |
 | Duplicate | Ctrl+D |
@@ -302,6 +345,8 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 | Fit to window | Ctrl+0 |
 | Rotate CW / CCW | Ctrl+] / Ctrl+[ |
 | Global search | Ctrl+Shift+F |
+| Export annotations (XFDF) | Ctrl+Shift+E |
+| Import annotations (XFDF) | Ctrl+Shift+I |
 | Keyboard shortcuts reference | F1 |
 
 ---
