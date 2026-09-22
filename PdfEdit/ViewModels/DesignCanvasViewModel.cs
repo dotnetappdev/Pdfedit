@@ -27,6 +27,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private double _fontSize = 14;
     private bool _bold, _italic, _underline;
     private Color _textColor = Colors.Black;
+    private Color _textBgColor = Colors.Transparent;
     private TextAlignment _textAlignment = TextAlignment.Left;
     private Color _penColor = Colors.Black;
     private double _penThickness = 2;
@@ -228,6 +229,17 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _textColor = value;
             OnPropertyChanged();
             if (_selectedElement is TextDesignElement t) t.Color = value;
+        }
+    }
+
+    public Color TextBgColor
+    {
+        get => _textBgColor;
+        set
+        {
+            _textBgColor = value;
+            OnPropertyChanged();
+            if (_selectedElement is TextDesignElement t) t.BgColor = value;
         }
     }
 
@@ -833,8 +845,9 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _bold       = t.Bold;         OnPropertyChanged(nameof(Bold));
             _italic     = t.Italic;       OnPropertyChanged(nameof(Italic));
             _underline  = t.Underline;    OnPropertyChanged(nameof(Underline));
-            _textColor  = t.Color;        OnPropertyChanged(nameof(TextColor));
-            _textAlignment = t.Alignment; OnPropertyChanged(nameof(TextAlignment));
+            _textColor   = t.Color;        OnPropertyChanged(nameof(TextColor));
+            _textBgColor = t.BgColor;      OnPropertyChanged(nameof(TextBgColor));
+            _textAlignment = t.Alignment;  OnPropertyChanged(nameof(TextAlignment));
         }
         else if (_selectedElement is ShapeDesignElement sh)
         {

@@ -558,6 +558,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand NavigateToResultCommand { get; }
     public ICommand OpenRecentCommand { get; }
     public ICommand ShowAboutCommand { get; }
+    public ICommand ShowShortcutsCommand { get; }
     public ICommand SendAiChatCommand { get; }
     public ICommand ClearAiChatCommand { get; }
     public ICommand DeleteCurrentPageCommand { get; }
@@ -679,6 +680,11 @@ public class MainViewModel : INotifyPropertyChanged
         ShowAboutCommand = new RelayCommand(() =>
         {
             var dlg = new Dialogs.AboutDialog { Owner = Application.Current.MainWindow };
+            dlg.ShowDialog();
+        });
+        ShowShortcutsCommand = new RelayCommand(() =>
+        {
+            var dlg = new Dialogs.ShortcutsDialog { Owner = Application.Current.MainWindow };
             dlg.ShowDialog();
         });
         SendAiChatCommand = new AsyncRelayCommand(SendAiChatAsync, () => !_isAiRunning);

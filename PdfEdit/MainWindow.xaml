@@ -38,6 +38,7 @@
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
         <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
+        <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
         <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
         <KeyBinding Key="S" Command="{Binding SetToolCommand}" CommandParameter="Signature"/>
         <KeyBinding Key="K" Command="{Binding SetToolCommand}" CommandParameter="Checkmark"/>
@@ -108,6 +109,10 @@
 
                     <Separator/>
 
+                    <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
+                                                KeyTip="K"
+                                                Command="{Binding ShowShortcutsCommand}"
+                                                AutomationProperties.Name="Keyboard shortcuts reference"/>
                     <Fluent:MenuItem Header="About PdfEdit…"
                                                 KeyTip="B"
                                                 Command="{Binding ShowAboutCommand}"
@@ -1604,6 +1609,10 @@
                     <Fluent:Button Header="Text Color" Size="Middle" Tag="TextColor" Click="DesignColor_Click"
                                    ToolTip="Set text color" AutomationProperties.Name="Text color">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Highlight" Size="Middle" Tag="TextBgColor" Click="DesignColor_Click"
+                                   ToolTip="Set text highlight / background color" AutomationProperties.Name="Text highlight color">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

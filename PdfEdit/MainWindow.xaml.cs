@@ -191,10 +191,11 @@ public partial class MainWindow : RibbonWindow
             "FillColor"   => VM.DesignCanvas.FillColor,
             "StrokeColor" => VM.DesignCanvas.StrokeColor,
             "TextColor"   => VM.DesignCanvas.TextColor,
+            "TextBgColor" => VM.DesignCanvas.TextBgColor,
             _             => System.Windows.Media.Colors.Black
         };
 
-        var newColor = ShowColorPickerDialog($"Set {tag}", current);
+        var newColor = ShowColorPickerDialog($"Set {tag?.Replace("Color", " Color")}", current);
         if (newColor == null) return;
 
         switch (tag)
@@ -202,6 +203,7 @@ public partial class MainWindow : RibbonWindow
             case "FillColor":   VM.DesignCanvas.FillColor   = newColor.Value; break;
             case "StrokeColor": VM.DesignCanvas.StrokeColor = newColor.Value; break;
             case "TextColor":   VM.DesignCanvas.TextColor   = newColor.Value; break;
+            case "TextBgColor": VM.DesignCanvas.TextBgColor = newColor.Value; break;
         }
     }
 
