@@ -44,6 +44,14 @@ public class MainViewModel : INotifyPropertyChanged
     // Page rotation: pageIndex → cumulative degrees
     private readonly Dictionary<int, int> _pageRotations = new();
 
+    // Active highlight color used when dragging with the Highlight tool
+    private string _activeHighlightColor = "#80FFFF00";
+    public string ActiveHighlightColor
+    {
+        get => _activeHighlightColor;
+        set { _activeHighlightColor = value ?? "#80FFFF00"; OnPropertyChanged(); }
+    }
+
     // Library signature pending placement
     private byte[]? _pendingLibrarySignature;
     public byte[]? PendingLibrarySignature
@@ -63,6 +71,7 @@ public class MainViewModel : INotifyPropertyChanged
     public event Action? AnnotationFormattingChanged;
     public event Action<double>? UiScaleChanged;
     public event Action<bool>? SearchOverlayToggled;
+    public event Action? GoToPageRequested;
 
     // ── Available options ────────────────────────────────────────────────────
 
@@ -516,13 +525,85 @@ public class MainViewModel : INotifyPropertyChanged
     // Names of existing fields the user has deleted; stripped from the PDF on save.
     public HashSet<string> DeletedFieldNames { get; } = new();
 
+    // ── Undo / Redo ───────────────────────────────────────────────────────────
+
+    private readonly Stack<(Action Undo, Action Redo)> _undoStack = new();
+    private readonly Stack<(Action Undo, Action Redo)> _redoStack = new();
+
+    public bool CanUndo => _undoStack.Count > 0;
+    public bool CanRedo => _redoStack.Count > 0;
+
+    public void PushUndo(Action undo, Action redo)
+    {
+        _undoStack.Push((undo, redo));
+        _redoStack.Clear();
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+    }
+
+    public void Undo()
+    {
+        if (_undoStack.Count == 0) return;
+        var entry = _undoStack.Pop();
+        _redoStack.Push(entry);
+        entry.Undo();
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+    }
+
+    public void Redo()
+    {
+        if (_redoStack.Count == 0) return;
+        var entry = _redoStack.Pop();
+        _undoStack.Push(entry);
+        entry.Redo();
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+    }
+
+    // ── Viewer size (updated by PdfViewerControl on resize) ───────────────────
+
+    private double _viewerWidth  = 800;
+    private double _viewerHeight = 600;
+
+    public void UpdateViewerSize(double w, double h)
+    {
+        _viewerWidth  = Math.Max(100, w);
+        _viewerHeight = Math.Max(100, h);
+    }
+
+    private void FitPage()
+    {
+        if (_document == null || _currentPageIndex >= _document.PageSizes.Count) return;
+        var ps = _document.PageSizes[_currentPageIndex];
+        double dipW = ps.Width  * PdfRenderService.PointsToDips;
+        double dipH = ps.Height * PdfRenderService.PointsToDips;
+        double zoomW = (_viewerWidth  - 24) / dipW;
+        double zoomH = (_viewerHeight - 24) / dipH;
+        Zoom = Math.Max(0.1, Math.Min(zoomW, zoomH));
+    }
+
+    private void FitWidth()
+    {
+        if (_document == null || _currentPageIndex >= _document.PageSizes.Count) return;
+        var ps = _document.PageSizes[_currentPageIndex];
+        double dipW = ps.Width * PdfRenderService.PointsToDips;
+        Zoom = Math.Max(0.1, (_viewerWidth - 24) / dipW);
+    }
+
+    // Fired by PdfViewerControl after loading a document so zoom auto-fits.
+    public void AutoFitOnLoad() => FitPage();
+
     // ── Commands ─────────────────────────────────────────────────────────────
 
+    public ICommand UndoCommand { get; }
+    public ICommand RedoCommand { get; }
     public ICommand OpenCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand SaveAsCommand { get; }
     public ICommand CloseCommand { get; }
     public ICommand PrintCommand { get; }
+    public ICommand GoToPageCommand { get; }
     public ICommand NextPageCommand { get; }
     public ICommand PreviousPageCommand { get; }
     public ICommand FirstPageCommand { get; }
@@ -530,6 +611,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ZoomInCommand { get; }
     public ICommand ZoomOutCommand { get; }
     public ICommand ZoomFitCommand { get; }
+    public ICommand ZoomWidthCommand { get; }
     public ICommand ZoomActualCommand { get; }
     public ICommand ClearAllFieldsCommand { get; }
     public ICommand DeleteSelectedFieldCommand { get; }
@@ -574,6 +656,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand MovePageUpCommand { get; }
     public ICommand MovePageDownCommand { get; }
     public ICommand InsertPageBeforeCommand { get; }
+    public ICommand DuplicateCurrentPageCommand { get; }
     public ICommand CancelAiCommand { get; }
     public ICommand SummarizeDocumentCommand { get; }
     public ICommand SmartFillFromDocCommand { get; }
@@ -581,8 +664,10 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
     public ICommand NewDesignCommand { get; }
+    public ICommand CloseDesignCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
+    public ICommand ExportPageAsImageCommand { get; }
 
     // ── Design Canvas ─────────────────────────────────────────────────────────
     private bool _isDesignMode;
@@ -607,11 +692,14 @@ public class MainViewModel : INotifyPropertyChanged
         _aiModel = AppSettings.Current.AiModel;
         SyncAiModels();
 
+        UndoCommand = new RelayCommand(Undo, () => CanUndo);
+        RedoCommand = new RelayCommand(Redo, () => CanRedo);
         OpenCommand = new AsyncRelayCommand(OpenAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => HasDocument);
         SaveAsCommand = new AsyncRelayCommand(SaveAsAsync, () => HasDocument);
         CloseCommand = new RelayCommand(CloseDocument, () => HasDocument);
-        PrintCommand = new RelayCommand(Print, () => HasDocument);
+        PrintCommand = new AsyncRelayCommand(PrintAsync, () => HasDocument);
+        GoToPageCommand = new RelayCommand(() => GoToPageRequested?.Invoke(), () => HasDocument);
         NextPageCommand = new RelayCommand(() => CurrentPageIndex++,
             () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
         PreviousPageCommand = new RelayCommand(() => CurrentPageIndex--,
@@ -620,7 +708,8 @@ public class MainViewModel : INotifyPropertyChanged
         LastPageCommand = new RelayCommand(() => CurrentPageIndex = (_document?.PageCount ?? 1) - 1, () => HasDocument);
         ZoomInCommand = new RelayCommand(() => Zoom += 0.1, () => HasDocument);
         ZoomOutCommand = new RelayCommand(() => Zoom -= 0.1, () => HasDocument);
-        ZoomFitCommand = new RelayCommand(() => Zoom = 1.0, () => HasDocument);
+        ZoomFitCommand  = new RelayCommand(FitPage,  () => HasDocument);
+        ZoomWidthCommand = new RelayCommand(FitWidth, () => HasDocument);
         ZoomActualCommand = new RelayCommand(() => Zoom = 1.0, () => HasDocument);
         ClearAllFieldsCommand = new RelayCommand(ClearAllFields, () => HasDocument);
         DeleteSelectedFieldCommand = new RelayCommand(() => DeleteField(SelectedField), () => SelectedField != null);
@@ -702,6 +791,7 @@ public class MainViewModel : INotifyPropertyChanged
         MovePageDownCommand = new AsyncRelayCommand(MovePageDownAsync,
             () => HasDocument && _currentPageIndex < (_document?.PageCount ?? 1) - 1);
         InsertPageBeforeCommand = new AsyncRelayCommand(InsertPageBeforeAsync, () => HasDocument);
+        DuplicateCurrentPageCommand = new AsyncRelayCommand(DuplicateCurrentPageAsync, () => HasDocument);
 
         CancelAiCommand = new RelayCommand(() => { _aiCts?.Cancel(); }, () => _isAiRunning);
         SummarizeDocumentCommand    = new AsyncRelayCommand(() => RunAnalysisPresetAsync("summarize"),  () => HasDocument && !_isAiRunning);
@@ -715,6 +805,12 @@ public class MainViewModel : INotifyPropertyChanged
             DesignCanvas.Elements.Clear();
             IsDesignMode = true;
             StatusText = "Design Canvas — draw shapes, text, and images to create a PDF from scratch.";
+        });
+
+        CloseDesignCommand = new RelayCommand(() =>
+        {
+            IsDesignMode = false;
+            StatusText = HasDocument ? "PDF view." : "Ready.";
         });
 
         ExportDesignCommand = new AsyncRelayCommand(ExportDesignAsync, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
@@ -732,6 +828,8 @@ public class MainViewModel : INotifyPropertyChanged
             }
             catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
         }, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
+
+        ExportPageAsImageCommand = new AsyncRelayCommand(ExportPageAsImageAsync, () => HasDocument);
 
         // Pre-select first profile if any exist
         if (Services.PersonalProfileStore.All.Count > 0)
@@ -778,6 +876,19 @@ public class MainViewModel : INotifyPropertyChanged
         var field = AllFields.FirstOrDefault(f => f.Name == fieldName);
         if (field != null) field.Value = value;
         StatusText = $"Field '{fieldName}' updated.";
+    }
+
+    public void ApplyValueToAllMatchingFields(string fieldName, string value)
+    {
+        int count = 0;
+        foreach (var f in AllFields.Where(f => f.Name == fieldName))
+        {
+            f.Value = value;
+            count++;
+        }
+        FieldValues[fieldName] = value;
+        ToastService.Instance.Success($"Applied \"{value}\" to {count} field(s) named '{fieldName}'.");
+        StatusText = $"Value applied to {count} matching field(s).";
     }
 
     public FreeTextAnnotation AddFreeTextAnnotation(double pdfX, double pdfY, double pdfW, double pdfH,
@@ -847,6 +958,7 @@ public class MainViewModel : INotifyPropertyChanged
     private async Task LoadDocumentAsync(string path)
     {
         IsLoading = true;
+        IsDesignMode = false;
         StatusText = $"Loading {System.IO.Path.GetFileName(path)}…";
 
         try
@@ -861,6 +973,10 @@ public class MainViewModel : INotifyPropertyChanged
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
+            _undoStack.Clear();
+            _redoStack.Clear();
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
 
             foreach (var f in Document.FormFields)
             {
@@ -879,7 +995,7 @@ public class MainViewModel : INotifyPropertyChanged
             _currentPageIndex = 0;
             _zoom = 1.0;
 
-            // Restore per-document state (last page + zoom)
+            // Restore per-document state (last page, zoom, annotations, signatures, field values)
             var docState = DocumentStateStore.Get(path);
             if (docState != null)
             {
@@ -887,6 +1003,15 @@ public class MainViewModel : INotifyPropertyChanged
                 _zoom = Math.Clamp(docState.LastZoom, 0.1, 5.0);
                 OnPropertyChanged(nameof(Zoom));
                 OnPropertyChanged(nameof(ZoomPercent));
+
+                foreach (var ann in docState.Annotations)
+                    FreeTextAnnotations.Add(ann);
+                foreach (var sig in docState.Signatures)
+                    PlacedSignatures.Add(sig);
+
+                // Saved field values override the ones loaded from the PDF
+                foreach (var kv in docState.FieldValues)
+                    FieldValues[kv.Key] = kv.Value;
             }
 
             OnPropertyChanged(nameof(CurrentPageIndex));
@@ -919,7 +1044,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Dialogs.AppDialog.ShowError("Failed to open PDF", ex.Message, ex);
+            Dialogs.AppDialog.ShowError("Failed to open PDF", ex);
             StatusText = "Error loading document.";
             ToastService.Instance.Error("Failed to open PDF.");
         }
@@ -945,9 +1070,10 @@ public class MainViewModel : INotifyPropertyChanged
             if (errors.Count > 0)
             {
                 ToastService.Instance.Warning($"Saved with {errors.Count} issue(s) — see details.");
-                Dialogs.AppDialog.ShowError("Saved with warnings",
+                Dialogs.AppDialog.ShowError(
                     $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
-                    + string.Join("\n", errors.Take(10)));
+                    + string.Join("\n", errors.Take(10)),
+                    title: "Saved with warnings");
             }
             else
             {
@@ -956,7 +1082,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Dialogs.AppDialog.ShowError("Save failed", ex.Message, ex);
+            Dialogs.AppDialog.ShowError("Save failed", ex);
             ToastService.Instance.Error("Save failed.");
         }
         finally
@@ -988,9 +1114,10 @@ public class MainViewModel : INotifyPropertyChanged
             if (errors.Count > 0)
             {
                 ToastService.Instance.Warning($"Saved with {errors.Count} issue(s).");
-                Dialogs.AppDialog.ShowError("Saved with warnings",
+                Dialogs.AppDialog.ShowError(
                     $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
-                    + string.Join("\n", errors.Take(10)));
+                    + string.Join("\n", errors.Take(10)),
+                    title: "Saved with warnings");
             }
             else
             {
@@ -999,7 +1126,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Dialogs.AppDialog.ShowError("Save failed", ex.Message, ex);
+            Dialogs.AppDialog.ShowError("Save failed", ex);
             ToastService.Instance.Error("Save failed.");
         }
     }
@@ -1024,9 +1151,10 @@ public class MainViewModel : INotifyPropertyChanged
             if (errors.Count > 0)
             {
                 ToastService.Instance.Warning($"Flattened with {errors.Count} issue(s).");
-                Dialogs.AppDialog.ShowError("Flattened with warnings",
+                Dialogs.AppDialog.ShowError(
                     $"The file was saved but {errors.Count} field(s) could not be written:\n\n"
-                    + string.Join("\n", errors.Take(10)));
+                    + string.Join("\n", errors.Take(10)),
+                    title: "Flattened with warnings");
             }
             else
             {
@@ -1035,7 +1163,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Dialogs.AppDialog.ShowError("Flatten & Save failed", ex.Message, ex);
+            Dialogs.AppDialog.ShowError("Flatten & Save failed", ex);
             ToastService.Instance.Error("Flatten & Save failed.");
         }
     }
@@ -1066,28 +1194,14 @@ public class MainViewModel : INotifyPropertyChanged
         FreeTextAnnotations.Clear();
         PlacedSignatures.Clear();
         _pageRotations.Clear();
+        _undoStack.Clear();
+        _redoStack.Clear();
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
         SelectedField = null;
         SelectedAnnotation = null;
         StatusText = "Document closed.";
         ToastService.Instance.Info("Document closed.");
-    }
-
-    private void Print()
-    {
-        if (_document == null) return;
-
-        var dlg = new System.Windows.Controls.PrintDialog();
-        if (dlg.ShowDialog() == true)
-        {
-            // Print the current rendered page image via the WPF print dialog
-            var doc = new System.Windows.Documents.FlowDocument();
-            doc.Blocks.Add(new System.Windows.Documents.Paragraph(
-                new System.Windows.Documents.Run($"Printing: {System.IO.Path.GetFileName(_currentFilePath)}\n\nFor best results, save the PDF and print from your system's PDF viewer.")));
-            dlg.PrintDocument(
-                ((System.Windows.Documents.IDocumentPaginatorSource)doc).DocumentPaginator,
-                "PdfEdit Print");
-            ToastService.Instance.Info("Sent to printer.");
-        }
     }
 
     private void ClearAllFields()
@@ -1264,6 +1378,29 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("Move page failed.", ex);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp);
+        }
+    }
+
+    private async Task DuplicateCurrentPageAsync()
+    {
+        if (_currentFilePath == null) return;
+        var tmp = _currentFilePath + ".ptmp";
+        try
+        {
+            int savedPage = _currentPageIndex;
+            await Task.Run(() => _formService.DuplicatePage(_currentFilePath, tmp, savedPage));
+            System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
+            await LoadDocumentAsync(_currentFilePath);
+            CurrentPageIndex = savedPage + 1; // navigate to the new duplicate
+            ToastService.Instance.Success($"Page {savedPage + 1} duplicated.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Duplicate page failed.", ex);
         }
         finally
         {
@@ -1680,7 +1817,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_currentFilePath == null) return;
 
-        var dlg = new Dialogs.InsertPdfDialog(_currentPageIndex + 1, TotalPages);
+        var dlg = new Dialogs.InsertPdfDialog(_currentPageIndex + 1, PageCount);
         dlg.Owner = System.Windows.Application.Current.MainWindow;
         if (dlg.ShowDialog() != true || dlg.SelectedFilePath == null) return;
 
@@ -1690,7 +1827,7 @@ public class MainViewModel : INotifyPropertyChanged
             Dialogs.InsertPdfPosition.Beginning     => -1,
             Dialogs.InsertPdfPosition.BeforeCurrent => _currentPageIndex - 1,
             Dialogs.InsertPdfPosition.AfterCurrent  => _currentPageIndex,
-            Dialogs.InsertPdfPosition.End           => TotalPages - 1,
+            Dialogs.InsertPdfPosition.End           => PageCount - 1,
             _                                       => _currentPageIndex
         };
 
@@ -1701,7 +1838,7 @@ public class MainViewModel : INotifyPropertyChanged
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             var savedPage = _currentPageIndex;
             await LoadDocumentAsync(_currentFilePath);
-            CurrentPageIndex = Math.Min(savedPage, TotalPages - 1);
+            CurrentPageIndex = Math.Min(savedPage, PageCount - 1);
             ToastService.Instance.Success($"PDF inserted successfully.");
         }
         catch (Exception ex)
@@ -1775,6 +1912,36 @@ public class MainViewModel : INotifyPropertyChanged
                 });
             }
         }
+
+        // Search the PDF text layer page-by-page (uses cached per-page text)
+        if (_currentFilePath != null && _document != null)
+        {
+            var addedPages = new HashSet<int>();
+            for (int pg = 1; pg <= _document.PageCount; pg++)
+            {
+                // Avoid searching too many pages to keep search responsive
+                if (addedPages.Count >= 50) break;
+                var pageText = Services.PdfTextExtractorService.GetPageText(_currentFilePath, pg);
+                if (!string.IsNullOrEmpty(pageText)
+                    && pageText.Contains(q, StringComparison.OrdinalIgnoreCase)
+                    && addedPages.Add(pg))
+                {
+                    // Find context snippet around the first match
+                    int matchIdx = pageText.IndexOf(q, StringComparison.OrdinalIgnoreCase);
+                    int start = Math.Max(0, matchIdx - 20);
+                    int len = Math.Min(60, pageText.Length - start);
+                    string snippet = pageText.Substring(start, len).Replace('\n', ' ').Trim();
+                    if (start > 0) snippet = "…" + snippet;
+                    SearchResults.Add(new SearchResult
+                    {
+                        Label = $"Page {pg}",
+                        Detail = snippet,
+                        Kind = "Text",
+                        PageNumber = pg,
+                    });
+                }
+            }
+        }
     }
 
     private async Task ExportDesignAsync()
@@ -1794,6 +1961,129 @@ public class MainViewModel : INotifyPropertyChanged
             ToastService.Instance.Success($"Design exported to {System.IO.Path.GetFileName(dlg.FileName)}");
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
+    }
+
+    private async Task ExportPageAsImageAsync()
+    {
+        if (_document == null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Page as Image",
+            Filter = "PNG image|*.png|JPEG image|*.jpg",
+            DefaultExt = ".png",
+            FileName = $"page{_currentPageIndex + 1}.png"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            StatusText = "Rendering page for export…";
+            // High-res export at 2× zoom (192 DPI equivalent)
+            var bmp = await _renderService.RenderPageAsync(_currentPageIndex, 2.0);
+
+            bool isPng = dlg.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+            await Task.Run(() =>
+            {
+                System.Windows.Media.Imaging.BitmapEncoder enc = isPng
+                    ? new System.Windows.Media.Imaging.PngBitmapEncoder()
+                    : new System.Windows.Media.Imaging.JpegBitmapEncoder();
+                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                using var fs = System.IO.File.OpenWrite(dlg.FileName);
+                enc.Save(fs);
+            });
+
+            StatusText = $"Page exported to {System.IO.Path.GetFileName(dlg.FileName)}";
+            ToastService.Instance.Success($"Page {_currentPageIndex + 1} exported as image.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Export failed.", ex);
+        }
+    }
+
+    private async Task PrintAsync()
+    {
+        if (_document == null || _currentFilePath == null) return;
+
+        var dlg = new System.Windows.Controls.PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+
+        StatusText = "Preparing print…";
+        IsLoading = true;
+        try
+        {
+            int pageCount = _document.PageCount;
+
+            // Render all pages at 150 DPI (zoom = 150/96)
+            const double printZoom = 150.0 / 96.0;
+            var frames = new System.Windows.Media.Imaging.BitmapSource[pageCount];
+            for (int i = 0; i < pageCount; i++)
+            {
+                frames[i] = await _renderService.RenderPageAsync(i, printZoom);
+                StatusText = $"Rendering page {i + 1} of {pageCount}…";
+            }
+
+            // Build a FixedDocument with one FixedPage per rendered frame
+            var fixedDoc = new System.Windows.Documents.FixedDocument();
+            fixedDoc.DocumentPaginator.PageSize = new Size(
+                dlg.PrintableAreaWidth, dlg.PrintableAreaHeight);
+
+            for (int i = 0; i < pageCount; i++)
+            {
+                var bmp = frames[i];
+                double pageW = bmp.PixelWidth;
+                double pageH = bmp.PixelHeight;
+
+                // Scale to fit printable area while preserving aspect ratio
+                double scaleX = dlg.PrintableAreaWidth / pageW;
+                double scaleY = dlg.PrintableAreaHeight / pageH;
+                double scale = Math.Min(scaleX, scaleY);
+
+                var img = new System.Windows.Controls.Image
+                {
+                    Source = bmp,
+                    Width = pageW * scale,
+                    Height = pageH * scale,
+                };
+                System.Windows.Controls.Canvas.SetLeft(img, 0);
+                System.Windows.Controls.Canvas.SetTop(img, 0);
+
+                var canvas = new System.Windows.Controls.Canvas
+                {
+                    Width = dlg.PrintableAreaWidth,
+                    Height = dlg.PrintableAreaHeight,
+                };
+                canvas.Children.Add(img);
+                canvas.Measure(new Size(dlg.PrintableAreaWidth, dlg.PrintableAreaHeight));
+                canvas.Arrange(new Rect(new Size(dlg.PrintableAreaWidth, dlg.PrintableAreaHeight)));
+
+                var fixedPage = new System.Windows.Documents.FixedPage
+                {
+                    Width = dlg.PrintableAreaWidth,
+                    Height = dlg.PrintableAreaHeight,
+                };
+                fixedPage.Children.Add(canvas);
+
+                var pageContent = new System.Windows.Documents.PageContent();
+                ((System.Windows.Markup.IAddChild)pageContent).AddChild(fixedPage);
+                fixedDoc.Pages.Add(pageContent);
+            }
+
+            dlg.PrintDocument(fixedDoc.DocumentPaginator,
+                System.IO.Path.GetFileNameWithoutExtension(_currentFilePath));
+
+            StatusText = $"Printed {pageCount} page(s).";
+            ToastService.Instance.Success($"Sent {pageCount} page(s) to printer.");
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Print failed.", ex);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     public void NavigateToSearchResult(SearchResult result)
@@ -1824,7 +2114,10 @@ public class MainViewModel : INotifyPropertyChanged
         DocumentStateStore.Set(_currentFilePath, new DocumentState
         {
             LastPageIndex = _currentPageIndex,
-            LastZoom = _zoom
+            LastZoom = _zoom,
+            Annotations = FreeTextAnnotations.ToList(),
+            Signatures = PlacedSignatures.ToList(),
+            FieldValues = FieldValues.ToDictionary(kv => kv.Key, kv => kv.Value),
         });
     }
 

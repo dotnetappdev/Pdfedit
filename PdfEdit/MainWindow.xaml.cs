@@ -32,6 +32,9 @@ public partial class MainWindow : RibbonWindow
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
+        if (DataContext is MainViewModel vm)
+            vm.GoToPageRequested += FocusPageNumberBox;
+
         var s = AppSettings.Current;
         if (!double.IsNaN(s.WindowLeft) && !double.IsNaN(s.WindowTop))
         {
@@ -77,6 +80,32 @@ public partial class MainWindow : RibbonWindow
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
             var pdf = System.Array.Find(files, f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
             if (pdf != null) _ = OpenFileAsync(pdf);
+        }
+    }
+
+    // ── Ctrl+G: focus the page number box for quick navigation ───────────────
+
+    public void FocusPageNumberBox()
+    {
+        PageNumberBox.Focus();
+        PageNumberBox.SelectAll();
+    }
+
+    // ── Status bar: page number navigation ───────────────────────────────────
+
+    private void PageNumberBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            if (sender is System.Windows.Controls.TextBox tb)
+                tb.MoveFocus(new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next));
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (sender is System.Windows.Controls.TextBox tb && DataContext is MainViewModel vm)
+                tb.Text = (vm.CurrentPageIndex + 1).ToString();
+            e.Handled = true;
         }
     }
 
@@ -156,7 +185,7 @@ public partial class MainWindow : RibbonWindow
     private void DesignPageSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (VM?.DesignCanvas == null) return;
-        var idx = (sender as ComboBox)?.SelectedIndex ?? 0;
+        var idx = (sender as System.Windows.Controls.ComboBox)?.SelectedIndex ?? 0;
         VM.DesignCanvas.PageSize = idx switch
         {
             1 => DesignPageSize.Letter,

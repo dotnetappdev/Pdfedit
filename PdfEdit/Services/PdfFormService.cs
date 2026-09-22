@@ -400,6 +400,22 @@ public class PdfFormService
             srcDoc.CopyPagesTo(splitAfter + 1, srcTotal, outDoc);
     }
 
+    /// <summary>Duplicates the page at pageIndex (0-based) and inserts it right after the original.</summary>
+    public void DuplicatePage(string sourcePath, string destPath, int pageIndex)
+    {
+        var tmpPage = System.IO.Path.GetTempFileName() + ".pdf";
+        try
+        {
+            ExtractPages(sourcePath, tmpPage, new[] { pageIndex });
+            InsertPdfAt(sourcePath, tmpPage, destPath, pageIndex); // inserts after pageIndex (0-based)
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tmpPage))
+                System.IO.File.Delete(tmpPage);
+        }
+    }
+
     /// <summary>Splits each page of sourcePath into a separate PDF in outputFolder.</summary>
     public int SplitPdf(string sourcePath, string outputFolder)
     {

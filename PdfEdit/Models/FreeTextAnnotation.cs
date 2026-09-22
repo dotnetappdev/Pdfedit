@@ -28,4 +28,11 @@ public class FreeTextAnnotation
     public bool IsUnderline { get; set; }
     public TextAlignment TextAlignment { get; set; } = TextAlignment.Left;
     public bool ForceUpperCase { get; set; }
+
+    // Highlight-mode: renders as a semi-transparent colored rectangle instead of text
+    public bool IsHighlight { get; set; }
+    public string HighlightColor { get; set; } = "#80FFFF00"; // ARGB semi-transparent yellow
+
+    // Locked annotations cannot be moved or deleted via the UI
+    public bool IsLocked { get; set; }
 }

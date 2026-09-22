@@ -333,8 +333,7 @@
                     BorderThickness="1"
                     CornerRadius="8"
                     Padding="6"
-                    MinWidth="200"
-                    Effect="{x:Null}">
+                    MinWidth="200">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.35" ShadowDepth="4" Direction="270"/>
                 </Border.Effect>
@@ -410,7 +409,7 @@
                                        Text="Not connected — add key in ⚙" FontSize="10"
                                        Foreground="{DynamicResource DimForegroundBrush}"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
         </Popup>

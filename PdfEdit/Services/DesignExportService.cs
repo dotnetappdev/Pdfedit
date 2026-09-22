@@ -5,6 +5,7 @@ using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Extgstate;
 using iText.Kernel.Pdf.Canvas.Draw;
 using iText.Layout;
 using iText.Layout.Element;
@@ -58,7 +59,7 @@ public static class DesignExportService
         // Apply opacity via ExtGState if less than fully opaque
         if (elem.Opacity < 0.999)
         {
-            var gs = new iText.Kernel.Pdf.PdfExtGState()
+            var gs = new PdfExtGState()
                 .SetFillOpacity((float)elem.Opacity)
                 .SetStrokeOpacity((float)elem.Opacity);
             pdfCanvas.SetExtGState(gs);
@@ -288,14 +289,14 @@ public static class DesignExportService
 
     // ── Color conversion ──────────────────────────────────────────────────────
 
-    private static DeviceRgb ToDeviceRgb(Color c)
+    private static DeviceRgb ToDeviceRgb(System.Windows.Media.Color c)
         => new(c.R / 255f, c.G / 255f, c.B / 255f);
 
-    private static TextAlignment ToITextAlignment(System.Windows.TextAlignment a) => a switch
+    private static iText.Layout.Properties.TextAlignment ToITextAlignment(System.Windows.TextAlignment a) => a switch
     {
-        System.Windows.TextAlignment.Center  => TextAlignment.CENTER,
-        System.Windows.TextAlignment.Right   => TextAlignment.RIGHT,
-        System.Windows.TextAlignment.Justify => TextAlignment.JUSTIFIED,
-        _                                    => TextAlignment.LEFT
+        System.Windows.TextAlignment.Center  => iText.Layout.Properties.TextAlignment.CENTER,
+        System.Windows.TextAlignment.Right   => iText.Layout.Properties.TextAlignment.RIGHT,
+        System.Windows.TextAlignment.Justify => iText.Layout.Properties.TextAlignment.JUSTIFIED,
+        _                                    => iText.Layout.Properties.TextAlignment.LEFT
     };
 }

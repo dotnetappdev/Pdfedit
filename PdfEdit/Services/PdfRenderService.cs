@@ -14,6 +14,8 @@ public class PdfRenderService : IDisposable
 {
     private PdfDocument? _pdfDoc;
     private bool _disposed;
+    // Serialize renders so thumbnail and main-view renders never race on _pdfDoc
+    private readonly SemaphoreSlim _renderLock = new(1, 1);
 
     public const double PointsPerInch = 72.0;
     public const double DipsPerInch = 96.0;
@@ -23,10 +25,18 @@ public class PdfRenderService : IDisposable
 
     public async Task LoadAsync(string absolutePath)
     {
-        _pdfDoc = null;
-
-        var file = await StorageFile.GetFileFromPathAsync(absolutePath);
-        _pdfDoc = await PdfDocument.LoadFromFileAsync(file);
+        // Drain any in-flight renders before swapping the document
+        await _renderLock.WaitAsync();
+        try
+        {
+            _pdfDoc = null;
+            var file = await StorageFile.GetFileFromPathAsync(absolutePath);
+            _pdfDoc = await PdfDocument.LoadFromFileAsync(file);
+        }
+        finally
+        {
+            _renderLock.Release();
+        }
     }
 
     /// <summary>
@@ -35,35 +45,43 @@ public class PdfRenderService : IDisposable
     /// </summary>
     public async Task<BitmapSource> RenderPageAsync(int pageIndex, double zoom = 1.0)
     {
-        if (_pdfDoc == null)
-            throw new InvalidOperationException("No document loaded.");
-
-        using var page = _pdfDoc.GetPage((uint)pageIndex);
-
-        var opts = new PdfPageRenderOptions
+        await _renderLock.WaitAsync();
+        try
         {
-            DestinationWidth = (uint)Math.Round(page.Size.Width * zoom),
-            DestinationHeight = (uint)Math.Round(page.Size.Height * zoom),
-        };
+            if (_pdfDoc == null)
+                throw new InvalidOperationException("No document loaded.");
 
-        using var ras = new InMemoryRandomAccessStream();
-        await page.RenderToStreamAsync(ras, opts);
+            using var page = _pdfDoc.GetPage((uint)pageIndex);
 
-        // Copy to managed stream so BitmapImage can cache it
-        var ms = new MemoryStream();
-        await ras.AsStream().CopyToAsync(ms);
-        ms.Seek(0, SeekOrigin.Begin);
+            var opts = new PdfPageRenderOptions
+            {
+                DestinationWidth  = (uint)Math.Max(1, Math.Round(page.Size.Width  * zoom)),
+                DestinationHeight = (uint)Math.Max(1, Math.Round(page.Size.Height * zoom)),
+            };
 
-        return await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            using var ras = new InMemoryRandomAccessStream();
+            await page.RenderToStreamAsync(ras, opts);
+
+            // Copy to managed stream so BitmapImage can cache it after the WinRT stream closes
+            var ms = new MemoryStream();
+            await ras.AsStream().CopyToAsync(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            return await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.StreamSource = ms;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                return (BitmapSource)bmp;
+            });
+        }
+        finally
         {
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.StreamSource = ms;
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
-            bmp.Freeze();
-            return (BitmapSource)bmp;
-        });
+            _renderLock.Release();
+        }
     }
 
     /// <summary>
@@ -72,6 +90,8 @@ public class PdfRenderService : IDisposable
     /// </summary>
     public (double WidthPts, double HeightPts) GetPageSizeInPoints(int pageIndex)
     {
+        // Intentionally not locked — called synchronously on the UI thread after load,
+        // when no render task can be in flight.
         if (_pdfDoc == null || pageIndex >= PageCount) return (0, 0);
         using var page = _pdfDoc.GetPage((uint)pageIndex);
         return (page.Size.Width / PointsToDips, page.Size.Height / PointsToDips);

@@ -117,6 +117,26 @@
 
     </UserControl.Resources>
 
+    <!-- Element context menu (right-click) -->
+    <UserControl.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Copy"           Click="Copy_Click"      InputGestureText="Ctrl+C"/>
+            <MenuItem Header="Paste"          Click="Paste_Click"     InputGestureText="Ctrl+V"/>
+            <MenuItem Header="Duplicate"      Click="Duplicate_Click" InputGestureText="Ctrl+D"/>
+            <Separator/>
+            <MenuItem Header="Bring Forward"  Click="BringForward_Click"/>
+            <MenuItem Header="Send Backward"  Click="SendBackward_Click"/>
+            <MenuItem Header="Bring to Front" Click="BringToFront_Click"/>
+            <MenuItem Header="Send to Back"   Click="SendToBack_Click"/>
+            <Separator/>
+            <MenuItem Header="Lock Element"   Click="LockElement_Click"/>
+            <Separator/>
+            <MenuItem Header="Delete Element" Click="DeleteElement_Click"/>
+            <Separator/>
+            <MenuItem Header="Select All"     Click="SelectAll_Click"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -227,26 +247,6 @@
                 </Border>
             </Grid>
         </ScrollViewer>
-
-        <!-- Element context menu (right-click) -->
-        <UserControl.ContextMenu>
-            <ContextMenu>
-                <MenuItem Header="Copy"           Click="Copy_Click"      InputGestureText="Ctrl+C"/>
-                <MenuItem Header="Paste"          Click="Paste_Click"     InputGestureText="Ctrl+V"/>
-                <MenuItem Header="Duplicate"      Click="Duplicate_Click" InputGestureText="Ctrl+D"/>
-                <Separator/>
-                <MenuItem Header="Bring Forward"  Click="BringForward_Click"/>
-                <MenuItem Header="Send Backward"  Click="SendBackward_Click"/>
-                <MenuItem Header="Bring to Front" Click="BringToFront_Click"/>
-                <MenuItem Header="Send to Back"   Click="SendToBack_Click"/>
-                <Separator/>
-                <MenuItem Header="Lock Element"   Click="LockElement_Click"/>
-                <Separator/>
-                <MenuItem Header="Delete Element" Click="DeleteElement_Click"/>
-                <Separator/>
-                <MenuItem Header="Select All"     Click="SelectAll_Click"/>
-            </ContextMenu>
-        </UserControl.ContextMenu>
 
     </Grid>
 </UserControl>

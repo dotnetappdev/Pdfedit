@@ -23,6 +23,20 @@ public partial class SignatureDialog : Window
 
     public SignatureData? Result { get; private set; }
 
+    // When true, the dialog is for creating initials instead of a full signature
+    public bool InitialsMode
+    {
+        set
+        {
+            if (value)
+            {
+                Title = "Create Initials";
+                LibraryNameTb.Text = "My Initials";
+                ApplyBtn.Content = "Apply Initials";
+            }
+        }
+    }
+
     public SignatureDialog()
     {
         InitializeComponent();
@@ -89,8 +103,8 @@ public partial class SignatureDialog : Window
     {
         switch (TabCtrl.SelectedIndex)
         {
-            case 0: InkArea.Strokes.Clear(); break;
-            case 1: TypedNameBox.Clear(); break;
+            case 0: TypedNameBox.Clear(); break;
+            case 1: InkArea.Strokes.Clear(); break;
             case 2:
                 _imageBytes = null;
                 ImagePreview.Source = null;
@@ -105,8 +119,8 @@ public partial class SignatureDialog : Window
         {
             byte[]? bytes = TabCtrl.SelectedIndex switch
             {
-                0 => RenderInkToBytes(),
-                1 => RenderTypedToBytes(),
+                0 => RenderTypedToBytes(),
+                1 => RenderInkToBytes(),
                 2 => _imageBytes,
                 _ => null
             };
@@ -117,9 +131,15 @@ public partial class SignatureDialog : Window
                 return;
             }
 
+            // Tab order: 0=Type, 1=Draw, 2=Image
             Result = new SignatureData
             {
-                Mode = (SignatureMode)TabCtrl.SelectedIndex,
+                Mode = TabCtrl.SelectedIndex switch
+                {
+                    0 => SignatureMode.Type,
+                    1 => SignatureMode.Draw,
+                    _ => SignatureMode.Image,
+                },
                 ImageBytes = bytes
             };
 
