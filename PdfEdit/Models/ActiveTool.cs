@@ -27,5 +27,6 @@ public enum ActiveTool
     AddTextField,
     AddCheckbox,
     AddComboBox,
-    AddRadioButton
+    AddRadioButton,
+    StickyNote
 }

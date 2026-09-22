@@ -437,6 +437,7 @@ public partial class PdfViewerControl : UserControl
             BuildRedactAnnotationOverlay(_vm.GetRedactRegionsForCurrentPage());
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
+            BuildStickyNoteOverlay(_vm.GetStickyNotesForCurrentPage());
         }
         catch (Exception ex)
         {
@@ -1413,6 +1414,15 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        if (tool == ActiveTool.StickyNote)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            PlaceStickyNote(posOnPage);
+            e.Handled = true;
+            return;
+        }
+
         if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -2163,6 +2173,87 @@ public partial class PdfViewerControl : UserControl
             var pdf = files.FirstOrDefault(f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
             if (pdf != null && _vm != null) await _vm.OpenFileAsync(pdf);
         }
+    }
+
+    // ── Sticky note overlay ───────────────────────────────────────────────────
+
+    private void BuildStickyNoteOverlay(IEnumerable<Models.StickyNoteAnnotation> notes)
+    {
+        if (_vm?.Document == null) return;
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+        foreach (var note in notes)
+            PlaceStickyNoteVisual(note, pageH);
+    }
+
+    private void PlaceStickyNoteVisual(Models.StickyNoteAnnotation note, double pageH)
+    {
+        double x = note.Left * Scale;
+        double y = (pageH - note.Bottom) * Scale;
+
+        var border = new Border
+        {
+            Width = 28, Height = 28,
+            Background = new SolidColorBrush(ParseColor(note.Color)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(200, 100, 80, 0)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(3, 3, 0, 3),
+            Cursor = Cursors.Hand,
+            ToolTip = $"📌 {note.Author}: {note.Text}",
+        };
+
+        var icon = new TextBlock
+        {
+            Text = "📌",
+            FontSize = 14,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        border.Child = icon;
+
+        var cm = new ContextMenu();
+        var viewItem = new MenuItem { Header = "View Note" };
+        viewItem.Click += (_, _) =>
+            MessageBox.Show(note.Text, $"Sticky Note — {note.Author}",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        var delItem = new MenuItem { Header = "Delete Note" };
+        delItem.Click += (_, _) =>
+        {
+            _vm?.RemoveStickyNote(note);
+            AnnotationCanvas.Children.Remove(border);
+        };
+        cm.Items.Add(viewItem);
+        cm.Items.Add(delItem);
+        border.ContextMenu = cm;
+
+        Canvas.SetLeft(border, x - 14);
+        Canvas.SetTop(border, y - 28);
+        AnnotationCanvas.Children.Add(border);
+    }
+
+    private void PlaceStickyNote(Point posOnCanvas)
+    {
+        if (_vm?.Document == null) return;
+        var dlg = new Dialogs.StickyNoteDialog { Owner = Window.GetWindow(this) };
+        if (dlg.ShowDialog() != true) return;
+
+        int pageNum = _vm.CurrentPageIndex + 1;
+        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
+        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+
+        var note = new Models.StickyNoteAnnotation
+        {
+            Left   = posOnCanvas.X / Scale,
+            Bottom = pageH - (posOnCanvas.Y / Scale),
+            Text   = dlg.NoteText,
+            Author = dlg.Author,
+            Color  = dlg.NoteColor,
+        };
+        _vm.AddStickyNote(note);
+        PlaceStickyNoteVisual(note, pageH);
+        _vm.StatusText = "Sticky note added. Right-click to delete or view.";
+        ToastService.Instance.Success("Sticky note added.");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

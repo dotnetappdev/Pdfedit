@@ -1,28 +1,26 @@
 # PdfEdit — PDF Designer, Form Filler & Editor
 
-A professional WPF desktop application for designing, editing, and filling PDF documents. Build PDFs from scratch with the design canvas, fill any form with AI assistance, annotate, sign, and manage pages — all in a native Windows application with an Office-style ribbon UI.
-
-## Demo
-
-![PdfEdit Demo](docs/screenshots/demo.gif)
-
-*Open a PDF → fill form fields → AI Smart Fill → page management → theme switching*
+A professional WPF desktop application for designing, editing, and filling PDF documents on Windows. Build PDFs from scratch with the design canvas, fill any form with AI assistance, annotate, sign, and manage pages — all in a native Windows application with an Office-style ribbon UI.
 
 ---
 
 ## Screenshots
 
-| Ribbon — Clipboard, Navigation & AI | Form Filling with AI Smart Fill |
-|------|------|
-| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | ![Form Filling](docs/screenshots/form-filling.png) |
+| Home Ribbon — Form Filling | Tools Tab — Annotations & Drawing |
+|---|---|
+| ![Home Ribbon](docs/screenshots/home-ribbon.png) | ![Tools Tab](docs/screenshots/tools-tab.png) |
+
+| AI Smart Fill | Design Canvas |
+|---|---|
+| ![AI Smart Fill](docs/screenshots/ai-smart-fill.png) | ![Design Canvas](docs/screenshots/design-canvas.png) |
+
+| Annotations — Highlight, Ink & Sticky Notes | Page Management |
+|---|---|
+| ![Annotations](docs/screenshots/annotations.png) | ![Page Management](docs/screenshots/page-management.png) |
 
 | Dark Theme | Light Theme (IRS W-4) |
-|------|------|
+|---|---|
 | ![Dark Theme](docs/screenshots/dark-theme.png) | ![Light Theme](docs/screenshots/light-theme.png) |
-
-| AI Features | Settings |
-|------|------|
-| ![AI Features](docs/screenshots/ai-features.png) | ![Settings](docs/screenshots/settings.png) |
 
 ---
 
@@ -30,7 +28,7 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 
 | Feature | PdfEdit | Adobe Acrobat | PDFfiller | Foxit PDF |
 |---------|---------|---------------|-----------|-----------|
-| Design canvas (build from scratch) | ✅ | ✅ | ❌ | ✅ |
+| Design canvas (build PDF from scratch) | ✅ | ✅ | ❌ | ✅ |
 | AI Smart Fill (auto-fill all fields) | ✅ Claude + GPT | ❌ | ❌ | ❌ |
 | Built-in templates (Invoice, Letter…) | ✅ 7 templates | Limited | ✅ | ❌ |
 | Table element | ✅ | ✅ | ❌ | ✅ |
@@ -42,18 +40,21 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 | Crop Pages | ✅ | ✅ | ❌ | ✅ |
 | Header / Footer | ✅ | ✅ | ✅ | ✅ |
 | Highlight / Underline / Strikethrough | ✅ | ✅ | ✅ | ✅ |
+| Sticky Note annotations | ✅ | ✅ | ✅ | ✅ |
 | Redaction (burn-in) | ✅ | ✅ | ❌ | ✅ |
 | Freehand Ink Annotations | ✅ | ✅ | ✅ | ✅ |
 | Hyperlink Annotations | ✅ | ✅ | ❌ | ✅ |
 | Form Field Creator (draw new fields) | ✅ | ✅ | ❌ | ✅ |
+| Compare PDFs (text diff) | ✅ | ✅ | ❌ | ✅ |
 | Export pages as images (PNG) | ✅ | ✅ | ❌ | ✅ |
 | Export PDF text to TXT | ✅ | ✅ | ❌ | ✅ |
+| Delete / Extract page range | ✅ | ✅ | ✅ | ✅ |
 | Find & Replace in form fields | ✅ | ✅ | ❌ | ✅ |
 | Required-field validation | ✅ | ✅ | ❌ | ❌ |
 | PDF/A archival export | ✅ | ✅ | ❌ | ✅ |
 | Rubber Stamps (APPROVED, DRAFT…) | ✅ 10 stamps | ✅ | ❌ | ✅ |
 | Free (open source) | ✅ | ❌ | ❌ | ❌ |
-| WPF native (no browser) | ✅ | ✅ | ❌ | ✅ |
+| WPF native (no browser/Electron) | ✅ | ✅ | ❌ | ✅ |
 | Bring your own AI key | ✅ | ❌ | ❌ | ❌ |
 
 ---
@@ -120,7 +121,7 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 
 - **Visual Form Overlay** — Click any AcroForm field directly on the rendered page
 - **All Field Types** — Text, checkboxes, radio buttons, combo boxes, list boxes, signature fields, password fields
-- **Field Highlights** — Blue = optional, red = required, blue border = focused
+- **Field Highlights** — Blue = optional, red = required, blue border = focused; toggle from ribbon
 - **Clear All Fields** — Reset all values in one click
 - **Delete Field** — Remove individual AcroForm fields from the document
 - **Import / Export** — Save and reload all field values as TSV files
@@ -152,7 +153,6 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - **Extract Key Data** — Names, dates, addresses, amounts, reference numbers, contact info
 - **Contract Analysis** — Parties, obligations, payment terms, termination clauses, risks
 - **Find PII** — Locate all personally identifiable information for redaction review
-- **Translate** — Translate document content to English or another target language
 - **AI Chat with Document Context** — Ask any question grounded in the actual PDF text
 - **Multi-Provider** — Connect Claude (Anthropic) or ChatGPT (OpenAI) with your own API key
 - **Model Selection** — Claude Haiku 4.5 · Sonnet 5 · Opus 5 · GPT-4o mini · GPT-4o
@@ -167,12 +167,18 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 **Free-Text Annotations**
 - Add text anywhere on any page; rich formatting (font, size, bold, italic, underline, colour)
 - Vertical text rotation (−90°); force uppercase mode
-- Delete individual annotations before saving
+- Drag the toolbar grip to reposition; Delete key or right-click to remove
 
 **Highlight / Underline / Strikethrough**
-- Drag to draw; five colours: Yellow, Green, Blue, Pink, Orange (picker in ribbon)
+- Drag to draw on any page; five colours: Yellow, Green, Blue, Pink, Orange (picker in ribbon)
 - Stored as standard PDF highlight/underline/strikethrough annotations on save
 - Right-click any highlight to delete it
+
+**Sticky Notes**
+- Click anywhere on a page to place a sticky note pin 📌
+- Enter note text and author name; choose colour (yellow, green, blue, pink)
+- Tooltip shows the note preview; right-click to view full text or delete
+- Saved as standard PDF text (comment) annotations — readable in any PDF viewer
 
 **Redaction**
 - Drag to mark sensitive regions with a black box
@@ -192,6 +198,9 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - Link tool: drag a rectangle, enter a URL — creates a clickable PDF link annotation
 - Supports http://, https://, and mailto: schemes
 
+**Checkmarks, X Marks, Dots, Lines, Circles**
+- Single-click stamps for form checking workflows
+
 **Signatures**
 - Draw, type, or load signature images; preview thumbnails in the signature picker
 - Place signatures anywhere on a page; remove before saving
@@ -206,12 +215,15 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - **Duplicate Page** — Copies current page and inserts the copy immediately after it
 - **Insert Page Before / After** — Add blank pages at any position
 - **Delete Page** — Remove the current page (disabled on single-page documents)
+- **Delete Page Range** — Delete any range of pages by first/last page number
 - **Extract Page** — Save the current page as a standalone PDF
+- **Extract Page Range** — Extract any range of pages to a new PDF
 - **Merge PDF** — Append one or more PDFs to the current document
 - **Insert PDF** — Insert another PDF at beginning, before/after current page, or end
 - **Split PDF** — Split every page into individual files
 - **Drag-and-Drop Reorder** — Drag thumbnails in the left panel to reorder pages
 - **Right-Click Thumbnails** — Rotate CW/CCW, Move Up/Down, Insert Before/After, Delete, Extract
+- **Compare PDFs** — Side-by-side text diff of two PDFs; shows added/removed lines per page
 - **Watermark** — Diagonal text watermark on all pages (text, opacity, angle, font size, colour)
 - **Page Numbers** — Footer on every page: "Page N of M" (left/centre/right, configurable format)
 - **Header / Footer** — Custom text top/bottom of every page; font size and alignment (L/C/R)
@@ -278,12 +290,19 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 | Rectangle / Ellipse / Line | R / E / L |
 | Arrow / Pen / Image | A / P / I |
 | Table tool | B |
+| Hand (pan) tool | H |
+| Signature tool | S |
+| Date Stamp | D |
+| Stamp | M |
+| Checkmark | K |
 | Next page | Ctrl+Right |
 | Previous page | Ctrl+Left |
 | Zoom in | Ctrl+Add |
 | Zoom out | Ctrl+Subtract |
 | Fit to window | Ctrl+0 |
+| Rotate CW / CCW | Ctrl+] / Ctrl+[ |
 | Global search | Ctrl+Shift+F |
+| Keyboard shortcuts reference | F1 |
 
 ---
 
@@ -322,6 +341,13 @@ dotnet test
 5. Add your signature: **Fill & Sign** tab → **Signatures** → draw or type → place on page
 6. Save with Ctrl+S (fields remain editable) or **Flatten & Save** to bake them in permanently
 
+**Adding sticky note comments:**
+1. Open a PDF
+2. Go to **Tools** tab → **Drawing** group → **Sticky Note**
+3. Click anywhere on the page to place a note
+4. Enter your text, author name, and choose a colour
+5. Save the PDF — notes are stored as standard PDF text annotations
+
 **Building a PDF from scratch:**
 1. Click the **Design** tab in the ribbon
 2. Click **New Design** to open the canvas
@@ -337,18 +363,19 @@ dotnet test
 | Layer | Description |
 |-------|-------------|
 | `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
-| `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; header/footer; Bates numbers; crop; compress; metadata; bookmarks; redaction; encryption; form field creation; text export; PDF/A export via iText7 |
+| `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; header/footer; Bates numbers; crop; compress; metadata; bookmarks; redaction; encryption; form field creation; text export; PDF/A export; hyperlinks; sticky notes via iText7 |
 | `Services/PdfTextExtractorService` | Extracts text from PDF pages via iText7; cached per page for AI context |
 | `Services/AiProviderService` | Streaming HTTP client for Claude and OpenAI; document analysis prompt builder |
 | `Services/DesignExportService` | Renders DesignCanvas elements to a PDF page via iText7; handles WPF→PDF coordinate transform, opacity, and table layout |
 | `Services/ToastService` | Singleton event-based toast notification bus |
 | `Services/AppSettings` | Loads/saves `%AppData%\PdfEdit\settings.json` (API keys, theme, recent files, UI scale) |
 | `Services/PersonalProfileStore` | Profile storage and keyword-based field matching for Quick Fill |
-| `ViewModels/MainViewModel` | MVVM — all commands, page state, rotation, field values, AI orchestration, design mode |
+| `ViewModels/MainViewModel` | MVVM — all commands, page state, rotation, field values, highlight/redact/sticky-note collections, AI orchestration, design mode |
 | `ViewModels/DesignCanvasViewModel` | Design canvas state: elements, tools, selection, format, undo/redo, alignment, templates |
 | `Models/DesignElement` | Element hierarchy: `TextDesignElement`, `ShapeDesignElement`, `ImageDesignElement`, `FreehandDesignElement`, `TableDesignElement` |
+| `Models/StickyNoteAnnotation` | Data model for sticky note annotations (page, position, text, author, colour) |
 | `Controls/DesignCanvas` | WPF canvas with ItemsControl, InkCanvas, 8-handle resize thumbs, rubber-band preview, mouse draw |
-| `Controls/PdfViewerControl` | Renders the page image and overlays live form controls |
+| `Controls/PdfViewerControl` | Renders the page image; overlays live form controls, highlights, redactions, ink, sticky notes, and signatures |
 | `Controls/PageThumbnailsPanel` | Left thumbnail strip with drag-and-drop reorder |
 | `Controls/AiChatPanel` | AI chat UI — model picker, provider tabs, preset chips, streaming |
 | `Dialogs/AppDialog` | Themed dialogs replacing `MessageBox.Show` |
@@ -362,6 +389,9 @@ dotnet test
 | `Dialogs/CropPageDialog` | Per-edge crop margin entry (in points) |
 | `Dialogs/LinkUriDialog` | URL entry with http/https/mailto validation |
 | `Dialogs/FieldNameDialog` | New form field name + combo box choices |
+| `Dialogs/StickyNoteDialog` | Sticky note text, author, and colour picker |
+| `Dialogs/ComparePdfsDialog` | Side-by-side text diff results with added/removed lines per page |
+| `Dialogs/PageRangeDialog` | First/last page selection for delete/extract range operations |
 | `Models/BookmarkItem` | Hierarchical PDF outline node (title, page number, children) |
 | `Models/PdfMetadataInfo` | PDF metadata DTO (title, author, subject, keywords, creator, producer, page count) |
 | `Resources/AppTheme.xaml` | `DynamicResource` token-based style system for live theme switching |
@@ -372,7 +402,7 @@ dotnet test
 
 | Package | Use |
 |---------|-----|
-| `itext7` v8 | PDF AcroForm, text extraction, page manipulation, canvas drawing |
+| `itext7` v8 | PDF AcroForm, text extraction, page manipulation, canvas drawing, annotation creation |
 | `Fluent.Ribbon` v10 | Office-style ribbon toolbar |
 | `AvalonDock` (Dirkster) v5 | Dockable panels |
 | `Windows.Data.Pdf` (built-in) | High-quality PDF page rendering |

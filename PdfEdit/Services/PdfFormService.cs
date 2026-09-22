@@ -171,7 +171,8 @@ public class PdfFormService
         bool flatten = false,
         IEnumerable<string>? deletedFieldNames = null,
         Dictionary<string, string>? fieldExportValues = null,
-        IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null)
+        IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null,
+        IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -338,7 +339,30 @@ public class PdfFormService
             }
         }
 
-        // ── 5. Placed signatures ──────────────────────────────────────────
+        // ── 5. Sticky note annotations ────────────────────────────────────
+        if (stickyNotes != null)
+        {
+            foreach (var note in stickyNotes)
+            {
+                int pageNum = note.PageNumber;
+                if (pageNum < 1 || pageNum > doc.GetNumberOfPages()) continue;
+                var page = doc.GetPage(pageNum);
+
+                ParseHexColor(note.Color, out float nr, out float ng, out float nb);
+                var noteColor = new DeviceRgb(nr, ng, nb);
+
+                var noteRect = new Rectangle((float)note.Left, (float)note.Bottom, 20f, 20f);
+                var textAnnot = new iText.Kernel.Pdf.Annot.PdfTextAnnotation(noteRect);
+                textAnnot.SetContents(note.Text);
+                textAnnot.SetColor(noteColor);
+                textAnnot.SetOpen(false);
+                if (!string.IsNullOrEmpty(note.Author))
+                    textAnnot.Put(PdfName.T, new PdfString(note.Author));
+                page.AddAnnotation(textAnnot);
+            }
+        }
+
+        // ── 6. Placed signatures ──────────────────────────────────────────
         if (placedSignatures != null)
         {
             foreach (var sig in placedSignatures)
