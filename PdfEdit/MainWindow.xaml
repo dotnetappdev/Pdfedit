@@ -1332,6 +1332,253 @@
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
 
+            <!-- ── DESIGN TAB ──────────────────────────────────────────────── -->
+            <Fluent:RibbonTabItem Header="Design"
+                                   AutomationProperties.Name="Design canvas tab">
+
+                <!-- New / open -->
+                <Fluent:RibbonGroupBox Header="Canvas"
+                                        AutomationProperties.Name="Canvas management group">
+                    <Fluent:Button Header="New Design"
+                                   Command="{Binding NewDesignCommand}"
+                                   ToolTip="Open a blank design canvas to build a PDF from scratch"
+                                   AutomationProperties.Name="New design canvas">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export PDF"
+                                   Command="{Binding ExportDesignCommand}"
+                                   ToolTip="Save the design canvas as a PDF file"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Export design to PDF">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Open as PDF"
+                                   Command="{Binding OpenDesignInPdfViewCommand}"
+                                   Size="Middle"
+                                   ToolTip="Export and open in the PDF viewer"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Open design in PDF viewer">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Drawing tools -->
+                <Fluent:RibbonGroupBox Header="Insert"
+                                        AutomationProperties.Name="Design insert tools group">
+                    <Fluent:Button Header="Select"
+                                   Command="{Binding DesignCanvas.ActiveTool, Mode=OneWayToSource}"
+                                   ToolTip="Select and move elements (V)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Select tool">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Text Box"
+                                   Tag="Text"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Add a text block (T)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Text tool">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Rectangle"
+                                   Tag="Rectangle"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Draw a rectangle (R)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Rectangle tool">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7C4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Ellipse"
+                                   Tag="Ellipse"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Draw an ellipse or circle (E)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   AutomationProperties.Name="Ellipse tool">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xF138;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Line"
+                                   Tag="Line"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Draw a straight line (L)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Line tool">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xF4BC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Arrow"
+                                   Tag="Arrow"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Draw an arrow"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Arrow tool">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Pen"
+                                   Tag="Pen"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Freehand drawing (P)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Pen / freehand tool">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Image"
+                                   Tag="Image"
+                                   Click="DesignTool_Click"
+                                   ToolTip="Insert an image file"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Insert image">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Text formatting -->
+                <Fluent:RibbonGroupBox Header="Text Format"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Text formatting group">
+                    <Fluent:ComboBox Header="Font"
+                                     ItemsSource="{Binding AvailableFonts}"
+                                     SelectedItem="{Binding DesignCanvas.FontFamily}"
+                                     Width="130"
+                                     AutomationProperties.Name="Font family"/>
+                    <Fluent:Spinner Header="Size"
+                                    Value="{Binding DesignCanvas.FontSize}"
+                                    Minimum="6" Maximum="144" Increment="1"
+                                    Width="60"
+                                    AutomationProperties.Name="Font size"/>
+                    <Fluent:ToggleButton Header="B"
+                                         IsChecked="{Binding DesignCanvas.Bold}"
+                                         FontWeight="Bold" Width="32"
+                                         ToolTip="Bold"
+                                         AutomationProperties.Name="Bold"/>
+                    <Fluent:ToggleButton Header="I"
+                                         IsChecked="{Binding DesignCanvas.Italic}"
+                                         FontStyle="Italic" Width="32"
+                                         ToolTip="Italic"
+                                         AutomationProperties.Name="Italic"/>
+                    <Fluent:ToggleButton Header="U"
+                                         IsChecked="{Binding DesignCanvas.Underline}"
+                                         Width="32"
+                                         ToolTip="Underline"
+                                         AutomationProperties.Name="Underline"/>
+                    <Fluent:Button Header="Align Left"   Size="Middle" Tag="Left"    Click="TextAlign_Click" AutomationProperties.Name="Align left">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Center"       Size="Middle" Tag="Center"  Click="TextAlign_Click" AutomationProperties.Name="Center text">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Align Right"  Size="Middle" Tag="Right"   Click="TextAlign_Click" AutomationProperties.Name="Align right">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Shape format -->
+                <Fluent:RibbonGroupBox Header="Shape Format"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Shape formatting group">
+                    <Fluent:Spinner Header="Line Width"
+                                    Value="{Binding DesignCanvas.StrokeThickness}"
+                                    Minimum="0.5" Maximum="20" Increment="0.5"
+                                    Width="60"
+                                    AutomationProperties.Name="Stroke thickness"/>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Arrange -->
+                <Fluent:RibbonGroupBox Header="Arrange"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Arrange group">
+                    <Fluent:Button Header="Bring Forward"
+                                   Click="BringForward_Click"
+                                   Size="Middle"
+                                   ToolTip="Move element one layer up"
+                                   AutomationProperties.Name="Bring forward">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Send Backward"
+                                   Click="SendBackward_Click"
+                                   Size="Middle"
+                                   ToolTip="Move element one layer down"
+                                   AutomationProperties.Name="Send backward">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Delete"
+                                   Click="DeleteDesignElement_Click"
+                                   Size="Middle"
+                                   ToolTip="Delete selected element (Del)"
+                                   AutomationProperties.Name="Delete element">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Undo"
+                                   Click="DesignUndo_Click"
+                                   Size="Middle"
+                                   ToolTip="Undo (Ctrl+Z)"
+                                   AutomationProperties.Name="Undo">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Redo"
+                                   Click="DesignRedo_Click"
+                                   Size="Middle"
+                                   ToolTip="Redo (Ctrl+Y)"
+                                   AutomationProperties.Name="Redo">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Page / View -->
+                <Fluent:RibbonGroupBox Header="Page"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Page settings group">
+                    <Fluent:ComboBox Header="Page Size"
+                                     SelectedIndex="0"
+                                     Width="90"
+                                     x:Name="DesignPageSizeCombo"
+                                     SelectionChanged="DesignPageSize_SelectionChanged"
+                                     AutomationProperties.Name="Page size selector">
+                        <ComboBoxItem Content="A4"/>
+                        <ComboBoxItem Content="Letter"/>
+                        <ComboBoxItem Content="A3"/>
+                    </Fluent:ComboBox>
+                    <Fluent:ToggleButton Header="Grid"
+                                         IsChecked="{Binding DesignCanvas.ShowGrid}"
+                                         Size="Middle"
+                                         ToolTip="Toggle grid overlay"
+                                         AutomationProperties.Name="Toggle grid">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Zoom In"   Click="DesignZoomIn_Click"  Size="Middle" AutomationProperties.Name="Design zoom in">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Zoom Out"  Click="DesignZoomOut_Click" Size="Middle" AutomationProperties.Name="Design zoom out">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+            </Fluent:RibbonTabItem>
+
         </Fluent:Ribbon>
 
         <!-- ════════════════════════════════════════════════════════════════
@@ -1361,13 +1608,23 @@
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
 
-                        <!-- ── PDF Viewer (document) ───────────────────────── -->
+                        <!-- ── Document area: PDF Viewer OR Design Canvas ─── -->
                         <avalonDock:LayoutDocumentPaneGroup>
                             <avalonDock:LayoutDocumentPane>
+                                <!-- PDF viewer (visible in PDF mode) -->
                                 <avalonDock:LayoutDocument Title="Document" ContentId="document" CanClose="False">
-                                    <controls:PdfViewerControl x:Name="PdfViewer"
-                                                               DataContext="{Binding}"
-                                                               AutomationProperties.Name="PDF document viewer"/>
+                                    <Grid>
+                                        <!-- PDF viewer (shown when not in design mode) -->
+                                        <controls:PdfViewerControl x:Name="PdfViewer"
+                                                                   DataContext="{Binding}"
+                                                                   Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                   AutomationProperties.Name="PDF document viewer"/>
+                                        <!-- Design Canvas (shown in design mode) -->
+                                        <controls:DesignCanvas x:Name="DesignCanvasControl"
+                                                               DataContext="{Binding DesignCanvas}"
+                                                               Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                               AutomationProperties.Name="Design canvas"/>
+                                    </Grid>
                                 </avalonDock:LayoutDocument>
                             </avalonDock:LayoutDocumentPane>
                         </avalonDock:LayoutDocumentPaneGroup>

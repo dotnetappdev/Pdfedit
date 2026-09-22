@@ -580,6 +580,20 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AnalyzeContractCommand { get; }
     public ICommand ExtractKeyDataCommand { get; }
     public ICommand FindPiiCommand { get; }
+    public ICommand NewDesignCommand { get; }
+    public ICommand ExportDesignCommand { get; }
+    public ICommand OpenDesignInPdfViewCommand { get; }
+
+    // ── Design Canvas ─────────────────────────────────────────────────────────
+    private bool _isDesignMode;
+    public bool IsDesignMode
+    {
+        get => _isDesignMode;
+        set { _isDesignMode = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsPdfMode)); }
+    }
+    public bool IsPdfMode => !_isDesignMode;
+
+    public DesignCanvasViewModel DesignCanvas { get; } = new();
 
     public MainViewModel()
     {
@@ -695,6 +709,29 @@ public class MainViewModel : INotifyPropertyChanged
         AnalyzeContractCommand      = new AsyncRelayCommand(() => RunAnalysisPresetAsync("contract"),   () => HasDocument && !_isAiRunning);
         ExtractKeyDataCommand       = new AsyncRelayCommand(() => RunAnalysisPresetAsync("extract"),    () => HasDocument && !_isAiRunning);
         FindPiiCommand              = new AsyncRelayCommand(() => RunAnalysisPresetAsync("pii"),        () => HasDocument && !_isAiRunning);
+
+        NewDesignCommand = new RelayCommand(() =>
+        {
+            DesignCanvas.Elements.Clear();
+            IsDesignMode = true;
+            StatusText = "Design Canvas — draw shapes, text, and images to create a PDF from scratch.";
+        });
+
+        ExportDesignCommand = new AsyncRelayCommand(ExportDesignAsync, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
+
+        OpenDesignInPdfViewCommand = new AsyncRelayCommand(async () =>
+        {
+            var tmp = System.IO.Path.GetTempFileName() + ".pdf";
+            try
+            {
+                await Task.Run(() => Services.DesignExportService.ExportToPdf(
+                    DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, tmp));
+                IsDesignMode = false;
+                await LoadDocumentAsync(tmp);
+                StatusText = "Design exported and opened as PDF.";
+            }
+            catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
+        }, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
 
         // Pre-select first profile if any exist
         if (Services.PersonalProfileStore.All.Count > 0)
@@ -1738,6 +1775,25 @@ public class MainViewModel : INotifyPropertyChanged
                 });
             }
         }
+    }
+
+    private async Task ExportDesignAsync()
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Design as PDF",
+            Filter = "PDF files|*.pdf",
+            DefaultExt = ".pdf",
+            FileName = "design.pdf"
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            await Task.Run(() => Services.DesignExportService.ExportToPdf(
+                DesignCanvas.Elements, DesignCanvas.PageWidth, DesignCanvas.PageHeight, dlg.FileName));
+            ToastService.Instance.Success($"Design exported to {System.IO.Path.GetFileName(dlg.FileName)}");
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Export failed.", ex); }
     }
 
     public void NavigateToSearchResult(SearchResult result)

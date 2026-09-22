@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using Fluent;
+using PdfEdit.Models;
 using PdfEdit.Services;
 using PdfEdit.ViewModels;
 
@@ -76,5 +78,60 @@ public partial class MainWindow : RibbonWindow
             var pdf = System.Array.Find(files, f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
             if (pdf != null) _ = OpenFileAsync(pdf);
         }
+    }
+
+    // ── Design ribbon handlers ────────────────────────────────────────────────
+
+    private MainViewModel? VM => DataContext as MainViewModel;
+
+    private void DesignTool_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+        VM.DesignCanvas.ActiveTool = tag switch
+        {
+            "Text"      => DesignTool.Text,
+            "Rectangle" => DesignTool.Rectangle,
+            "Ellipse"   => DesignTool.Ellipse,
+            "Line"      => DesignTool.Line,
+            "Arrow"     => DesignTool.Arrow,
+            "Pen"       => DesignTool.Pen,
+            "Image"     => DesignTool.Image,
+            _           => DesignTool.Select
+        };
+        DesignCanvasControl?.Focus();
+    }
+
+    private void TextAlign_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var tag = (sender as FrameworkElement)?.Tag?.ToString();
+        VM.DesignCanvas.TextAlignment = tag switch
+        {
+            "Center"  => System.Windows.TextAlignment.Center,
+            "Right"   => System.Windows.TextAlignment.Right,
+            "Justify" => System.Windows.TextAlignment.Justify,
+            _         => System.Windows.TextAlignment.Left
+        };
+    }
+
+    private void BringForward_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.BringForward();
+    private void SendBackward_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.SendBackward();
+    private void DeleteDesignElement_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.DeleteSelected();
+    private void DesignUndo_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.Undo();
+    private void DesignRedo_Click(object sender, RoutedEventArgs e)    => VM?.DesignCanvas.Redo();
+    private void DesignZoomIn_Click(object sender, RoutedEventArgs e)  => VM?.DesignCanvas.ZoomIn();
+    private void DesignZoomOut_Click(object sender, RoutedEventArgs e) => VM?.DesignCanvas.ZoomOut();
+
+    private void DesignPageSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var idx = (sender as ComboBox)?.SelectedIndex ?? 0;
+        VM.DesignCanvas.PageSize = idx switch
+        {
+            1 => DesignPageSize.Letter,
+            2 => DesignPageSize.A3,
+            _ => DesignPageSize.A4
+        };
     }
 }

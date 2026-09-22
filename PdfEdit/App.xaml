@@ -23,6 +23,10 @@
             <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <conv:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter"/>
+            <conv:BoolToFontStyleConverter x:Key="BoolToFontStyleConverter"/>
+            <conv:BoolToTextDecorationConverter x:Key="BoolToTextDecoration"/>
 
             <!-- Per-area interface font sizes (defaults; overridden live by FontService
                  from the user's settings). Controls bind via DynamicResource. -->

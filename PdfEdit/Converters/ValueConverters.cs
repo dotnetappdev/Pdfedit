@@ -75,3 +75,43 @@ public class InverseBoolConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is bool b ? !b : true;
 }
+
+/// <summary>Maps bool to Visibility: false → Visible, true → Collapsed (inverse of BoolToVisibilityConverter).</summary>
+public class InverseBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is Visibility v && v == Visibility.Collapsed;
+}
+
+/// <summary>Maps bool to FontWeight: true → Bold, false → Normal.</summary>
+public class BoolToFontWeightConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? System.Windows.FontWeights.Bold : System.Windows.FontWeights.Normal;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.FontWeight fw && fw == System.Windows.FontWeights.Bold;
+}
+
+/// <summary>Maps bool to FontStyle: true → Italic, false → Normal.</summary>
+public class BoolToFontStyleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? System.Windows.FontStyles.Italic : System.Windows.FontStyles.Normal;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.FontStyle fs && fs == System.Windows.FontStyles.Italic;
+}
+
+/// <summary>Maps bool to TextDecorationCollection: true → Underline, false → null.</summary>
+public class BoolToTextDecorationConverter : IValueConverter
+{
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? System.Windows.TextDecorations.Underline : null;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value != null;
+}

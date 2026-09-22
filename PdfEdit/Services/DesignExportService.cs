@@ -1,0 +1,230 @@
+using System.Windows;
+using System.Windows.Media;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Canvas.Draw;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+using PdfEdit.Models;
+
+namespace PdfEdit.Services;
+
+/// <summary>Converts a list of DesignElements into a PDF page via iText7.</summary>
+public static class DesignExportService
+{
+    /// <summary>Export elements to a new PDF file.</summary>
+    public static void ExportToPdf(
+        IEnumerable<DesignElement> elements,
+        double pageWidthPt,
+        double pageHeightPt,
+        string outputPath)
+    {
+        using var writer = new PdfWriter(outputPath);
+        using var pdf    = new PdfDocument(writer);
+        var pageSize     = new PageSize((float)pageWidthPt, (float)pageHeightPt);
+        var page         = pdf.AddNewPage(pageSize);
+
+        var pdfCanvas = new PdfCanvas(page);
+        var document  = new Document(pdf, pageSize);
+        document.SetMargins(0, 0, 0, 0);
+
+        // Draw elements ordered by ZOrder
+        foreach (var elem in elements.OrderBy(e => e.ZOrder))
+        {
+            DrawElement(elem, pdfCanvas, document, pageWidthPt, pageHeightPt);
+        }
+
+        document.Close();
+    }
+
+    private static void DrawElement(
+        DesignElement elem,
+        PdfCanvas pdfCanvas,
+        Document doc,
+        double pageW,
+        double pageH)
+    {
+        // WPF origin is top-left (y↓); PDF origin is bottom-left (y↑).
+        // Flip: pdf_y = pageH - (elem.Y + elem.Height)
+        float x  = (float)elem.X;
+        float y  = (float)(pageH - elem.Y - elem.Height);
+        float w  = (float)elem.Width;
+        float h  = (float)elem.Height;
+
+        switch (elem)
+        {
+            case TextDesignElement t:
+                DrawText(t, doc, x, y, w, h, pageW, pageH);
+                break;
+
+            case ShapeDesignElement s:
+                DrawShape(s, pdfCanvas, x, y, w, h);
+                break;
+
+            case ImageDesignElement img:
+                DrawImage(img, doc, x, y, w, h);
+                break;
+
+            case FreehandDesignElement fh:
+                DrawFreehand(fh, pdfCanvas, pageH);
+                break;
+        }
+    }
+
+    // ── Text ─────────────────────────────────────────────────────────────────
+
+    private static void DrawText(TextDesignElement t, Document doc, float x, float y, float w, float h, double pageW, double pageH)
+    {
+        try
+        {
+            var fontName = t.Bold && t.Italic ? iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLDOBLIQUE
+                         : t.Bold            ? iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD
+                         : t.Italic          ? iText.IO.Font.Constants.StandardFonts.HELVETICA_OBLIQUE
+                         :                     iText.IO.Font.Constants.StandardFonts.HELVETICA;
+
+            var font     = PdfFontFactory.CreateFont(fontName);
+            var color    = ToDeviceRgb(t.Color);
+            var para     = new Paragraph(t.Text)
+                .SetFont(font)
+                .SetFontSize((float)t.FontSize)
+                .SetFontColor(color)
+                .SetFixedPosition(x, y, w)
+                .SetHeight(h)
+                .SetTextAlignment(ToITextAlignment(t.Alignment));
+
+            if (t.Underline) para.SetUnderline();
+            if (t.BgColor.A > 0)
+                para.SetBackgroundColor(ToDeviceRgb(t.BgColor), t.BgColor.A / 255f);
+
+            doc.Add(para);
+        }
+        catch { /* fall back silently */ }
+    }
+
+    // ── Shapes ───────────────────────────────────────────────────────────────
+
+    private static void DrawShape(ShapeDesignElement s, PdfCanvas canvas, float x, float y, float w, float h)
+    {
+        canvas.SaveState();
+
+        bool hasFill   = s.FillColor.A > 0;
+        bool hasStroke = s.StrokeColor.A > 0 && s.StrokeThickness > 0;
+
+        if (hasFill)   canvas.SetFillColor(ToDeviceRgb(s.FillColor));
+        if (hasStroke) { canvas.SetStrokeColor(ToDeviceRgb(s.StrokeColor)); canvas.SetLineWidth((float)s.StrokeThickness); }
+
+        switch (s.ElementType)
+        {
+            case DesignElementType.Rectangle:
+                canvas.Rectangle(x, y, w, h);
+                ApplyFillStroke(canvas, hasFill, hasStroke);
+                break;
+
+            case DesignElementType.Ellipse:
+                // Approximate ellipse with Bezier curves
+                DrawEllipse(canvas, x + w / 2, y + h / 2, w / 2, h / 2);
+                ApplyFillStroke(canvas, hasFill, hasStroke);
+                break;
+
+            case DesignElementType.Line:
+                canvas.MoveTo(x, y + h).LineTo(x + w, y);
+                if (hasStroke) canvas.Stroke();
+                break;
+
+            case DesignElementType.Arrow:
+                DrawArrow(canvas, x, y + h, x + w, y, (float)s.StrokeThickness);
+                if (hasStroke) canvas.Stroke();
+                break;
+        }
+
+        canvas.RestoreState();
+    }
+
+    private static void DrawEllipse(PdfCanvas canvas, float cx, float cy, float rx, float ry)
+    {
+        const float k = 0.5523f; // Bezier handle ratio for circle approximation
+        canvas.MoveTo(cx + rx, cy);
+        canvas.CurveTo(cx + rx, cy + k * ry, cx + k * rx, cy + ry, cx, cy + ry);
+        canvas.CurveTo(cx - k * rx, cy + ry, cx - rx, cy + k * ry, cx - rx, cy);
+        canvas.CurveTo(cx - rx, cy - k * ry, cx - k * rx, cy - ry, cx, cy - ry);
+        canvas.CurveTo(cx + k * rx, cy - ry, cx + rx, cy - k * ry, cx + rx, cy);
+        canvas.ClosePath();
+    }
+
+    private static void DrawArrow(PdfCanvas canvas, float x1, float y1, float x2, float y2, float thickness)
+    {
+        canvas.MoveTo(x1, y1).LineTo(x2, y2);
+        // Arrowhead
+        double angle = Math.Atan2(y2 - y1, x2 - x1);
+        double al = Math.Max(10, thickness * 4);
+        float ax1 = (float)(x2 - al * Math.Cos(angle - 0.4));
+        float ay1 = (float)(y2 - al * Math.Sin(angle - 0.4));
+        float ax2 = (float)(x2 - al * Math.Cos(angle + 0.4));
+        float ay2 = (float)(y2 - al * Math.Sin(angle + 0.4));
+        canvas.MoveTo(x2, y2).LineTo(ax1, ay1);
+        canvas.MoveTo(x2, y2).LineTo(ax2, ay2);
+    }
+
+    private static void ApplyFillStroke(PdfCanvas canvas, bool fill, bool stroke)
+    {
+        if (fill && stroke) canvas.FillStroke();
+        else if (fill)      canvas.Fill();
+        else if (stroke)    canvas.Stroke();
+    }
+
+    // ── Image ─────────────────────────────────────────────────────────────────
+
+    private static void DrawImage(ImageDesignElement img, Document doc, float x, float y, float w, float h)
+    {
+        if (string.IsNullOrEmpty(img.FilePath) || !System.IO.File.Exists(img.FilePath)) return;
+        try
+        {
+            var imageData = iText.IO.Image.ImageDataFactory.Create(img.FilePath);
+            var image     = new iText.Layout.Element.Image(imageData)
+                .SetFixedPosition(x, y)
+                .ScaleToFit(w, h);
+            doc.Add(image);
+        }
+        catch { /* ignore missing/corrupt images */ }
+    }
+
+    // ── Freehand ─────────────────────────────────────────────────────────────
+
+    private static void DrawFreehand(FreehandDesignElement fh, PdfCanvas canvas, double pageH)
+    {
+        canvas.SaveState();
+        canvas.SetStrokeColor(ToDeviceRgb(fh.Color));
+        canvas.SetLineWidth((float)fh.Thickness);
+        canvas.SetLineCapStyle(1);  // 1 = Round
+        canvas.SetLineJoinStyle(1); // 1 = Round
+
+        foreach (var stroke in fh.Strokes)
+        {
+            if (stroke.Count == 0) continue;
+            var first = stroke[0];
+            canvas.MoveTo(first.X, pageH - first.Y);
+            foreach (var pt in stroke.Skip(1))
+                canvas.LineTo(pt.X, pageH - pt.Y);
+            canvas.Stroke();
+        }
+
+        canvas.RestoreState();
+    }
+
+    // ── Color conversion ──────────────────────────────────────────────────────
+
+    private static DeviceRgb ToDeviceRgb(Color c)
+        => new(c.R / 255f, c.G / 255f, c.B / 255f);
+
+    private static TextAlignment ToITextAlignment(System.Windows.TextAlignment a) => a switch
+    {
+        System.Windows.TextAlignment.Center  => TextAlignment.CENTER,
+        System.Windows.TextAlignment.Right   => TextAlignment.RIGHT,
+        System.Windows.TextAlignment.Justify => TextAlignment.JUSTIFIED,
+        _                                    => TextAlignment.LEFT
+    };
+}
