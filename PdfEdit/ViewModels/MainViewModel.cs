@@ -550,6 +550,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
 
     public ICommand NavigateToBookmarkCommand { get; }
+    public ICommand NavigateToPageCommand { get; }
 
     // ── Commands ─────────────────────────────────────────────────────────────
 
@@ -673,6 +674,12 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (p is Models.BookmarkItem bm && bm.PageNumber > 0)
                 CurrentPageIndex = bm.PageNumber - 1;
+        });
+
+        NavigateToPageCommand = new RelayCommand(p =>
+        {
+            if (p is int pageNum && pageNum > 0)
+                CurrentPageIndex = pageNum - 1;
         });
 
         OpenCommand = new AsyncRelayCommand(OpenAsync);

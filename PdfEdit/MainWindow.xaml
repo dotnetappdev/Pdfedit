@@ -2490,6 +2490,133 @@
                             </Grid>
                         </TabItem>
 
+                        <!-- Comments/Annotations tab -->
+                        <TabItem Header="Comments"
+                                 Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 AutomationProperties.Name="Annotation comments list">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="COMMENTS &amp; ANNOTATIONS"
+                                           Style="{StaticResource SectionHeader}" Margin="8,8,8,4"/>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <!-- Sticky Notes -->
+                                        <ItemsControl ItemsSource="{Binding StickyNotes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="Sticky Note" FontSize="10" FontWeight="Bold"
+                                                                           Foreground="{DynamicResource AccentBrush}"/>
+                                                                <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                           FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Text}" FontSize="10"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       Margin="0,2,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Highlights -->
+                                        <ItemsControl ItemsSource="{Binding HighlightAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🖍" FontSize="11" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                            <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                       FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Shape annotations -->
+                                        <ItemsControl ItemsSource="{Binding ShapeAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="◻" FontSize="11" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                            <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                       FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Free text annotations -->
+                                        <ItemsControl ItemsSource="{Binding FreeTextAnnotations}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="4,2" Padding="6,4"
+                                                            Background="{DynamicResource InputBgBrush}"
+                                                            CornerRadius="3" Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.NavigateToPageCommand,
+                                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                          CommandParameter="{Binding PageNumber}"/>
+                                                        </Border.InputBindings>
+                                                        <StackPanel>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="T" FontSize="11" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="Text" FontSize="10" FontWeight="Bold"
+                                                                           Foreground="{DynamicResource AccentBrush}"/>
+                                                                <TextBlock Text="{Binding PageNumber, StringFormat=' · p{0}'}"
+                                                                           FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="4,0,0,0"/>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Text}" FontSize="10"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                                       Margin="0,2,0,0"
+                                                                       MaxHeight="36"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </TabItem>
+
                         <!-- AI Chat tab -->
                         <TabItem Header="AI Chat"
                                  AutomationProperties.Name="AI chat assistant">
