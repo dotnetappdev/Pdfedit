@@ -38,6 +38,8 @@
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
         <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
         <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoAnnotationCommand}"/>
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoAnnotationCommand}"/>
         <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
         <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
         <KeyBinding Key="S" Command="{Binding SetToolCommand}" CommandParameter="Signature"/>
@@ -879,6 +881,24 @@
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Undo Ann."
+                                   Command="{Binding UndoAnnotationCommand}"
+                                   Size="Middle"
+                                   ToolTip="Undo annotation (Ctrl+Z)"
+                                   AutomationProperties.Name="Undo annotation">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Redo Ann."
+                                   Command="{Binding RedoAnnotationCommand}"
+                                   Size="Middle"
+                                   ToolTip="Redo annotation (Ctrl+Y)"
+                                   AutomationProperties.Name="Redo annotation">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

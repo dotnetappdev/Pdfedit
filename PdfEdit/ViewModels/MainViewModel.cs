@@ -13,6 +13,7 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
     private readonly PdfRenderService _renderService = new();
+    private readonly Services.AnnotationUndoService _undoService = new();
 
     private PdfDocumentInfo? _document;
     private int _currentPageIndex;
@@ -558,6 +559,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ICommand NavigateToBookmarkCommand { get; }
     public ICommand NavigateToPageCommand { get; }
+    public ICommand UndoAnnotationCommand { get; }
+    public ICommand RedoAnnotationCommand { get; }
 
     // ── Commands ─────────────────────────────────────────────────────────────
 
@@ -688,6 +691,21 @@ public class MainViewModel : INotifyPropertyChanged
             if (p is int pageNum && pageNum > 0)
                 CurrentPageIndex = pageNum - 1;
         });
+
+        UndoAnnotationCommand = new RelayCommand(() =>
+        {
+            _undoService.Undo();
+            PageChanged?.Invoke();
+            OnPropertyChanged(nameof(UndoAnnotationCommand));
+            OnPropertyChanged(nameof(RedoAnnotationCommand));
+        }, () => _undoService.CanUndo);
+        RedoAnnotationCommand = new RelayCommand(() =>
+        {
+            _undoService.Redo();
+            PageChanged?.Invoke();
+            OnPropertyChanged(nameof(UndoAnnotationCommand));
+            OnPropertyChanged(nameof(RedoAnnotationCommand));
+        }, () => _undoService.CanRedo);
 
         OpenCommand = new AsyncRelayCommand(OpenAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => HasDocument);
@@ -918,6 +936,13 @@ public class MainViewModel : INotifyPropertyChanged
             ForceUpperCase = _forceUpperCase,
         };
         FreeTextAnnotations.Add(ann);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Add text",
+            Execute     = () => FreeTextAnnotations.Add(ann),
+            Undo        = () => { FreeTextAnnotations.Remove(ann); if (_selectedAnnotation == ann) SelectedAnnotation = null; },
+        });
+        RefreshUndoCanExecute();
         return ann;
     }
 
@@ -925,6 +950,13 @@ public class MainViewModel : INotifyPropertyChanged
     {
         FreeTextAnnotations.Remove(ann);
         if (_selectedAnnotation == ann) SelectedAnnotation = null;
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete text",
+            Execute     = () => { FreeTextAnnotations.Remove(ann); if (_selectedAnnotation == ann) SelectedAnnotation = null; },
+            Undo        = () => FreeTextAnnotations.Add(ann),
+        });
+        RefreshUndoCanExecute();
     }
 
     public IEnumerable<FreeTextAnnotation> GetAnnotationsForCurrentPage()
@@ -940,12 +972,26 @@ public class MainViewModel : INotifyPropertyChanged
     {
         hl.PageNumber = _currentPageIndex + 1;
         HighlightAnnotations.Add(hl);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Add {hl.Kind}",
+            Execute     = () => HighlightAnnotations.Add(hl),
+            Undo        = () => HighlightAnnotations.Remove(hl),
+        });
+        RefreshUndoCanExecute();
         PageChanged?.Invoke();
     }
 
     public void RemoveHighlightAnnotation(Models.HighlightAnnotation hl)
     {
         HighlightAnnotations.Remove(hl);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete highlight",
+            Execute     = () => HighlightAnnotations.Remove(hl),
+            Undo        = () => HighlightAnnotations.Add(hl),
+        });
+        RefreshUndoCanExecute();
         PageChanged?.Invoke();
     }
 
@@ -974,10 +1020,26 @@ public class MainViewModel : INotifyPropertyChanged
     {
         note.PageNumber = _currentPageIndex + 1;
         StickyNotes.Add(note);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Add sticky note",
+            Execute     = () => StickyNotes.Add(note),
+            Undo        = () => StickyNotes.Remove(note),
+        });
+        RefreshUndoCanExecute();
     }
 
     public void RemoveStickyNote(Models.StickyNoteAnnotation note)
-        => StickyNotes.Remove(note);
+    {
+        StickyNotes.Remove(note);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete sticky note",
+            Execute     = () => StickyNotes.Remove(note),
+            Undo        = () => StickyNotes.Add(note),
+        });
+        RefreshUndoCanExecute();
+    }
 
     public IEnumerable<Models.StickyNoteAnnotation> GetStickyNotesForCurrentPage()
         => StickyNotes.Where(n => n.PageNumber == _currentPageIndex + 1);
@@ -986,10 +1048,33 @@ public class MainViewModel : INotifyPropertyChanged
     {
         shape.PageNumber = _currentPageIndex + 1;
         ShapeAnnotations.Add(shape);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Add {shape.Kind}",
+            Execute     = () => ShapeAnnotations.Add(shape),
+            Undo        = () => ShapeAnnotations.Remove(shape),
+        });
+        RefreshUndoCanExecute();
     }
-    public void RemoveShapeAnnotation(Models.ShapeAnnotation shape) => ShapeAnnotations.Remove(shape);
+    public void RemoveShapeAnnotation(Models.ShapeAnnotation shape)
+    {
+        ShapeAnnotations.Remove(shape);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = $"Delete {shape.Kind}",
+            Execute     = () => ShapeAnnotations.Remove(shape),
+            Undo        = () => ShapeAnnotations.Add(shape),
+        });
+        RefreshUndoCanExecute();
+    }
     public IEnumerable<Models.ShapeAnnotation> GetShapeAnnotationsForCurrentPage()
         => ShapeAnnotations.Where(s => s.PageNumber == _currentPageIndex + 1);
+
+    private void RefreshUndoCanExecute()
+    {
+        OnPropertyChanged(nameof(UndoAnnotationCommand));
+        OnPropertyChanged(nameof(RedoAnnotationCommand));
+    }
 
     // ── Private Commands ─────────────────────────────────────────────────────
 
@@ -1035,6 +1120,7 @@ public class MainViewModel : INotifyPropertyChanged
             RedactionRegions.Clear();
             StickyNotes.Clear();
             ShapeAnnotations.Clear();
+            _undoService.Clear();
             Bookmarks.Clear();
 
             foreach (var f in Document.FormFields)
@@ -1264,6 +1350,7 @@ public class MainViewModel : INotifyPropertyChanged
         RedactionRegions.Clear();
         StickyNotes.Clear();
         ShapeAnnotations.Clear();
+        _undoService.Clear();
         _pageRotations.Clear();
         SelectedField = null;
         SelectedAnnotation = null;
