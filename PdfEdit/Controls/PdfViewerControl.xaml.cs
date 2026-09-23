@@ -612,7 +612,8 @@ public partial class PdfViewerControl : UserControl
         ShowLoading(true);
         try
         {
-            var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom);
+            double dpiScale = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+            var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom, dpiScale);
             PageImage.Source = bmp;
             HideRenderDiagnostic();
 
@@ -623,7 +624,7 @@ public partial class PdfViewerControl : UserControl
                 ShowRenderDiagnostic($"Rendered page is degenerate ({w}×{h}px). Zoom={_vm.Zoom:F3}, PageIndex={_vm.CurrentPageIndex}.");
             else if (IsBitmapBlank(bmp))
                 ShowRenderDiagnostic($"Bitmap decoded OK ({w}×{h}px, Zoom={_vm.Zoom:F3}) but every sampled pixel is blank/white — " +
-                    "the PDF rasterizer (Windows.Data.Pdf) returned an empty page, this is not a display/theme issue.");
+                    $"the PDF rasterizer ({(_vm.RenderService.RendersAnnotations ? "Pdfium" : "Windows.Data.Pdf")}) returned an empty page, this is not a display/theme issue.");
             FieldOverlayCanvas.Width = w;
             FieldOverlayCanvas.Height = h;
             HighlightCanvas.Width = w;
