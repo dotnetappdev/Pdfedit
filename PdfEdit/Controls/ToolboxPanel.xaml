@@ -352,157 +352,49 @@
                 <TextBlock Style="{StaticResource Ico}" Text="&#xE8F4;" FontSize="15"/>
             </RadioButton>
 
-            <!-- ── DRAW / ANNOTATE ────────────────────────────────────────────── -->
-            <Separator Style="{StaticResource ToolSep}"/>
-            <TextBlock Text="DRAW / ANNOTATE" Style="{StaticResource SecHdr}"/>
+            <!-- ── DRAW / ANNOTATE (compact icon-only — fits the 52 px pill) ────── -->
+            <Separator Style="{StaticResource FDiv}"/>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="DrawFreehand"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawFreehand"
                          Checked="Tool_Checked"
-                         ToolTip="Freehand — draw with a pen"
+                         ToolTip="Freehand — draw with a pen  (W)"
                          AutomationProperties.Name="Freehand draw tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEDC6;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Freehand"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEDC6;"/>
             </RadioButton>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="DrawRectangle"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawRectangle"
                          Checked="Tool_Checked"
-                         ToolTip="Rectangle — drag to draw a rectangle annotation"
+                         ToolTip="Rectangle annotation — drag to draw"
                          AutomationProperties.Name="Draw rectangle annotation">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xE7C2;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Rectangle"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE7C2;"/>
             </RadioButton>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="DrawEllipse"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawEllipse"
                          Checked="Tool_Checked"
-                         ToolTip="Ellipse — drag to draw an ellipse annotation"
+                         ToolTip="Ellipse annotation — drag to draw"
                          AutomationProperties.Name="Draw ellipse annotation">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEA3A;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Ellipse"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEA3A;"/>
             </RadioButton>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="DrawArrow"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawArrow"
                          Checked="Tool_Checked"
-                         ToolTip="Arrow — drag to draw an arrow annotation"
+                         ToolTip="Arrow annotation — drag to draw"
                          AutomationProperties.Name="Draw arrow annotation">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEBD4;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Arrow"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEBD4;"/>
             </RadioButton>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="DrawCallout"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawCallout"
                          Checked="Tool_Checked"
                          ToolTip="Callout — drag a box then type callout text"
                          AutomationProperties.Name="Draw callout annotation">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xE8F2;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Callout"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE8F2;"/>
             </RadioButton>
 
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Eraser"
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Eraser"
                          Checked="Tool_Checked"
-                         ToolTip="Eraser — click or drag over annotations to erase them"
+                         ToolTip="Eraser — click or drag to erase annotations"
                          AutomationProperties.Name="Eraser tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xED60;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Eraser"/>
-                </StackPanel>
-            </RadioButton>
-
-            <!-- ══ DESIGN (switches to Design canvas) ═══════════════════════════ -->
-            <Border Margin="8,10,8,4" Height="1"
-                    Background="{DynamicResource AccentBrush}" Opacity="0.5"/>
-            <TextBlock Text="DESIGN CANVAS" Style="{StaticResource SecHdr}"
-                       Foreground="{DynamicResource AccentBrush}"/>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Select"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Select — move and resize design elements"
-                         AutomationProperties.Name="Design select tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xE8B0;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Select"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Text"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Text — add a text element to the design canvas"
-                         AutomationProperties.Name="Design text tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               Text="T" FontSize="16" FontWeight="Bold"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Text"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Rectangle"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Rectangle — draw a rectangle on the design canvas"
-                         AutomationProperties.Name="Design rectangle tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xE7C2;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Rect (Design)"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Ellipse"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Ellipse — draw an ellipse on the design canvas"
-                         AutomationProperties.Name="Design ellipse tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEA3A;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Ellipse (Design)"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Arrow"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Arrow — draw an arrow on the design canvas"
-                         AutomationProperties.Name="Design arrow tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEBD4;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Arrow (Design)"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Pen"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Pen — draw freehand on the design canvas"
-                         AutomationProperties.Name="Design pen tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEDC6;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Pen (Design)"/>
-                </StackPanel>
-            </RadioButton>
-
-            <RadioButton Style="{StaticResource ToolBtn}" GroupName="Tools" Tag="Image"
-                         Checked="DesignTool_Checked"
-                         ToolTip="Image — insert an image on the design canvas"
-                         AutomationProperties.Name="Design image tool">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ToolIcon}"
-                               FontFamily="Segoe MDL2 Assets" Text="&#xEB9F;" FontSize="15"/>
-                    <TextBlock Style="{StaticResource ToolLabel}" Text="Image (Design)"/>
-                </StackPanel>
+                <TextBlock Style="{StaticResource Ico}" Text="&#xED60;"/>
             </RadioButton>
 
         </StackPanel>
