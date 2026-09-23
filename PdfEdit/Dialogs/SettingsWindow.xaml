@@ -70,6 +70,26 @@
                                          AutomationProperties.Name="High contrast theme"/>
                         </StackPanel>
 
+                        <TextBlock Style="{StaticResource SectionHead}" Text="PDF RENDER ENGINE"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <RadioButton x:Name="RbEnginePdfium" Content="Pdfium  (Chrome/Adobe quality — recommended)"
+                                         GroupName="RenderEngine" Tag="Pdfium"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Margin="0,0,0,0" IsChecked="True"
+                                         Checked="RenderEngine_Checked"
+                                         AutomationProperties.Name="Pdfium render engine"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton x:Name="RbEngineWinRT" Content="WinRT  (Windows built-in, legacy fallback)"
+                                         GroupName="RenderEngine" Tag="WinRT"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Checked="RenderEngine_Checked"
+                                         AutomationProperties.Name="WinRT render engine"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{DynamicResource SubtleForegroundBrush}"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,0,0,16"
+                                   Text="Pdfium is the same engine used by Google Chrome and Microsoft Edge. It renders text and vector content with sub-pixel hinting and accurate colours — comparable to Adobe Acrobat. Restart not required; takes effect on the next file open."/>
+
                         <TextBlock Style="{StaticResource SectionHead}" Text="UI SCALE"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Style="{StaticResource SettingLabel}" Text="Scale factor:"/>

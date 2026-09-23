@@ -12,7 +12,7 @@ namespace PdfEdit.ViewModels;
 public class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
-    private readonly PdfRenderService _renderService = new();
+    private readonly IPdfRenderer _renderService = RendererFactory.Create();
     private readonly Services.AnnotationUndoService _undoService = new();
 
     private PdfDocumentInfo? _document;
@@ -649,8 +649,8 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_document == null || _currentPageIndex >= _document.PageSizes.Count) return;
         var ps = _document.PageSizes[_currentPageIndex];
-        double dipW = ps.Width  * PdfRenderService.PointsToDips;
-        double dipH = ps.Height * PdfRenderService.PointsToDips;
+        double dipW = ps.Width  * RendererFactory.PointsToDips;
+        double dipH = ps.Height * RendererFactory.PointsToDips;
         double zoomW = (_viewerWidth  - 24) / dipW;
         double zoomH = (_viewerHeight - 24) / dipH;
         Zoom = Math.Max(0.1, Math.Min(zoomW, zoomH));
@@ -660,7 +660,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_document == null || _currentPageIndex >= _document.PageSizes.Count) return;
         var ps = _document.PageSizes[_currentPageIndex];
-        double dipW = ps.Width * PdfRenderService.PointsToDips;
+        double dipW = ps.Width * RendererFactory.PointsToDips;
         Zoom = Math.Max(0.1, (_viewerWidth - 24) / dipW);
     }
 
@@ -1056,7 +1056,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public PdfRenderService RenderService => _renderService;
+    public IPdfRenderer RenderService => _renderService;
 
     public int GetPageRotation(int pageIndex)
         => _pageRotations.TryGetValue(pageIndex, out var r) ? r : 0;
@@ -1810,7 +1810,7 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Exporting {total} page(s) as images…";
         try
         {
-            var renderer = new Services.PdfRenderService();
+            var renderer = RendererFactory.Create();
             await renderer.LoadAsync(_currentFilePath);
 
             for (int i = 0; i < total; i++)

@@ -102,6 +102,10 @@ public partial class SettingsWindow : Window
         RbLight.IsChecked = s.Theme == "Light";
         RbHighContrast.IsChecked = s.Theme == "HighContrast";
 
+        // Render engine
+        RbEnginePdfium.IsChecked = s.RenderEngine != "WinRT";
+        RbEngineWinRT.IsChecked  = s.RenderEngine == "WinRT";
+
         // UI Scale
         UiScaleSlider.Value = s.UiScale;
         UiScaleLabel.Text = $"{(int)(s.UiScale * 100)}%";
@@ -202,6 +206,15 @@ public partial class SettingsWindow : Window
     {
         if (sender is RadioButton rb && rb.Tag is string tag)
             App.SwitchTheme(tag);
+    }
+
+    private void RenderEngine_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string tag)
+        {
+            AppSettings.Current.RenderEngine = tag;
+            AppSettings.Current.Save();
+        }
     }
 
     private void UiScaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

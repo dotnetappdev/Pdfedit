@@ -10,7 +10,7 @@ namespace PdfEdit.Services;
 /// Renders PDF pages to WPF BitmapSource using Windows.Data.Pdf (built-in Windows PDF engine).
 /// Scale factor: PDF points * (96/72) = WPF DIPs at 100% zoom.
 /// </summary>
-public class PdfRenderService : IDisposable
+public class PdfRenderService : IPdfRenderer
 {
     private PdfDocument? _pdfDoc;
     private bool _disposed;
