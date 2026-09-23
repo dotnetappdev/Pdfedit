@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="460" viewBox="0 0 760 460">
+  <defs>
+    <style>
+      .win { fill:#1e1e2e; stroke:#3a3a5c; stroke-width:1; rx:6; }
+      .title { font:bold 13px 'Segoe UI',sans-serif; fill:#e0e0f0; }
+      .label { font:12px 'Segoe UI',sans-serif; fill:#c0c0d8; }
+      .desc  { font:11px 'Segoe UI',sans-serif; fill:#7878a0; }
+      .tab   { font:12px 'Segoe UI',sans-serif; }
+      .badge { font:bold 10px 'Segoe UI',sans-serif; fill:#1e1e2e; }
+      .radio-circle { fill:#1e1e2e; stroke:#5a5a7a; stroke-width:1.5; }
+      .radio-checked { fill:#6c8ef0; stroke:#6c8ef0; stroke-width:1.5; }
+      .radio-dot { fill:#fff; }
+      .divider { stroke:#2e2e4e; stroke-width:1; }
+      .panel { fill:#161625; stroke:#2e2e4e; stroke-width:1; }
+      .tab-active { fill:#2a2a4a; stroke:#3a3a6a; stroke-width:1; }
+      .tab-inactive { fill:#1a1a2a; stroke:none; }
+      .btn { fill:#3a3a5c; stroke:#5a5a7a; stroke-width:1; }
+      .badge-default { fill:#4a8f4a; }
+      .badge-optional { fill:#4a6a9f; }
+    </style>
+  </defs>
+
+  <!-- Window -->
+  <rect x="0" y="0" width="760" height="460" rx="8" class="win"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="760" height="36" rx="8" fill="#252540"/>
+  <rect x="0" y="28" width="760" height="8" fill="#252540"/>
+  <text x="20" y="23" class="title">Settings</text>
+  <circle cx="728" cy="18" r="7" fill="#e05050"/>
+  <circle cx="710" cy="18" r="7" fill="#e0a030"/>
+  <circle cx="692" cy="18" r="7" fill="#40a040"/>
+
+  <!-- Tab bar -->
+  <rect x="0" y="36" width="760" height="38" fill="#1a1a30"/>
+  <rect x="12" y="44" width="80" height="26" rx="4" class="tab-inactive"/>
+  <text x="52" y="61" text-anchor="middle" class="tab" fill="#7878a0">Appearance</text>
+  <rect x="100" y="44" width="80" height="26" rx="4" class="tab-active"/>
+  <text x="140" y="61" text-anchor="middle" class="tab" fill="#e0e0f0">Render</text>
+  <rect x="188" y="44" width="70" height="26" rx="4" class="tab-inactive"/>
+  <text x="223" y="61" text-anchor="middle" class="tab" fill="#7878a0">Editor</text>
+  <rect x="266" y="44" width="56" height="26" rx="4" class="tab-inactive"/>
+  <text x="294" y="61" text-anchor="middle" class="tab" fill="#7878a0">Fonts</text>
+  <rect x="330" y="44" width="40" height="26" rx="4" class="tab-inactive"/>
+  <text x="350" y="61" text-anchor="middle" class="tab" fill="#7878a0">AI</text>
+
+  <!-- Content area -->
+  <rect x="0" y="74" width="760" height="386" fill="#161625"/>
+
+  <!-- Section heading -->
+  <text x="30" y="108" class="title">PDF Render Engine</text>
+  <text x="30" y="126" class="desc">Choose how PDF pages are rasterised. Restart not required — applies to next page load.</text>
+  <line x1="30" y1="136" x2="730" y2="136" class="divider"/>
+
+  <!-- Option 1: Custom (selected) -->
+  <rect x="24" y="148" width="712" height="82" rx="6" fill="#1e2a3a" stroke="#4a7adf" stroke-width="1.5"/>
+  <!-- radio -->
+  <circle cx="46" cy="189" r="9" class="radio-checked"/>
+  <circle cx="46" cy="189" r="4" class="radio-dot"/>
+  <text x="66" y="183" class="label" font-weight="bold" fill="#e0e0f0">Custom (Pure C#)</text>
+  <rect x="66" y="185" width="58" height="14" rx="3" class="badge-default"/>
+  <text x="95" y="196" text-anchor="middle" class="badge">Default</text>
+  <text x="66" y="206" class="desc">Built-in Adobe-spec parser and renderer — zero native dependencies. Full support for</text>
+  <text x="66" y="220" class="desc">FlateDecode, LZW, all path/text/image operators, Standard-14 fonts, and xref streams.</text>
+
+  <!-- Option 2: Pdfium -->
+  <rect x="24" y="242" width="712" height="72" rx="6" fill="#1a1a2a" stroke="#2e2e4e" stroke-width="1"/>
+  <circle cx="46" cy="278" r="9" class="radio-circle"/>
+  <text x="66" y="272" class="label" font-weight="bold" fill="#c0c0d8">Pdfium</text>
+  <rect x="66" y="274" width="68" height="14" rx="3" class="badge-optional"/>
+  <text x="100" y="285" text-anchor="middle" class="badge">Optional</text>
+  <text x="66" y="295" class="desc">Google Chrome's PDF engine via Docnet.Core — highest fidelity for complex PDFs.</text>
+  <text x="66" y="309" class="desc">Requires Docnet.Core NuGet package and its native DLL at runtime.</text>
+
+  <!-- Option 3: Windows -->
+  <rect x="24" y="326" width="712" height="62" rx="6" fill="#1a1a2a" stroke="#2e2e4e" stroke-width="1"/>
+  <circle cx="46" cy="357" r="9" class="radio-circle"/>
+  <text x="66" y="351" class="label" font-weight="bold" fill="#c0c0d8">Windows (WinRT)</text>
+  <text x="66" y="367" class="desc">Uses Windows.Data.Pdf — built into Windows 10/11. Good for basic documents.</text>
+  <text x="66" y="381" class="desc">Does not render PDF annotations; legacy option for compatibility.</text>
+
+  <!-- Bottom bar -->
+  <line x1="0" y1="402" x2="760" y2="402" class="divider"/>
+  <rect x="580" y="416" width="80" height="28" rx="4" class="btn"/>
+  <text x="620" y="434" text-anchor="middle" class="label" fill="#c0c0d8">Cancel</text>
+  <rect x="670" y="416" width="70" height="28" rx="4" fill="#4a6adf" stroke="#6a8aef" stroke-width="1"/>
+  <text x="705" y="434" text-anchor="middle" class="label" fill="#ffffff">Save</text>
+</svg>
