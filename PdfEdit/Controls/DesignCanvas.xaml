@@ -95,9 +95,13 @@
 
         <!-- ── Table template ────────────────────────────────────────────── -->
         <DataTemplate x:Key="TableTemplate" DataType="{x:Type models:TableDesignElement}">
-            <!-- Table rendered in code-behind as a UniformGrid child -->
-            <Border Tag="{Binding}" x:Name="TableHost"
-                    BorderThickness="0" Background="Transparent"/>
+            <Border x:Name="TableHost"
+                    BorderThickness="{Binding BorderThickness}"
+                    ClipToBounds="True">
+                <Border.BorderBrush>
+                    <SolidColorBrush Color="{Binding BorderColor}"/>
+                </Border.BorderBrush>
+            </Border>
         </DataTemplate>
 
         <!-- ── Selection overlay style (shared) ─────────────────────────── -->
