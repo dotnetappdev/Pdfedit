@@ -201,4 +201,61 @@
   <!-- Label badge -->
   <rect x="270" y="490" width="360" height="30" fill="#1A56A0" rx="4"/>
   <text x="450" y="510" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12" font-weight="bold">Live View — PDF with Callout + Highlight Annotations</text>
+
+  <!-- Floating PDF-mode pill toolbox (right edge of PDF view, vertically centred) -->
+  <!-- Drop shadow -->
+  <rect x="702" y="172" width="54" height="362" rx="13" fill="#080810" opacity="0.6"/>
+  <!-- Pill body -->
+  <rect x="700" y="169" width="52" height="360" rx="12" fill="#20203A" stroke="#3C3C58" stroke-width="1"/>
+  <!-- "PDF" mode label above pill -->
+  <text x="726" y="165" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="7">PDF</text>
+
+  <!-- Hand button (ACTIVE) -->
+  <rect x="706" y="177" width="40" height="32" rx="7" fill="#4E80FF"/>
+  <text x="726" y="198" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12">✋</text>
+
+  <!-- Zoom button -->
+  <rect x="706" y="213" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="234" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="13">⊕</text>
+
+  <!-- Separator -->
+  <line x1="710" y1="250" x2="746" y2="250" stroke="#3C3C58" stroke-width="1.5"/>
+
+  <!-- Fill button -->
+  <rect x="706" y="256" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="277" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">⌨</text>
+
+  <!-- Check button -->
+  <rect x="706" y="292" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="313" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">☑</text>
+
+  <!-- Date button -->
+  <rect x="706" y="328" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="349" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="10">📅</text>
+
+  <!-- Separator -->
+  <line x1="710" y1="365" x2="746" y2="365" stroke="#3C3C58" stroke-width="1.5"/>
+
+  <!-- Text/Mark button -->
+  <rect x="706" y="371" width="40" height="32" rx="7" fill="#20203A"/>
+  <rect x="714" y="378" width="24" height="18" fill="none" stroke="#AFAFD2" stroke-width="1"/>
+  <text x="726" y="392" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="10" font-weight="bold">A</text>
+
+  <!-- Separator -->
+  <line x1="710" y1="408" x2="746" y2="408" stroke="#3C3C58" stroke-width="1.5"/>
+
+  <!-- Sign button -->
+  <rect x="706" y="414" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="435" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="12">✍</text>
+
+  <!-- Separator -->
+  <line x1="710" y1="451" x2="746" y2="451" stroke="#3C3C58" stroke-width="1.5"/>
+
+  <!-- Highlight button -->
+  <rect x="706" y="457" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="478" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="13">▌</text>
+
+  <!-- Stamp button -->
+  <rect x="706" y="493" width="40" height="32" rx="7" fill="#20203A"/>
+  <text x="726" y="514" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">⬡</text>
 </svg>
