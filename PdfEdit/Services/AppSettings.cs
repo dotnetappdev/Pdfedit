@@ -50,7 +50,7 @@ public class AppSettings
 
     // ── Render engine ────────────────────────────────────────────────────────
     /// <summary>"Pdfium" (default, Chrome/Adobe quality) or "WinRT" (legacy Windows renderer).</summary>
-    public string RenderEngine { get; set; } = "Pdfium";
+    public string RenderEngine { get; set; } = "Custom";
 
     // ── Accessibility ────────────────────────────────────────────────────────
     public bool HighContrastFocusIndicators { get; set; }

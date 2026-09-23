@@ -103,7 +103,8 @@ public partial class SettingsWindow : Window
         RbHighContrast.IsChecked = s.Theme == "HighContrast";
 
         // Render engine
-        RbEnginePdfium.IsChecked = s.RenderEngine != "WinRT";
+        RbEngineCustom.IsChecked = s.RenderEngine == "Custom" || (s.RenderEngine != "Pdfium" && s.RenderEngine != "WinRT");
+        RbEnginePdfium.IsChecked = s.RenderEngine == "Pdfium";
         RbEngineWinRT.IsChecked  = s.RenderEngine == "WinRT";
 
         // UI Scale
