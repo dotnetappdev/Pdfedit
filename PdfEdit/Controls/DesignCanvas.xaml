@@ -20,7 +20,7 @@
                 <!-- Editable text box (shown when IsEditing) -->
                 <TextBox x:Name="EditBox"
                          Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
-                         AcceptsReturn="True" TextWrapping="Wrap"
+                         AcceptsReturn="True" TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                          BorderThickness="0" Background="Transparent"
                          Foreground="{DynamicResource ForegroundBrush}"
                          FontFamily="{Binding FontFamily}"
@@ -33,7 +33,7 @@
                 <!-- Display text block (shown when not editing) -->
                 <TextBlock x:Name="DisplayBlock"
                            Text="{Binding Text}"
-                           TextWrapping="Wrap"
+                           TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                            FontFamily="{Binding FontFamily}"
                            FontSize="{Binding FontSize}"
                            FontWeight="{Binding Bold, Converter={StaticResource BoolToFontWeightConverter}}"
@@ -98,6 +98,73 @@
             <!-- Table rendered in code-behind as a UniformGrid child -->
             <Border Tag="{Binding}" x:Name="TableHost"
                     BorderThickness="0" Background="Transparent"/>
+        </DataTemplate>
+
+        <!-- ── Form field placeholder template ───────────────────────────── -->
+        <!-- Design-time placeholder for an AcroForm field: caption label to the
+             left/right of the field box (with an adjustable pixel gap), or the
+             label shown as a hint inside the box. The label is static caption
+             text — never user-editable once exported to PDF Live View. -->
+        <DataTemplate x:Key="FormFieldTemplate" DataType="{x:Type models:FormFieldDesignElement}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Label to the left of the field -->
+                <TextBlock Grid.Column="0" Text="{Binding Label}"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource ForegroundBrush}"
+                           Margin="{Binding LabelOffset, Converter={StaticResource DoubleToRightMarginConverter}}"
+                           Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Left}"/>
+
+                <!-- Field box -->
+                <Border Grid.Column="1"
+                        BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                        Background="#1A0078D7" CornerRadius="2" MinHeight="18">
+                    <Grid>
+                        <!-- Placeholder-style hint text inside the box -->
+                        <TextBlock Text="{Binding Label}"
+                                   Foreground="Gray" FontStyle="Italic" Margin="4,0"
+                                   VerticalAlignment="Top" Padding="0,2,0,0"
+                                   TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
+                                   Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Placeholder}"/>
+                        <!-- Field-kind glyph, centered — indicates what this placeholder becomes on export -->
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                   Foreground="{DynamicResource DimForegroundBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value=""/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FieldKind}" Value="Checkbox">
+                                            <Setter Property="Text" Value="&#xE739;"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding FieldKind}" Value="Radio">
+                                            <Setter Property="Text" Value="&#xEA81;"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding FieldKind}" Value="ComboBox">
+                                            <Setter Property="Text" Value="&#xE70D;"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding FieldKind}" Value="Signature">
+                                            <Setter Property="Text" Value="&#xEDC6;"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <!-- Label to the right of the field -->
+                <TextBlock Grid.Column="2" Text="{Binding Label}"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource ForegroundBrush}"
+                           Margin="{Binding LabelOffset, Converter={StaticResource DoubleToLeftMarginConverter}}"
+                           Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Right}"/>
+            </Grid>
         </DataTemplate>
 
         <!-- ── Selection overlay style (shared) ─────────────────────────── -->
@@ -219,7 +286,8 @@
                                     LineTemplate="{StaticResource LineTemplate}"
                                     ImageTemplate="{StaticResource ImageTemplate}"
                                     FreehandTemplate="{StaticResource FreehandTemplate}"
-                                    TableTemplate="{StaticResource TableTemplate}"/>
+                                    TableTemplate="{StaticResource TableTemplate}"
+                                    FormFieldTemplate="{StaticResource FormFieldTemplate}"/>
                             </ItemsControl.ItemTemplateSelector>
                         </ItemsControl>
 

@@ -99,13 +99,16 @@ public partial class PdfViewerControl : UserControl
     private static readonly string[] StampPresets =
         { "APPROVED", "DRAFT", "CONFIDENTIAL", "RECEIVED", "REVIEWED", "REJECTED", "FOR REVIEW" };
 
-    // Adobe-style field selection chrome
+    // Adobe-style field selection chrome (floating mini toolbar shown above a focused text field)
     private Border?    _fieldChromeBorder;
-    private TextBlock? _fieldChromeLabel;
-    private Button?    _fieldChromeClear;
-    private Button?    _fieldChromeToday;
+    private Border?    _fieldChromeToday;
     private TextBox?   _activeTb;
     private FormFieldInfo? _activeFieldInfo;
+
+    // Per-field (by field name) UI preferences, applied across re-renders of the same document.
+    private readonly Dictionary<string, double> _fieldFontSizes = new();
+    private readonly Dictionary<string, int> _fieldRotations = new();
+    private readonly Dictionary<string, bool> _fieldAutoSize = new();
 
     private static bool IsDateFieldName(string name)
     {
@@ -171,6 +174,10 @@ public partial class PdfViewerControl : UserControl
         {
             PlaceholderPanel.Visibility = Visibility.Collapsed;
             PdfScrollViewer.Visibility = Visibility.Visible;
+            // Force a synchronous layout pass so ViewportWidth/Height are measured
+            // before we read them — otherwise they're still 0 (the ScrollViewer was
+            // just Collapsed) and the auto-fit zoom collapses to its 10% floor.
+            PdfScrollViewer.UpdateLayout();
             // Seed viewport size then auto-fit before first render so the user
             // sees the whole page without manually hitting Fit Page.
             _vm?.UpdateViewerSize(PdfScrollViewer.ViewportWidth, PdfScrollViewer.ViewportHeight);
@@ -607,9 +614,16 @@ public partial class PdfViewerControl : UserControl
         {
             var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom);
             PageImage.Source = bmp;
+            HideRenderDiagnostic();
 
             double w = bmp.PixelWidth;
             double h = bmp.PixelHeight;
+
+            if (w <= 1 || h <= 1)
+                ShowRenderDiagnostic($"Rendered page is degenerate ({w}×{h}px). Zoom={_vm.Zoom:F3}, PageIndex={_vm.CurrentPageIndex}.");
+            else if (IsBitmapBlank(bmp))
+                ShowRenderDiagnostic($"Bitmap decoded OK ({w}×{h}px, Zoom={_vm.Zoom:F3}) but every sampled pixel is blank/white — " +
+                    "the PDF rasterizer (Windows.Data.Pdf) returned an empty page, this is not a display/theme issue.");
             FieldOverlayCanvas.Width = w;
             FieldOverlayCanvas.Height = h;
             HighlightCanvas.Width = w;
@@ -638,10 +652,72 @@ public partial class PdfViewerControl : UserControl
         catch (Exception ex)
         {
             if (_vm != null) _vm.StatusText = $"Render error: {ex.Message}";
+            ShowRenderDiagnostic($"{ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
         }
         finally
         {
             ShowLoading(false);
+        }
+    }
+
+    // ── Render diagnostics ──────────────────────────────────────────────────
+    // Surfaces a render failure directly on the page instead of only in the
+    // (easily-missed) status bar, so a blank page always explains itself.
+
+    private TextBlock? _renderDiagnosticText;
+
+    private void ShowRenderDiagnostic(string message)
+    {
+        if (_renderDiagnosticText == null)
+        {
+            _renderDiagnosticText = new TextBlock
+            {
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromArgb(230, 180, 30, 30)),
+                FontSize = 13,
+                Padding = new Thickness(10),
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 600,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+            Panel.SetZIndex(_renderDiagnosticText, 99999);
+            PageGrid.Children.Add(_renderDiagnosticText);
+        }
+        _renderDiagnosticText.Text = "PDF render diagnostic — " + message;
+        _renderDiagnosticText.Visibility = Visibility.Visible;
+    }
+
+    private void HideRenderDiagnostic()
+    {
+        if (_renderDiagnosticText != null)
+            _renderDiagnosticText.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>Samples pixels across the bitmap to tell a genuinely blank render (rasterizer
+    /// problem) apart from a display/theme problem where the bitmap itself has real content.</summary>
+    private static bool IsBitmapBlank(BitmapSource bmp)
+    {
+        try
+        {
+            var converted = new FormatConvertedBitmap(bmp, PixelFormats.Bgra32, null, 0);
+            int stride = converted.PixelWidth * 4;
+            var pixels = new byte[stride * converted.PixelHeight];
+            converted.CopyPixels(pixels, stride, 0);
+
+            int step = Math.Max(1, pixels.Length / 4 / 2000); // sample ~2000 pixels max
+            for (int i = 0; i < pixels.Length - 4; i += 4 * step)
+            {
+                byte b = pixels[i], g = pixels[i + 1], r = pixels[i + 2], a = pixels[i + 3];
+                bool nearWhite = r > 245 && g > 245 && b > 245;
+                bool transparent = a < 10;
+                if (!nearWhite && !transparent) return false;
+            }
+            return true;
+        }
+        catch
+        {
+            return false; // sampling failed — don't report a false blank
         }
     }
 
@@ -650,8 +726,7 @@ public partial class PdfViewerControl : UserControl
     private void BuildFieldOverlay(IEnumerable<FormFieldInfo> fields, bool highlight)
     {
         _fieldChromeBorder = null;
-        _fieldChromeLabel = null;
-        _fieldChromeClear = null;
+        _fieldChromeToday = null;
         _activeTb = null;
         _activeFieldInfo = null;
 
@@ -838,7 +913,7 @@ public partial class PdfViewerControl : UserControl
             BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush,
             BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
             Cursor = Cursors.IBeam,
-            FontSize = Math.Max(8, (vertical ? w : h) * 0.6),
+            FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize : Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
             AcceptsReturn = field.IsMultiline,
             TextWrapping = field.IsMultiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
@@ -847,10 +922,19 @@ public partial class PdfViewerControl : UserControl
         };
         System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.Name}");
 
+        // Vertical-text fields already use LayoutTransform for their -90° orientation, so the
+        // Adobe-style toolbar's Rotate button (which also targets LayoutTransform) is skipped there.
         if (vertical)
             tb.LayoutTransform = new RotateTransform(-90);
+        else if (_fieldRotations.TryGetValue(field.Name, out var savedAngle) && savedAngle != 0)
+            tb.LayoutTransform = new RotateTransform(savedAngle);
 
-        tb.TextChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, tb.Text);
+        tb.TextChanged += (_, _) =>
+        {
+            _vm!.UpdateFieldValue(field.Name, tb.Text);
+            if (_fieldAutoSize.TryGetValue(field.Name, out var autoSize) && autoSize)
+                ApplyFieldAutoSize(tb, field);
+        };
         tb.GotFocus += (_, _) =>
         {
             tb.Background = FieldFocusBrush;
@@ -1003,22 +1087,15 @@ public partial class PdfViewerControl : UserControl
 
         EnsureFieldChrome();
 
-        // Label: field name above the selected field
-        _fieldChromeLabel!.Text = field.Name;
-
         // Show "Today" button for date-like fields
         if (_fieldChromeToday != null)
             _fieldChromeToday.Visibility = IsDateFieldName(field.Name)
                 ? Visibility.Visible : Visibility.Collapsed;
 
-        double labelY = Math.Max(0, y - 18);
+        double barTop = Math.Max(0, y - ToolbarH - 1);
         Canvas.SetLeft(_fieldChromeBorder!, x);
-        Canvas.SetTop(_fieldChromeBorder!, labelY);
-        _fieldChromeBorder!.Width = Math.Max(80, w);
-        _fieldChromeBorder.Visibility = Visibility.Visible;
-
-        // Wire clear button
-        _fieldChromeClear!.Tag = (tb, field);
+        Canvas.SetTop(_fieldChromeBorder!, barTop);
+        _fieldChromeBorder!.Visibility = Visibility.Visible;
     }
 
     private void HideFieldChrome(TextBox tb)
@@ -1029,87 +1106,88 @@ public partial class PdfViewerControl : UserControl
         _activeFieldInfo = null;
     }
 
+    /// <summary>
+    /// Adobe-style mini toolbar shown above a focused text form field: decrease/increase font
+    /// size, clear the value, rotate the displayed text, and toggle auto-size-to-fit — mirrors
+    /// the same interaction the FreeText annotation toolbar already offers.
+    /// </summary>
     private void EnsureFieldChrome()
     {
         if (_fieldChromeBorder != null) return;
 
-        _fieldChromeLabel = new TextBlock
-        {
-            FontSize = 10,
-            Foreground = AdobeBlue,
-            FontWeight = FontWeights.SemiBold,
-            Padding = new Thickness(2, 0, 4, 0),
-        };
+        var panel = new StackPanel { Orientation = Orientation.Horizontal };
 
-        _fieldChromeClear = new Button
-        {
-            Content = "✕",
-            FontSize = 9,
-            Padding = new Thickness(3, 0, 3, 0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Foreground = AdobeBlue,
-            Cursor = Cursors.Hand,
-            VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = "Clear field",
-        };
-        _fieldChromeClear.Click += (_, _) =>
-        {
-            if (_activeTb != null)
-            {
-                _activeTb.Text = string.Empty;
-                if (_activeFieldInfo != null)
-                    _vm?.UpdateFieldValue(_activeFieldInfo.Name, string.Empty);
-            }
-        };
+        panel.Children.Add(MakeToolbarBtn("A", "Decrease font size", () => AdjustActiveFieldFontSize(-1), fontSize: 10));
+        panel.Children.Add(MakeToolbarBtn("A", "Increase font size", () => AdjustActiveFieldFontSize(+1), fontSize: 14));
+        panel.Children.Add(MakeToolbarBtn("🗑", "Clear field", ClearActiveField));
+        panel.Children.Add(MakeToolbarBtn("↻", "Rotate text 90°", RotateActiveField));
+        panel.Children.Add(MakeToolbarBtn("VA", "Auto-size text to fit the field", ToggleActiveFieldAutoSize, fontSize: 10));
 
-        _fieldChromeToday = new Button
-        {
-            Content = "Today",
-            FontSize = 9,
-            Padding = new Thickness(3, 0, 3, 0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Foreground = AdobeBlue,
-            Cursor = Cursors.Hand,
-            VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = "Insert today's date",
-            Visibility = Visibility.Collapsed,
-        };
-        _fieldChromeToday.Click += (_, _) =>
-        {
-            if (_activeTb != null && _activeFieldInfo != null)
-            {
-                var dateStr = DateTime.Today.ToString("MM/dd/yyyy");
-                _activeTb.Text = dateStr;
-                _vm?.UpdateFieldValue(_activeFieldInfo.Name, dateStr);
-            }
-        };
-
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        row.Children.Add(_fieldChromeLabel);
-        row.Children.Add(_fieldChromeToday);
-        row.Children.Add(_fieldChromeClear);
+        _fieldChromeToday = MakeToolbarBtn("Today", "Insert today's date", InsertTodayIntoActiveField, fontSize: 10);
+        _fieldChromeToday.Visibility = Visibility.Collapsed;
+        panel.Children.Add(_fieldChromeToday);
 
         _fieldChromeBorder = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(220, 30, 30, 30)),
-            BorderBrush = AdobeBlue,
+            Child = panel,
+            Background = new SolidColorBrush(Color.FromRgb(35, 35, 35)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(3),
-            Height = 16,
-            Padding = new Thickness(2, 0, 2, 0),
-            Child = row,
+            CornerRadius = new CornerRadius(4),
+            Height = ToolbarH,
             IsHitTestVisible = true,
             Visibility = Visibility.Collapsed,
         };
-
-        Panel.SetZIndex(_fieldChromeBorder, 999);
+        Panel.SetZIndex(_fieldChromeBorder, 9999);
         FieldOverlayCanvas.Children.Add(_fieldChromeBorder);
+    }
+
+    private void AdjustActiveFieldFontSize(double delta)
+    {
+        if (_activeTb == null || _activeFieldInfo == null) return;
+        double newSize = Math.Clamp(_activeTb.FontSize + delta, 6, 72);
+        _activeTb.FontSize = newSize;
+        _fieldFontSizes[_activeFieldInfo.Name] = newSize;
+        _fieldAutoSize[_activeFieldInfo.Name] = false; // manual size overrides auto-fit
+    }
+
+    private void ClearActiveField()
+    {
+        if (_activeTb == null || _activeFieldInfo == null) return;
+        _activeTb.Text = string.Empty;
+        _vm?.UpdateFieldValue(_activeFieldInfo.Name, string.Empty);
+    }
+
+    private void RotateActiveField()
+    {
+        if (_activeTb == null || _activeFieldInfo == null) return;
+        int angle = (_fieldRotations.TryGetValue(_activeFieldInfo.Name, out var a) ? a : 0);
+        angle = (angle + 90) % 360;
+        _fieldRotations[_activeFieldInfo.Name] = angle;
+        _activeTb.LayoutTransform = angle == 0 ? Transform.Identity : new RotateTransform(angle);
+    }
+
+    private void ToggleActiveFieldAutoSize()
+    {
+        if (_activeTb == null || _activeFieldInfo == null) return;
+        bool next = !(_fieldAutoSize.TryGetValue(_activeFieldInfo.Name, out var cur) && cur);
+        _fieldAutoSize[_activeFieldInfo.Name] = next;
+        if (next) ApplyFieldAutoSize(_activeTb, _activeFieldInfo);
+    }
+
+    private void ApplyFieldAutoSize(TextBox tb, FormFieldInfo field)
+    {
+        double fit = Math.Clamp(tb.ActualHeight > 0 ? tb.ActualHeight * 0.6 : field.Height * Scale * 0.6, 6, 48);
+        tb.FontSize = fit;
+        _fieldFontSizes[field.Name] = fit;
+    }
+
+    private void InsertTodayIntoActiveField()
+    {
+        if (_activeTb == null || _activeFieldInfo == null) return;
+        var dateStr = DateTime.Today.ToString("MM/dd/yyyy");
+        _activeTb.Text = dateStr;
+        _vm?.UpdateFieldValue(_activeFieldInfo.Name, dateStr);
     }
 
     // ── Highlight annotation overlay ──────────────────────────────────────────

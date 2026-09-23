@@ -21,6 +21,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
     public DataTemplate? ImageTemplate    { get; set; }
     public DataTemplate? FreehandTemplate { get; set; }
     public DataTemplate? TableTemplate    { get; set; }
+    public DataTemplate? FormFieldTemplate { get; set; }
 
     public override DataTemplate? SelectTemplate(object item, DependencyObject container) => item switch
     {
@@ -31,6 +32,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
         ImageDesignElement                                      => ImageTemplate,
         FreehandDesignElement                                   => FreehandTemplate,
         TableDesignElement                                      => TableTemplate,
+        FormFieldDesignElement                                  => FormFieldTemplate,
         _                                                       => base.SelectTemplate(item, container)
     };
 }
@@ -57,6 +59,10 @@ public partial class DesignCanvas : UserControl
     // Selection handles (8 Thumb elements placed on SelectionOverlay)
     private readonly Thumb[] _handles = new Thumb[8];
     private readonly double _handleHalf = 5;
+
+    // Adobe-style mini toolbar shown above a text element while it's being edited
+    private Border? _textToolbar;
+    private const double TextToolbarH = 26;
 
     private DesignCanvasViewModel? VM => DataContext as DesignCanvasViewModel;
 
@@ -220,6 +226,7 @@ public partial class DesignCanvas : UserControl
             VM.AddElement(elem);
             _dragMode = DragMode.None;
             InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
             BeginTextEdit(elem);
             return;
         }
@@ -227,6 +234,26 @@ public partial class DesignCanvas : UserControl
         if (VM.ActiveTool is DesignTool.Table)
         {
             var elem = VM.CreateTableElement(pos.X, pos.Y);
+            VM.AddElement(elem);
+            _dragMode = DragMode.None;
+            InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
+            return;
+        }
+
+        FormFieldKind? fieldKind = VM.ActiveTool switch
+        {
+            DesignTool.TextField => FormFieldKind.Text,
+            DesignTool.Memo      => FormFieldKind.Memo,
+            DesignTool.Checkbox  => FormFieldKind.Checkbox,
+            DesignTool.Radio     => FormFieldKind.Radio,
+            DesignTool.ComboBox  => FormFieldKind.ComboBox,
+            DesignTool.Signature => FormFieldKind.Signature,
+            _                    => null
+        };
+        if (fieldKind.HasValue)
+        {
+            var elem = VM.CreateFormFieldElement(fieldKind.Value, pos.X, pos.Y);
             VM.AddElement(elem);
             _dragMode = DragMode.None;
             InteractionCanvas.ReleaseMouseCapture();
@@ -447,6 +474,7 @@ public partial class DesignCanvas : UserControl
                 tb.Focus();
                 tb.SelectAll();
                 tb.LostFocus += (_, _) => FinishTextEdit();
+                ShowTextToolbar(elem);
             }
         });
     }
@@ -456,6 +484,76 @@ public partial class DesignCanvas : UserControl
         if (VM == null) return;
         foreach (var e in VM.Elements.OfType<TextDesignElement>())
             e.IsEditing = false;
+        HideTextToolbar();
+    }
+
+    // ── Text mini toolbar (Adobe-style: font size, delete) ─────────────────────
+
+    private void ShowTextToolbar(TextDesignElement elem)
+    {
+        if (_textToolbar == null)
+        {
+            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+            panel.Children.Add(MakeTextToolbarBtn("A", "Decrease font size", () =>
+            {
+                if (VM?.SelectedElement is TextDesignElement t) t.FontSize = Math.Max(6, t.FontSize - 1);
+            }, fontSize: 10));
+            panel.Children.Add(MakeTextToolbarBtn("A", "Increase font size", () =>
+            {
+                if (VM?.SelectedElement is TextDesignElement t) t.FontSize = Math.Min(144, t.FontSize + 1);
+            }, fontSize: 14));
+            panel.Children.Add(MakeTextToolbarBtn("🗑", "Delete this text element", () =>
+            {
+                FinishTextEdit();
+                VM?.DeleteSelected();
+            }));
+
+            _textToolbar = new Border
+            {
+                Child = panel,
+                Background = new SolidColorBrush(Color.FromRgb(35, 35, 35)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Height = TextToolbarH,
+            };
+            Panel.SetZIndex(_textToolbar, 9999);
+        }
+
+        if (!SelectionOverlay.Children.Contains(_textToolbar))
+            SelectionOverlay.Children.Add(_textToolbar);
+
+        Canvas.SetLeft(_textToolbar, elem.X);
+        Canvas.SetTop(_textToolbar, Math.Max(0, elem.Y - TextToolbarH - 1));
+        _textToolbar.Visibility = Visibility.Visible;
+    }
+
+    private void HideTextToolbar()
+    {
+        if (_textToolbar != null) _textToolbar.Visibility = Visibility.Collapsed;
+    }
+
+    private static Border MakeTextToolbarBtn(string label, string tip, Action onClick, double fontSize = 12)
+    {
+        var border = new Border
+        {
+            Width = 26, Height = TextToolbarH,
+            Cursor = Cursors.Hand,
+            ToolTip = tip,
+            Background = Brushes.Transparent,
+            Child = new TextBlock
+            {
+                Text = label,
+                FontSize = fontSize,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        };
+        border.MouseEnter += (_, _) => border.Background = new SolidColorBrush(Color.FromRgb(60, 60, 60));
+        border.MouseLeave += (_, _) => border.Background = Brushes.Transparent;
+        border.MouseLeftButtonDown += (_, e) => { onClick(); e.Handled = true; };
+        return border;
     }
 
     // ── Hit testing ───────────────────────────────────────────────────────────

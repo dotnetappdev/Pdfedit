@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
+using iText.Forms;
+using iText.Forms.Fields;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -45,9 +47,10 @@ public static class DesignExportService
         }
 
         // Draw elements ordered by ZOrder
+        var radioGroups = new Dictionary<string, PdfButtonFormField>();
         foreach (var elem in elements.OrderBy(e => e.ZOrder))
         {
-            DrawElement(elem, pdfCanvas, document, pageWidthPt, pageHeightPt);
+            DrawElement(elem, pdfCanvas, document, pdf, page, pageWidthPt, pageHeightPt, radioGroups);
         }
 
         document.Close();
@@ -57,8 +60,11 @@ public static class DesignExportService
         DesignElement elem,
         PdfCanvas pdfCanvas,
         Document doc,
+        PdfDocument pdf,
+        PdfPage page,
         double pageW,
-        double pageH)
+        double pageH,
+        Dictionary<string, PdfButtonFormField> radioGroups)
     {
         // WPF origin is top-left (y↓); PDF origin is bottom-left (y↑).
         // Flip: pdf_y = pageH - (elem.Y + elem.Height)
@@ -97,6 +103,10 @@ public static class DesignExportService
             case TableDesignElement tb:
                 DrawTable(tb, pdfCanvas, doc, x, y, w, h);
                 break;
+
+            case FormFieldDesignElement f:
+                DrawFormField(f, doc, pdf, page, x, y, w, h, radioGroups);
+                break;
         }
     }
 
@@ -113,11 +123,14 @@ public static class DesignExportService
 
             var font     = PdfFontFactory.CreateFont(fontName);
             var color    = ToDeviceRgb(t.Color);
+            // Wrap=false: lay out on a much wider box than the visible element so lines
+            // never break — PDF has no literal "no-wrap" flag for free-standing text.
+            float layoutW = t.Wrap ? w : Math.Max(w, 2000f);
             var para     = new Paragraph(t.Text)
                 .SetFont(font)
                 .SetFontSize((float)t.FontSize)
                 .SetFontColor(color)
-                .SetFixedPosition(x, y, w)
+                .SetFixedPosition(x, y, layoutW)
                 .SetHeight(h)
                 .SetTextAlignment(ToITextAlignment(t.Alignment));
 
@@ -299,6 +312,94 @@ public static class DesignExportService
             }
         }
         catch { /* ignore */ }
+    }
+
+    // ── Form fields ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Creates a real AcroForm field for the placeholder and, when the label sits to the
+    /// left/right of the field, burns the caption in as static (non-editable) text next to it.
+    /// A "Placeholder" label is instead attached as the field's tooltip (PDF /TU), which the
+    /// app's own Live View already shows as a hint when the field is otherwise unlabeled.
+    /// </summary>
+    private static void DrawFormField(
+        FormFieldDesignElement f, Document doc, PdfDocument pdf, PdfPage page,
+        float x, float y, float w, float h,
+        Dictionary<string, PdfButtonFormField> radioGroups)
+    {
+        try
+        {
+            // Split the element's own footprint into a label region and the field box itself.
+            var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+            float labelW = f.LabelPosition is FieldLabelPosition.Left or FieldLabelPosition.Right
+                ? Math.Min(w * 0.4f, (float)font.GetWidth(f.Label, 10f) + 8f)
+                : 0f;
+            float gap = f.LabelPosition is FieldLabelPosition.Left or FieldLabelPosition.Right
+                ? (float)f.LabelOffset : 0f;
+            float fieldX = f.LabelPosition == FieldLabelPosition.Left ? x + labelW + gap : x;
+            float fieldW = Math.Max(4f, w - labelW - gap);
+
+            if (labelW > 0 && !string.IsNullOrEmpty(f.Label))
+            {
+                float labelX = f.LabelPosition == FieldLabelPosition.Left ? x : x + fieldW + gap;
+                doc.Add(new Paragraph(f.Label)
+                    .SetFont(font).SetFontSize(10f).SetFontColor(new DeviceRgb(0, 0, 0))
+                    .SetFixedPosition(labelX, y, labelW)
+                    .SetHeight(h)
+                    .SetMargin(0).SetPadding(0));
+            }
+
+            var rect = new Rectangle(fieldX, y, fieldW, h);
+            var form = PdfAcroForm.GetAcroForm(pdf, true);
+            string fieldName = string.IsNullOrWhiteSpace(f.FieldName) ? f.FieldKind.ToString() : f.FieldName;
+            string? tooltip = f.LabelPosition == FieldLabelPosition.Placeholder ? f.Label : null;
+
+            PdfFormField? field = f.FieldKind switch
+            {
+                FormFieldKind.Text => new TextFormFieldBuilder(pdf, fieldName)
+                    .SetWidgetRectangle(rect).CreateText(),
+                FormFieldKind.Memo => new TextFormFieldBuilder(pdf, fieldName)
+                    .SetWidgetRectangle(rect).CreateMultilineText(),
+                FormFieldKind.Checkbox => new CheckBoxFormFieldBuilder(pdf, fieldName)
+                    .SetWidgetRectangle(rect).CreateCheckBox(),
+                FormFieldKind.ComboBox => BuildCombo(pdf, fieldName, rect, f.Options),
+                FormFieldKind.Signature => new SignatureFormFieldBuilder(pdf, fieldName)
+                    .SetWidgetRectangle(rect).CreateSignature(),
+                FormFieldKind.Radio => null, // handled separately below (group + button)
+                _ => null
+            };
+
+            if (f.FieldKind == FormFieldKind.Radio)
+            {
+                if (!radioGroups.TryGetValue(fieldName, out var group))
+                {
+                    group = new RadioFormFieldBuilder(pdf, fieldName).CreateRadioGroup();
+                    form.AddField(group, page);
+                    radioGroups[fieldName] = group;
+                }
+                var widget = new RadioFormFieldBuilder(pdf, fieldName)
+                    .CreateRadioButton(string.IsNullOrEmpty(f.Label) ? "Yes" : f.Label, rect);
+                group.AddKid(widget);
+                if (tooltip != null) group.Put(PdfName.TU, new PdfString(tooltip));
+                return;
+            }
+
+            if (field == null) return;
+
+            if (f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo)
+                field.SetFont(font).SetFontSize(10f);
+            field.SetRequired(f.Required);
+            if (tooltip != null) field.Put(PdfName.TU, new PdfString(tooltip));
+            form.AddField(field, page);
+        }
+        catch { /* skip a field that fails to build rather than aborting the whole export */ }
+    }
+
+    private static PdfFormField BuildCombo(PdfDocument pdf, string fieldName, Rectangle rect, IReadOnlyList<string> options)
+    {
+        var builder = new ChoiceFormFieldBuilder(pdf, fieldName).SetWidgetRectangle(rect);
+        if (options.Count > 0) builder.SetOptions(options.ToArray());
+        return builder.CreateComboBox();
     }
 
     // ── Color conversion ──────────────────────────────────────────────────────
