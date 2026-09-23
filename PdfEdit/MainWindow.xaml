@@ -2297,6 +2297,26 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Check ✓"
+                                   Tag="Checkmark" Click="DesignTool_Click"
+                                   ToolTip="Insert a checkmark (✓)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Insert checkmark">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="✓" FontSize="14" Foreground="#007A45"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="X Mark ✗"
+                                   Tag="XMark" Click="DesignTool_Click"
+                                   ToolTip="Insert an X mark (✗)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Insert X mark">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="✗" FontSize="14" Foreground="#C0392B"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text formatting -->

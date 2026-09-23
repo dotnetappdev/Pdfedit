@@ -8,7 +8,7 @@ namespace PdfEdit.Models;
 
 public enum DesignTool
 {
-    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table
+    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table, Checkmark, XMark
 }
 
 public enum DesignElementType

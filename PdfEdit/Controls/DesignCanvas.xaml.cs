@@ -270,6 +270,22 @@ public partial class DesignCanvas : UserControl
             VM.ActiveTool = DesignTool.Select;
             return;
         }
+
+        if (VM.ActiveTool is DesignTool.Checkmark or DesignTool.XMark)
+        {
+            bool isCheck = VM.ActiveTool == DesignTool.Checkmark;
+            var elem = VM.CreateTextElement(pos.X, pos.Y);
+            elem.Text      = isCheck ? "✓" : "✗";
+            elem.FontSize  = 24;
+            elem.Color     = isCheck ? Color.FromRgb(0, 122, 69) : Color.FromRgb(192, 57, 43);
+            elem.Width     = 40;
+            elem.Height    = 40;
+            VM.AddElement(elem);
+            _dragMode = DragMode.None;
+            InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
+            return;
+        }
     }
 
     private void InteractionCanvas_MouseMove(object sender, MouseEventArgs e)
@@ -768,7 +784,7 @@ public partial class DesignCanvas : UserControl
             DesignTool.Text      => Cursors.IBeam,
             DesignTool.Pen       => Cursors.Pen,
             DesignTool.Rectangle or DesignTool.Ellipse or DesignTool.Line or DesignTool.Arrow => Cursors.Cross,
-            DesignTool.Image or DesignTool.Table => Cursors.Cross,
+            DesignTool.Image or DesignTool.Table or DesignTool.Checkmark or DesignTool.XMark => Cursors.Cross,
             _ => HitTestElement(pos) != null && !(HitTestElement(pos)?.IsLocked ?? false) ? Cursors.SizeAll : Cursors.Arrow
         };
     }
@@ -875,6 +891,8 @@ public partial class DesignCanvas : UserControl
                 Key.P => DesignTool.Pen,
                 Key.I => DesignTool.Image,
                 Key.B => DesignTool.Table,
+                Key.K => DesignTool.Checkmark,
+                Key.X => DesignTool.XMark,
                 _     => null
             };
             if (tool.HasValue) { VM.ActiveTool = tool.Value; e.Handled = true; }

@@ -177,6 +177,8 @@ public partial class MainWindow : RibbonWindow
             "Pen"       => DesignTool.Pen,
             "Image"     => DesignTool.Image,
             "Table"     => DesignTool.Table,
+            "Checkmark" => DesignTool.Checkmark,
+            "XMark"     => DesignTool.XMark,
             _           => DesignTool.Select
         };
         DesignCanvasControl?.Focus();
