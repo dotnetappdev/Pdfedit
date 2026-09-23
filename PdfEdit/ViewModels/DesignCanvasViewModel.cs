@@ -112,14 +112,16 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SelectedIsText));
             OnPropertyChanged(nameof(SelectedIsShape));
+            OnPropertyChanged(nameof(SelectedIsTable));
             NotifyPositionProperties();
             SyncFormatFromSelection();
         }
     }
 
-    public bool HasSelection  => _selectedElement != null;
+    public bool HasSelection    => _selectedElement != null;
     public bool SelectedIsText  => _selectedElement is TextDesignElement;
     public bool SelectedIsShape => _selectedElement is ShapeDesignElement;
+    public bool SelectedIsTable => _selectedElement is TableDesignElement;
 
     // ── Format properties ─────────────────────────────────────────────────────
 
@@ -893,6 +895,80 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     {
         X = x, Y = y, Rows = rows, Columns = cols, Width = 300, Height = 120
     };
+
+    // ── Table row / column context (set by DesignCanvas on right-click) ───────
+
+    public int TableContextRow    { get; set; } = 0;
+    public int TableContextColumn { get; set; } = 0;
+
+    public void TableInsertRowBefore()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.InsertRowBefore(TableContextRow);
+    }
+
+    public void TableInsertRowAfter()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.InsertRowAfter(TableContextRow);
+    }
+
+    public void TableDeleteRow()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.DeleteRow(TableContextRow);
+    }
+
+    public void TableInsertColumnBefore()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.InsertColumnBefore(TableContextColumn);
+    }
+
+    public void TableInsertColumnAfter()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.InsertColumnAfter(TableContextColumn);
+    }
+
+    public void TableDeleteColumn()
+    {
+        if (_selectedElement is not TableDesignElement t) return;
+        SaveUndo();
+        t.DeleteColumn(TableContextColumn);
+    }
+
+    // ── Palette / theme ───────────────────────────────────────────────────────
+
+    public void ApplyPalette(DesignPalette palette)
+    {
+        SaveUndo();
+        PageBackground = palette.Background;
+        foreach (var element in Elements)
+        {
+            switch (element)
+            {
+                case TextDesignElement t:
+                    t.Color = palette.TextPrimary;
+                    break;
+                case ShapeDesignElement sh:
+                    if (sh.FillColor.A > 0)
+                        sh.FillColor = Color.FromArgb(sh.FillColor.A, palette.Secondary.R, palette.Secondary.G, palette.Secondary.B);
+                    sh.StrokeColor = palette.Border;
+                    break;
+                case TableDesignElement tb:
+                    tb.HeaderBgColor = palette.Primary;
+                    tb.CellBgColor   = Color.FromArgb(200, palette.Background.R, palette.Background.G, palette.Background.B);
+                    tb.BorderColor   = palette.Border;
+                    break;
+            }
+        }
+    }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

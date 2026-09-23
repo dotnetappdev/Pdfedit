@@ -186,6 +186,69 @@ public class TableDesignElement : DesignElement
         }
     }
 
+    private List<string> EmptyRow()
+    {
+        var r = new List<string>();
+        for (int i = 0; i < _columns; i++) r.Add(string.Empty);
+        return r;
+    }
+
+    public void InsertRowBefore(int rowIndex)
+    {
+        rowIndex = Math.Clamp(rowIndex, 0, _rows);
+        _cells.Insert(rowIndex, EmptyRow());
+        _rows++;
+        OnPropertyChanged(nameof(Rows));
+        OnPropertyChanged(nameof(Cells));
+    }
+
+    public void InsertRowAfter(int rowIndex)
+    {
+        int at = Math.Clamp(rowIndex + 1, 0, _rows);
+        _cells.Insert(at, EmptyRow());
+        _rows++;
+        OnPropertyChanged(nameof(Rows));
+        OnPropertyChanged(nameof(Cells));
+    }
+
+    public void DeleteRow(int rowIndex)
+    {
+        if (_rows <= 1) return;
+        rowIndex = Math.Clamp(rowIndex, 0, _rows - 1);
+        _cells.RemoveAt(rowIndex);
+        _rows--;
+        OnPropertyChanged(nameof(Rows));
+        OnPropertyChanged(nameof(Cells));
+    }
+
+    public void InsertColumnBefore(int colIndex)
+    {
+        colIndex = Math.Clamp(colIndex, 0, _columns);
+        foreach (var row in _cells) row.Insert(colIndex, string.Empty);
+        _columns++;
+        OnPropertyChanged(nameof(Columns));
+        OnPropertyChanged(nameof(Cells));
+    }
+
+    public void InsertColumnAfter(int colIndex)
+    {
+        int at = Math.Clamp(colIndex + 1, 0, _columns);
+        foreach (var row in _cells) row.Insert(at, string.Empty);
+        _columns++;
+        OnPropertyChanged(nameof(Columns));
+        OnPropertyChanged(nameof(Cells));
+    }
+
+    public void DeleteColumn(int colIndex)
+    {
+        if (_columns <= 1) return;
+        colIndex = Math.Clamp(colIndex, 0, _columns - 1);
+        foreach (var row in _cells) row.RemoveAt(colIndex);
+        _columns--;
+        OnPropertyChanged(nameof(Columns));
+        OnPropertyChanged(nameof(Cells));
+    }
+
     public TableDesignElement()
     {
         Width = 300;
@@ -197,3 +260,36 @@ public class TableDesignElement : DesignElement
 }
 
 public enum DesignPageSize { A4, Letter, A3, Custom }
+
+public record DesignPalette(
+    string Name,
+    Color Primary,
+    Color Secondary,
+    Color Accent,
+    Color TextPrimary,
+    Color Background,
+    Color Border
+)
+{
+    public static readonly IReadOnlyList<DesignPalette> BuiltIn = new[]
+    {
+        new DesignPalette(
+            Name:        "Ocean Blue",
+            Primary:     Color.FromRgb(13,  71,  161),
+            Secondary:   Color.FromRgb(21,  101, 192),
+            Accent:      Color.FromRgb(3,   169, 244),
+            TextPrimary: Color.FromRgb(18,  18,  18),
+            Background:  Color.FromRgb(227, 242, 253),
+            Border:      Color.FromRgb(100, 181, 246)
+        ),
+        new DesignPalette(
+            Name:        "Warm Earth",
+            Primary:     Color.FromRgb(121, 85,  72),
+            Secondary:   Color.FromRgb(161, 136, 127),
+            Accent:      Color.FromRgb(255, 152, 0),
+            TextPrimary: Color.FromRgb(33,  33,  33),
+            Background:  Color.FromRgb(250, 245, 240),
+            Border:      Color.FromRgb(188, 170, 164)
+        ),
+    };
+}

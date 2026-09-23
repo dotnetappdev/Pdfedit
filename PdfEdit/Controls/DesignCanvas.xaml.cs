@@ -412,7 +412,17 @@ public partial class DesignCanvas : UserControl
         if (VM == null) return;
         var pos = e.GetPosition(InteractionCanvas);
         var hit = HitTestElement(pos);
-        if (hit != null) VM.SelectedElement = hit;
+        if (hit != null)
+        {
+            VM.SelectedElement = hit;
+            if (hit is TableDesignElement tb)
+            {
+                double relX = pos.X - tb.X;
+                double relY = pos.Y - tb.Y;
+                VM.TableContextRow    = Math.Clamp((int)(relY / (tb.Height / tb.Rows)),    0, tb.Rows    - 1);
+                VM.TableContextColumn = Math.Clamp((int)(relX / (tb.Width  / tb.Columns)), 0, tb.Columns - 1);
+            }
+        }
     }
 
     // Double-click to edit text
@@ -626,6 +636,13 @@ public partial class DesignCanvas : UserControl
 
     // ── Context menu handlers ─────────────────────────────────────────────────
 
+    private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        bool isTable = VM?.SelectedIsTable ?? false;
+        SepTable.Visibility      = isTable ? Visibility.Visible : Visibility.Collapsed;
+        MenuItemTable.Visibility = isTable ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void Copy_Click(object sender, RoutedEventArgs e)      => VM?.CopySelected();
     private void Paste_Click(object sender, RoutedEventArgs e)     => VM?.PasteClipboard();
     private void Duplicate_Click(object sender, RoutedEventArgs e) => VM?.DuplicateSelected();
@@ -636,6 +653,20 @@ public partial class DesignCanvas : UserControl
     private void LockElement_Click(object sender, RoutedEventArgs e)  { if (VM?.SelectedElement != null) VM.SelectedElement.IsLocked = !VM.SelectedElement.IsLocked; }
     private void DeleteElement_Click(object sender, RoutedEventArgs e) { VM?.DeleteSelected(); HideHandles(); }
     private void SelectAll_Click(object sender, RoutedEventArgs e)    => VM?.SelectAll();
+
+    // Table row / column
+    private void TableInsertRowBefore_Click(object sender, RoutedEventArgs e)    => VM?.TableInsertRowBefore();
+    private void TableInsertRowAfter_Click(object sender, RoutedEventArgs e)     => VM?.TableInsertRowAfter();
+    private void TableDeleteRow_Click(object sender, RoutedEventArgs e)          => VM?.TableDeleteRow();
+    private void TableInsertColumnBefore_Click(object sender, RoutedEventArgs e) => VM?.TableInsertColumnBefore();
+    private void TableInsertColumnAfter_Click(object sender, RoutedEventArgs e)  => VM?.TableInsertColumnAfter();
+    private void TableDeleteColumn_Click(object sender, RoutedEventArgs e)       => VM?.TableDeleteColumn();
+
+    // Palettes
+    private void ApplyPaletteOceanBlue_Click(object sender, RoutedEventArgs e)
+        => VM?.ApplyPalette(DesignPalette.BuiltIn[0]);
+    private void ApplyPaletteWarmEarth_Click(object sender, RoutedEventArgs e)
+        => VM?.ApplyPalette(DesignPalette.BuiltIn[1]);
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
