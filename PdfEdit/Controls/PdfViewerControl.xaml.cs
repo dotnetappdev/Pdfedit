@@ -18,7 +18,7 @@ public partial class PdfViewerControl : UserControl
 {
     private MainViewModel? _vm;
 
-    private double Scale => PdfRenderService.PointsToDips * (_vm?.Zoom ?? 1.0);
+    private double Scale => RendererFactory.PointsToDips * (_vm?.Zoom ?? 1.0);
 
     // Acrobat-style form-field appearance brushes (frozen for reuse across fields).
     private static readonly Brush FieldFillBrush = Freeze(Color.FromArgb(60, 90, 160, 255));
@@ -193,7 +193,7 @@ public partial class PdfViewerControl : UserControl
         switch (e.PropertyName)
         {
             case nameof(MainViewModel.CurrentFontSize):
-                _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / PdfRenderService.PointsToDips;
+                _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / RendererFactory.PointsToDips;
                 _focusedAnnotation.FontSize = _vm.CurrentFontSize;
                 break;
             case nameof(MainViewModel.CurrentFontFamily):
@@ -612,7 +612,8 @@ public partial class PdfViewerControl : UserControl
         ShowLoading(true);
         try
         {
-            var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom);
+            double dpiScale = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+            var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom, dpiScale);
             PageImage.Source = bmp;
             HideRenderDiagnostic();
 
@@ -623,7 +624,7 @@ public partial class PdfViewerControl : UserControl
                 ShowRenderDiagnostic($"Rendered page is degenerate ({w}×{h}px). Zoom={_vm.Zoom:F3}, PageIndex={_vm.CurrentPageIndex}.");
             else if (IsBitmapBlank(bmp))
                 ShowRenderDiagnostic($"Bitmap decoded OK ({w}×{h}px, Zoom={_vm.Zoom:F3}) but every sampled pixel is blank/white — " +
-                    "the PDF rasterizer (Windows.Data.Pdf) returned an empty page, this is not a display/theme issue.");
+                    $"the PDF rasterizer ({(_vm.RenderService.RendersAnnotations ? "Pdfium" : "Windows.Data.Pdf")}) returned an empty page, this is not a display/theme issue.");
             FieldOverlayCanvas.Width = w;
             FieldOverlayCanvas.Height = h;
             HighlightCanvas.Width = w;
@@ -1545,7 +1546,7 @@ public partial class PdfViewerControl : UserControl
 
     private void ApplyAnnotationFormatting(FreeTextAnnotation ann, TextBox tb)
     {
-        double displayFontSize = ann.FontSize * Scale / PdfRenderService.PointsToDips;
+        double displayFontSize = ann.FontSize * Scale / RendererFactory.PointsToDips;
         tb.FontSize = Math.Max(8, displayFontSize);
         tb.FontFamily = new FontFamily(ann.FontFamily);
         tb.FontWeight = ann.IsBold ? FontWeights.Bold : FontWeights.Normal;
@@ -2782,7 +2783,7 @@ public partial class PdfViewerControl : UserControl
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
         double fontSize = _vm.CurrentFontSize * 2;
-        double displayFontSize = fontSize * Scale / PdfRenderService.PointsToDips;
+        double displayFontSize = fontSize * Scale / RendererFactory.PointsToDips;
         double defaultW = 32 * Scale;
         double defaultH = 32 * Scale;
 
@@ -2897,7 +2898,7 @@ public partial class PdfViewerControl : UserControl
         {
             Width = dispW, Height = dispH,
             Text = label,
-            FontSize = Math.Max(8, 18 * Scale / PdfRenderService.PointsToDips),
+            FontSize = Math.Max(8, 18 * Scale / RendererFactory.PointsToDips),
             FontWeight = FontWeights.Bold,
             FontFamily = new FontFamily("Arial"),
             Foreground = new SolidColorBrush(c),
@@ -2938,7 +2939,7 @@ public partial class PdfViewerControl : UserControl
         double defaultW = vertical ? 24 * Scale : 140 * Scale;
         double defaultH = vertical ? 100 * Scale : 28 * Scale;
 
-        double displayFontSize = _vm.CurrentFontSize * Scale / PdfRenderService.PointsToDips;
+        double displayFontSize = _vm.CurrentFontSize * Scale / RendererFactory.PointsToDips;
 
         var tb = new TextBox
         {

@@ -70,6 +70,33 @@
                                          AutomationProperties.Name="High contrast theme"/>
                         </StackPanel>
 
+                        <TextBlock Style="{StaticResource SectionHead}" Text="PDF RENDER ENGINE"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <RadioButton x:Name="RbEngineCustom" Content="Custom  (built-in C# engine — no native dependencies)"
+                                         GroupName="RenderEngine" Tag="Custom"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Margin="0,0,0,0" IsChecked="True"
+                                         Checked="RenderEngine_Checked"
+                                         AutomationProperties.Name="Custom built-in render engine"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <RadioButton x:Name="RbEnginePdfium" Content="Pdfium  (Chrome/Adobe quality, requires native DLL)"
+                                         GroupName="RenderEngine" Tag="Pdfium"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Checked="RenderEngine_Checked"
+                                         AutomationProperties.Name="Pdfium render engine"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton x:Name="RbEngineWinRT" Content="WinRT  (Windows built-in, legacy fallback)"
+                                         GroupName="RenderEngine" Tag="WinRT"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Checked="RenderEngine_Checked"
+                                         AutomationProperties.Name="WinRT render engine"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{DynamicResource SubtleForegroundBrush}"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,0,0,16"
+                                   Text="Custom: pure C# engine — zero native dependencies, handles FlateDecode/JPEG/PNG streams and the 14 standard fonts. Pdfium: Chrome/Adobe quality with sub-pixel hinting (requires Docnet.Core). Restart not required; takes effect on next file open."/>
+
                         <TextBlock Style="{StaticResource SectionHead}" Text="UI SCALE"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Style="{StaticResource SettingLabel}" Text="Scale factor:"/>

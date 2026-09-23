@@ -61,9 +61,13 @@ Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the W
 |---|---|
 | ![AI Features](docs/screenshots/ai-features.png) | ![Accessibility Settings](docs/screenshots/settings-accessibility.png) |
 
-| Ribbon Icons | Form Filling |
+| Render Engine Settings | Form Filling |
 |---|---|
-| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | ![Form Filling](docs/screenshots/form-filling.png) |
+| ![Render Engine Settings](docs/screenshots/settings-render-engine.svg) | ![Form Filling](docs/screenshots/form-filling.png) |
+
+| Ribbon Icons | |
+|---|---|
+| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | |
 
 ---
 
@@ -71,6 +75,7 @@ Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the W
 
 | Feature | PdfEdit | Adobe Acrobat | PDFfiller | Foxit PDF |
 |---------|---------|---------------|-----------|-----------|
+| Built-in pure-C# PDF renderer (zero native deps) | ✅ | ❌ | ❌ | ❌ |
 | Design canvas (build PDF from scratch) | ✅ | ✅ | ❌ | ✅ |
 | AI Smart Fill (auto-fill all fields) | ✅ Claude + GPT | ❌ | ❌ | ❌ |
 | Built-in templates (Invoice, Letter…) | ✅ 7 templates | Limited | ✅ | ❌ |
@@ -350,6 +355,25 @@ Embed and manage attached files within the PDF document:
 
 ---
 
+### Render Engine
+
+PdfEdit ships three interchangeable PDF renderers, selectable in **Settings → Render Engine**:
+
+| Engine | Technology | Quality | Dependencies |
+|--------|-----------|---------|--------------|
+| **Custom (default)** | Pure C# — built-in PDF parser and renderer | Native WPF vector/text output | None (zero native DLLs) |
+| **Pdfium** | Google Chrome's PDF engine via Docnet.Core | Chrome/Adobe-quality rasterisation | `Docnet.Core` NuGet + native DLL |
+| **Windows (WinRT)** | `Windows.Data.Pdf` OS API | Good for basic documents | Built-in (Windows 10+) |
+
+The Custom engine is a full Adobe-spec PDF implementation written entirely in C#:
+- **Parser** — xref tables, xref streams (PDF 1.5+), object streams (ObjStm), cross-reference caching
+- **Stream filters** — FlateDecode (zlib + all 5 PNG predictors + TIFF horizontal), LZW, ASCII85, ASCIIHex, RunLength, DCT/JPX passthrough
+- **Content renderer** — all standard path, paint, color, text, and XObject operators
+- **Font handling** — Standard-14 font map, ToUnicode CMap, WinAnsi (CP1252), /Differences glyph table
+- **Images** — JPEG (native passthrough), raw RGB/CMYK/Gray bitmaps, inline images (BI…ID…EI)
+
+---
+
 ### UI & Themes
 
 - **Three Live Themes** — Dark, Light, and High Contrast (no restart required)
@@ -462,7 +486,14 @@ dotnet test
 
 | Layer | Description |
 |-------|-------------|
-| `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` |
+| `Engine/CustomPdfEngine` | Pure-C# PDF renderer — implements `IPdfRenderer`; parses and rasterises PDF pages with no native dependencies |
+| `Engine/PdfParser` | PDF binary parser — xref tables, xref streams (PDF 1.5+), object streams, stream filter chain, page tree traversal |
+| `Engine/PdfLexer` | Low-level PDF tokeniser — objects, dicts, arrays, strings, names, inline images |
+| `Engine/PdfContentRenderer` | Content stream interpreter — path operators, colour spaces, text (GlyphRun), XObjects, inline images |
+| `Engine/PdfStreamFilter` | FlateDecode (zlib + PNG predictors + TIFF predictor), LZW, ASCII85, ASCIIHex, RunLength |
+| `Engine/PdfFont` | Font resolution — Standard-14 map, ToUnicode CMap, WinAnsi CP1252, /Differences glyph names |
+| `Engine/PdfGraphicsState` | Graphics state stack — CTM, colour, line attributes, text state |
+| `Services/PdfRenderService` | Renders pages to `BitmapSource` via `Windows.Data.Pdf` (WinRT fallback engine) |
 | `Services/PdfFormService` | Reads/writes AcroForm fields; splits, merges, reorders, rotates, inserts pages; watermark; page numbers; header/footer; Bates numbers; crop; compress; metadata; bookmarks; redaction; encryption; form field creation; text export; PDF/A export; hyperlinks; sticky notes via iText7 |
 | `Services/PdfTextExtractorService` | Extracts text from PDF pages via iText7; cached per page for AI context |
 | `Services/AiProviderService` | Streaming HTTP client for Claude and OpenAI; document analysis prompt builder |
@@ -505,7 +536,9 @@ dotnet test
 | `itext7` v8 | PDF AcroForm, text extraction, page manipulation, canvas drawing, annotation creation |
 | `Fluent.Ribbon` v10 | Office-style ribbon toolbar |
 | `AvalonDock` (Dirkster) v5 | Dockable panels |
-| `Windows.Data.Pdf` (built-in) | High-quality PDF page rendering |
+| `Engine/*` (built-in) | **Default renderer** — pure-C# PDF parser and rasteriser; zero native dependencies |
+| `Docnet.Core` v2.6 | Optional Pdfium wrapper (Chrome/Adobe-quality rendering; selectable in Settings) |
+| `Windows.Data.Pdf` (built-in) | WinRT fallback renderer (selectable in Settings) |
 | `System.Text.Json` (built-in) | Settings and AI API serialisation |
 | `xunit` v2 | Unit test framework |
 

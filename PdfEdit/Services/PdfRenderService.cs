@@ -10,7 +10,7 @@ namespace PdfEdit.Services;
 /// Renders PDF pages to WPF BitmapSource using Windows.Data.Pdf (built-in Windows PDF engine).
 /// Scale factor: PDF points * (96/72) = WPF DIPs at 100% zoom.
 /// </summary>
-public class PdfRenderService : IDisposable
+public class PdfRenderService : IPdfRenderer
 {
     private PdfDocument? _pdfDoc;
     private bool _disposed;
@@ -22,6 +22,9 @@ public class PdfRenderService : IDisposable
     public const double PointsToDips = DipsPerInch / PointsPerInch; // ~1.333
 
     public int PageCount => (int)(_pdfDoc?.PageCount ?? 0);
+
+    // WinRT does not bake annotations into the rasterized page bitmap.
+    public bool RendersAnnotations => false;
 
     public async Task LoadAsync(string absolutePath)
     {
@@ -43,7 +46,7 @@ public class PdfRenderService : IDisposable
     /// Renders a page to a frozen BitmapSource at the specified zoom level.
     /// zoom 1.0 = 96 DPI (matches WPF default DIP units).
     /// </summary>
-    public async Task<BitmapSource> RenderPageAsync(int pageIndex, double zoom = 1.0)
+    public async Task<BitmapSource> RenderPageAsync(int pageIndex, double zoom = 1.0, double dpiScale = 1.0)
     {
         await _renderLock.WaitAsync();
         try
@@ -83,6 +86,9 @@ public class PdfRenderService : IDisposable
             _renderLock.Release();
         }
     }
+
+    /// <summary>WinRT does not expose the page /Rotate value; always returns 0.</summary>
+    public int GetPageRotation(int pageIndex) => 0;
 
     /// <summary>
     /// Returns page size in PDF points (72 pts = 1 inch).
