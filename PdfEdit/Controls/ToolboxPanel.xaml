@@ -124,6 +124,9 @@
 
         <StackPanel Orientation="Vertical">
 
+            <!-- ══ PDF FILL & SIGN tools (visible in PDF mode) ════════════════ -->
+            <StackPanel Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}">
+
             <!-- Hand / pan -->
             <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Hand"
                          IsChecked="True" Checked="Tool_Checked"
@@ -396,6 +399,82 @@
                          AutomationProperties.Name="Eraser tool">
                 <TextBlock Style="{StaticResource Ico}" Text="&#xED60;"/>
             </RadioButton>
+
+            </StackPanel><!-- end PDF tools -->
+
+            <!-- ══ DESIGN CANVAS tools (visible in design mode) ═══════════════ -->
+            <StackPanel Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}">
+
+            <!-- Select -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Select"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Select — move and resize elements  (V)"
+                         AutomationProperties.Name="Design select tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE8B0;"/>
+            </RadioButton>
+
+            <!-- Text -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Text"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Text — add a text element  (T)"
+                         AutomationProperties.Name="Design text tool">
+                <TextBlock Style="{StaticResource Ico}" Text="T" FontFamily="Segoe UI" FontWeight="Bold" FontSize="15"
+                           Foreground="{DynamicResource ForegroundBrush}" TextAlignment="Center" VerticalAlignment="Center"/>
+            </RadioButton>
+
+            <Separator Style="{StaticResource FDiv}"/>
+
+            <!-- Rectangle -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Rectangle"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Rectangle — drag to draw  (R)"
+                         AutomationProperties.Name="Design rectangle tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE7C2;"/>
+            </RadioButton>
+
+            <!-- Ellipse -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Ellipse"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Ellipse — drag to draw  (E)"
+                         AutomationProperties.Name="Design ellipse tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEA3A;"/>
+            </RadioButton>
+
+            <!-- Arrow -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Arrow"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Arrow — drag to draw  (A)"
+                         AutomationProperties.Name="Design arrow tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEBD4;"/>
+            </RadioButton>
+
+            <!-- Pen / Freehand -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Pen"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Pen — freehand drawing  (P)"
+                         AutomationProperties.Name="Design pen tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEDC6;"/>
+            </RadioButton>
+
+            <Separator Style="{StaticResource FDiv}"/>
+
+            <!-- Image -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Image"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Image — insert an image  (I)"
+                         AutomationProperties.Name="Design image tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEB9F;"/>
+            </RadioButton>
+
+            <!-- Table -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Table"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Table — insert a table  (B)"
+                         AutomationProperties.Name="Design table tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE8A9;"/>
+            </RadioButton>
+
+            </StackPanel><!-- end Design tools -->
 
         </StackPanel>
     </Border>

@@ -2672,15 +2672,14 @@
                                                                    DataContext="{Binding DesignCanvas}"
                                                                    Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
                                                                    AutomationProperties.Name="Design canvas"/>
-                                            <!-- Floating Fill & Sign toolbar (PDF mode only) -->
+                                            <!-- Floating toolbar (PDF: fill & sign; Design: canvas tools) -->
                                             <controls:ToolboxPanel x:Name="FloatingToolbox"
                                                                    DataContext="{Binding}"
                                                                    HorizontalAlignment="Right"
                                                                    VerticalAlignment="Center"
                                                                    Margin="0,0,12,0"
                                                                    Panel.ZIndex="50"
-                                                                   Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                                   AutomationProperties.Name="Fill and Sign floating toolbar"/>
+                                                                   AutomationProperties.Name="Floating toolbar"/>
                                         </Grid>
                                     </Grid>
                                 </avalonDock:LayoutDocument>
