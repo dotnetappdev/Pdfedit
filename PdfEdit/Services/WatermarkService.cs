@@ -30,13 +30,12 @@ public static class WatermarkService
             var canvas = new PdfCanvas(page);
             canvas.SaveState();
 
-            var gs = new iText.Kernel.Pdf.PdfExtGState()
+            var gs = new iText.Kernel.Pdf.Extgstate.PdfExtGState()
                 .SetFillOpacity(opt.Opacity)
                 .SetStrokeOpacity(opt.Opacity);
             canvas.SetExtGState(gs);
 
             canvas.SetFillColor(color);
-            canvas.SetFont(font);
             canvas.SetFontAndSize(font, opt.FontSize);
 
             // Measure approximate text width to center it

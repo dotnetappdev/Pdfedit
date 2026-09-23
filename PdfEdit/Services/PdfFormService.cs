@@ -324,17 +324,19 @@ public class PdfFormService
                 ParseHexColor(hl.Color, out float r, out float g, out float b);
                 var color = new DeviceRgb(r, g, b);
 
-                iText.Kernel.Pdf.Annot.PdfAnnotation pdfHL;
+                float left = (float)hl.Left, bottom = (float)hl.Bottom;
+                float right = left + (float)hl.Width, top = bottom + (float)hl.Height;
+                var quadPoints = new float[] { left, top, right, top, left, bottom, right, bottom };
+
+                iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation pdfHL;
                 if (hl.Kind == Models.HighlightKind.Strikethrough)
-                    pdfHL = new iText.Kernel.Pdf.Annot.PdfStrikeOutAnnotation(rect);
+                    pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateStrikeout(rect, quadPoints);
                 else if (hl.Kind == Models.HighlightKind.Underline)
-                    pdfHL = new iText.Kernel.Pdf.Annot.PdfUnderlineAnnotation(rect);
+                    pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateUnderline(rect, quadPoints);
                 else
-                    pdfHL = new PdfHighlightAnnotation(rect);
+                    pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateHighLight(rect, quadPoints);
 
                 pdfHL.SetColor(color);
-                var extState = new iText.Kernel.Pdf.PdfExtGState().SetFillOpacity(hl.Opacity);
-                var extStateDict = extState.GetPdfObject();
                 pdfHL.Put(PdfName.CA, new PdfNumber(hl.Opacity));
                 page.AddAnnotation(pdfHL);
             }
@@ -387,7 +389,7 @@ public class PdfFormService
                     var annot = new PdfSquareAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
-                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
+                        annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     page.AddAnnotation(annot);
                 }
@@ -396,7 +398,7 @@ public class PdfFormService
                     var annot = new PdfCircleAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
-                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
+                        annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     page.AddAnnotation(annot);
                 }
@@ -415,7 +417,7 @@ public class PdfFormService
                     var annot = new PdfFreeTextAnnotation(boxRect, new PdfString(shape.CalloutText));
                     annot.SetColor(strokeColor);
                     if (ParseHexColor(shape.FillColor ?? "#FFFDE7", out float fr, out float fg, out float fb))
-                        annot.SetInteriorColor(new DeviceRgb(fr, fg, fb));
+                        annot.Put(PdfName.IC, new PdfArray(new float[] { fr, fg, fb }));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     // Callout line: tip below box center, knee at box bottom, attach at box bottom-center
                     float tipX = (float)(left + width / 2.0);
@@ -618,22 +620,6 @@ public class PdfFormService
         // Remaining pages
         if (splitAfter < srcTotal)
             srcDoc.CopyPagesTo(splitAfter + 1, srcTotal, outDoc);
-    }
-
-    /// <summary>Duplicates the page at pageIndex (0-based) and inserts it right after the original.</summary>
-    public void DuplicatePage(string sourcePath, string destPath, int pageIndex)
-    {
-        var tmpPage = System.IO.Path.GetTempFileName() + ".pdf";
-        try
-        {
-            ExtractPages(sourcePath, tmpPage, new[] { pageIndex });
-            InsertPdfAt(sourcePath, tmpPage, destPath, pageIndex); // inserts after pageIndex (0-based)
-        }
-        finally
-        {
-            if (System.IO.File.Exists(tmpPage))
-                System.IO.File.Delete(tmpPage);
-        }
     }
 
     /// <summary>Splits each page of sourcePath into a separate PDF in outputFolder.</summary>
@@ -1137,7 +1123,7 @@ public class PdfFormService
         var rect = new Rectangle(left, bottom, width, height);
         var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
 
-        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
+        var field = new iText.Forms.Fields.TextFormFieldBuilder(pdf, fieldName)
             .SetWidgetRectangle(rect)
             .CreateText();
         field.SetValue(defaultValue);
@@ -1161,7 +1147,7 @@ public class PdfFormService
         var page = pdf.GetPage(pageNumber);
         var rect = new Rectangle(left, bottom, size, size);
 
-        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
+        var field = new iText.Forms.Fields.CheckBoxFormFieldBuilder(pdf, fieldName)
             .SetWidgetRectangle(rect)
             .CreateCheckBox();
         if (defaultChecked) field.SetValue("Yes");
@@ -1185,13 +1171,13 @@ public class PdfFormService
         var rect = new Rectangle(left, bottom, width, height);
         var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
 
-        var field = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, fieldName)
-            .SetWidgetRectangle(rect)
-            .CreateComboBox();
-        field.SetFont(font).SetFontSize(fontSize);
         var choiceList = choices.ToList();
+        var builder = new iText.Forms.Fields.ChoiceFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(rect);
         if (choiceList.Count > 0)
-            (field as iText.Forms.Fields.PdfChoiceFormField)?.SetOptions(choiceList.ToArray());
+            builder.SetOptions(choiceList.ToArray());
+        var field = builder.CreateComboBox();
+        field.SetFont(font).SetFontSize(fontSize);
         form.AddField(field, page);
     }
 
@@ -1212,14 +1198,12 @@ public class PdfFormService
         PdfButtonFormField? group = form.GetField(groupName) as PdfButtonFormField;
         if (group == null)
         {
-            group = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, groupName)
-                .SetWidgetRectangle(rect)
+            group = new iText.Forms.Fields.RadioFormFieldBuilder(pdf, groupName)
                 .CreateRadioGroup();
             form.AddField(group, page);
         }
-        var widget = new iText.Forms.Fields.PdfFormFieldBuilder(pdf, groupName)
-            .SetWidgetRectangle(rect)
-            .CreateRadioButton(onValue, true);
+        var widget = new iText.Forms.Fields.RadioFormFieldBuilder(pdf, groupName)
+            .CreateRadioButton(onValue, rect);
         group.AddKid(widget);
     }
 
@@ -1347,7 +1331,7 @@ public class PdfFormService
             {
                 var stream = ef.GetAsStream(PdfName.F) ?? ef.GetAsStream(new PdfName("UF"));
                 if (stream != null)
-                    size = stream.GetAsNumber(PdfName.DL)?.LongValue() ?? 0;
+                    size = stream.GetAsDictionary(PdfName.Params)?.GetAsNumber(PdfName.Size)?.LongValue() ?? 0;
             }
             var descObj = fileSpec.GetAsString(new PdfName("Desc"));
             if (descObj != null) desc = descObj.ToUnicodeString();

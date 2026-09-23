@@ -8,12 +8,25 @@ namespace PdfEdit.Models;
 
 public enum DesignTool
 {
-    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table, Checkmark, XMark
+    Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table, Checkmark, XMark,
+    TextField, Memo, Checkbox, Radio, ComboBox, Signature
 }
 
 public enum DesignElementType
 {
-    Text, Rectangle, Ellipse, Line, Arrow, Image, Freehand, Table
+    Text, Rectangle, Ellipse, Line, Arrow, Image, Freehand, Table, FormField
+}
+
+/// <summary>The kind of AcroForm field a placed FormFieldDesignElement will become on export.</summary>
+public enum FormFieldKind
+{
+    Text, Memo, Checkbox, Radio, ComboBox, Signature
+}
+
+/// <summary>Where a form field's caption label is drawn relative to the field box.</summary>
+public enum FieldLabelPosition
+{
+    None, Left, Right, Placeholder
 }
 
 public abstract class DesignElement : INotifyPropertyChanged
@@ -65,6 +78,45 @@ public class TextDesignElement : DesignElement
     public Color BgColor { get => _bgColor; set { _bgColor = value; OnPropertyChanged(); } }
     public TextAlignment Alignment { get => _alignment; set { _alignment = value; OnPropertyChanged(); } }
     public bool IsEditing { get => _isEditing; set { _isEditing = value; OnPropertyChanged(); } }
+
+    private bool _wrap = true;
+    public bool Wrap { get => _wrap; set { _wrap = value; OnPropertyChanged(); } }
+}
+
+/// <summary>
+/// A placeholder for an AcroForm field placed on the design canvas: Text, Memo (multiline),
+/// Checkbox, Radio, ComboBox or Signature. Carries its own caption label, independent of the
+/// field's live value, which is drawn as static (non-editable) text once exported to PDF.
+/// </summary>
+public class FormFieldDesignElement : DesignElement
+{
+    private readonly FormFieldKind _kind;
+    private string _fieldName = "Field";
+    private string _label = "Label";
+    private FieldLabelPosition _labelPosition = FieldLabelPosition.Left;
+    private double _labelOffset = 6;
+    private bool _required;
+    private bool _wrap = true;
+    private string _optionsCsv = "Option 1, Option 2, Option 3";
+
+    public override DesignElementType ElementType => DesignElementType.FormField;
+    public FormFieldKind FieldKind => _kind;
+
+    public FormFieldDesignElement(FormFieldKind kind) => _kind = kind;
+
+    public string FieldName { get => _fieldName; set { _fieldName = value; OnPropertyChanged(); } }
+    public string Label { get => _label; set { _label = value; OnPropertyChanged(); } }
+    public FieldLabelPosition LabelPosition { get => _labelPosition; set { _labelPosition = value; OnPropertyChanged(); } }
+    public double LabelOffset { get => _labelOffset; set { _labelOffset = Math.Max(0, value); OnPropertyChanged(); } }
+    public bool Required { get => _required; set { _required = value; OnPropertyChanged(); } }
+
+    /// <summary>Text wrapping for Text/Memo field kinds — ignored by other kinds.</summary>
+    public bool Wrap { get => _wrap; set { _wrap = value; OnPropertyChanged(); } }
+
+    /// <summary>Comma-separated option list, used by ComboBox kind only.</summary>
+    public string OptionsCsv { get => _optionsCsv; set { _optionsCsv = value; OnPropertyChanged(); } }
+    public IReadOnlyList<string> Options =>
+        _optionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
 
 public class ShapeDesignElement : DesignElement

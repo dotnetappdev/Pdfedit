@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using AvalonDock.Layout;
 using Fluent;
 using PdfEdit.Controls;
 using PdfEdit.Models;
@@ -301,7 +302,7 @@ public partial class MainWindow : RibbonWindow
         };
         var stack = new StackPanel { Margin = new Thickness(16) };
         stack.Children.Add(new TextBlock { Text = "Hex color (#AARRGGBB or #RRGGBB):", Margin = new Thickness(0,0,0,6) });
-        var box   = new TextBox { Text = $"#{current.A:X2}{current.R:X2}{current.G:X2}{current.B:X2}", Padding = new Thickness(4), Margin = new Thickness(0,0,0,10) };
+        var box   = new System.Windows.Controls.TextBox { Text = $"#{current.A:X2}{current.R:X2}{current.G:X2}{current.B:X2}", Padding = new Thickness(4), Margin = new Thickness(0,0,0,10) };
         stack.Children.Add(box);
 
         // Quick swatches
@@ -309,7 +310,7 @@ public partial class MainWindow : RibbonWindow
         var swatches = new[] { "#FF000000","#FFFFFFFF","#FF1F3A8A","#FF8B0000","#FF006400","#FF555555","#FF800080","#FFFF8C00","#FF0A84FF","#FFFFE000","#FF40C4FF","#FFAAAAAA" };
         foreach (var hex in swatches)
         {
-            var btn = new Button
+            var btn = new System.Windows.Controls.Button
             {
                 Width = 24, Height = 24, Margin = new Thickness(2),
                 Tag = hex,
@@ -321,8 +322,8 @@ public partial class MainWindow : RibbonWindow
         stack.Children.Add(swatchPanel);
 
         var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var ok     = new Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
-        var cancel = new Button { Content = "Cancel", Width = 70, IsCancel = true };
+        var ok     = new System.Windows.Controls.Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
+        var cancel = new System.Windows.Controls.Button { Content = "Cancel", Width = 70, IsCancel = true };
         btns.Children.Add(ok); btns.Children.Add(cancel);
         stack.Children.Add(btns);
         win.Content = stack;
@@ -357,10 +358,10 @@ public partial class MainWindow : RibbonWindow
         };
         var stack = new StackPanel { Margin = new Thickness(16) };
         var label = new TextBlock { Text = "Enter color (hex, e.g. #FFFFFF or #FFE8D5):", Margin = new Thickness(0,0,0,8) };
-        var box   = new TextBox   { Text = $"#{current.R:X2}{current.G:X2}{current.B:X2}", Margin = new Thickness(0,0,0,12), Padding = new Thickness(4) };
+        var box   = new System.Windows.Controls.TextBox   { Text = $"#{current.R:X2}{current.G:X2}{current.B:X2}", Margin = new Thickness(0,0,0,12), Padding = new Thickness(4) };
         var btns  = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var ok    = new Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
-        var cancel= new Button { Content = "Cancel", Width = 70, IsCancel = true };
+        var ok    = new System.Windows.Controls.Button { Content = "OK",     Width = 70, Margin = new Thickness(0,0,8,0), IsDefault = true };
+        var cancel= new System.Windows.Controls.Button { Content = "Cancel", Width = 70, IsCancel = true };
         btns.Children.Add(ok); btns.Children.Add(cancel);
         stack.Children.Add(label); stack.Children.Add(box); stack.Children.Add(btns);
         win.Content = stack;

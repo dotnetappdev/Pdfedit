@@ -108,6 +108,15 @@ public static class DesignSerializerService
         public string? CellBgColor   { get; set; }
         public double  BorderThick   { get; set; }
         public List<List<string>>? Cells { get; set; }
+        // form field
+        public string? FieldKind        { get; set; }
+        public string? FieldName        { get; set; }
+        public string? Label            { get; set; }
+        public string? LabelPosition    { get; set; }
+        public double  LabelOffset      { get; set; }
+        public bool    Required         { get; set; }
+        public bool    Wrap             { get; set; } = true;
+        public string? OptionsCsv       { get; set; }
     }
 
     private class PointDto { public double X { get; set; } public double Y { get; set; } }
@@ -135,6 +144,19 @@ public static class DesignSerializerService
                 dto.Color      = ColorToHex(t.Color);
                 dto.BgColor    = ColorToHex(t.BgColor);
                 dto.Alignment  = t.Alignment.ToString();
+                dto.Wrap       = t.Wrap;
+                break;
+
+            case FormFieldDesignElement f:
+                dto.Type          = "field";
+                dto.FieldKind     = f.FieldKind.ToString();
+                dto.FieldName     = f.FieldName;
+                dto.Label         = f.Label;
+                dto.LabelPosition = f.LabelPosition.ToString();
+                dto.LabelOffset   = f.LabelOffset;
+                dto.Required      = f.Required;
+                dto.Wrap          = f.Wrap;
+                dto.OptionsCsv    = f.OptionsCsv;
                 break;
 
             case ShapeDesignElement s:
@@ -185,8 +207,23 @@ public static class DesignSerializerService
             Bold       = dto.Bold, Italic = dto.Italic, Underline = dto.Underline,
             Color      = ParseColor(dto.Color),
             BgColor    = ParseColor(dto.BgColor),
-            Alignment  = Enum.TryParse<System.Windows.TextAlignment>(dto.Alignment, out var ta) ? ta : System.Windows.TextAlignment.Left
+            Alignment  = Enum.TryParse<System.Windows.TextAlignment>(dto.Alignment, out var ta) ? ta : System.Windows.TextAlignment.Left,
+            Wrap       = dto.Wrap
         },
+
+        "field" when Enum.TryParse<FormFieldKind>(dto.FieldKind, out var fk) =>
+            new FormFieldDesignElement(fk)
+            {
+                X = dto.X, Y = dto.Y, Width = dto.W, Height = dto.H,
+                Opacity = dto.Opacity, IsLocked = dto.IsLocked,
+                FieldName     = dto.FieldName ?? "Field",
+                Label         = dto.Label ?? "Label",
+                LabelPosition = Enum.TryParse<FieldLabelPosition>(dto.LabelPosition, out var lp) ? lp : FieldLabelPosition.Left,
+                LabelOffset   = dto.LabelOffset,
+                Required      = dto.Required,
+                Wrap          = dto.Wrap,
+                OptionsCsv    = dto.OptionsCsv ?? ""
+            },
 
         "shape" when Enum.TryParse<DesignElementType>(dto.ShapeType, out var st) =>
             new ShapeDesignElement(st)
