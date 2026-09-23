@@ -6,7 +6,13 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 
 ## Demo
 
-![PdfEdit animated demo](docs/screenshots/demo.gif)
+### Form Filling Demo — Job Application
+
+![PdfEdit form filling demo](docs/screenshots/demo.gif)
+
+### App Tour
+
+![PdfEdit app tour](docs/screenshots/tour.gif)
 
 > **Video walkthrough:** A full narrated product demo video is coming soon.
 > See [`docs/demo-video-script.md`](docs/demo-video-script.md) for the storyboard.
