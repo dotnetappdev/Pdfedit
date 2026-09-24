@@ -14,6 +14,12 @@ A professional WPF desktop application for designing, editing, and filling PDF d
 
 ![PdfEdit app tour](docs/screenshots/tour-v4.gif)
 
+### Sample PDF Gallery — Multi-page, Landscape & Mixed Orientation
+
+Navigate a 2-page invoice, a landscape quarterly report, a decorative certificate, and a document that switches orientation page-by-page.
+
+![PdfEdit sample PDF gallery](docs/screenshots/samples-v1.gif)
+
 > **Video walkthrough:** A full narrated product demo video is coming soon.
 > See [`docs/demo-video-script.md`](docs/demo-video-script.md) for the storyboard.
 > <!-- TODO: replace with real YouTube embed once recorded -->
