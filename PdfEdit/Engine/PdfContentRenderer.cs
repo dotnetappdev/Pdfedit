@@ -24,6 +24,7 @@ internal sealed class PdfContentRenderer
     private StreamGeometry? _pathGeom;
     private StreamGeometryContext? _pathCtx;
     private Point _currentPoint;
+    private Point _subpathStart;
     private bool  _pathOpen;
 
     // Font cache
@@ -105,7 +106,7 @@ internal sealed class PdfContentRenderer
             case "gs": ApplyExtGState(ops); break;
 
             // ── Path construction ─────────────────────────────────────────
-            case "m":  BeginPath(); MoveTo(ops); break;
+            case "m":  MoveTo(ops); break;
             case "l":  LineTo(ops); break;
             case "c":  CurveTo(ops, false, false); break;
             case "v":  CurveTo(ops, true,  false); break;
@@ -122,7 +123,10 @@ internal sealed class PdfContentRenderer
             case "B*": FillAndStroke(true); break;
             case "b":  ClosePath(); FillAndStroke(false); break;
             case "b*": ClosePath(); FillAndStroke(true); break;
-            case "n":  _pathGeom = null; _pathCtx = null; _pathOpen = false; break;
+            case "n":
+                if (_pathCtx != null) { try { _pathCtx.Close(); } catch { } }
+                _pathCtx = null; _pathGeom = null; _pathOpen = false;
+                break;
 
             // ── Clipping ───────────────────────────────────────────────────
             case "W":  case "W*": /* clipping — ignore for now */ _pathGeom = null; break;
@@ -213,6 +217,7 @@ internal sealed class PdfContentRenderer
     {
         EnsurePath();
         _currentPoint = TransformPoint(GetReal(ops, 0), GetReal(ops, 1));
+        _subpathStart = _currentPoint;
         _pathCtx!.BeginFigure(_currentPoint, isFilled: true, isClosed: false);
         _pathOpen = true;
     }
@@ -256,9 +261,12 @@ internal sealed class PdfContentRenderer
 
     private void ClosePath()
     {
-        // Close the current sub-path
         if (_pathCtx != null && _pathOpen)
-            _pathCtx.LineTo(_currentPoint, isStroked: true, isSmoothJoin: false);
+        {
+            _pathCtx.LineTo(_subpathStart, isStroked: true, isSmoothJoin: false);
+            _currentPoint = _subpathStart;
+            _pathOpen = false;
+        }
     }
 
     private void DrawRect(List<PdfObject> ops)
@@ -266,7 +274,7 @@ internal sealed class PdfContentRenderer
         if (ops.Count < 4) return;
         double x = GetReal(ops, 0), y = GetReal(ops, 1);
         double w = GetReal(ops, 2), h = GetReal(ops, 3);
-        BeginPath();
+        EnsurePath();
         var tl = TransformPoint(x,     y);
         var tr = TransformPoint(x + w, y);
         var br = TransformPoint(x + w, y + h);
@@ -736,11 +744,6 @@ internal sealed class PdfContentRenderer
             _gs.Ctm = Matrix.Multiply(m, _gs.Ctm);
         }
 
-        var sub = new PdfContentRenderer(_dc, _parser, res, _pageH, _scale);
-        sub._gsStack.Clear();
-        // Copy our current CTM into the sub-renderer's initial CTM
-        sub._gs.Ctm = _gs.Ctm;
-        // Re-render with sub-renderer's own state
         var subContent = new PdfContentRenderer(_dc, _parser, res, _pageH, _scale);
         subContent._gs.Ctm = _gs.Ctm;
         subContent.Render(content);

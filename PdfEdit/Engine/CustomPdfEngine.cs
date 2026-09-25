@@ -117,7 +117,7 @@ public sealed class CustomPdfEngine : IPdfRenderer
                 var renderer = new PdfContentRenderer(dc, _parser!, resources, hPts, scale);
                 renderer.Render(content);
             }
-            catch { /* partial render — show what we have */ }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PdfRender] {ex.Message}"); }
 
             if (rot != 0) dc.Pop();
         }
