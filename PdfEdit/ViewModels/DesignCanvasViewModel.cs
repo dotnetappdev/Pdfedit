@@ -872,6 +872,39 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         Text = "Text"
     };
 
+    private static int _fieldCounter;
+
+    /// <summary>Places a new form-field placeholder at a drag-defined bounding box.</summary>
+    public FormFieldDesignElement CreateFormFieldElement(FormFieldKind kind, double x, double y, double w, double h)
+    {
+        int n = ++_fieldCounter;
+        return new FormFieldDesignElement(kind)
+        {
+            X = x, Y = y, Width = Math.Max(8, w), Height = Math.Max(8, h),
+            FieldName = $"{kind}{n}",
+            Label = kind.ToString(),
+            LabelPosition = _fieldLabelPosition,
+            LabelOffset = _fieldLabelOffset,
+            Wrap = _wrap
+        };
+    }
+
+    /// <summary>Places a new form-field placeholder with kind-appropriate default sizing.</summary>
+    public FormFieldDesignElement CreateFormFieldElement(FormFieldKind kind, double x, double y)
+    {
+        (double w, double h) = kind switch
+        {
+            FormFieldKind.Text      => (180.0, 24.0),
+            FormFieldKind.Memo      => (220.0, 90.0),
+            FormFieldKind.Checkbox  => (120.0, 20.0),
+            FormFieldKind.Radio     => (120.0, 20.0),
+            FormFieldKind.ComboBox  => (180.0, 24.0),
+            FormFieldKind.Signature => (220.0, 60.0),
+            _                       => (180.0, 24.0)
+        };
+        return CreateFormFieldElement(kind, x, y, w, h);
+    }
+
     public ShapeDesignElement CreateShapeElement(DesignElementType type, double x, double y, double w, double h)
         => new(type)
         {

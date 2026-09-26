@@ -260,6 +260,27 @@ public partial class MainWindow : RibbonWindow
         if (newColor != null) VM.DesignCanvas.PenColor = newColor.Value;
     }
 
+    private void InspectorFillColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var c = ShowColorPickerDialog("Fill Color", VM.DesignCanvas.FillColor);
+        if (c != null) VM.DesignCanvas.FillColor = c.Value;
+    }
+
+    private void InspectorStrokeColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var c = ShowColorPickerDialog("Stroke Color", VM.DesignCanvas.StrokeColor);
+        if (c != null) VM.DesignCanvas.StrokeColor = c.Value;
+    }
+
+    private void InspectorTextColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.DesignCanvas == null) return;
+        var c = ShowColorPickerDialog("Text Color", VM.DesignCanvas.TextColor);
+        if (c != null) VM.DesignCanvas.TextColor = c.Value;
+    }
+
     private void DesignColor_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.DesignCanvas == null) return;

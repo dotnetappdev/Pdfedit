@@ -233,6 +233,24 @@ public partial class DesignCanvas : UserControl
             VM.ActiveTool = DesignTool.Select;
             return;
         }
+
+        if (VM.ActiveTool is DesignTool.Checkmark or DesignTool.XMark)
+        {
+            bool isCheck = VM.ActiveTool == DesignTool.Checkmark;
+            var elem = VM.CreateTextElement(pos.X, pos.Y);
+            elem.Text      = isCheck ? "✓" : "✗";
+            elem.FontSize  = 24;
+            elem.Color     = isCheck ? Color.FromRgb(0, 122, 69) : Color.FromRgb(192, 57, 43);
+            elem.Width     = 40;
+            elem.Height    = 40;
+            VM.AddElement(elem);
+            _dragMode = DragMode.None;
+            InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
+            return;
+        }
+
+        // Form field tools fall through to DragMode.Drawing (drag-to-define bounding box)
     }
 
     private void InteractionCanvas_MouseMove(object sender, MouseEventArgs e)
@@ -382,6 +400,22 @@ public partial class DesignCanvas : UserControl
             if (shapeType.HasValue)
             {
                 var elem = VM.CreateShapeElement(shapeType.Value, x, y, w, h);
+                VM.AddElement(elem);
+            }
+
+            FormFieldKind? fieldKind = VM.ActiveTool switch
+            {
+                DesignTool.TextField => FormFieldKind.Text,
+                DesignTool.Memo      => FormFieldKind.Memo,
+                DesignTool.Checkbox  => FormFieldKind.Checkbox,
+                DesignTool.Radio     => FormFieldKind.Radio,
+                DesignTool.ComboBox  => FormFieldKind.ComboBox,
+                DesignTool.Signature => FormFieldKind.Signature,
+                _                    => null
+            };
+            if (fieldKind.HasValue)
+            {
+                var elem = VM.CreateFormFieldElement(fieldKind.Value, x, y, w, h);
                 VM.AddElement(elem);
             }
 
@@ -596,7 +630,8 @@ public partial class DesignCanvas : UserControl
             DesignTool.Text      => Cursors.IBeam,
             DesignTool.Pen       => Cursors.Pen,
             DesignTool.Rectangle or DesignTool.Ellipse or DesignTool.Line or DesignTool.Arrow => Cursors.Cross,
-            DesignTool.Image or DesignTool.Table => Cursors.Cross,
+            DesignTool.Image or DesignTool.Table or DesignTool.Checkmark or DesignTool.XMark => Cursors.Cross,
+            DesignTool.TextField or DesignTool.Memo or DesignTool.Checkbox or DesignTool.Radio or DesignTool.ComboBox or DesignTool.Signature => Cursors.Cross,
             _ => HitTestElement(pos) != null && !(HitTestElement(pos)?.IsLocked ?? false) ? Cursors.SizeAll : Cursors.Arrow
         };
     }

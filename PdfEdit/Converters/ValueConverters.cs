@@ -135,3 +135,54 @@ public class OpacityPercentConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is double dv ? (float)Math.Clamp(dv / 100.0, 0.1, 1.0) : 0.4f;
 }
+
+/// <summary>Converts an enum value to Visibility by comparing its ToString() to the converter parameter.</summary>
+public class EnumEqualsVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value != null && parameter != null && value.ToString() == parameter.ToString()
+            ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+/// <summary>Converts a pixel gap (double) to a left-side Thickness margin.</summary>
+public class DoubleToLeftMarginConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => new Thickness(value is double d ? d : 0, 0, 0, 0);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is Thickness t ? t.Left : 0.0;
+}
+
+/// <summary>Converts a pixel gap (double) to a right-side Thickness margin.</summary>
+public class DoubleToRightMarginConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => new Thickness(0, 0, value is double d ? d : 0, 0);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is Thickness t ? t.Right : 0.0;
+}
+
+/// <summary>Converts bool to TextWrapping (true = Wrap, false = NoWrap).</summary>
+public class BoolToTextWrapConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? System.Windows.TextWrapping.Wrap : System.Windows.TextWrapping.NoWrap;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.TextWrapping w && w == System.Windows.TextWrapping.Wrap;
+}
+
+/// <summary>Converts a WPF Color to a SolidColorBrush for binding to Background/Foreground.</summary>
+public class ColorToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.Media.Color c ? new System.Windows.Media.SolidColorBrush(c) : System.Windows.Media.Brushes.Transparent;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.Media.SolidColorBrush b ? b.Color : System.Windows.Media.Colors.Transparent;
+}

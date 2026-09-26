@@ -29,6 +29,11 @@
             <conv:BoolToTextDecorationConverter x:Key="BoolToTextDecoration"/>
             <conv:PercentConverter x:Key="PercentConverter"/>
             <conv:OpacityPercentConverter x:Key="OpacityPercentConverter"/>
+            <conv:EnumEqualsVisibilityConverter x:Key="EnumEqualsVisibilityConverter"/>
+            <conv:DoubleToLeftMarginConverter x:Key="DoubleToLeftMarginConverter"/>
+            <conv:DoubleToRightMarginConverter x:Key="DoubleToRightMarginConverter"/>
+            <conv:BoolToTextWrapConverter x:Key="BoolToTextWrapConverter"/>
+            <conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
 
             <!-- Per-area interface font sizes (defaults; overridden live by FontService
                  from the user's settings). Controls bind via DynamicResource. -->
