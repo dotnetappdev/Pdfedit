@@ -1407,8 +1407,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Strikethrough — drag to draw strikethrough annotation"
                                          AutomationProperties.Name="Strikethrough annotation tool"/>
-                    <Fluent:ToggleButton Header="Redact"
-                                         GroupName="ToolGroup"
+                    <Fluent:ToggleButton GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Redact, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Redact"
@@ -2123,6 +2122,15 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Import PDF Page"
+                                   Command="{Binding ImportPdfPageCommand}"
+                                   Size="Middle"
+                                   ToolTip="Replace the canvas with an editable reconstruction of the current PDF page (text, images, and form fields as movable elements). Positions and fonts are approximate — this re-derives content from the page, it doesn't extract the original source objects."
+                                   AutomationProperties.Name="Import current PDF page into design">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Undo" Click="DesignUndo_Click" Size="Middle" ToolTip="Undo (Ctrl+Z)" AutomationProperties.Name="Undo">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
@@ -2297,6 +2305,26 @@
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Check ✓"
+                                   Tag="Checkmark" Click="DesignTool_Click"
+                                   ToolTip="Insert a checkmark (✓)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Insert checkmark">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="✓" FontSize="14" Foreground="#007A45"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="X Mark ✗"
+                                   Tag="XMark" Click="DesignTool_Click"
+                                   ToolTip="Insert an X mark (✗)"
+                                   IsEnabled="{Binding IsDesignMode}"
+                                   Size="Middle"
+                                   AutomationProperties.Name="Insert X mark">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="✗" FontSize="14" Foreground="#C0392B"/></Viewbox>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Text formatting -->
@@ -2319,6 +2347,9 @@
                                          FontStyle="Italic" Width="32" ToolTip="Italic" AutomationProperties.Name="Italic"/>
                     <Fluent:ToggleButton Header="U" IsChecked="{Binding DesignCanvas.Underline}"
                                          Width="32" ToolTip="Underline" AutomationProperties.Name="Underline"/>
+                    <Fluent:ToggleButton Header="Wrap" IsChecked="{Binding DesignCanvas.Wrap}"
+                                         Size="Middle" ToolTip="Wrap text within the element's width (applies to Text, Text Field and Memo)"
+                                         AutomationProperties.Name="Wrap text"/>
                     <Fluent:Button Header="Left"    Size="Middle" Tag="Left"    Click="TextAlign_Click" AutomationProperties.Name="Align left">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
@@ -2374,6 +2405,54 @@
                                          AutomationProperties.Name="Lock element">
                         <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Field format (Text Field / Memo / Checkbox / Radio / Combo / Signature placeholders) -->
+                <Fluent:RibbonGroupBox Header="Field"
+                                        IsEnabled="{Binding IsDesignMode}"
+                                        AutomationProperties.Name="Form field formatting group">
+                    <Fluent:TextBox Header="Field Name"
+                                    Text="{Binding DesignCanvas.FieldName, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="110"
+                                    ToolTip="The exported AcroForm field's internal name"
+                                    AutomationProperties.Name="Field name"/>
+                    <Fluent:TextBox Header="Label"
+                                    Text="{Binding DesignCanvas.FieldLabel, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="110"
+                                    ToolTip="Caption shown next to the field — static text, not editable by the person filling the form"
+                                    AutomationProperties.Name="Field label"/>
+                    <Fluent:ToggleButton Header="Left" GroupName="FieldLabelPos"
+                                         IsChecked="{Binding DesignCanvas.FieldLabelPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Left, Mode=TwoWay}"
+                                         Size="Middle" ToolTip="Label to the left of the field"
+                                         AutomationProperties.Name="Label left of field"/>
+                    <Fluent:ToggleButton Header="Right" GroupName="FieldLabelPos"
+                                         IsChecked="{Binding DesignCanvas.FieldLabelPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Right, Mode=TwoWay}"
+                                         Size="Middle" ToolTip="Label to the right of the field"
+                                         AutomationProperties.Name="Label right of field"/>
+                    <Fluent:ToggleButton Header="Inside" GroupName="FieldLabelPos"
+                                         IsChecked="{Binding DesignCanvas.FieldLabelPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Placeholder, Mode=TwoWay}"
+                                         Size="Middle" ToolTip="Label shown as a placeholder hint inside the field, no separate caption printed"
+                                         AutomationProperties.Name="Label as placeholder"/>
+                    <Fluent:ToggleButton Header="None" GroupName="FieldLabelPos"
+                                         IsChecked="{Binding DesignCanvas.FieldLabelPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=None, Mode=TwoWay}"
+                                         Size="Middle" ToolTip="No label"
+                                         AutomationProperties.Name="No field label"/>
+                    <Fluent:Spinner Header="Label Gap"
+                                    Value="{Binding DesignCanvas.FieldLabelOffset}"
+                                    Minimum="0" Maximum="200" Increment="1"
+                                    Width="60"
+                                    ToolTip="Pixel gap between the label and the field box (Left/Right positions)"
+                                    AutomationProperties.Name="Label offset in pixels"/>
+                    <Fluent:ToggleButton Header="Required"
+                                         IsChecked="{Binding DesignCanvas.FieldRequired}"
+                                         Size="Middle"
+                                         ToolTip="Mark this field as required"
+                                         AutomationProperties.Name="Field required"/>
+                    <Fluent:TextBox Header="Options"
+                                    Text="{Binding DesignCanvas.FieldOptionsCsv, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="160"
+                                    ToolTip="Combo Box choices, comma-separated"
+                                    AutomationProperties.Name="Combo box options"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Pen Format -->
@@ -2672,15 +2751,14 @@
                                                                    DataContext="{Binding DesignCanvas}"
                                                                    Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
                                                                    AutomationProperties.Name="Design canvas"/>
-                                            <!-- Floating Fill & Sign toolbar (PDF mode only) -->
+                                            <!-- Floating toolbar (PDF: fill & sign; Design: canvas tools) -->
                                             <controls:ToolboxPanel x:Name="FloatingToolbox"
                                                                    DataContext="{Binding}"
                                                                    HorizontalAlignment="Right"
                                                                    VerticalAlignment="Center"
                                                                    Margin="0,0,12,0"
                                                                    Panel.ZIndex="50"
-                                                                   Visibility="{Binding IsPdfMode, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                                   AutomationProperties.Name="Fill and Sign floating toolbar"/>
+                                                                   AutomationProperties.Name="Floating toolbar"/>
                                         </Grid>
                                     </Grid>
                                 </avalonDock:LayoutDocument>

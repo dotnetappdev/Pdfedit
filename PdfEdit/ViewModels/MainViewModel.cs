@@ -765,6 +765,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand DrawArrowCommand { get; }
     public ICommand NewDesignCommand { get; }
     public ICommand CloseDesignCommand { get; }
+    public ICommand ImportPdfPageCommand { get; }
     public ICommand ExportDesignCommand { get; }
     public ICommand OpenDesignInPdfViewCommand { get; }
     public ICommand ExportPageAsImageCommand { get; }
@@ -985,9 +986,14 @@ public class MainViewModel : INotifyPropertyChanged
 
         NewDesignCommand = new RelayCommand(() =>
         {
-            DesignCanvas.Elements.Clear();
             IsDesignMode = true;
-            StatusText = "Design Canvas — draw shapes, text, and images to create a PDF from scratch.";
+            if (HasDocument && _currentFilePath != null)
+                ImportCurrentPdfPageIntoDesign();
+            else
+            {
+                DesignCanvas.Elements.Clear();
+                StatusText = "Design Canvas — draw shapes, text, and images to create a PDF from scratch.";
+            }
         });
 
         CloseDesignCommand = new RelayCommand(() =>
@@ -995,6 +1001,8 @@ public class MainViewModel : INotifyPropertyChanged
             IsDesignMode = false;
             StatusText = HasDocument ? "PDF view." : "Ready.";
         });
+
+        ImportPdfPageCommand = new RelayCommand(ImportCurrentPdfPageIntoDesign, () => HasDocument);
 
         ExportDesignCommand = new AsyncRelayCommand(ExportDesignAsync, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
 
@@ -2296,7 +2304,7 @@ public class MainViewModel : INotifyPropertyChanged
             Dialogs.AppDialog.ShowInfo("Cannot delete all pages — at least one page must remain.", "Delete Pages");
             return;
         }
-        if (!Dialogs.AppDialog.Confirm($"Delete pages {dlg.FirstPage}–{dlg.LastPage}?\n\nThis operation cannot be undone.", "Delete Pages"))
+        if (!Dialogs.AppDialog.ShowConfirm($"Delete pages {dlg.FirstPage}–{dlg.LastPage}?\n\nThis operation cannot be undone.", "Delete Pages"))
             return;
 
         string tmp = _currentFilePath + ".tmp";
@@ -3259,6 +3267,41 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Dialogs.AppDialog.ShowError("Find and highlight failed.", ex);
             StatusText = "Ready";
+        }
+    }
+
+    /// <summary>
+    /// Replaces the Design canvas with a best-effort editable reconstruction of the current
+    /// PDF page: text lines, images, and existing form fields as movable elements, rather than
+    /// a flat background image. Content-stream reconstruction is inherently approximate — see
+    /// PdfToDesignImportService for the specific tradeoffs (line grouping, font substitution).
+    /// </summary>
+    private void ImportCurrentPdfPageIntoDesign()
+    {
+        if (_currentFilePath == null || _document == null) return;
+        try
+        {
+            RefreshCurrentPageFields();
+            double pageWidth = _document.PageSizes[_currentPageIndex].Width;
+            double pageHeight = _document.PageSizes[_currentPageIndex].Height;
+
+            var elements = Services.PdfToDesignImportService.ExtractPageAsElements(
+                _currentFilePath, _currentPageIndex, pageHeight, CurrentPageFields);
+
+            DesignCanvas.Elements.Clear();
+            foreach (var e in elements) DesignCanvas.Elements.Add(e);
+            DesignCanvas.SelectedElement = null;
+            DesignCanvas.PageSize = Models.DesignPageSize.Custom;
+            DesignCanvas.CustomPageWidth = pageWidth;
+            DesignCanvas.CustomPageHeight = pageHeight;
+
+            StatusText = elements.Count > 0
+                ? $"Imported page {_currentPageIndex + 1} into Design ({elements.Count} elements) — positions and fonts are approximate."
+                : $"Page {_currentPageIndex + 1} had no extractable text, images, or fields — Design canvas is blank.";
+        }
+        catch (Exception ex)
+        {
+            Dialogs.AppDialog.ShowError("Could not import the PDF page into Design.", ex);
         }
     }
 

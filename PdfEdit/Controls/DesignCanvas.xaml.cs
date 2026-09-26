@@ -21,6 +21,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
     public DataTemplate? ImageTemplate    { get; set; }
     public DataTemplate? FreehandTemplate { get; set; }
     public DataTemplate? TableTemplate    { get; set; }
+    public DataTemplate? FormFieldTemplate { get; set; }
 
     public override DataTemplate? SelectTemplate(object item, DependencyObject container) => item switch
     {
@@ -31,6 +32,7 @@ public class DesignElementTemplateSelector : DataTemplateSelector
         ImageDesignElement                                      => ImageTemplate,
         FreehandDesignElement                                   => FreehandTemplate,
         TableDesignElement                                      => TableTemplate,
+        FormFieldDesignElement                                  => FormFieldTemplate,
         _                                                       => base.SelectTemplate(item, container)
     };
 }
@@ -58,7 +60,16 @@ public partial class DesignCanvas : UserControl
     private readonly Thumb[] _handles = new Thumb[8];
     private readonly double _handleHalf = 5;
 
+    // Adobe-style mini toolbar shown above a text element while it's being edited
+    private Border? _textToolbar;
+    private const double TextToolbarH = 26;
+
     private DesignCanvasViewModel? VM => DataContext as DesignCanvasViewModel;
+
+    // Table cell editing state
+    private TextBox? _tableCellEditBox;
+    private TableDesignElement? _editingTable;
+    private int _editingRow, _editingCol;
 
     public DesignCanvas()
     {
@@ -86,7 +97,24 @@ public partial class DesignCanvas : UserControl
     private void OnVmChanged()
     {
         if (VM == null) return;
-        VM.Elements.CollectionChanged += (_, _) => { RefreshSelectionHandles(); DrawGrid(); };
+        VM.Elements.CollectionChanged += (_, ce) =>
+        {
+            RefreshSelectionHandles();
+            DrawGrid();
+            if (ce.NewItems != null)
+                foreach (var item in ce.NewItems.OfType<TableDesignElement>())
+                {
+                    item.PropertyChanged += OnTablePropertyChanged;
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+                        () => RebuildTableGrid(item));
+                }
+        };
+        foreach (var tbl in VM.Elements.OfType<TableDesignElement>())
+        {
+            tbl.PropertyChanged += OnTablePropertyChanged;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+                () => RebuildTableGrid(tbl));
+        }
         VM.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(DesignCanvasViewModel.SelectedElement)
@@ -141,11 +169,19 @@ public partial class DesignCanvas : UserControl
     private void InteractionCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (VM == null) return;
+
+        // Don't interrupt an active table-cell edit if the click landed inside the TextBox
+        if (_tableCellEditBox != null &&
+            e.OriginalSource is DependencyObject clickedObj &&
+            (_tableCellEditBox == clickedObj || _tableCellEditBox.IsAncestorOf(clickedObj)))
+            return;
+
         var pos = e.GetPosition(InteractionCanvas);
         _dragStart = pos;
 
-        // Finish any active text edit
+        // Finish any active text/cell edit
         FinishTextEdit();
+        FinishTableCellEdit();
 
         if (VM.ActiveTool == DesignTool.Select)
         {
@@ -168,7 +204,14 @@ public partial class DesignCanvas : UserControl
                 }
                 else
                 {
+                    bool wasAlreadySelected = VM.SelectedElement == hit;
                     VM.SetMultiSelection([hit]);
+                    // Single-click on an already-selected text element → begin editing
+                    if (wasAlreadySelected && !hit.IsLocked && hit is TextDesignElement clickedText)
+                    {
+                        BeginTextEdit(clickedText);
+                        return;
+                    }
                     if (!hit.IsLocked)
                     {
                         _dragMode = DragMode.Moving;
@@ -220,6 +263,7 @@ public partial class DesignCanvas : UserControl
             VM.AddElement(elem);
             _dragMode = DragMode.None;
             InteractionCanvas.ReleaseMouseCapture();
+            VM.ActiveTool = DesignTool.Select;
             BeginTextEdit(elem);
             return;
         }
@@ -459,12 +503,22 @@ public partial class DesignCanvas : UserControl
         }
     }
 
-    // Double-click to edit text
+    // Double-click to edit text or table cell
     protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
     {
         base.OnMouseDoubleClick(e);
-        if (VM?.SelectedElement is TextDesignElement t)
+        var pos = e.GetPosition(InteractionCanvas);
+        var hit = HitTestElement(pos);
+        if (hit is TextDesignElement t)
             BeginTextEdit(t);
+        else if (hit is TableDesignElement tbl)
+        {
+            double relX = pos.X - tbl.X;
+            double relY = pos.Y - tbl.Y;
+            int col = Math.Clamp((int)(relX / (tbl.Width  / tbl.Columns)), 0, tbl.Columns - 1);
+            int row = Math.Clamp((int)(relY / (tbl.Height / tbl.Rows)),    0, tbl.Rows    - 1);
+            BeginTableCellEdit(tbl, row, col);
+        }
     }
 
     // ── Text editing ──────────────────────────────────────────────────────────
@@ -481,6 +535,7 @@ public partial class DesignCanvas : UserControl
                 tb.Focus();
                 tb.SelectAll();
                 tb.LostFocus += (_, _) => FinishTextEdit();
+                ShowTextToolbar(elem);
             }
         });
     }
@@ -490,6 +545,201 @@ public partial class DesignCanvas : UserControl
         if (VM == null) return;
         foreach (var e in VM.Elements.OfType<TextDesignElement>())
             e.IsEditing = false;
+        HideTextToolbar();
+    }
+
+    // ── Text mini toolbar (Adobe-style: font size, delete) ─────────────────────
+
+    private void ShowTextToolbar(TextDesignElement elem)
+    {
+        if (_textToolbar == null)
+        {
+            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+            panel.Children.Add(MakeTextToolbarBtn("A", "Decrease font size", () =>
+            {
+                if (VM?.SelectedElement is TextDesignElement t) t.FontSize = Math.Max(6, t.FontSize - 1);
+            }, fontSize: 10));
+            panel.Children.Add(MakeTextToolbarBtn("A", "Increase font size", () =>
+            {
+                if (VM?.SelectedElement is TextDesignElement t) t.FontSize = Math.Min(144, t.FontSize + 1);
+            }, fontSize: 14));
+            panel.Children.Add(MakeTextToolbarBtn("🗑", "Delete this text element", () =>
+            {
+                FinishTextEdit();
+                VM?.DeleteSelected();
+            }));
+
+            _textToolbar = new Border
+            {
+                Child = panel,
+                Background = new SolidColorBrush(Color.FromRgb(35, 35, 35)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Height = TextToolbarH,
+            };
+            Panel.SetZIndex(_textToolbar, 9999);
+        }
+
+        if (!SelectionOverlay.Children.Contains(_textToolbar))
+            SelectionOverlay.Children.Add(_textToolbar);
+
+        Canvas.SetLeft(_textToolbar, elem.X);
+        Canvas.SetTop(_textToolbar, Math.Max(0, elem.Y - TextToolbarH - 1));
+        _textToolbar.Visibility = Visibility.Visible;
+    }
+
+    private void HideTextToolbar()
+    {
+        if (_textToolbar != null) _textToolbar.Visibility = Visibility.Collapsed;
+    }
+
+    private static Border MakeTextToolbarBtn(string label, string tip, Action onClick, double fontSize = 12)
+    {
+        var border = new Border
+        {
+            Width = 26, Height = TextToolbarH,
+            Cursor = Cursors.Hand,
+            ToolTip = tip,
+            Background = Brushes.Transparent,
+            Child = new TextBlock
+            {
+                Text = label,
+                FontSize = fontSize,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        };
+        border.MouseEnter += (_, _) => border.Background = new SolidColorBrush(Color.FromRgb(60, 60, 60));
+        border.MouseLeave += (_, _) => border.Background = Brushes.Transparent;
+        border.MouseLeftButtonDown += (_, e) => { onClick(); e.Handled = true; };
+        return border;
+    }
+
+    // ── Table rendering ───────────────────────────────────────────────────────
+
+    private void OnTablePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is TableDesignElement tbl &&
+            e.PropertyName is nameof(TableDesignElement.Rows)
+                           or nameof(TableDesignElement.Columns)
+                           or nameof(TableDesignElement.Cells)
+                           or nameof(TableDesignElement.BorderColor)
+                           or nameof(TableDesignElement.HeaderBgColor)
+                           or nameof(TableDesignElement.CellBgColor)
+                           or nameof(TableDesignElement.BorderThickness))
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render,
+                () => RebuildTableGrid(tbl));
+    }
+
+    private void RebuildTableGrid(TableDesignElement tbl)
+    {
+        var container = FindContainerForElement(tbl);
+        if (container == null) return;
+        if (container.ContentTemplate?.FindName("TableHost", container) is not Border host) return;
+        host.Child = BuildTableGrid(tbl);
+    }
+
+    private Grid BuildTableGrid(TableDesignElement tbl)
+    {
+        var borderBrush = new SolidColorBrush(tbl.BorderColor);
+        var grid = new Grid();
+
+        for (int r = 0; r < tbl.Rows; r++)
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        for (int c = 0; c < tbl.Columns; c++)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        for (int r = 0; r < tbl.Rows; r++)
+        {
+            for (int c = 0; c < tbl.Columns; c++)
+            {
+                bool isHeader = r == 0;
+                var cell = new Border
+                {
+                    BorderThickness = new Thickness(0.5),
+                    BorderBrush     = borderBrush,
+                    Background      = new SolidColorBrush(isHeader ? tbl.HeaderBgColor : tbl.CellBgColor)
+                };
+                var tb = new TextBlock
+                {
+                    Text             = tbl.GetCell(r, c),
+                    Padding          = new Thickness(3, 2, 3, 2),
+                    TextTrimming     = TextTrimming.CharacterEllipsis,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontWeight       = isHeader ? FontWeights.SemiBold : FontWeights.Normal
+                };
+                cell.Child = tb;
+                Grid.SetRow(cell, r);
+                Grid.SetColumn(cell, c);
+                grid.Children.Add(cell);
+            }
+        }
+        return grid;
+    }
+
+    // ── Table cell editing ────────────────────────────────────────────────────
+
+    private void BeginTableCellEdit(TableDesignElement tbl, int row, int col)
+    {
+        FinishTableCellEdit();
+        _editingTable = tbl;
+        _editingRow   = row;
+        _editingCol   = col;
+
+        double cellW = tbl.Width  / tbl.Columns;
+        double cellH = tbl.Height / tbl.Rows;
+        double x     = tbl.X + col * cellW;
+        double y     = tbl.Y + row * cellH;
+
+        _tableCellEditBox = new TextBox
+        {
+            Text                     = tbl.GetCell(row, col),
+            AcceptsReturn            = false,
+            BorderThickness          = new Thickness(1.5),
+            BorderBrush              = new SolidColorBrush(Color.FromRgb(0x0A, 0x84, 0xFF)),
+            Background               = Brushes.White,
+            Foreground               = Brushes.Black,
+            Padding                  = new Thickness(2),
+            Width                    = cellW,
+            Height                   = cellH,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+
+        Canvas.SetLeft(_tableCellEditBox, x);
+        Canvas.SetTop(_tableCellEditBox,  y);
+        InteractionCanvas.Children.Add(_tableCellEditBox);
+
+        _tableCellEditBox.LostFocus += (_, _) => FinishTableCellEdit();
+        _tableCellEditBox.KeyDown   += (_, ke) =>
+        {
+            if (ke.Key == Key.Return || ke.Key == Key.Escape)
+            {
+                if (ke.Key == Key.Return) CommitTableCellEdit();
+                FinishTableCellEdit();
+                ke.Handled = true;
+            }
+        };
+
+        _tableCellEditBox.Focus();
+        _tableCellEditBox.SelectAll();
+    }
+
+    private void CommitTableCellEdit()
+    {
+        if (_editingTable != null && _tableCellEditBox != null)
+            _editingTable.SetCell(_editingRow, _editingCol, _tableCellEditBox.Text);
+    }
+
+    private void FinishTableCellEdit()
+    {
+        if (_tableCellEditBox == null) return;
+        CommitTableCellEdit();
+        var box = _tableCellEditBox;
+        _tableCellEditBox = null;
+        _editingTable = null;
+        InteractionCanvas.Children.Remove(box);
     }
 
     // ── Hit testing ───────────────────────────────────────────────────────────
@@ -738,6 +988,8 @@ public partial class DesignCanvas : UserControl
                 Key.P => DesignTool.Pen,
                 Key.I => DesignTool.Image,
                 Key.B => DesignTool.Table,
+                Key.K => DesignTool.Checkmark,
+                Key.X => DesignTool.XMark,
                 _     => null
             };
             if (tool.HasValue) { VM.ActiveTool = tool.Value; e.Handled = true; }

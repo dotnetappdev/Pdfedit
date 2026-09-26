@@ -20,7 +20,7 @@
                 <!-- Editable text box (shown when IsEditing) -->
                 <TextBox x:Name="EditBox"
                          Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
-                         AcceptsReturn="True" TextWrapping="Wrap"
+                         AcceptsReturn="True" TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                          BorderThickness="0" Background="Transparent"
                          Foreground="{DynamicResource ForegroundBrush}"
                          FontFamily="{Binding FontFamily}"
@@ -33,7 +33,7 @@
                 <!-- Display text block (shown when not editing) -->
                 <TextBlock x:Name="DisplayBlock"
                            Text="{Binding Text}"
-                           TextWrapping="Wrap"
+                           TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                            FontFamily="{Binding FontFamily}"
                            FontSize="{Binding FontSize}"
                            FontWeight="{Binding Bold, Converter={StaticResource BoolToFontWeightConverter}}"
@@ -290,7 +290,8 @@
                                     LineTemplate="{StaticResource LineTemplate}"
                                     ImageTemplate="{StaticResource ImageTemplate}"
                                     FreehandTemplate="{StaticResource FreehandTemplate}"
-                                    TableTemplate="{StaticResource TableTemplate}"/>
+                                    TableTemplate="{StaticResource TableTemplate}"
+                                    FormFieldTemplate="{StaticResource FormFieldTemplate}"/>
                             </ItemsControl.ItemTemplateSelector>
                         </ItemsControl>
 

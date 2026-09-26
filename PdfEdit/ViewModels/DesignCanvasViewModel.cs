@@ -32,6 +32,15 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private TextAlignment _textAlignment = TextAlignment.Left;
     private Color _penColor = Colors.Black;
     private double _penThickness = 2;
+    private bool _wrap = true;
+
+    // Form field format state
+    private string _fieldName = "Field";
+    private string _fieldLabel = "Label";
+    private FieldLabelPosition _fieldLabelPosition = FieldLabelPosition.Left;
+    private double _fieldLabelOffset = 6;
+    private bool _fieldRequired;
+    private string _fieldOptionsCsv = "Option 1, Option 2, Option 3";
 
     private double _elementOpacity = 1.0;
     private bool _elementLocked;
@@ -113,6 +122,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(SelectedIsText));
             OnPropertyChanged(nameof(SelectedIsShape));
             OnPropertyChanged(nameof(SelectedIsTable));
+            OnPropertyChanged(nameof(SelectedIsFormField));
+            OnPropertyChanged(nameof(SelectedIsTextLike));
             NotifyPositionProperties();
             SyncFormatFromSelection();
         }
@@ -122,6 +133,11 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     public bool SelectedIsText  => _selectedElement is TextDesignElement;
     public bool SelectedIsShape => _selectedElement is ShapeDesignElement;
     public bool SelectedIsTable => _selectedElement is TableDesignElement;
+    public bool SelectedIsFormField => _selectedElement is FormFieldDesignElement;
+    /// <summary>True when the selection is a text-based component (plain Text, or a Text/Memo field) — used to gate the Wrap toggle.</summary>
+    public bool SelectedIsTextLike =>
+        _selectedElement is TextDesignElement ||
+        _selectedElement is FormFieldDesignElement { FieldKind: FormFieldKind.Text or FormFieldKind.Memo };
 
     // ── Format properties ─────────────────────────────────────────────────────
 
@@ -232,6 +248,90 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _textColor = value;
             OnPropertyChanged();
             if (_selectedElement is TextDesignElement t) t.Color = value;
+        }
+    }
+
+    /// <summary>Text wrapping toggle, shared by plain Text elements and Text/Memo form fields.</summary>
+    public bool Wrap
+    {
+        get => _wrap;
+        set
+        {
+            _wrap = value;
+            OnPropertyChanged();
+            switch (_selectedElement)
+            {
+                case TextDesignElement t: t.Wrap = value; break;
+                case FormFieldDesignElement { FieldKind: FormFieldKind.Text or FormFieldKind.Memo } f: f.Wrap = value; break;
+            }
+        }
+    }
+
+    // ── Form field format properties ──────────────────────────────────────────
+
+    public string FieldName
+    {
+        get => _fieldName;
+        set
+        {
+            _fieldName = value;
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.FieldName = value;
+        }
+    }
+
+    public string FieldLabel
+    {
+        get => _fieldLabel;
+        set
+        {
+            _fieldLabel = value;
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.Label = value;
+        }
+    }
+
+    public FieldLabelPosition FieldLabelPosition
+    {
+        get => _fieldLabelPosition;
+        set
+        {
+            _fieldLabelPosition = value;
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.LabelPosition = value;
+        }
+    }
+
+    public double FieldLabelOffset
+    {
+        get => _fieldLabelOffset;
+        set
+        {
+            _fieldLabelOffset = Math.Max(0, value);
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.LabelOffset = _fieldLabelOffset;
+        }
+    }
+
+    public bool FieldRequired
+    {
+        get => _fieldRequired;
+        set
+        {
+            _fieldRequired = value;
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.Required = value;
+        }
+    }
+
+    public string FieldOptionsCsv
+    {
+        get => _fieldOptionsCsv;
+        set
+        {
+            _fieldOptionsCsv = value;
+            OnPropertyChanged();
+            if (_selectedElement is FormFieldDesignElement f) f.OptionsCsv = value;
         }
     }
 
@@ -786,6 +886,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         ImageDesignElement im   => CloneImage(im),
         FreehandDesignElement f => CloneFreehand(f),
         TableDesignElement tb   => CloneTable(tb),
+        FormFieldDesignElement ff => CloneFormField(ff),
         _                       => src
     };
 
@@ -794,7 +895,14 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         X = t.X, Y = t.Y, Width = t.Width, Height = t.Height, ZOrder = t.ZOrder, Opacity = t.Opacity,
         Text = t.Text, FontFamily = t.FontFamily, FontSize = t.FontSize,
         Bold = t.Bold, Italic = t.Italic, Underline = t.Underline,
-        Color = t.Color, BgColor = t.BgColor, Alignment = t.Alignment
+        Color = t.Color, BgColor = t.BgColor, Alignment = t.Alignment, Wrap = t.Wrap
+    };
+
+    private static FormFieldDesignElement CloneFormField(FormFieldDesignElement f) => new(f.FieldKind)
+    {
+        X = f.X, Y = f.Y, Width = f.Width, Height = f.Height, ZOrder = f.ZOrder, Opacity = f.Opacity,
+        FieldName = f.FieldName, Label = f.Label, LabelPosition = f.LabelPosition,
+        LabelOffset = f.LabelOffset, Required = f.Required, Wrap = f.Wrap, OptionsCsv = f.OptionsCsv
     };
 
     private static ShapeDesignElement CloneShape(ShapeDesignElement sh) => new(sh.ElementType)
@@ -851,6 +959,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _textColor   = t.Color;        OnPropertyChanged(nameof(TextColor));
             _textBgColor = t.BgColor;      OnPropertyChanged(nameof(TextBgColor));
             _textAlignment = t.Alignment;  OnPropertyChanged(nameof(TextAlignment));
+            _wrap       = t.Wrap;         OnPropertyChanged(nameof(Wrap));
         }
         else if (_selectedElement is ShapeDesignElement sh)
         {
@@ -858,6 +967,17 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _strokeColor      = sh.StrokeColor;     OnPropertyChanged(nameof(StrokeColor));
             _strokeThickness  = sh.StrokeThickness; OnPropertyChanged(nameof(StrokeThickness));
             _cornerRadius     = sh.CornerRadius;    OnPropertyChanged(nameof(CornerRadius));
+        }
+        else if (_selectedElement is FormFieldDesignElement f)
+        {
+            _fieldName          = f.FieldName;       OnPropertyChanged(nameof(FieldName));
+            _fieldLabel          = f.Label;           OnPropertyChanged(nameof(FieldLabel));
+            _fieldLabelPosition  = f.LabelPosition;   OnPropertyChanged(nameof(FieldLabelPosition));
+            _fieldLabelOffset    = f.LabelOffset;     OnPropertyChanged(nameof(FieldLabelOffset));
+            _fieldRequired       = f.Required;        OnPropertyChanged(nameof(FieldRequired));
+            _fieldOptionsCsv     = f.OptionsCsv;       OnPropertyChanged(nameof(FieldOptionsCsv));
+            if (f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo)
+            { _wrap = f.Wrap; OnPropertyChanged(nameof(Wrap)); }
         }
     }
 
@@ -868,7 +988,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         X = x, Y = y, Width = 200, Height = 40,
         FontFamily = _fontFamily, FontSize = _fontSize,
         Bold = _bold, Italic = _italic, Underline = _underline,
-        Color = _textColor, Alignment = _textAlignment,
+        Color = _textColor, Alignment = _textAlignment, Wrap = _wrap,
         Text = "Text"
     };
 

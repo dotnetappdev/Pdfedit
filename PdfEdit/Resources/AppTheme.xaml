@@ -341,10 +341,93 @@
         <Setter Property="Margin"     Value="0"/>
     </Style>
 
+    <!-- ── ContextMenu ───────────────────────────────────────────────────────── -->
+    <!-- Unstyled ContextMenu/MenuItem fall back to the OS default template, which
+         on Windows dark mode can render dark-popup-chrome behind text that our
+         global TextBlock style (above) has already forced to the app's light
+         foreground — i.e. light text on a light default popup, or vice versa.
+         Both must be styled together so the popup background and text always match. -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background"    Value="{DynamicResource PanelBgBrush}"/>
+        <Setter Property="Foreground"    Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="BorderBrush"   Value="{DynamicResource AppBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <StackPanel IsItemsHost="True" Margin="2"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ── MenuItem ──────────────────────────────────────────────────────────── -->
     <Style TargetType="MenuItem">
-        <Setter Property="FontFamily" Value="Segoe UI, Arial"/>
-        <Setter Property="FontSize"   Value="12"/>
+        <Setter Property="Background"  Value="Transparent"/>
+        <Setter Property="Foreground"  Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="FontFamily"  Value="Segoe UI, Arial"/>
+        <Setter Property="FontSize"    Value="12"/>
+        <Setter Property="Padding"     Value="8,5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid>
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3"
+                                SnapsToDevicePixels="True">
+                            <Grid Margin="{TemplateBinding Padding}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0" ContentSource="Icon"
+                                                   Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                                   RecognizesAccessKey="True"
+                                                   VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}"
+                                           Foreground="{DynamicResource DimForegroundBrush}"
+                                           Margin="16,0,0,0" VerticalAlignment="Center"/>
+                                <Path x:Name="SubmenuArrow" Grid.Column="3"
+                                      Data="M0,0 L4,4 L0,8 Z"
+                                      Fill="{DynamicResource ForegroundBrush}"
+                                      Margin="8,0,0,0" VerticalAlignment="Center"
+                                      Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <Popup x:Name="Popup" Placement="Right"
+                               IsOpen="{TemplateBinding IsSubmenuOpen}"
+                               AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                            <Border Background="{DynamicResource PanelBgBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1" CornerRadius="4">
+                                <StackPanel IsItemsHost="True" Margin="2"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
 </ResourceDictionary>
