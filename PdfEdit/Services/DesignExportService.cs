@@ -46,11 +46,17 @@ public static class DesignExportService
             pdfCanvas.RestoreState();
         }
 
-        // Draw elements ordered by ZOrder
-        var radioGroups = new Dictionary<string, PdfButtonFormField>();
+        // Tell Acrobat to regenerate field appearances from their values
+        var acroForm = PdfAcroForm.GetAcroForm(pdf, true);
+        acroForm.SetNeedAppearances(true);
+
+        // Per-export state for form fields
+        var radioGroups = new Dictionary<string, (PdfButtonFormField Group, int ButtonCount)>();
+        var usedNames   = new Dictionary<string, int>(StringComparer.Ordinal);
+
         foreach (var elem in elements.OrderBy(e => e.ZOrder))
         {
-            DrawElement(elem, pdfCanvas, document, pdf, page, pageWidthPt, pageHeightPt, radioGroups);
+            DrawElement(elem, pdfCanvas, document, pdf, page, pageWidthPt, pageHeightPt, radioGroups, usedNames);
         }
 
         document.Close();
@@ -64,7 +70,8 @@ public static class DesignExportService
         PdfPage page,
         double pageW,
         double pageH,
-        Dictionary<string, PdfButtonFormField> radioGroups)
+        Dictionary<string, (PdfButtonFormField Group, int ButtonCount)> radioGroups,
+        Dictionary<string, int> usedNames)
     {
         // WPF origin is top-left (y↓); PDF origin is bottom-left (y↑).
         // Flip: pdf_y = pageH - (elem.Y + elem.Height)
@@ -105,7 +112,7 @@ public static class DesignExportService
                 break;
 
             case FormFieldDesignElement f:
-                DrawFormField(f, doc, pdf, page, x, y, w, h, radioGroups);
+                DrawFormField(f, doc, pdf, page, x, y, w, h, radioGroups, usedNames);
                 break;
         }
     }
@@ -319,27 +326,33 @@ public static class DesignExportService
     /// <summary>
     /// Creates a real AcroForm field for the placeholder and, when the label sits to the
     /// left/right of the field, burns the caption in as static (non-editable) text next to it.
-    /// A "Placeholder" label is instead attached as the field's tooltip (PDF /TU), which the
-    /// app's own Live View already shows as a hint when the field is otherwise unlabeled.
+    /// "Placeholder" labels become the field's /TU tooltip entry (shown as hint in Acrobat).
+    ///
+    /// Field-name deduplication: non-radio fields with identical names get a numeric suffix
+    /// (_2, _3, …) so each widget maps to a distinct AcroForm field. Radio fields deliberately
+    /// share a name — that is how Acrobat groups them into a mutually-exclusive set.
     /// </summary>
     private static void DrawFormField(
         FormFieldDesignElement f, Document doc, PdfDocument pdf, PdfPage page,
         float x, float y, float w, float h,
-        Dictionary<string, PdfButtonFormField> radioGroups)
+        Dictionary<string, (PdfButtonFormField Group, int ButtonCount)> radioGroups,
+        Dictionary<string, int> usedNames)
     {
         try
         {
-            // Split the element's own footprint into a label region and the field box itself.
             var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
-            float labelW = f.LabelPosition is FieldLabelPosition.Left or FieldLabelPosition.Right
+
+            // ── Split footprint: static label region + interactive field box ──
+            bool hasExternalLabel = f.LabelPosition is FieldLabelPosition.Left or FieldLabelPosition.Right;
+            float labelW = hasExternalLabel
                 ? Math.Min(w * 0.4f, (float)font.GetWidth(f.Label, 10f) + 8f)
                 : 0f;
-            float gap = f.LabelPosition is FieldLabelPosition.Left or FieldLabelPosition.Right
-                ? (float)f.LabelOffset : 0f;
+            float gap    = hasExternalLabel ? (float)f.LabelOffset : 0f;
             float fieldX = f.LabelPosition == FieldLabelPosition.Left ? x + labelW + gap : x;
-            float fieldW = Math.Max(4f, w - labelW - gap);
+            float fieldW = Math.Max(8f, w - labelW - gap);
 
-            if (labelW > 0 && !string.IsNullOrEmpty(f.Label))
+            // Burn the external label as static (non-editable) text
+            if (hasExternalLabel && !string.IsNullOrEmpty(f.Label))
             {
                 float labelX = f.LabelPosition == FieldLabelPosition.Left ? x : x + fieldW + gap;
                 doc.Add(new Paragraph(f.Label)
@@ -351,55 +364,86 @@ public static class DesignExportService
 
             var rect = new Rectangle(fieldX, y, fieldW, h);
             var form = PdfAcroForm.GetAcroForm(pdf, true);
-            string fieldName = string.IsNullOrWhiteSpace(f.FieldName) ? f.FieldKind.ToString() : f.FieldName;
+
+            // Tooltip: placeholder label text → PDF /TU (shown as hint in Acrobat)
             string? tooltip = f.LabelPosition == FieldLabelPosition.Placeholder ? f.Label : null;
 
-            PdfFormField? field = f.FieldKind switch
-            {
-                FormFieldKind.Text => new TextFormFieldBuilder(pdf, fieldName)
-                    .SetWidgetRectangle(rect).CreateText(),
-                FormFieldKind.Memo => new TextFormFieldBuilder(pdf, fieldName)
-                    .SetWidgetRectangle(rect).CreateMultilineText(),
-                FormFieldKind.Checkbox => new CheckBoxFormFieldBuilder(pdf, fieldName)
-                    .SetWidgetRectangle(rect).CreateCheckBox(),
-                FormFieldKind.ComboBox => BuildCombo(pdf, fieldName, rect, f.Options),
-                FormFieldKind.Signature => new SignatureFormFieldBuilder(pdf, fieldName)
-                    .SetWidgetRectangle(rect).CreateSignature(),
-                FormFieldKind.Radio => null, // handled separately below (group + button)
-                _ => null
-            };
+            // ── Raw field name from the element ──
+            string rawName = string.IsNullOrWhiteSpace(f.FieldName) ? f.FieldKind.ToString() : f.FieldName;
 
+            // ── Radio buttons: shared group name is intentional (groups them) ──
             if (f.FieldKind == FormFieldKind.Radio)
             {
-                if (!radioGroups.TryGetValue(fieldName, out var group))
+                if (!radioGroups.TryGetValue(rawName, out var info))
                 {
-                    group = new RadioFormFieldBuilder(pdf, fieldName).CreateRadioGroup();
-                    form.AddField(group, page);
-                    radioGroups[fieldName] = group;
+                    var grp = new RadioFormFieldBuilder(pdf, rawName).CreateRadioGroup();
+                    form.AddField(grp, page);
+                    info = (grp, 0);
+                    radioGroups[rawName] = info;
                 }
-                var widget = new RadioFormFieldBuilder(pdf, fieldName)
-                    .CreateRadioButton(string.IsNullOrEmpty(f.Label) ? "Yes" : f.Label, rect);
-                group.AddKid(widget);
-                if (tooltip != null) group.Put(PdfName.TU, new PdfString(tooltip));
+                // Each radio button must export a unique value so Acrobat can tell them apart
+                string btnValue = string.IsNullOrWhiteSpace(f.Label) || f.Label == f.FieldName
+                    ? $"option{info.ButtonCount + 1}"
+                    : f.Label;
+                var btn = new RadioFormFieldBuilder(pdf, rawName).CreateRadioButton(btnValue, rect);
+                info.Group.AddKid(btn);
+                if (tooltip != null) info.Group.Put(PdfName.TU, new PdfString(tooltip));
+                radioGroups[rawName] = (info.Group, info.ButtonCount + 1);
                 return;
             }
 
+            // ── All other fields: deduplicate names so each widget is its own field ──
+            string fieldName;
+            if (usedNames.TryGetValue(rawName, out int count))
+            {
+                usedNames[rawName] = count + 1;
+                fieldName = $"{rawName}_{count + 1}";
+            }
+            else
+            {
+                usedNames[rawName] = 1;
+                fieldName = rawName;
+            }
+
+            PdfFormField? field = f.FieldKind switch
+            {
+                FormFieldKind.Text      => new TextFormFieldBuilder(pdf, fieldName)
+                                              .SetWidgetRectangle(rect).CreateText(),
+                FormFieldKind.Memo      => new TextFormFieldBuilder(pdf, fieldName)
+                                              .SetWidgetRectangle(rect).CreateMultilineText(),
+                FormFieldKind.Checkbox  => new CheckBoxFormFieldBuilder(pdf, fieldName)
+                                              .SetWidgetRectangle(rect).CreateCheckBox(),
+                FormFieldKind.ComboBox  => BuildCombo(pdf, fieldName, rect, f.Options, font),
+                FormFieldKind.Signature => new SignatureFormFieldBuilder(pdf, fieldName)
+                                              .SetWidgetRectangle(rect).CreateSignature(),
+                _                       => null
+            };
+
             if (field == null) return;
 
+            // Font for text-bearing fields
             if (f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo)
                 field.SetFont(font).SetFontSize(10f);
+
             field.SetRequired(f.Required);
-            if (tooltip != null) field.Put(PdfName.TU, new PdfString(tooltip));
+
+            // Tooltip / alternate description (/TU) — shown in Acrobat's tooltip on hover
+            if (tooltip != null)
+                field.Put(PdfName.TU, new PdfString(tooltip));
+
             form.AddField(field, page);
         }
         catch { /* skip a field that fails to build rather than aborting the whole export */ }
     }
 
-    private static PdfFormField BuildCombo(PdfDocument pdf, string fieldName, Rectangle rect, IReadOnlyList<string> options)
+    private static PdfFormField BuildCombo(PdfDocument pdf, string fieldName, Rectangle rect,
+                                           IReadOnlyList<string> options, PdfFont font)
     {
         var builder = new ChoiceFormFieldBuilder(pdf, fieldName).SetWidgetRectangle(rect);
         if (options.Count > 0) builder.SetOptions(options.ToArray());
-        return builder.CreateComboBox();
+        var combo = builder.CreateComboBox();
+        combo.SetFont(font).SetFontSize(10f);
+        return combo;
     }
 
     // ── Color conversion ──────────────────────────────────────────────────────

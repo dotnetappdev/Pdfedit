@@ -176,3 +176,13 @@ public class BoolToTextWrapConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is System.Windows.TextWrapping w && w == System.Windows.TextWrapping.Wrap;
 }
+
+/// <summary>Converts a WPF Color to a SolidColorBrush for binding to Background/Foreground.</summary>
+public class ColorToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.Media.Color c ? new System.Windows.Media.SolidColorBrush(c) : System.Windows.Media.Brushes.Transparent;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.Media.SolidColorBrush b ? b.Color : System.Windows.Media.Colors.Transparent;
+}
