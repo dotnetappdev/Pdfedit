@@ -105,10 +105,10 @@
         </DataTemplate>
 
         <!-- ── Form field placeholder template ───────────────────────────── -->
-        <!-- Design-time placeholder for an AcroForm field: caption label to the
-             left/right of the field box (with an adjustable pixel gap), or the
-             label shown as a hint inside the box. The label is static caption
-             text — never user-editable once exported to PDF Live View. -->
+        <!-- Design-time placeholder showing Adobe-accurate field-type visuals:
+             Text/Memo → blue tinted box with italic label hint;
+             Checkbox → bordered square; Radio → circle;
+             ComboBox → label + dropdown arrow; Signature → dashed outline. -->
         <DataTemplate x:Key="FormFieldTemplate" DataType="{x:Type models:FormFieldDesignElement}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -124,41 +124,67 @@
                            Margin="{Binding LabelOffset, Converter={StaticResource DoubleToRightMarginConverter}}"
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Left}"/>
 
-                <!-- Field box -->
-                <Border Grid.Column="1"
-                        BorderBrush="#888888" BorderThickness="1"
-                        Background="#F8F8FF" CornerRadius="2" MinHeight="18">
+                <!-- Field box — default: Acrobat light-blue text field -->
+                <Border x:Name="FieldBox" Grid.Column="1"
+                        BorderBrush="#5B9BD5" BorderThickness="1"
+                        Background="#E8F0FE" CornerRadius="2" MinHeight="18" ClipToBounds="True">
                     <Grid>
-                        <!-- Placeholder-style hint text inside the box -->
-                        <TextBlock Text="{Binding Label}"
-                                   Foreground="Gray" FontStyle="Italic" Margin="4,0"
-                                   VerticalAlignment="Top" Padding="0,2,0,0"
+                        <!-- Text / Memo: italic label hint (always shown for these kinds) -->
+                        <TextBlock x:Name="TextHint"
+                                   Text="{Binding Label}"
+                                   Foreground="#777" FontStyle="Italic"
+                                   Margin="4,0" VerticalAlignment="Top" Padding="0,2,0,0"
                                    TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
-                                   Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Placeholder}"/>
-                        <!-- Field-kind glyph, centered — indicates what this placeholder becomes on export -->
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                   Foreground="{DynamicResource DimForegroundBrush}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value=""/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding FieldKind}" Value="Checkbox">
-                                            <Setter Property="Text" Value="&#xE739;"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding FieldKind}" Value="Radio">
-                                            <Setter Property="Text" Value="&#xEA81;"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding FieldKind}" Value="ComboBox">
-                                            <Setter Property="Text" Value="&#xE70D;"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding FieldKind}" Value="Signature">
-                                            <Setter Property="Text" Value="&#xEDC6;"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                                   Visibility="Collapsed"/>
+
+                        <!-- Checkbox: small bordered square centered in the field area -->
+                        <Border x:Name="CheckboxSquare"
+                                Width="13" Height="13"
+                                BorderBrush="#444" BorderThickness="1.5"
+                                Background="White" CornerRadius="1"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="Collapsed"/>
+
+                        <!-- Radio: small circle centered -->
+                        <Ellipse x:Name="RadioCircle"
+                                 Width="13" Height="13"
+                                 Stroke="#444" StrokeThickness="1.5" Fill="White"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Visibility="Collapsed"/>
+
+                        <!-- ComboBox: label text on left + dropdown glyph on right -->
+                        <Grid x:Name="ComboContent" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Label}"
+                                       Foreground="#777" FontStyle="Italic" FontSize="11"
+                                       Margin="4,0" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1"
+                                    BorderBrush="#AAA" BorderThickness="1,0,0,0"
+                                    Background="#D4E4F8">
+                                <TextBlock Text="&#x25BE;"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontSize="10" Foreground="#444"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Signature: dashed outline + pen icon + "Sign Here" -->
+                        <Grid x:Name="SigContent" Visibility="Collapsed">
+                            <Rectangle Stroke="#5B9BD5" StrokeThickness="1.5"
+                                       StrokeDashArray="5,3" Fill="Transparent" Margin="1"/>
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEDC6;"
+                                           FontSize="11" Foreground="#5B9BD5"
+                                           VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="Sign Here" FontStyle="Italic"
+                                           Foreground="#5B9BD5" FontSize="10"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -169,6 +195,33 @@
                            Margin="{Binding LabelOffset, Converter={StaticResource DoubleToLeftMarginConverter}}"
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Right}"/>
             </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding FieldKind}" Value="Text">
+                    <Setter TargetName="TextHint" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FieldKind}" Value="Memo">
+                    <Setter TargetName="TextHint" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FieldKind}" Value="Checkbox">
+                    <Setter TargetName="FieldBox"        Property="Background"  Value="#F8F8F8"/>
+                    <Setter TargetName="FieldBox"        Property="BorderBrush" Value="#888"/>
+                    <Setter TargetName="CheckboxSquare"  Property="Visibility"  Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FieldKind}" Value="Radio">
+                    <Setter TargetName="FieldBox"    Property="Background"  Value="#F8F8F8"/>
+                    <Setter TargetName="FieldBox"    Property="BorderBrush" Value="#888"/>
+                    <Setter TargetName="RadioCircle" Property="Visibility"  Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FieldKind}" Value="ComboBox">
+                    <Setter TargetName="ComboContent" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FieldKind}" Value="Signature">
+                    <Setter TargetName="FieldBox"   Property="Background"      Value="#EFF6FF"/>
+                    <Setter TargetName="FieldBox"   Property="BorderThickness" Value="0"/>
+                    <Setter TargetName="SigContent" Property="Visibility"      Value="Visible"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
         <!-- ── Selection overlay style (shared) ─────────────────────────── -->

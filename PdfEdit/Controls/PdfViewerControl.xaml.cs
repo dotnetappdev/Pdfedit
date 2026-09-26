@@ -20,12 +20,13 @@ public partial class PdfViewerControl : UserControl
 
     private double Scale => PdfRenderService.PointsToDips * (_vm?.Zoom ?? 1.0);
 
-    // Acrobat-style form-field appearance brushes (frozen for reuse across fields).
-    private static readonly Brush FieldFillBrush = Freeze(Color.FromArgb(60, 90, 160, 255));
-    private static readonly Brush FieldBorderBrush = Freeze(Color.FromArgb(150, 70, 130, 200));
-    private static readonly Brush FieldFocusBrush = Freeze(Color.FromArgb(90, 120, 180, 255));
-    private static readonly Brush FieldFocusBorderBrush = Freeze(Color.FromArgb(230, 30, 120, 220));
-    private static readonly Brush FieldRequiredBorderBrush = Freeze(Color.FromArgb(200, 210, 60, 60));
+    // Adobe Acrobat DC-accurate form-field appearance brushes (frozen for reuse).
+    private static readonly Brush FieldFillBrush          = Freeze(Color.FromArgb( 45,   0,  85, 215));
+    private static readonly Brush FieldBorderBrush        = Freeze(Color.FromArgb(170,   0,  80, 200));
+    private static readonly Brush FieldFocusBrush         = Freeze(Color.FromArgb( 80,   0, 100, 220));
+    private static readonly Brush FieldFocusBorderBrush   = Freeze(Color.FromArgb(230,  30, 120, 220));
+    private static readonly Brush FieldRequiredBorderBrush= Freeze(Color.FromArgb(210, 200,  30,  30));
+    private static readonly SolidColorBrush SigBlueBrush  = new(Color.FromRgb(0, 80, 200));
 
     private static Brush Freeze(Color c)
     {
@@ -950,7 +951,7 @@ public partial class PdfViewerControl : UserControl
         return tb;
     }
 
-    private CheckBox BuildCheckBox(FormFieldInfo field, double w, double h)
+    private UIElement BuildCheckBox(FormFieldInfo field, double w, double h)
     {
         var currentVal = _vm!.FieldValues.TryGetValue(field.Name, out var cv) ? cv : field.Value;
         bool isChecked = currentVal == field.ExportValue
@@ -958,36 +959,56 @@ public partial class PdfViewerControl : UserControl
 
         var cb = new CheckBox
         {
-            Width = w, Height = h,
             IsChecked = isChecked,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
         };
         System.Windows.Automation.AutomationProperties.SetName(cb, $"Checkbox: {field.Name}");
         cb.Checked   += (_, _) => _vm!.UpdateFieldValue(field.Name, field.ExportValue);
         cb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
         cb.GotFocus  += (_, _) => _vm!.SelectedField = field;
-        return cb;
+
+        // Wrap in Acrobat-style highlighted field area so the interactive region is visible.
+        var container = new Border
+        {
+            Width = w, Height = h,
+            Background = FieldFillBrush,
+            BorderBrush = FieldBorderBrush,
+            BorderThickness = new Thickness(1),
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
+            Child = cb,
+        };
+        container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
+        container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        return container;
     }
 
-    private RadioButton BuildRadioButton(FormFieldInfo field, double w, double h)
+    private UIElement BuildRadioButton(FormFieldInfo field, double w, double h)
     {
         var groupVal = _vm!.FieldValues.TryGetValue(field.Name, out var gv) ? gv : field.Value;
         var rb = new RadioButton
         {
-            Width = w, Height = h,
             GroupName = field.RadioGroup ?? field.Name,
             IsChecked = groupVal == field.ExportValue,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
         };
         System.Windows.Automation.AutomationProperties.SetName(rb, $"Radio: {field.Name} = {field.ExportValue}");
-        // Only handle Checked — GroupName handles mutual exclusion automatically
         rb.Checked  += (_, _) => _vm!.UpdateFieldValue(field.Name, field.ExportValue);
         rb.GotFocus += (_, _) => _vm!.SelectedField = field;
-        return rb;
+
+        var container = new Border
+        {
+            Width = w, Height = h,
+            Background = FieldFillBrush,
+            BorderBrush = FieldBorderBrush,
+            BorderThickness = new Thickness(1),
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
+            Child = rb,
+        };
+        container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
+        container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        return container;
     }
 
     private ComboBox BuildComboBox(FormFieldInfo field, double w, double h)
@@ -1024,27 +1045,56 @@ public partial class PdfViewerControl : UserControl
         return lb;
     }
 
-    private Border BuildSignatureBox(FormFieldInfo field, double w, double h)
+    private Grid BuildSignatureBox(FormFieldInfo field, double w, double h)
     {
-        var border = new Border
+        // Adobe Acrobat signature field: light blue fill + dashed blue border + pen icon.
+        var grid = new Grid
         {
             Width = w, Height = h,
-            BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 200)),
-            BorderThickness = new Thickness(1),
-            Background = new SolidColorBrush(Color.FromArgb(20, 100, 100, 200)),
             ToolTip = $"Signature field: {field.Name} — click to sign",
             Cursor = Cursors.Pen,
         };
-        border.Child = new TextBlock
+
+        // Light-blue field fill
+        grid.Children.Add(new Rectangle { Fill = FieldFillBrush });
+
+        // Dashed border (WPF Border doesn't support dash; use Rectangle)
+        grid.Children.Add(new Rectangle
+        {
+            Stroke = SigBlueBrush,
+            StrokeThickness = 1.5,
+            StrokeDashArray = new DoubleCollection { 5, 3 },
+            Fill = Brushes.Transparent,
+            Margin = new Thickness(1),
+        });
+
+        // Pen icon + "Click to Sign" label
+        var label = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        label.Children.Add(new TextBlock
+        {
+            FontFamily = new FontFamily("Segoe MDL2 Assets"),
+            Text = "",
+            FontSize = Math.Max(8, h * 0.35),
+            Foreground = SigBlueBrush,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 4, 0),
+        });
+        label.Children.Add(new TextBlock
         {
             Text = "Click to Sign",
-            Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 200)),
-            HorizontalAlignment = HorizontalAlignment.Center,
+            Foreground = SigBlueBrush,
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = Math.Max(8, h * 0.35),
             FontStyle = FontStyles.Italic,
-        };
-        border.MouseLeftButtonDown += (_, e) =>
+        });
+        grid.Children.Add(label);
+
+        grid.MouseLeftButtonDown += (_, e) =>
         {
             _vm!.SelectedField = field;
             var sig = OpenSignatureDialog();
@@ -1069,7 +1119,7 @@ public partial class PdfViewerControl : UserControl
             }
             e.Handled = true;
         };
-        return border;
+        return grid;
     }
 
     private static readonly SolidColorBrush AdobeBlue = new(Color.FromRgb(0, 120, 215));
