@@ -3289,6 +3289,23 @@ public class MainViewModel : INotifyPropertyChanged
                 _currentFilePath, _currentPageIndex, pageHeight, CurrentPageFields);
 
             DesignCanvas.Elements.Clear();
+
+            // Vector artwork (fills, rules, boxes, drawings) has no editable equivalent, so
+            // it comes in as a locked full-page backdrop beneath the editable elements.
+            try
+            {
+                var artwork = Engine.CustomPdfEngine.RenderPageArtwork(_currentFilePath, _currentPageIndex);
+                if (artwork != null)
+                {
+                    DesignCanvas.Elements.Add(new Models.ImageDesignElement
+                    {
+                        X = 0, Y = 0, Width = pageWidth, Height = pageHeight,
+                        Bitmap = artwork, IsLocked = true, ZOrder = -1
+                    });
+                }
+            }
+            catch { /* backdrop is best-effort; the editable elements still import */ }
+
             foreach (var e in elements) DesignCanvas.Elements.Add(e);
             DesignCanvas.SelectedElement = null;
             DesignCanvas.PageSize = Models.DesignPageSize.Custom;

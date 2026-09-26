@@ -2749,7 +2749,7 @@
                                             <!-- Design Canvas (shown in design mode) -->
                                             <controls:DesignCanvas x:Name="DesignCanvasControl"
                                                                    DataContext="{Binding DesignCanvas}"
-                                                                   Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                   Visibility="{Binding DataContext.IsDesignMode, RelativeSource={RelativeSource AncestorType=Grid}, Converter={StaticResource BoolToVisibilityConverter}}"
                                                                    AutomationProperties.Name="Design canvas"/>
                                             <!-- Floating toolbar (PDF: fill & sign; Design: canvas tools) -->
                                             <controls:ToolboxPanel x:Name="FloatingToolbox"

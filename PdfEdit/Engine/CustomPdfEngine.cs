@@ -94,15 +94,23 @@ public sealed class CustomPdfEngine : IPdfRenderer
 
     private BitmapSource RenderPage(PdfDictionary page, PdfDictionary? resources,
                                      byte[] content, int pixelW, int pixelH,
-                                     double wPts, double hPts, double scale, double bitmapDpi, int rot)
+                                     double wPts, double hPts, double scale, double bitmapDpi, int rot,
+                                     bool skipText = false, bool skipImages = false, bool whiteBackground = true)
     {
         var rtb = new RenderTargetBitmap(pixelW, pixelH, bitmapDpi, bitmapDpi, PixelFormats.Pbgra32);
         var dv  = new DrawingVisual();
 
         using (var dc = dv.RenderOpen())
         {
+            // All drawing below is in device pixels, but RenderTargetBitmap at a DPI above 96
+            // scales the visual by bitmapDpi/96 again. Undo that so content fills the bitmap exactly.
+            double dpiFactor = bitmapDpi / WpfDpi;
+            if (Math.Abs(dpiFactor - 1) > 1e-6)
+                dc.PushTransform(new ScaleTransform(1 / dpiFactor, 1 / dpiFactor));
+
             // White page background
-            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, pixelW, pixelH));
+            if (whiteBackground)
+                dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, pixelW, pixelH));
 
             // Apply page rotation (viewer transform)
             if (rot != 0)
@@ -114,17 +122,46 @@ public sealed class CustomPdfEngine : IPdfRenderer
             // Render content
             try
             {
-                var renderer = new PdfContentRenderer(dc, _parser!, resources, hPts, scale);
+                var renderer = new PdfContentRenderer(dc, _parser!, resources, hPts, scale)
+                {
+                    SkipText = skipText, SkipImages = skipImages
+                };
                 renderer.Render(content);
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PdfRender] {ex.Message}"); }
 
             if (rot != 0) dc.Pop();
+            if (Math.Abs(dpiFactor - 1) > 1e-6) dc.Pop();
         }
 
         rtb.Render(dv);
         rtb.Freeze();
         return rtb;
+    }
+
+    /// <summary>
+    /// Synchronously renders only a page's vector artwork (paths and fills) with no text
+    /// and no images, on a transparent background. Used by the Design import, which
+    /// recreates text and images as editable elements and needs the rest as a backdrop.
+    /// Must be called on the UI thread.
+    /// </summary>
+    public static BitmapSource? RenderPageArtwork(string path, int pageIndex, double zoom = 2.0)
+    {
+        var eng = new CustomPdfEngine();
+        eng._fileBytes = File.ReadAllBytes(path);
+        eng.ParseDocument();
+        if (eng._parser == null || eng._pages == null || pageIndex < 0 || pageIndex >= eng._pageCount) return null;
+
+        double scale = PtsToDips * zoom;
+        var (wPts, hPts) = eng._pageSizePts[pageIndex];
+        int rot = eng._pageRotations[pageIndex];
+        bool swapped = rot is 90 or 270;
+        int pixelW = Math.Max(1, (int)Math.Round((swapped ? hPts : wPts) * scale));
+        int pixelH = Math.Max(1, (int)Math.Round((swapped ? wPts : hPts) * scale));
+        var page = eng._pages[pageIndex];
+        return eng.RenderPage(page, eng._parser.GetResources(page), eng._parser.GetPageContent(page),
+            pixelW, pixelH, wPts, hPts, scale, WpfDpi, rot,
+            skipText: true, skipImages: true, whiteBackground: false);
     }
 
     // ── Page metadata ─────────────────────────────────────────────────────────

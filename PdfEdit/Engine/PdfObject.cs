@@ -35,13 +35,25 @@ internal sealed class PdfString : PdfObject
     public override string ToString() => ToLatin1();
 }
 
-internal sealed class PdfName : PdfObject
+internal class PdfName : PdfObject
 {
     public string Value { get; }
     public PdfName(string v) => Value = v;
     public override string ToString() => "/" + Value;
     public override bool Equals(object? obj) => obj is PdfName n && n.Value == Value;
     public override int GetHashCode() => Value.GetHashCode();
+}
+
+/// <summary>
+/// A bare keyword (no leading '/'), e.g. "obj", "stream", or a content-stream operator
+/// such as "Tf" or "re". Derives from PdfName so keyword checks like
+/// <c>is PdfName { Value: "stream" }</c> keep working, but lets the content
+/// renderer tell operators apart from /Name operands.
+/// </summary>
+internal sealed class PdfKeyword : PdfName
+{
+    public PdfKeyword(string v) : base(v) { }
+    public override string ToString() => Value;
 }
 
 internal sealed class PdfArray : PdfObject

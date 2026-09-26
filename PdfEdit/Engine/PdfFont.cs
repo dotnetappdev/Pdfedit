@@ -47,6 +47,18 @@ internal sealed class PdfFont
 
         // Determine WPF family, bold, italic
         (string family, bool bold, bool italic) = ResolveFamily(baseFont, dict);
+        var descriptor = parser.ResolveDict(dict.Get("FontDescriptor"));
+        int weight = ResolveWeight(baseFont, descriptor, bold);
+        if (family == "Arial" && !StandardFonts.ContainsKey(baseFont) && descriptor != null)
+        {
+            long flags = descriptor.GetInt("Flags");
+            if ((flags & 1) != 0)      family = "Courier New";       // FixedPitch
+            else if ((flags & 2) != 0) family = "Times New Roman";   // Serif
+        }
+        // Arial has no light face; Segoe UI does (WPF picks it by weight). Glyphs are
+        // stretched to the PDF's widths when drawn, so metrics differences don't matter.
+        if (weight <= 300 && family == "Arial" && IsInstalled("Segoe UI"))
+            family = "Segoe UI";
 
         // Glyph widths
         long   firstChar = dict.GetInt("FirstChar", 0);
@@ -73,32 +85,62 @@ internal sealed class PdfFont
             if (diffArr != null) differences = ParseDifferences(diffArr);
         }
 
-        return new PdfFont(family, bold, italic, (int)firstChar, widths, toUnicodeMap, differences);
+        return new PdfFont(family, weight, italic, (int)firstChar, widths, toUnicodeMap, differences);
     }
 
-    private PdfFont(string family, bool bold, bool italic, int firstChar, double[]? widths,
+    private PdfFont(string family, int weight, bool italic, int firstChar, double[]? widths,
                     Dictionary<int, char> toUnicode, int[]? differences)
     {
         WpfFamilyName = family;
-        IsBold        = bold;
+        IsBold        = weight >= 600;
         IsItalic      = italic;
         FirstChar     = firstChar;
         Widths        = widths;
         _toUnicode    = toUnicode;
         _differences  = differences;
-        GlyphTypeface = ResolveGlyphTypeface(family, bold, italic);
+        GlyphTypeface = ResolveGlyphTypeface(family, weight, italic);
     }
 
     // ── glyph typeface ────────────────────────────────────────────────────────
 
-    private static GlyphTypeface? ResolveGlyphTypeface(string family, bool bold, bool italic)
+    /// <summary>
+    /// OpenType weight (100–900) from the descriptor's /FontWeight, falling back to
+    /// weight hints in the PostScript name (e.g. "HelveticaNeueLTStd-Md", "Roboto-Light").
+    /// </summary>
+    private static int ResolveWeight(string baseFont, PdfDictionary? descriptor, bool boldFromName)
+    {
+        int w = (int)(descriptor?.GetReal("FontWeight", 0) ?? 0);
+        if (w >= 100 && w <= 900) return w;
+
+        bool hyphen  = baseFont.Contains('-');
+        string style = hyphen ? baseFont[(baseFont.LastIndexOf('-') + 1)..] : baseFont;
+        bool Has(params string[] keys) => keys.Any(k => style.Contains(k, StringComparison.OrdinalIgnoreCase));
+        // Two-letter abbreviations (Adobe style: "-Lt", "-MdIt") only count as the suffix style
+        bool Abbr(string key) => hyphen && style.StartsWith(key, StringComparison.Ordinal);
+        if (Has("Black", "Heavy"))                            return 900;
+        if (Has("ExtraBold", "UltraBold"))                    return 800;
+        if (Has("SemiBold", "DemiBold", "Demi") || Abbr("Sb")) return 600;
+        if (boldFromName || Has("Bold") || Abbr("Bd"))        return 700;
+        if (Has("Medium") || Abbr("Md"))                      return 500;
+        if (Has("Thin", "Hairline") || Abbr("Th"))            return 200;
+        if (Has("Light") || Abbr("Lt"))                       return 300;
+        // /Flags bit 19 (ForceBold)
+        if (descriptor != null && (descriptor.GetInt("Flags") & (1 << 18)) != 0) return 700;
+        return 400;
+    }
+
+    private static bool IsInstalled(string family) =>
+        System.Windows.Media.Fonts.SystemFontFamilies.Any(f => string.Equals(f.Source, family, StringComparison.OrdinalIgnoreCase));
+
+    private static GlyphTypeface? ResolveGlyphTypeface(string family, int weight, bool italic)
     {
         try
         {
             var typeface = new Typeface(
                 new FontFamily(family),
                 italic ? FontStyles.Italic : FontStyles.Normal,
-                bold   ? FontWeights.Bold  : FontWeights.Normal,
+                // Medium (500) has no Arial face; nudge it to bold so it still reads as heavier
+                FontWeight.FromOpenTypeWeight(weight == 500 ? 600 : weight),
                 FontStretches.Normal);
             typeface.TryGetGlyphTypeface(out var gt);
             return gt;

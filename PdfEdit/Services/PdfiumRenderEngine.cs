@@ -112,7 +112,11 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
         int pixelW = Math.Max(1, (int)Math.Round((swapped ? hPts : wPts) * scalingFactor));
         int pixelH = Math.Max(1, (int)Math.Round((swapped ? wPts : hPts) * scalingFactor));
 
-        byte[] bgra = await Task.Run(() => RenderPageToBytes(pageIndex, scalingFactor));
+        var (bgra, renderedW, renderedH) = await Task.Run(() => RenderPageToBytes(pageIndex, scalingFactor));
+
+        // Use Pdfium's actual output size: its rounding can differ from ours by a pixel,
+        // and a width mismatch shears every row of the image.
+        if (renderedW > 0 && renderedH > 0) { pixelW = renderedW; pixelH = renderedH; }
 
         return await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             MakeBitmap(bgra, pixelW, pixelH, bitmapDpi));
@@ -120,9 +124,9 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
 
     // ── Pdfium render (thread-pool) ──────────────────────────────────────────────
 
-    private byte[] RenderPageToBytes(int pageIndex, double scalingFactor)
+    private (byte[] Bgra, int Width, int Height) RenderPageToBytes(int pageIndex, double scalingFactor)
     {
-        if (_fileBytes == null) return Array.Empty<byte>();
+        if (_fileBytes == null) return (Array.Empty<byte>(), 0, 0);
         lock (Lib)
         {
             using var doc  = Lib.GetDocReader(_fileBytes, new PageDimensions(scalingFactor));
@@ -130,7 +134,8 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
 
             // Pre-fill white — Pdfium renders transparent backgrounds on pages that don't
             // specify a background colour (most PDFs). Adobe Reader fills white by default.
-            return FillWhite(page.GetImage(ScreenFlags), page.GetPageWidth(), page.GetPageHeight());
+            int w = page.GetPageWidth(), h = page.GetPageHeight();
+            return (FillWhite(page.GetImage(ScreenFlags), w, h), w, h);
         }
     }
 
@@ -167,16 +172,10 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
     private static WriteableBitmap MakeBitmap(byte[] bgra, int width, int height, double dpi)
     {
         var bmp = new WriteableBitmap(width, height, dpi, dpi, PixelFormats.Bgra32, null);
-        bmp.Lock();
-        try
-        {
-            Marshal.Copy(bgra, 0, bmp.BackBuffer, bgra.Length);
-            bmp.AddDirtyRect(new Int32Rect(0, 0, width, height));
-        }
-        finally
-        {
-            bmp.Unlock();
-        }
+        // WritePixels honours the back buffer's stride (Marshal.Copy into BackBuffer does not)
+        int stride = width * 4;
+        int rows   = Math.Min(height, bgra.Length / stride);
+        if (rows > 0) bmp.WritePixels(new Int32Rect(0, 0, width, rows), bgra, stride, 0);
         bmp.Freeze();
         return bmp;
     }

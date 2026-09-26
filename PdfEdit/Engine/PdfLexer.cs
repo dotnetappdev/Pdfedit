@@ -71,9 +71,31 @@ internal sealed class PdfLexer
             }
             if (ReadObject() is not PdfName key) break;
             var val = ReadObject() ?? PdfNull.Instance;
+            if (val is PdfInteger iv) val = TryCollapseRef(iv);
             dict.Items[key.Value] = val;
         }
         return dict;
+    }
+
+    // After reading an integer, checks whether "G R" follows (an indirect reference "N G R").
+    // Returns the collapsed ref, or the original integer with the position restored.
+    private PdfObject TryCollapseRef(PdfInteger num)
+    {
+        int savedPos = _pos;
+        SkipWs();
+        if (_pos < _data.Length && _data[_pos] >= '0' && _data[_pos] <= '9' &&
+            ReadObject() is PdfInteger gen)
+        {
+            SkipWs();
+            if (_pos < _data.Length && _data[_pos] == 'R' &&
+                (_pos + 1 >= _data.Length || IsWs(_data[_pos + 1]) || IsDelim(_data[_pos + 1])))
+            {
+                _pos++;
+                return new PdfIndirectRef((int)num.Value, (int)gen.Value);
+            }
+        }
+        _pos = savedPos;
+        return num;
     }
 
     // ── array ────────────────────────────────────────────────────────────────
@@ -89,23 +111,7 @@ internal sealed class PdfLexer
             var obj = ReadObject();
             if (obj == null) break;
             // If it looks like an indirect ref N G R, collapse it
-            if (obj is PdfInteger iObj)
-            {
-                int savedPos = _pos;
-                SkipWs();
-                if (ReadObject() is PdfInteger gen)
-                {
-                    SkipWs();
-                    int kw = _pos;
-                    if (ReadObject() is { } kObj && kObj.ToString() == "R")
-                    {
-                        arr.Items.Add(new PdfIndirectRef((int)iObj.Value, (int)gen.Value));
-                        continue;
-                    }
-                    _pos = kw;
-                }
-                _pos = savedPos;
-            }
+            if (obj is PdfInteger iObj) obj = TryCollapseRef(iObj);
             arr.Items.Add(obj);
         }
         return arr;
@@ -232,13 +238,13 @@ internal sealed class PdfLexer
             "true"  => PdfBoolean.True,
             "false" => PdfBoolean.False,
             "null"  => PdfNull.Instance,
-            _       => new PdfName(kw)      // treat unknown keywords as names
+            _       => new PdfKeyword(kw)   // operators and other bare keywords
         };
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private byte Peek2() => _pos + 1 < _data.Length ? _data[_pos + 1] : 0;
+    private byte Peek2() => _pos + 1 < _data.Length ? _data[_pos + 1] : (byte)0;
 
     public string ReadLine()
     {

@@ -27,6 +27,15 @@ internal sealed class PdfContentRenderer
     private Point _subpathStart;
     private bool  _pathOpen;
 
+    // Clip requested by W / W* — takes effect after the next path-painting operator
+    private bool _pendingClip;
+    private bool _pendingClipEvenOdd;
+
+    /// <summary>Skip painting text (it still advances, so layout is unaffected).</summary>
+    public bool SkipText   { get; init; }
+    /// <summary>Skip painting image XObjects and inline images.</summary>
+    public bool SkipImages { get; init; }
+
     // Font cache
     private readonly Dictionary<string, PdfFont> _fontCache = new();
     private PdfFont? _currentFont;
@@ -59,15 +68,21 @@ internal sealed class PdfContentRenderer
             lex.SkipWs();
             if (lex.AtEnd) break;
 
+            int before = lex.Position;
             var obj = lex.ReadObject();
-            if (obj == null) break;
-
-            // A PdfName that is NOT preceded by '/' is a keyword/operator
-            // We distinguish: PdfName = operator (starts with alphabetic/etc), not '/'
-            // Actually our lexer wraps keywords as PdfName too — check if it's an operator
-            if (obj is PdfName opName && IsOperator(opName.Value))
+            if (obj == null)
             {
-                ExecuteOp(opName.Value, operands, contentBytes, ref lex);
+                // Stray delimiter such as ']' or '>' — skip it rather than stopping the page
+                if (lex.Position == before) lex.Position++;
+                continue;
+            }
+
+            // Bare keywords are operators; /Names (PdfName) are operands
+            if (obj is PdfKeyword opName)
+            {
+                // One malformed operator must not abort the rest of the page
+                try { ExecuteOp(opName.Value, operands, contentBytes, ref lex); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PdfRender] {opName.Value}: {ex.Message}"); }
                 operands.Clear();
             }
             else
@@ -75,16 +90,31 @@ internal sealed class PdfContentRenderer
                 operands.Add(obj);
             }
         }
+
+        // Unwind any clips left by unbalanced q/Q so the DrawingContext stays balanced.
+        for (int i = 0; i < _gs.ClipPushes; i++) _dc.Pop();
+        _gs.ClipPushes = 0;
     }
 
-    // Operators do NOT start with '/' in a content stream (those are names used as operands).
-    // They are alphabetic strings like "BT", "q", "cm", "Tf", etc.
-    // Our lexer returns keywords as PdfName with no '/' — distinguish them from
-    // actual /Name operands: a content stream name operand starts with '/' but we strip it.
-    // The lexer already reads '/' names as PdfName; keywords become PdfName too.
-    // We treat a token as an operator when it's not a number, string, array, dict, or indirect ref.
-    private static bool IsOperator(string v) =>
-        v.Length > 0 && v[0] != '/' && !char.IsDigit(v[0]) && v[0] != '-' && v[0] != '.' && v[0] != '+';
+    private void RestoreState()
+    {
+        if (_gsStack.Count == 0) return;
+        var prev = _gsStack.Pop();
+        for (int i = prev.ClipPushes; i < _gs.ClipPushes; i++) _dc.Pop();
+        _gs = prev;
+    }
+
+    private void ApplyPendingClip(Geometry? geom)
+    {
+        if (!_pendingClip) return;
+        _pendingClip = false;
+        if (geom == null) return;
+        var clip = geom.Clone();
+        if (clip is StreamGeometry sg) sg.FillRule = _pendingClipEvenOdd ? FillRule.EvenOdd : FillRule.Nonzero;
+        clip.Freeze();
+        _dc.PushClip(clip);
+        _gs.ClipPushes++;
+    }
 
     // ── operator dispatch ─────────────────────────────────────────────────────
 
@@ -94,7 +124,7 @@ internal sealed class PdfContentRenderer
         {
             // ── Graphics state ─────────────────────────────────────────────
             case "q":  _gsStack.Push(_gs); _gs = _gs.Clone(); break;
-            case "Q":  if (_gsStack.Count > 0) _gs = _gsStack.Pop(); break;
+            case "Q":  RestoreState(); break;
             case "cm": SetCtm(ops); break;
             case "w":  _gs.LineWidth = GetReal(ops, 0, 1); break;
             case "J":  _gs.LineCap  = (PenLineCap)(int)GetReal(ops, 0, 0); break;
@@ -123,27 +153,25 @@ internal sealed class PdfContentRenderer
             case "B*": FillAndStroke(true); break;
             case "b":  ClosePath(); FillAndStroke(false); break;
             case "b*": ClosePath(); FillAndStroke(true); break;
-            case "n":
-                if (_pathCtx != null) { try { _pathCtx.Close(); } catch { } }
-                _pathCtx = null; _pathGeom = null; _pathOpen = false;
-                break;
+            case "n":  ApplyPendingClip(FinalizeGeom(false)); break;
 
-            // ── Clipping ───────────────────────────────────────────────────
-            case "W":  case "W*": /* clipping — ignore for now */ _pathGeom = null; break;
+            // ── Clipping (applied by the next painting operator) ──────────
+            case "W":  _pendingClip = true; _pendingClipEvenOdd = false; break;
+            case "W*": _pendingClip = true; _pendingClipEvenOdd = true;  break;
 
             // ── Color (stroke) ────────────────────────────────────────────
-            case "CS": break; // set stroke color space name — handled by SC/SCN
-            case "SC": case "SCN": _gs.StrokeColor = ParseColor(ops, "stroke"); break;
-            case "G":  _gs.StrokeColor = Gray(GetReal(ops, 0, 0)); break;
-            case "RG": _gs.StrokeColor = Rgb(ops, 0); break;
-            case "K":  _gs.StrokeColor = Cmyk(ops, 0); break;
+            case "CS": _gs.StrokeColorSpace = ResolveColorSpace(ops); _gs.StrokeColor = PdfColorSpace.InitialColor(_gs.StrokeColorSpace, _parser); break;
+            case "SC": case "SCN": _gs.StrokeColor = ParseColor(ops, _gs.StrokeColorSpace, _gs.StrokeColor); break;
+            case "G":  _gs.StrokeColorSpace = null; _gs.StrokeColor = Gray(GetReal(ops, 0, 0)); break;
+            case "RG": _gs.StrokeColorSpace = null; _gs.StrokeColor = Rgb(ops, 0); break;
+            case "K":  _gs.StrokeColorSpace = null; _gs.StrokeColor = Cmyk(ops, 0); break;
 
             // ── Color (fill) ──────────────────────────────────────────────
-            case "cs": break;
-            case "sc": case "scn": _gs.FillColor = ParseColor(ops, "fill"); break;
-            case "g":  _gs.FillColor = Gray(GetReal(ops, 0, 0)); break;
-            case "rg": _gs.FillColor = Rgb(ops, 0); break;
-            case "k":  _gs.FillColor = Cmyk(ops, 0); break;
+            case "cs": _gs.FillColorSpace = ResolveColorSpace(ops); _gs.FillColor = PdfColorSpace.InitialColor(_gs.FillColorSpace, _parser); break;
+            case "sc": case "scn": _gs.FillColor = ParseColor(ops, _gs.FillColorSpace, _gs.FillColor); break;
+            case "g":  _gs.FillColorSpace = null; _gs.FillColor = Gray(GetReal(ops, 0, 0)); break;
+            case "rg": _gs.FillColorSpace = null; _gs.FillColor = Rgb(ops, 0); break;
+            case "k":  _gs.FillColorSpace = null; _gs.FillColor = Cmyk(ops, 0); break;
 
             // ── Text ────────────────────────────────────────────────────────
             case "BT": BeginText(); break;
@@ -304,12 +332,20 @@ internal sealed class PdfContentRenderer
     {
         var color = Color.FromArgb((byte)(_gs.AlphaStroke * _gs.StrokeColor.A),
             _gs.StrokeColor.R, _gs.StrokeColor.G, _gs.StrokeColor.B);
-        var pen = new Pen(new SolidColorBrush(color), _gs.LineWidth * _scale);
-        pen.StartLineCap = pen.EndLineCap = _gs.LineCap;
+        // Line width is in user space: scale it by the CTM (geometric mean of the axes).
+        double ctmScale = Math.Sqrt(Math.Abs(_gs.Ctm.Determinant));
+        double width = _gs.LineWidth * ctmScale;
+        if (width < 1) width = 1;   // PDF: width 0 means "thinnest visible line"
+        var pen = new Pen(new SolidColorBrush(color), width);
+        pen.StartLineCap = pen.EndLineCap = pen.DashCap = _gs.LineCap;
         pen.LineJoin = _gs.LineJoin;
         pen.MiterLimit = _gs.MiterLimit;
-        if (_gs.DashArray != null && _gs.DashArray.Length > 0)
-            pen.DashStyle = new DashStyle(_gs.DashArray.Select(d => d), _gs.DashPhase);
+        if (_gs.DashArray != null && _gs.DashArray.Length > 0 && _gs.DashArray.Any(d => d > 0))
+        {
+            // WPF dash lengths are multiples of pen thickness; PDF's are user-space units.
+            pen.DashStyle = new DashStyle(_gs.DashArray.Select(d => d * ctmScale / width),
+                                          _gs.DashPhase * ctmScale / width);
+        }
         pen.Freeze();
         return pen;
     }
@@ -327,56 +363,61 @@ internal sealed class PdfContentRenderer
     {
         var geom = FinalizeGeom(_gs.EvenOddFill);
         if (geom != null) _dc.DrawGeometry(null, MakePen(), geom);
+        ApplyPendingClip(geom);
     }
 
     private void FillPath(bool evenOdd)
     {
         var geom = FinalizeGeom(evenOdd);
         if (geom != null) _dc.DrawGeometry(MakeFillBrush(), null, geom);
+        ApplyPendingClip(geom);
     }
 
     private void FillAndStroke(bool evenOdd)
     {
         var geom = FinalizeGeom(evenOdd);
         if (geom != null) _dc.DrawGeometry(MakeFillBrush(), MakePen(), geom);
+        ApplyPendingClip(geom);
     }
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
-    private static Color Gray(double g)
+    private static Color Gray(double g) => PdfColorSpace.Gray(g);
+
+    private static Color Rgb(List<PdfObject> ops, int startIdx) =>
+        PdfColorSpace.Rgb(GetReal(ops, startIdx), GetReal(ops, startIdx + 1), GetReal(ops, startIdx + 2));
+
+    private static Color Cmyk(List<PdfObject> ops, int startIdx) =>
+        PdfColorSpace.Cmyk(GetReal(ops, startIdx), GetReal(ops, startIdx + 1),
+                           GetReal(ops, startIdx + 2), GetReal(ops, startIdx + 3));
+
+    /// <summary>Resolves a cs/CS operand: device names directly, others via /Resources /ColorSpace.</summary>
+    private PdfObject? ResolveColorSpace(List<PdfObject> ops)
     {
-        byte b = (byte)(g * 255);
-        return Color.FromRgb(b, b, b);
+        if (ops.Count == 0 || ops[0] is not PdfName n) return null;
+        if (n.Value is "DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "Pattern" or "G" or "RGB" or "CMYK")
+            return n;
+        var csDict = _resources == null ? null : _parser.ResolveDict(_resources.Get("ColorSpace"));
+        var cs = csDict?.Get(n.Value);
+        return cs != null ? _parser.Resolve(cs) : n;
     }
 
-    private static Color Rgb(List<PdfObject> ops, int startIdx)
+    private Color ParseColor(List<PdfObject> ops, PdfObject? colorSpace, Color current)
     {
-        return Color.FromRgb(
-            (byte)(GetReal(ops, startIdx,     0) * 255),
-            (byte)(GetReal(ops, startIdx + 1, 0) * 255),
-            (byte)(GetReal(ops, startIdx + 2, 0) * 255));
-    }
+        var comps = ops.Where(o => o is PdfInteger or PdfReal)
+                       .Select(o => o is PdfReal r ? r.Value : ((PdfInteger)o).Value)
+                       .ToArray();
+        if (comps.Length == 0) return current;   // e.g. a pattern name only — keep current color
 
-    private static Color Cmyk(List<PdfObject> ops, int startIdx)
-    {
-        double c = GetReal(ops, startIdx,     0);
-        double m = GetReal(ops, startIdx + 1, 0);
-        double y = GetReal(ops, startIdx + 2, 0);
-        double k = GetReal(ops, startIdx + 3, 0);
-        return Color.FromRgb(
-            (byte)((1 - Math.Min(1, c + k)) * 255),
-            (byte)((1 - Math.Min(1, m + k)) * 255),
-            (byte)((1 - Math.Min(1, y + k)) * 255));
-    }
+        if (colorSpace != null)
+            return PdfColorSpace.ToColor(colorSpace, comps, _parser) ?? current;
 
-    private Color ParseColor(List<PdfObject> ops, string mode)
-    {
-        return ops.Count switch
+        return comps.Length switch
         {
-            1 => Gray(GetReal(ops, 0)),
-            3 => Rgb(ops, 0),
-            4 => Cmyk(ops, 0),
-            _ => mode == "stroke" ? _gs.StrokeColor : _gs.FillColor
+            1 => PdfColorSpace.Gray(comps[0]),
+            3 => PdfColorSpace.Rgb(comps[0], comps[1], comps[2]),
+            4 => PdfColorSpace.Cmyk(comps[0], comps[1], comps[2], comps[3]),
+            _ => current
         };
     }
 
@@ -477,9 +518,10 @@ internal sealed class PdfContentRenderer
 
         foreach (var item in arr.Items)
         {
+            double hScale = _gs.Text.HorizScale / 100.0;
             if (item is PdfString ps) RenderTextBytes(ps.Bytes);
-            else if (item is PdfInteger ki) AdjustTextPosition(-ki.Value * _gs.Text.FontSize / 1000.0);
-            else if (item is PdfReal   kr) AdjustTextPosition(-kr.Value  * _gs.Text.FontSize / 1000.0);
+            else if (item is PdfInteger ki) AdjustTextPosition(-ki.Value * _gs.Text.FontSize / 1000.0 * hScale);
+            else if (item is PdfReal   kr) AdjustTextPosition(-kr.Value  * _gs.Text.FontSize / 1000.0 * hScale);
         }
     }
 
@@ -489,103 +531,115 @@ internal sealed class PdfContentRenderer
         _gs.Text.Tm = Matrix.Multiply(m, _gs.Text.Tm);
     }
 
+    /// <summary>
+    /// Text rendering matrix per PDF 9.4.4: [Tfs·Th 0 0 Tfs 0 Trise] × Tm × CTM.
+    /// Maps glyph space (1 unit = 1 em, y up) to device pixels.
+    /// </summary>
+    private Matrix TextRenderMatrix()
+    {
+        var t = _gs.Text;
+        var m = new Matrix(t.FontSize * t.HorizScale / 100.0, 0, 0, t.FontSize, 0, t.Rise);
+        m = Matrix.Multiply(m, t.Tm);
+        return Matrix.Multiply(m, _gs.Ctm);
+    }
+
+    private Brush TextBrush()
+    {
+        var c = _gs.FillColor;
+        var brush = new SolidColorBrush(Color.FromArgb((byte)(_gs.AlphaFill * c.A), c.R, c.G, c.B));
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// Pushes a transform so that drawing a glyph run of em size <paramref name="emSize"/>
+    /// at (0,0) (WPF y-down) lands where the PDF text rendering matrix puts it.
+    /// Returns the em size to use, or 0 when the text is degenerate / too small to see.
+    /// </summary>
+    private double PushGlyphTransform(out bool pushed)
+    {
+        pushed = false;
+        var trm = TextRenderMatrix();
+        // Vertical em size in pixels — used as the glyph run's rendering size so
+        // hinting works at the real on-screen size.
+        double emSize = Math.Sqrt(trm.M21 * trm.M21 + trm.M22 * trm.M22);
+        if (emSize < 0.5 || double.IsNaN(emSize)) return 0;
+
+        // WPF glyph space is y-down: flip, then apply trm, all scaled down by emSize.
+        var g = Matrix.Multiply(new Matrix(1 / emSize, 0, 0, -1 / emSize, 0, 0), trm);
+        _dc.PushTransform(new MatrixTransform(g));
+        pushed = true;
+        return emSize;
+    }
+
     private void RenderTextBytes(byte[] bytes)
     {
-        if (_currentFont?.GlyphTypeface == null) { RenderTextFallback(bytes); return; }
-
+        if (_currentFont == null) return;
         var gt = _currentFont.GlyphTypeface;
         double fontSize = _gs.Text.FontSize;
         double hScale   = _gs.Text.HorizScale / 100.0;
+        bool visible    = !SkipText && _gs.Text.RenderMode is not 3 and not 7;
+        Brush? brush    = visible ? TextBrush() : null;
 
         foreach (byte b in bytes)
         {
             char ch = _currentFont.DecodeChar(b);
-            if (!gt.CharacterToGlyphMap.TryGetValue(ch, out ushort glyphIdx)) glyphIdx = 0;
 
-            // Text rendering matrix = Tm × CTM, but we have a Y-flip in CTM
-            // Text user-space point in PDF: (Tm.OffsetX, Tm.OffsetY)
-            // Transform via CTM to screen space
-            double tx = _gs.Text.Tm.OffsetX;
-            double ty = _gs.Text.Tm.OffsetY + _gs.Text.Rise;
-            var screenPt = _gs.Ctm.Transform(new Point(tx, ty));
-
-            // The font size in screen pixels: fontSize * CTM scale
-            double scaleX = Math.Sqrt(_gs.Ctm.M11 * _gs.Ctm.M11 + _gs.Ctm.M21 * _gs.Ctm.M21);
-            double pixelSize = fontSize * scaleX;
-
-            if (_gs.Text.RenderMode != 3 && pixelSize >= 1 && glyphIdx > 0)
+            if (visible && ch != ' ')
             {
-                // Build a single-glyph GlyphRun
-                var origin = new Point(screenPt.X, screenPt.Y);
-                try
+                double emSize = PushGlyphTransform(out bool pushed);
+                if (pushed)
                 {
-                    var glyphRun = new GlyphRun(
-                        glyphTypeface:    gt,
-                        bidiLevel:        0,
-                        isSideways:       false,
-                        renderingEmSize:  pixelSize,
-                        pixelsPerDip:     1.0,
-                        glyphIndices:     new[] { glyphIdx },
-                        baselineOrigin:   origin,
-                        advanceWidths:    new[] { gt.AdvanceWidths[glyphIdx] * pixelSize },
-                        glyphOffsets:     null,
-                        characters:       new[] { ch },
-                        deviceFontName:   null,
-                        clusterMap:       null,
-                        caretStops:       null,
-                        language:         System.Windows.Markup.XmlLanguage.GetLanguage("en-us"));
+                    try
+                    {
+                        if (gt != null && gt.CharacterToGlyphMap.TryGetValue(ch, out ushort glyphIdx))
+                        {
+                            // Stretch the substitute glyph to the PDF's advance width so
+                            // words keep their original length when the font is not embedded.
+                            double pdfW  = _currentFont.GetCharWidth(b, 1.0);
+                            double sysW  = gt.AdvanceWidths[glyphIdx];
+                            double xStretch = pdfW > 0 && sysW > 0 ? Math.Clamp(pdfW / sysW, 0.6, 1.4) : 1.0;
+                            if (Math.Abs(xStretch - 1) > 0.02)
+                                _dc.PushTransform(new ScaleTransform(xStretch, 1));
 
-                    Color fillColor = _gs.FillColor;
-                    var brush = new SolidColorBrush(fillColor); brush.Freeze();
-                    _dc.DrawGlyphRun(brush, glyphRun);
+                            var glyphRun = new GlyphRun(
+                                glyphTypeface:   gt,
+                                bidiLevel:       0,
+                                isSideways:      false,
+                                renderingEmSize: emSize,
+                                pixelsPerDip:    1.0f,
+                                glyphIndices:    new[] { glyphIdx },
+                                baselineOrigin:  new Point(0, 0),
+                                advanceWidths:   new[] { sysW * emSize },
+                                glyphOffsets:    null,
+                                characters:      new[] { ch },
+                                deviceFontName:  null,
+                                clusterMap:      null,
+                                caretStops:      null,
+                                language:        System.Windows.Markup.XmlLanguage.GetLanguage("en-us"));
+                            _dc.DrawGlyphRun(brush, glyphRun);
+
+                            if (Math.Abs(xStretch - 1) > 0.02) _dc.Pop();
+                        }
+                        else
+                        {
+                            RenderTextCharFallback(ch, emSize, brush!);
+                        }
+                    }
+                    catch { }
+                    finally { _dc.Pop(); }
                 }
-                catch { RenderTextCharFallback(ch, screenPt, pixelSize); }
             }
 
-            // Advance Tm
-            double charW = _currentFont.GetCharWidth(b, fontSize) * hScale;
-            if (b == 32) charW += _gs.Text.WordSpacing * hScale;
-            charW += _gs.Text.CharSpacing * hScale;
-            AdjustTextPosition(charW);
+            // Advance Tm: tx = ((w0/1000)·Tfs + Tc + Tw) · Th
+            double charW = _currentFont.GetCharWidth(b, fontSize);
+            charW += _gs.Text.CharSpacing;
+            if (b == 32) charW += _gs.Text.WordSpacing;
+            AdjustTextPosition(charW * hScale);
         }
     }
 
-    private void RenderTextFallback(byte[] bytes)
-    {
-        if (_currentFont == null) return;
-        double fontSize = _gs.Text.FontSize;
-        double hScale   = _gs.Text.HorizScale / 100.0;
-        double scaleX   = Math.Sqrt(_gs.Ctm.M11 * _gs.Ctm.M11 + _gs.Ctm.M21 * _gs.Ctm.M21);
-        double pixelSize = fontSize * scaleX;
-
-        var sb = new System.Text.StringBuilder();
-        foreach (byte b in bytes) sb.Append(_currentFont.DecodeChar(b));
-
-        double tx = _gs.Text.Tm.OffsetX;
-        double ty = _gs.Text.Tm.OffsetY + _gs.Text.Rise;
-        var screenPt = _gs.Ctm.Transform(new Point(tx, ty));
-
-        var ft = new System.Windows.Media.FormattedText(
-            sb.ToString(),
-            System.Globalization.CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight,
-            new Typeface(_currentFont.WpfFamilyName),
-            Math.Max(1, pixelSize),
-            new SolidColorBrush(_gs.FillColor),
-            1.0);
-        _dc.DrawText(ft, new Point(screenPt.X, screenPt.Y - pixelSize));
-
-        // Advance text position by full string width estimate
-        double totalW = bytes.Sum(b =>
-        {
-            double w = _currentFont.GetCharWidth(b, fontSize) * hScale;
-            if (b == 32) w += _gs.Text.WordSpacing * hScale;
-            return w + _gs.Text.CharSpacing * hScale;
-        });
-        AdjustTextPosition(totalW);
-    }
-
-    private void RenderTextCharFallback(char ch, Point screenPt, double pixelSize)
+    private void RenderTextCharFallback(char ch, double emSize, Brush brush)
     {
         if (_currentFont == null) return;
         var ft = new System.Windows.Media.FormattedText(
@@ -593,10 +647,11 @@ internal sealed class PdfContentRenderer
             System.Globalization.CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight,
             new Typeface(_currentFont.WpfFamilyName),
-            Math.Max(1, pixelSize),
-            new SolidColorBrush(_gs.FillColor),
+            Math.Max(1, emSize),
+            brush,
             1.0);
-        _dc.DrawText(ft, new Point(screenPt.X, screenPt.Y - pixelSize));
+        // DrawText positions by the top of the line box; shift up so the baseline sits at 0.
+        _dc.DrawText(ft, new Point(0, -ft.Baseline));
     }
 
     // ── XObjects ──────────────────────────────────────────────────────────────
@@ -615,50 +670,251 @@ internal sealed class PdfContentRenderer
 
     private void DrawImageXObject(PdfStream stm)
     {
-        int w    = (int)stm.Dict.GetInt("Width",  stm.Dict.GetInt("W"));
-        int h    = (int)stm.Dict.GetInt("Height", stm.Dict.GetInt("H"));
-        int bpc  = (int)stm.Dict.GetInt("BitsPerComponent", stm.Dict.GetInt("BPC", 8));
-        string cs = stm.Dict.GetName("ColorSpace") ?? stm.Dict.GetName("CS") ?? "DeviceRGB";
-        string filterName = GetFilterName(stm);
+        if (SkipImages) return;
+        var bitmap = DecodeImage(stm);
+        if (bitmap != null) PaintImage(bitmap);
+    }
 
-        BitmapSource? bitmap = null;
-        byte[] raw = PdfStreamFilter.Decode(stm);
-
-        if (filterName is "DCTDecode" or "DCT" || IsJpeg(stm.RawData))
-        {
-            // JPEG — feed the original compressed bytes directly to BitmapImage
-            bitmap = LoadJpegBitmap(stm.RawData);
-        }
-        else
-        {
-            bitmap = RawToBitmap(raw, w, h, bpc, cs);
-        }
-
-        if (bitmap == null) return;
-
-        // The image occupies a unit square [0,0]-[1,1] in user space,
-        // stretched by the CTM.  We draw at the CTM-transformed origin.
-        // CTM column vectors give the four corners.
-        var origin  = _gs.Ctm.Transform(new Point(0, 0));
-        var xAxis   = _gs.Ctm.Transform(new Point(1, 0));
-        var yAxis   = _gs.Ctm.Transform(new Point(0, 1));
-
-        double imgW = (xAxis - origin).Length;
-        double imgH = (yAxis - origin).Length;
-
-        if (imgW < 1 || imgH < 1) return;
-
-        _dc.PushTransform(new MatrixTransform(_gs.Ctm));
+    /// <summary>
+    /// Paints a bitmap into the current unit square. PDF images map row 0 to the top
+    /// of the unit square (user y = 1), so flip vertically before applying the CTM.
+    /// </summary>
+    private void PaintImage(BitmapSource bitmap)
+    {
+        var m = Matrix.Multiply(new Matrix(1, 0, 0, -1, 0, 1), _gs.Ctm);
+        _dc.PushTransform(new MatrixTransform(m));
+        if (_gs.AlphaFill < 1) _dc.PushOpacity(_gs.AlphaFill);
         _dc.DrawImage(bitmap, new Rect(0, 0, 1, 1));
+        if (_gs.AlphaFill < 1) _dc.Pop();
         _dc.Pop();
     }
 
-    private static string GetFilterName(PdfStream stm)
+    private BitmapSource? DecodeImage(PdfStream stm)
     {
-        var f = stm.Dict.Get("Filter") ?? stm.Dict.Get("F");
-        if (f is PdfName n) return n.Value;
-        if (f is PdfArray a && a.Count > 0 && a[0] is PdfName fn) return fn.Value;
-        return string.Empty;
+        var d   = stm.Dict;
+        int w   = (int)(_parser.Resolve(d.Get("Width")  ?? d.Get("W") ?? PdfNull.Instance) is PdfInteger wi ? wi.Value : 0);
+        int h   = (int)(_parser.Resolve(d.Get("Height") ?? d.Get("H") ?? PdfNull.Instance) is PdfInteger hi ? hi.Value : 0);
+        bool isMask = (d.Get("ImageMask") ?? d.Get("IM")) is PdfBoolean { Value: true };
+        int bpc = isMask ? 1 : (int)d.GetInt("BitsPerComponent", d.GetInt("BPC", 8));
+        var csObj = d.Get("ColorSpace") ?? d.Get("CS");
+        if (csObj != null) csObj = ResolveImageColorSpace(csObj);
+
+        byte[] data;
+        try { data = PdfStreamFilter.Decode(stm); } catch { return null; }
+
+        var filters = GetFilterNames(stm);
+        if (filters.Contains("JPXDecode")) return null;   // JPEG 2000 not supported
+
+        byte[]? bgra;
+        if (filters.Contains("DCTDecode") || filters.Contains("DCT") || IsJpeg(data))
+        {
+            var jpeg = LoadJpegBitmap(data);
+            if (jpeg == null) return null;
+            if (d.Get("SMask") == null && d.Get("Mask") is not PdfIndirectRef and not PdfStream) return jpeg;
+            // Need per-pixel alpha: convert to BGRA so the mask can be applied
+            var conv = new FormatConvertedBitmap(jpeg, PixelFormats.Bgra32, null, 0);
+            w = conv.PixelWidth; h = conv.PixelHeight;
+            bgra = new byte[w * h * 4];
+            conv.CopyPixels(bgra, w * 4, 0);
+        }
+        else
+        {
+            if (w <= 0 || h <= 0 || bpc <= 0) return null;
+            bgra = isMask
+                ? DecodeStencil(data, w, h, d)
+                : DecodeSamples(data, w, h, bpc, csObj ?? new PdfName("DeviceGray"), d.GetArray("Decode") ?? d.GetArray("D"));
+            if (bgra == null) return null;
+        }
+
+        // Soft mask (alpha channel) or explicit stencil mask
+        if (!isMask)
+        {
+            if (_parser.Resolve(d.Get("SMask") ?? PdfNull.Instance) is PdfStream smask)
+                ApplyAlphaMask(bgra, w, h, smask, invert: false);
+            else if (_parser.Resolve(d.Get("Mask") ?? PdfNull.Instance) is PdfStream mask)
+                ApplyAlphaMask(bgra, w, h, mask, invert: true);
+        }
+
+        try
+        {
+            var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+            wb.WritePixels(new Int32Rect(0, 0, w, h), bgra, w * 4, 0);
+            wb.Freeze();
+            return wb;
+        }
+        catch { return null; }
+    }
+
+    private PdfObject ResolveImageColorSpace(PdfObject cs)
+    {
+        cs = _parser.Resolve(cs);
+        // Named colour spaces may refer to /Resources /ColorSpace entries
+        if (cs is PdfName n && n.Value is not ("DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "G" or "RGB" or "CMYK" or "I" or "Indexed"))
+        {
+            var csDict = _resources == null ? null : _parser.ResolveDict(_resources.Get("ColorSpace"));
+            if (csDict?.Get(n.Value) is { } res) return _parser.Resolve(res);
+        }
+        return cs;
+    }
+
+    private List<string> GetFilterNames(PdfStream stm)
+    {
+        var f = _parser.Resolve(stm.Dict.Get("Filter") ?? stm.Dict.Get("F") ?? PdfNull.Instance);
+        if (f is PdfName n) return new List<string> { n.Value };
+        if (f is PdfArray a) return a.Items.Select(i => (_parser.Resolve(i) as PdfName)?.Value ?? "").ToList();
+        return new List<string>();
+    }
+
+    /// <summary>Reads one packed sample of 1/2/4/8/16 bits (16-bit returns the high byte).</summary>
+    private static int ReadSample(byte[] data, long bitPos, int bits)
+    {
+        long i = bitPos >> 3;
+        if (bits >= 8) return i < data.Length ? data[i] : 0;
+        if (i >= data.Length) return 0;
+        int shift = 8 - bits - (int)(bitPos & 7);
+        return (data[i] >> shift) & ((1 << bits) - 1);
+    }
+
+    private byte[]? DecodeSamples(byte[] data, int w, int h, int bpc, PdfObject cs, PdfArray? decodeArr)
+    {
+        string family = PdfColorSpace.Family(cs, _parser);
+        int comps = PdfColorSpace.ComponentCount(cs, _parser);
+        bool indexed = family is "Indexed" or "I";
+        int maxV = bpc == 16 ? 255 : (1 << bpc) - 1;   // 16-bit reads the high byte only
+        long rowBits = ((long)w * comps * bpc + 7) / 8 * 8;
+
+        // Decode ranges (defaults: [0 1] per component, [0 2^bpc-1] for Indexed, Lab uses its Range)
+        var dec = new double[comps * 2];
+        for (int c = 0; c < comps; c++) { dec[2 * c] = 0; dec[2 * c + 1] = indexed ? maxV : 1; }
+        if (family == "Lab")
+        {
+            dec[0] = 0; dec[1] = 100;
+            var rng = _parser.Resolve(cs) is PdfArray { Count: > 1 } la ? _parser.ResolveDict(la[1])?.GetArray("Range") : null;
+            for (int c = 1; c < 3; c++)
+            {
+                dec[2 * c]     = rng != null && rng.Count >= 2 * c ? PdfColorSpace.GetNum(rng[2 * c - 2]) : -100;
+                dec[2 * c + 1] = rng != null && rng.Count >= 2 * c ? PdfColorSpace.GetNum(rng[2 * c - 1]) : 100;
+            }
+        }
+        if (decodeArr != null)
+            for (int i = 0; i < Math.Min(dec.Length, decodeArr.Count); i++) dec[i] = PdfColorSpace.GetNum(decodeArr[i]);
+
+        // Palette for indexed images; memo cache for the non-device spaces
+        Color[]? palette = null;
+        if (indexed)
+        {
+            palette = new Color[maxV + 1];
+            for (int i = 0; i <= maxV; i++)
+                palette[i] = PdfColorSpace.ToColor(cs, new double[] { i }, _parser) ?? Colors.Black;
+        }
+        var cache = new Dictionary<long, Color>();
+        bool fastDevice = family is "DeviceGray" or "G" or "CalGray" or "DeviceRGB" or "RGB" or "CalRGB" or "DeviceCMYK" or "CMYK"
+                          || (family == "ICCBased" && comps is 1 or 3 or 4);
+
+        var px = new byte[w * h * 4];
+        var vals = new double[comps];
+        for (int y = 0; y < h; y++)
+        {
+            long bit = y * rowBits;
+            for (int x = 0; x < w; x++)
+            {
+                Color col;
+                if (indexed)
+                {
+                    int raw = ReadSample(data, bit, bpc); bit += bpc;
+                    int idx = (int)Math.Round(dec[0] + raw * (dec[1] - dec[0]) / maxV);
+                    col = palette![Math.Clamp(idx, 0, palette.Length - 1)];
+                }
+                else
+                {
+                    long key = 0;
+                    for (int c = 0; c < comps; c++)
+                    {
+                        int raw = ReadSample(data, bit, bpc); bit += bpc;
+                        key = (key << 8) ^ raw;
+                        vals[c] = dec[2 * c] + raw * (dec[2 * c + 1] - dec[2 * c]) / maxV;
+                    }
+                    if (fastDevice)
+                    {
+                        col = comps switch
+                        {
+                            1 => PdfColorSpace.Gray(vals[0]),
+                            4 => PdfColorSpace.Cmyk(vals[0], vals[1], vals[2], vals[3]),
+                            _ => PdfColorSpace.Rgb(vals[0], vals[1], vals[2]),
+                        };
+                    }
+                    else if (!cache.TryGetValue(key, out col))
+                    {
+                        col = PdfColorSpace.ToColor(cs, (double[])vals.Clone(), _parser) ?? Colors.Black;
+                        if (cache.Count < 65536) cache[key] = col;
+                    }
+                }
+                int o = (y * w + x) * 4;
+                px[o] = col.B; px[o + 1] = col.G; px[o + 2] = col.R; px[o + 3] = col.A;
+            }
+        }
+        return px;
+    }
+
+    /// <summary>ImageMask: 1-bit stencil painted with the current fill colour.</summary>
+    private byte[] DecodeStencil(byte[] data, int w, int h, PdfDictionary d)
+    {
+        var decode = d.GetArray("Decode") ?? d.GetArray("D");
+        bool paintOnOne = decode != null && decode.Count >= 1 && PdfColorSpace.GetNum(decode[0]) == 1;
+        var c = _gs.FillColor;
+        long rowBits = (w + 7) / 8 * 8;
+        var px = new byte[w * h * 4];
+        for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+        {
+            int s = ReadSample(data, y * rowBits + x, 1);
+            if ((s == 1) != paintOnOne) continue;
+            int o = (y * w + x) * 4;
+            px[o] = c.B; px[o + 1] = c.G; px[o + 2] = c.R; px[o + 3] = 255;
+        }
+        return px;
+    }
+
+    /// <summary>
+    /// Applies an SMask (gray = alpha) or a Mask stencil (sample 1 = masked out when
+    /// <paramref name="invert"/>) to straight-alpha BGRA pixels, resampling if sizes differ.
+    /// </summary>
+    private void ApplyAlphaMask(byte[] bgra, int w, int h, PdfStream mask, bool invert)
+    {
+        int mw = (int)mask.Dict.GetInt("Width"), mh = (int)mask.Dict.GetInt("Height");
+        if (mw <= 0 || mh <= 0) return;
+        bool isStencil = mask.Dict.Get("ImageMask") is PdfBoolean { Value: true };
+        int bpc = isStencil ? 1 : (int)mask.Dict.GetInt("BitsPerComponent", 8);
+        byte[] md;
+        try { md = PdfStreamFilter.Decode(mask); } catch { return; }
+        if (GetFilterNames(mask).Contains("DCTDecode"))
+        {
+            var jpeg = LoadJpegBitmap(md);
+            if (jpeg == null) return;
+            var gray = new FormatConvertedBitmap(jpeg, PixelFormats.Gray8, null, 0);
+            md = new byte[gray.PixelWidth * gray.PixelHeight];
+            gray.CopyPixels(md, gray.PixelWidth, 0);
+            bpc = 8;
+        }
+        int maxV = bpc == 16 ? 255 : (1 << bpc) - 1;
+        long rowBits = ((long)mw * bpc + 7) / 8 * 8;
+        var dec = mask.Dict.GetArray("Decode");
+        bool inverted = dec != null && dec.Count >= 1 && PdfColorSpace.GetNum(dec[0]) == 1;
+
+        for (int y = 0; y < h; y++)
+        {
+            int my = (int)((long)y * mh / h);
+            for (int x = 0; x < w; x++)
+            {
+                int mx = (int)((long)x * mw / w);
+                int s = ReadSample(md, my * rowBits + (long)mx * bpc, bpc);
+                double a = (double)s / maxV;
+                if (inverted) a = 1 - a;
+                if (invert) a = 1 - a;
+                int o = (y * w + x) * 4;
+                bgra[o + 3] = (byte)Math.Round(bgra[o + 3] * a);
+            }
+        }
     }
 
     private static bool IsJpeg(byte[] data) =>
@@ -680,58 +936,17 @@ internal sealed class PdfContentRenderer
         catch { return null; }
     }
 
-    private static BitmapSource? RawToBitmap(byte[] data, int w, int h, int bpc, string cs)
-    {
-        if (w <= 0 || h <= 0) return null;
-        try
-        {
-            int components = cs switch { "DeviceRGB" or "RGB" => 3, "DeviceCMYK" or "CMYK" => 4, _ => 1 };
-            int stride = w * 4; // BGRA32 output
-            var pixels  = new byte[stride * h];
-
-            for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
-                int src = (y * w + x) * components * bpc / 8;
-                int dst = (y * w + x) * 4;
-                if (dst + 3 >= pixels.Length) break;
-
-                byte r = 0, g = 0, b = 0, a = 255;
-                if (components == 3 && src + 2 < data.Length)
-                {
-                    r = data[src]; g = data[src + 1]; b = data[src + 2];
-                }
-                else if (components == 4 && src + 3 < data.Length)
-                {
-                    double dc = data[src] / 255.0, dm = data[src+1] / 255.0,
-                           dy = data[src+2] / 255.0, dk = data[src+3] / 255.0;
-                    r = (byte)((1 - Math.Min(1, dc + dk)) * 255);
-                    g = (byte)((1 - Math.Min(1, dm + dk)) * 255);
-                    b = (byte)((1 - Math.Min(1, dy + dk)) * 255);
-                }
-                else if (components == 1 && src < data.Length)
-                {
-                    r = g = b = data[src];
-                }
-                pixels[dst] = b; pixels[dst+1] = g; pixels[dst+2] = r; pixels[dst+3] = a;
-            }
-
-            var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
-            wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
-            wb.Freeze();
-            return wb;
-        }
-        catch { return null; }
-    }
-
     private void DrawFormXObject(PdfStream stm)
     {
-        // Recursively render the form XObject in its own graphics state
-        byte[] content = PdfStreamFilter.Decode(stm);
+        if (_formDepth >= 12) return;   // guard against self-referencing forms
+
+        // Recursively render the form XObject with a copy of the current graphics state
+        byte[] content;
+        try { content = PdfStreamFilter.Decode(stm); } catch { return; }
         var res = _parser.ResolveDict(stm.Dict.Get("Resources")) ?? _resources;
 
-        _gsStack.Push(_gs);
-        _gs = _gs.Clone();
+        var gs = _gs.Clone();
+        gs.ClipPushes = 0;
 
         // Apply optional Matrix from the Form XObject
         var matrix = stm.Dict.GetArray("Matrix");
@@ -741,15 +956,39 @@ internal sealed class PdfContentRenderer
                 GetArrReal(matrix, 0), GetArrReal(matrix, 1),
                 GetArrReal(matrix, 2), GetArrReal(matrix, 3),
                 GetArrReal(matrix, 4), GetArrReal(matrix, 5));
-            _gs.Ctm = Matrix.Multiply(m, _gs.Ctm);
+            gs.Ctm = Matrix.Multiply(m, gs.Ctm);
         }
 
-        var subContent = new PdfContentRenderer(_dc, _parser, res, _pageH, _scale);
-        subContent._gs.Ctm = _gs.Ctm;
-        subContent.Render(content);
+        // Clip to the form's BBox
+        bool clipped = false;
+        var bbox = stm.Dict.GetArray("BBox");
+        if (bbox?.Count >= 4)
+        {
+            double x0 = GetArrReal(bbox, 0), y0 = GetArrReal(bbox, 1), x1 = GetArrReal(bbox, 2), y1 = GetArrReal(bbox, 3);
+            var geo = new StreamGeometry();
+            using (var ctx = geo.Open())
+            {
+                ctx.BeginFigure(gs.Ctm.Transform(new Point(x0, y0)), true, true);
+                ctx.LineTo(gs.Ctm.Transform(new Point(x1, y0)), false, false);
+                ctx.LineTo(gs.Ctm.Transform(new Point(x1, y1)), false, false);
+                ctx.LineTo(gs.Ctm.Transform(new Point(x0, y1)), false, false);
+            }
+            geo.Freeze();
+            _dc.PushClip(geo);
+            clipped = true;
+        }
 
-        _gs = _gsStack.Pop();
+        var sub = new PdfContentRenderer(_dc, _parser, res, _pageH, _scale)
+        {
+            _formDepth = _formDepth + 1, SkipText = SkipText, SkipImages = SkipImages
+        };
+        sub._gs = gs;
+        sub.Render(content);
+
+        if (clipped) _dc.Pop();
     }
+
+    private int _formDepth;
 
     // ── Inline images ─────────────────────────────────────────────────────────
 
@@ -769,33 +1008,58 @@ internal sealed class PdfContentRenderer
         // skip one byte (space after ID)
         if (!lex.AtEnd) lex.Position++;
 
-        // Read until EI
+        // Read until "EI" delimited by whitespace on both sides
         int start = lex.Position;
-        while (lex.Position + 2 < contentBytes.Length)
+        while (lex.Position + 1 < contentBytes.Length)
         {
-            if (contentBytes[lex.Position]   == 'E' &&
-                contentBytes[lex.Position+1] == 'I' &&
-                (lex.Position == 0 || contentBytes[lex.Position-1] == '\n' || contentBytes[lex.Position-1] == '\r' || contentBytes[lex.Position-1] == ' '))
+            int p = lex.Position;
+            if (contentBytes[p] == 'E' && contentBytes[p + 1] == 'I' &&
+                (p == 0 || IsWsByte(contentBytes[p - 1])) &&
+                (p + 2 >= contentBytes.Length || IsWsByte(contentBytes[p + 2])))
             { break; }
             lex.Position++;
         }
-        byte[] imgData = contentBytes[start..lex.Position];
-        lex.Position += 2; // skip EI
+        int end = lex.Position;
+        if (end > start && IsWsByte(contentBytes[end - 1])) end--;
+        byte[] imgData = contentBytes[start..end];
+        lex.Position = Math.Min(contentBytes.Length, lex.Position + 2); // skip EI
 
-        int w   = (int)(dict.GetInt("W", dict.GetInt("Width",  1)));
-        int h   = (int)(dict.GetInt("H", dict.GetInt("Height", 1)));
-        int bpc = (int)(dict.GetInt("BPC", dict.GetInt("BitsPerComponent", 8)));
-        string cs = dict.GetName("CS") ?? dict.GetName("ColorSpace") ?? "DeviceRGB";
-
-        var stm = new PdfStream(dict, imgData);
-        byte[] decoded = PdfStreamFilter.Decode(stm);
-        var bitmap = IsJpeg(imgData) ? LoadJpegBitmap(imgData) : RawToBitmap(decoded, w, h, bpc, cs);
-        if (bitmap != null)
+        // Expand the abbreviated inline-image keys and values
+        var full = new PdfDictionary();
+        foreach (var (k, v) in dict.Items)
         {
-            _dc.PushTransform(new MatrixTransform(_gs.Ctm));
-            _dc.DrawImage(bitmap, new Rect(0, 0, 1, 1));
-            _dc.Pop();
+            string key = k switch
+            {
+                "W" => "Width", "H" => "Height", "BPC" => "BitsPerComponent", "CS" => "ColorSpace",
+                "D" => "Decode", "DP" => "DecodeParms", "F" => "Filter", "IM" => "ImageMask", _ => k
+            };
+            full.Items[key] = v switch
+            {
+                PdfName n  => new PdfName(ExpandInlineName(n.Value)),
+                PdfArray a => ExpandInlineArray(a),
+                _          => v
+            };
         }
+
+        if (SkipImages) return;
+        var bitmap = DecodeImage(new PdfStream(full, imgData));
+        if (bitmap != null) PaintImage(bitmap);
+    }
+
+    private static bool IsWsByte(byte b) => b is 0 or 9 or 10 or 12 or 13 or 32;
+
+    private static string ExpandInlineName(string v) => v switch
+    {
+        "G" => "DeviceGray", "RGB" => "DeviceRGB", "CMYK" => "DeviceCMYK", "I" => "Indexed",
+        "AHx" => "ASCIIHexDecode", "A85" => "ASCII85Decode", "LZW" => "LZWDecode", "Fl" => "FlateDecode",
+        "RL" => "RunLengthDecode", "CCF" => "CCITTFaxDecode", "DCT" => "DCTDecode", _ => v
+    };
+
+    private static PdfArray ExpandInlineArray(PdfArray a)
+    {
+        var r = new PdfArray();
+        foreach (var i in a.Items) r.Items.Add(i is PdfName n ? new PdfName(ExpandInlineName(n.Value)) : i);
+        return r;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

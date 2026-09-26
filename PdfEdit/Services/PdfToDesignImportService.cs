@@ -58,7 +58,7 @@ public static class PdfToDesignImportService
                 result.Add(new TextDesignElement
                 {
                     X = line.X,
-                    Y = pageHeightPt - line.Y - line.Height,
+                    Y = pageHeightPt - line.Y,   // line.Y is the top edge in PDF (y-up) space
                     Width = Math.Max(20, line.Width + 4),
                     Height = Math.Max(10, line.Height),
                     Text = line.Text,
@@ -153,7 +153,14 @@ public static class PdfToDesignImportService
 
             var rgb = SafeColorValue(info.GetFillColor());
             byte r, g, b;
-            if (rgb.Length >= 3) { r = ToByte(rgb[0]); g = ToByte(rgb[1]); b = ToByte(rgb[2]); }
+            if (rgb.Length == 4)
+            {
+                // DeviceCMYK
+                r = ToByte((1 - rgb[0]) * (1 - rgb[3]));
+                g = ToByte((1 - rgb[1]) * (1 - rgb[3]));
+                b = ToByte((1 - rgb[2]) * (1 - rgb[3]));
+            }
+            else if (rgb.Length >= 3) { r = ToByte(rgb[0]); g = ToByte(rgb[1]); b = ToByte(rgb[2]); }
             else if (rgb.Length == 1) { r = g = b = ToByte(rgb[0]); }
             else { r = g = b = 0; }
 
@@ -171,12 +178,29 @@ public static class PdfToDesignImportService
                 BaselineY = start.Get(PdfVector.I2),
                 StartX = start.Get(PdfVector.I1),
                 EndX = end.Get(PdfVector.I1),
-                FontSize = info.GetFontSize(),
+                FontSize = EffectiveFontSize(info),
                 FontFamily = CleanFontName(rawName),
                 Bold = bold,
                 Italic = italic,
                 Color = Color.FromRgb(r, g, b)
             });
+        }
+
+        /// <summary>
+        /// Tf only gives the nominal size; many producers use "1 Tf" and scale via the text
+        /// matrix (e.g. "12 0 0 12 x y Tm"). The on-page size is Tf × the vertical scale of Tm × CTM.
+        /// </summary>
+        private static float EffectiveFontSize(TextRenderInfo info)
+        {
+            float size = info.GetFontSize();
+            try
+            {
+                var m = info.GetTextMatrix().Multiply(info.GetGraphicsState().GetCtm());
+                float sy = (float)Math.Sqrt(m.Get(PdfMatrix.I21) * m.Get(PdfMatrix.I21) + m.Get(PdfMatrix.I22) * m.Get(PdfMatrix.I22));
+                if (sy > 0) size *= sy;
+            }
+            catch { }
+            return size;
         }
 
         private static float[] SafeColorValue(iText.Kernel.Colors.Color? c)
@@ -252,30 +276,49 @@ public static class PdfToDesignImportService
     private static IEnumerable<(string Text, double X, double Y, double Width, double Height, double FontSize, string FontFamily, bool Bold, bool Italic, Color Color)>
         GroupIntoLines(List<TextChunk> chunks)
     {
-        var lines = new List<LineAcc>();
+        // 1. Bucket chunks by baseline
+        var rows = new List<(float Baseline, List<TextChunk> Chunks)>();
         foreach (var c in chunks)
         {
             float tolerance = Math.Max(2f, c.FontSize * 0.3f);
-            var line = lines.FirstOrDefault(l => Math.Abs(l.BaselineY - c.BaselineY) < tolerance);
-            if (line == null)
-            {
-                line = new LineAcc { BaselineY = c.BaselineY, FontFamily = c.FontFamily, Bold = c.Bold, Italic = c.Italic, Color = c.Color };
-                lines.Add(line);
-            }
-            if (line.Text.Length > 0 && c.StartX - line.MaxX > c.FontSize * 0.15f)
-                line.Text += " ";
-            line.Text += c.Text;
-            line.MinX = Math.Min(line.MinX, c.StartX);
-            line.MaxX = Math.Max(line.MaxX, c.EndX);
-            line.MaxFontSize = Math.Max(line.MaxFontSize, c.FontSize);
+            int idx = rows.FindIndex(r => Math.Abs(r.Baseline - c.BaselineY) < tolerance);
+            if (idx < 0) rows.Add((c.BaselineY, new List<TextChunk> { c }));
+            else rows[idx].Chunks.Add(c);
         }
 
-        foreach (var l in lines.OrderByDescending(l => l.BaselineY))
+        // 2. Within a row, order left→right (content-stream order is arbitrary) and split
+        //    at wide gaps so separate labels on one baseline ("City … State … Zip") stay apart.
+        foreach (var (baseline, rowChunks) in rows.OrderByDescending(r => r.Baseline))
         {
-            if (string.IsNullOrWhiteSpace(l.Text)) continue;
-            double topY = l.BaselineY + l.MaxFontSize * 0.8;
+            LineAcc? line = null;
+            foreach (var c in rowChunks.OrderBy(c => c.StartX))
+            {
+                float gap = line == null ? 0 : c.StartX - line.MaxX;
+                if (line == null || gap > Math.Max(c.FontSize, line.MaxFontSize) * 1.5f)
+                {
+                    if (line != null) { var done = Emit(line); if (done != null) yield return done.Value; }
+                    line = new LineAcc { BaselineY = baseline, FontFamily = c.FontFamily, Bold = c.Bold, Italic = c.Italic, Color = c.Color };
+                }
+                else if (gap > c.FontSize * 0.15f && !line.Text.EndsWith(' ') && !c.Text.StartsWith(' '))
+                {
+                    line.Text += " ";
+                }
+                line.Text += c.Text;
+                line.MinX = Math.Min(line.MinX, c.StartX);
+                line.MaxX = Math.Max(line.MaxX, c.EndX);
+                line.MaxFontSize = Math.Max(line.MaxFontSize, c.FontSize);
+            }
+            if (line != null) { var last = Emit(line); if (last != null) yield return last.Value; }
+        }
+
+        static (string, double, double, double, double, double, string, bool, bool, Color)? Emit(LineAcc l)
+        {
+            string text = l.Text.Trim();
+            if (text.Length == 0) return null;
+            // WPF places the baseline roughly one ascent (~0.9 em) below the text box top
+            double topY = l.BaselineY + l.MaxFontSize * 0.9;
             double height = l.MaxFontSize * 1.25;
-            yield return (l.Text, l.MinX, topY, l.MaxX - l.MinX, height, l.MaxFontSize, l.FontFamily, l.Bold, l.Italic, l.Color);
+            return (text, l.MinX, topY, l.MaxX - l.MinX, height, l.MaxFontSize, l.FontFamily, l.Bold, l.Italic, l.Color);
         }
     }
 }

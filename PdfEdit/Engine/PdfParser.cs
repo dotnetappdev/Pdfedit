@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 
 namespace PdfEdit.Engine;
@@ -20,6 +21,7 @@ internal sealed class PdfParser
     private readonly Dictionary<int, PdfObject>          _cache     = new();
     // decoded object streams cache
     private readonly Dictionary<int, PdfObject[]>        _objStmCache = new();
+    private readonly Dictionary<int, int[]>              _objStmNums  = new();
 
     private PdfDictionary? _trailer;
 
@@ -28,9 +30,59 @@ internal sealed class PdfParser
     public static PdfParser Load(byte[] data)
     {
         var p = new PdfParser(data);
-        p.ReadXref();
+        try { p.ReadXref(); } catch { }
+        bool ok; try { ok = p.GetPages().Count > 0; } catch { ok = false; }
+        if (!ok) p.RebuildXref();
         return p;
     }
+
+    /// <summary>
+    /// Recovery path for damaged or unusual xref tables: scans the whole file for
+    /// "N G obj" headers and locates the catalog directly.
+    /// </summary>
+    private void RebuildXref()
+    {
+        _xref.Clear(); _xrefStm.Clear(); _cache.Clear(); _objStmCache.Clear();
+        for (int i = 0; i + 3 < _data.Length; i++)
+        {
+            if (_data[i] != 'o' || _data[i + 1] != 'b' || _data[i + 2] != 'j') continue;
+            if (i + 3 < _data.Length && !IsWsOrDelim(_data[i + 3])) continue;
+            // Walk back over "N G "
+            int p = i - 1;
+            while (p >= 0 && IsWsByte(_data[p])) p--;
+            int genEnd = p; while (p >= 0 && char.IsAsciiDigit((char)_data[p])) p--;
+            if (p == genEnd) continue;
+            while (p >= 0 && IsWsByte(_data[p])) p--;
+            int numEnd = p; while (p >= 0 && char.IsAsciiDigit((char)_data[p])) p--;
+            if (p == numEnd) continue;
+            if (!int.TryParse(Encoding.ASCII.GetString(_data, p + 1, numEnd - p), out int num)) continue;
+            _xref[num] = p + 1;   // later definitions win (incremental updates)
+        }
+
+        // Pick up objects stored in object streams, then find the catalog.
+        foreach (var num in _xref.Keys.ToList())
+        {
+            if (GetObject(num) is PdfStream s && s.Dict.GetName("Type") == "ObjStm")
+            {
+                var (objs, nums) = GetObjectStreamWithNums(num);
+                for (int k = 0; k < nums.Length; k++)
+                    if (!_xref.ContainsKey(nums[k])) _xrefStm[nums[k]] = (num, k);
+                _ = objs;
+            }
+        }
+        foreach (var num in _xref.Keys.Concat(_xrefStm.Keys).ToList())
+        {
+            if (Resolve(new PdfIndirectRef(num, 0)) is PdfDictionary d && d.GetName("Type") == "Catalog")
+            {
+                _trailer = new PdfDictionary();
+                _trailer.Items["Root"] = new PdfIndirectRef(num, 0);
+                break;
+            }
+        }
+    }
+
+    private static bool IsWsByte(byte b) => b is 0 or 9 or 10 or 12 or 13 or 32;
+    private static bool IsWsOrDelim(byte b) => IsWsByte(b) || b is (byte)'<' or (byte)'[' or (byte)'/' or (byte)'(';
 
     private PdfParser(byte[] data)
     {
@@ -105,16 +157,17 @@ internal sealed class PdfParser
             if (tok is not PdfInteger firstObj) break;
             if (_lex.ReadObject() is not PdfInteger count) break;
             int first = (int)firstObj.Value, cnt = (int)count.Value;
+            // Read entries as tokens (offset, generation, n/f) rather than lines:
+            // files use CR, LF or CRLF endings, and line-based reading drifts by one entry.
             for (int i = 0; i < cnt; i++)
             {
-                string entry = _lex.ReadLine().Trim();
-                var parts = entry.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 3) continue;
-                long off = long.Parse(parts[0]);
-                char type = parts[2][0];
+                _lex.SkipWs();
+                if (_lex.ReadObject() is not PdfInteger off) break;
+                _lex.ReadObject(); // generation
+                string type = (_lex.ReadObject() as PdfName)?.Value ?? "f";
                 int objNum = first + i;
-                if (type == 'n' && !_xref.ContainsKey(objNum))
-                    _xref[objNum] = off;
+                if (type == "n" && !_xref.ContainsKey(objNum))
+                    _xref[objNum] = off.Value;
             }
         }
 
@@ -252,12 +305,15 @@ internal sealed class PdfParser
         return v switch { PdfInteger i => i.Value, PdfReal re => (long)re.Value, _ => 0 };
     }
 
-    private PdfObject[] GetObjectStream(int stmObjNum)
+    private PdfObject[] GetObjectStream(int stmObjNum) => GetObjectStreamWithNums(stmObjNum).Objects;
+
+    private (PdfObject[] Objects, int[] Nums) GetObjectStreamWithNums(int stmObjNum)
     {
-        if (_objStmCache.TryGetValue(stmObjNum, out var cached)) return cached;
+        if (_objStmCache.TryGetValue(stmObjNum, out var cached))
+            return (cached, _objStmNums.GetValueOrDefault(stmObjNum) ?? Array.Empty<int>());
 
         var stmObj = GetObject(stmObjNum);
-        if (stmObj is not PdfStream stm) return Array.Empty<PdfObject>();
+        if (stmObj is not PdfStream stm) return (Array.Empty<PdfObject>(), Array.Empty<int>());
 
         byte[] data = PdfStreamFilter.Decode(stm);
         int n    = (int)stm.Dict.GetInt("N");
@@ -281,8 +337,10 @@ internal sealed class PdfParser
             result[i] = objLex.ReadObject() ?? PdfNull.Instance;
         }
 
+        var nums = offsets.Select(o => o.ObjNum).ToArray();
         _objStmCache[stmObjNum] = result;
-        return result;
+        _objStmNums[stmObjNum]  = nums;
+        return (result, nums);
     }
 
     // ── page tree ────────────────────────────────────────────────────────────

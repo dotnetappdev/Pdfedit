@@ -251,49 +251,24 @@ public partial class PdfViewerControl : UserControl
         grip.MouseLeftButtonUp += OnDragGripMouseUp;
         panel.Children.Add(grip);
 
-        // Font size: small a (decrease 1pt)
-        panel.Children.Add(MakeToolbarBtn("a", "Decrease font size by 1pt", () =>
+        // Adobe Fill & Sign order: smaller · larger · delete · swap
+        panel.Children.Add(MakeToolbarBtn("A", "Smaller", () =>
         {
-            if (_vm != null) _vm.CurrentFontSize = Math.Max(6, _vm.CurrentFontSize - 1);
+            if (_vm != null) _vm.CurrentFontSize = Math.Max(4, _vm.CurrentFontSize - 1);
         }, fontSize: 10));
 
-        // Font size: big A (increase 1pt)
-        panel.Children.Add(MakeToolbarBtn("A", "Increase font size by 1pt", () =>
+        panel.Children.Add(MakeToolbarBtn("A", "Larger", () =>
         {
             if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 1);
-        }, fontSize: 14));
+        }, fontSize: 16));
 
-        // Font size: − (decrease 2pt)
-        panel.Children.Add(MakeToolbarBtn("−", "Decrease font size by 2pt", () =>
-        {
-            if (_vm != null) _vm.CurrentFontSize = Math.Max(6, _vm.CurrentFontSize - 2);
-        }));
+        panel.Children.Add(MakeToolbarBtn("", "Delete (Del)", DeleteFocusedAnnotation,
+            fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
 
-        // Font size: + (increase 2pt)
-        panel.Children.Add(MakeToolbarBtn("+", "Increase font size by 2pt", () =>
-        {
-            if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 2);
-        }));
-
-        // Rotate CCW (↺ -90°)
-        panel.Children.Add(MakeToolbarBtn("↺", "Rotate 90° counter-clockwise", () =>
-        {
-            if (_focusedAnnotation == null || _focusedAnnotationTb == null) return;
-            _focusedAnnotation.RotationAngle = (_focusedAnnotation.RotationAngle - 90) % 360;
-            _focusedAnnotationTb.LayoutTransform = _focusedAnnotation.RotationAngle == 0
-                ? Transform.Identity
-                : new RotateTransform(_focusedAnnotation.RotationAngle);
-        }));
-
-        // Rotate CW (↻ +90°)
-        panel.Children.Add(MakeToolbarBtn("↻", "Rotate 90° clockwise", () =>
-        {
-            if (_focusedAnnotation == null || _focusedAnnotationTb == null) return;
-            _focusedAnnotation.RotationAngle = (_focusedAnnotation.RotationAngle + 90) % 360;
-            _focusedAnnotationTb.LayoutTransform = _focusedAnnotation.RotationAngle == 0
-                ? Transform.Identity
-                : new RotateTransform(_focusedAnnotation.RotationAngle);
-        }));
+        // Swap: cycles a placed mark through ✓ ✕ ○ — ● (only shown for marks)
+        _swapMarkBtn = MakeToolbarBtn("", "Swap mark", SwapFocusedMark,
+            fontSize: 14, fontFamily: "Segoe MDL2 Assets");
+        panel.Children.Add(_swapMarkBtn);
 
         // Quick color swatches (black, dark blue, dark red, dark green, gray)
         var swatchColors = new[]
@@ -335,29 +310,6 @@ public partial class PdfViewerControl : UserControl
             panel.Children.Add(swatch);
         }
 
-        // Delete button
-        var deleteBtn = new Border
-        {
-            Background = new SolidColorBrush(Color.FromRgb(160, 35, 25)),
-            Padding = new Thickness(7, 0, 7, 0),
-            Cursor = Cursors.Hand,
-            ToolTip = "Delete annotation (Del)",
-            Margin = new Thickness(3, 0, 0, 0),
-            Child = new TextBlock
-            {
-                Text = "✕",
-                FontSize = 12,
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center,
-            }
-        };
-        deleteBtn.MouseLeftButtonDown += (_, e) =>
-        {
-            DeleteFocusedAnnotation();
-            e.Handled = true;
-        };
-        panel.Children.Add(deleteBtn);
-
         var toolbar = new Border
         {
             Child = panel,
@@ -372,11 +324,12 @@ public partial class PdfViewerControl : UserControl
         return toolbar;
     }
 
-    private static Border MakeToolbarBtn(string label, string tip, Action onClick, double fontSize = 12)
+    private static Border MakeToolbarBtn(string label, string tip, Action onClick, double fontSize = 12,
+                                         string? fontFamily = null)
     {
         var border = new Border
         {
-            Padding = new Thickness(6, 0, 6, 0),
+            Padding = new Thickness(8, 0, 8, 0),
             Cursor = Cursors.Hand,
             ToolTip = tip,
             Background = Brushes.Transparent,
@@ -384,6 +337,7 @@ public partial class PdfViewerControl : UserControl
             {
                 Text = label,
                 FontSize = fontSize,
+                FontFamily = fontFamily != null ? new FontFamily(fontFamily) : SystemFonts.MessageFontFamily,
                 Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
                 VerticalAlignment = VerticalAlignment.Center,
             }
@@ -398,6 +352,23 @@ public partial class PdfViewerControl : UserControl
             e.Handled = true;
         };
         return border;
+    }
+
+    // ── Marks (✓ ✕ ○ — ●) ────────────────────────────────────────────────────
+
+    private static readonly string[] MarkGlyphs = { "✓", "✕", "○", "—", "●" };
+    private Border? _swapMarkBtn;
+
+    private static bool IsMarkGlyph(string? text) => text != null && MarkGlyphs.Contains(text);
+
+    private void SwapFocusedMark()
+    {
+        if (_focusedAnnotation == null || _focusedAnnotationTb == null) return;
+        int i = Array.IndexOf(MarkGlyphs, _focusedAnnotation.Text);
+        if (i < 0) return;
+        string next = MarkGlyphs[(i + 1) % MarkGlyphs.Length];
+        _focusedAnnotation.Text = next;
+        _focusedAnnotationTb.Text = next;
     }
 
     // Drag grip handlers
@@ -462,6 +433,8 @@ public partial class PdfViewerControl : UserControl
         double left = Canvas.GetLeft(tb);
         double top = Canvas.GetTop(tb);
         PositionAnnotationToolbar(left, top, tb.Width);
+        if (_swapMarkBtn != null)
+            _swapMarkBtn.Visibility = IsMarkGlyph(_focusedAnnotation?.Text) ? Visibility.Visible : Visibility.Collapsed;
         _annotToolbar.Visibility = Visibility.Visible;
 
         ShowResizeThumb(tb);
@@ -617,10 +590,12 @@ public partial class PdfViewerControl : UserControl
             PageImage.Source = bmp;
             HideRenderDiagnostic();
 
-            double w = bmp.PixelWidth;
-            double h = bmp.PixelHeight;
+            // Overlays are positioned in DIPs (see Scale), so size them to the bitmap's
+            // DIP size — PixelWidth is larger than the displayed image on high-DPI screens.
+            double w = bmp.Width;
+            double h = bmp.Height;
 
-            if (w <= 1 || h <= 1)
+            if (bmp.PixelWidth <= 1 || bmp.PixelHeight <= 1)
                 ShowRenderDiagnostic($"Rendered page is degenerate ({w}×{h}px). Zoom={_vm.Zoom:F3}, PageIndex={_vm.CurrentPageIndex}.");
             else if (IsBitmapBlank(bmp))
                 ShowRenderDiagnostic($"Bitmap decoded OK ({w}×{h}px, Zoom={_vm.Zoom:F3}) but every sampled pixel is blank/white — " +
@@ -1411,23 +1386,26 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        bool isMark = IsMarkGlyph(ann.Text);
+        // Adobe Fill & Sign style: text sits directly on the page (no fill, no box);
+        // a thin outline only appears while the item is selected.
         var tb = new TextBox
         {
             Width = ann.IsVertical ? h : w,
             Height = ann.IsVertical ? w : h,
             Text = ann.ForceUpperCase ? ann.Text.ToUpperInvariant() : ann.Text,
-            AcceptsReturn = true,
-            TextWrapping = TextWrapping.Wrap,
-            Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 200)),
+            AcceptsReturn = !isMark,
+            TextWrapping = isMark ? TextWrapping.NoWrap : TextWrapping.Wrap,
+            Background = Brushes.Transparent,
             BorderBrush = ann.IsLocked
                 ? new SolidColorBrush(Color.FromArgb(120, 200, 140, 0))   // amber = locked
-                : new SolidColorBrush(Color.FromArgb(120, 70, 130, 180)),
+                : Brushes.Transparent,
             BorderThickness = new Thickness(1),
-            Padding = new Thickness(2),
-            IsReadOnly = ann.IsLocked,
-            ToolTip = ann.IsLocked
-                ? "Locked annotation — right-click to unlock"
-                : "Annotation — drag the toolbar to move · right-click to delete"
+            Padding = new Thickness(0),
+            IsReadOnly = ann.IsLocked || isMark,
+            Cursor = isMark ? Cursors.Arrow : Cursors.IBeam,
+            VerticalContentAlignment = isMark ? VerticalAlignment.Center : VerticalAlignment.Top,
+            ToolTip = ann.IsLocked ? "Locked annotation — right-click to unlock" : null,
         };
         System.Windows.Automation.AutomationProperties.SetName(tb, "Text annotation");
 
@@ -1460,10 +1438,8 @@ public partial class PdfViewerControl : UserControl
             }
             _focusedAnnotation = ann;
             _focusedAnnotationTb = tb;
-            // Adobe-style black selection outline
-            tb.BorderBrush = new SolidColorBrush(Colors.Black);
-            tb.BorderThickness = new Thickness(2);
-            tb.Background = new SolidColorBrush(Color.FromArgb(35, 255, 255, 200));
+            // Adobe-style thin blue selection outline
+            tb.BorderBrush = AdobeBlue;
             ShowAnnotationToolbar(tb);
         };
 
@@ -1478,9 +1454,9 @@ public partial class PdfViewerControl : UserControl
                     _focusedAnnotationTb = null;
                     HideAnnotationToolbar();
                 }
-                tb.BorderBrush = new SolidColorBrush(Color.FromArgb(120, 70, 130, 180));
-                tb.BorderThickness = new Thickness(1);
-                tb.Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 200));
+                tb.BorderBrush = ann.IsLocked
+                    ? new SolidColorBrush(Color.FromArgb(120, 200, 140, 0))
+                    : Brushes.Transparent;
             });
         };
 
@@ -1546,8 +1522,9 @@ public partial class PdfViewerControl : UserControl
 
     private void ApplyAnnotationFormatting(FreeTextAnnotation ann, TextBox tb)
     {
+        // True page scale at every zoom, like the rendered page underneath
         double displayFontSize = ann.FontSize * Scale / RendererFactory.PointsToDips;
-        tb.FontSize = Math.Max(8, displayFontSize);
+        tb.FontSize = Math.Max(1, displayFontSize);
         tb.FontFamily = new FontFamily(ann.FontFamily);
         tb.FontWeight = ann.IsBold ? FontWeights.Bold : FontWeights.Normal;
         tb.FontStyle = ann.IsItalic ? FontStyles.Italic : FontStyles.Normal;
@@ -1820,8 +1797,8 @@ public partial class PdfViewerControl : UserControl
             FinalizeAnnotationBox();
             (string glyph, string colour) = tool switch
             {
-                ActiveTool.Checkmark => ("✓", "#2E7D32"),
-                ActiveTool.XMark => ("✕", "#C62828"),
+                ActiveTool.Checkmark => ("✓", "#1A1A1A"),
+                ActiveTool.XMark => ("✕", "#1A1A1A"),
                 ActiveTool.Dot => ("●", "#1A1A1A"),
                 ActiveTool.Line => ("—", "#1A1A1A"),
                 _ => ("○", "#1A1A1A"), // Circle
@@ -2808,42 +2785,17 @@ public partial class PdfViewerControl : UserControl
         };
         _vm.FreeTextAnnotations.Add(ann);
 
-        var tb = new TextBox
-        {
-            Width = defaultW,
-            Height = defaultH,
-            Text = stampText,
-            FontSize = Math.Max(8, displayFontSize),
-            FontWeight = FontWeights.Bold,
-            Foreground = ParseBrush(colorHex),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            IsReadOnly = true,
-            TextAlignment = System.Windows.TextAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-        };
-
-        var cm = new ContextMenu();
-        var delItem = new MenuItem { Header = "Delete Stamp" };
-        delItem.Click += (_, _) =>
-        {
-            _vm.RemoveFreeTextAnnotation(ann);
-            AnnotationCanvas.Children.Remove(tb);
-        };
-        cm.Items.Add(delItem);
-        tb.ContextMenu = cm;
-
-        Canvas.SetLeft(tb, posOnCanvas.X);
-        Canvas.SetTop(tb, posOnCanvas.Y);
-        AnnotationCanvas.Children.Add(tb);
+        // Same visual path as saved annotations, so the mark gets the selection
+        // outline, floating toolbar (size / delete / swap) and drag handling at once.
+        PlaceAnnotationVisual(ann, pageHeightPts);
+        AnnotationCanvas.Children.OfType<TextBox>().LastOrDefault()?.Focus();
 
         var capturedAnn = ann;
         _vm.PushUndo(
             undo: () => { _vm.FreeTextAnnotations.Remove(capturedAnn); RefreshPage(); },
             redo: () => { _vm.FreeTextAnnotations.Add(capturedAnn);    RefreshPage(); });
 
-        _vm.StatusText = $"Stamp '{stampText}' placed.";
-        ToastService.Instance.Success($"Stamp placed on page {pageNum}.");
+        _vm.StatusText = $"Mark '{stampText}' placed — use the toolbar to resize, swap or delete.";
     }
 
     // ── Rubber stamp (APPROVED / CONFIDENTIAL / etc.) ─────────────────────────
@@ -2946,21 +2898,19 @@ public partial class PdfViewerControl : UserControl
             Width = defaultW,
             Height = defaultH,
             Text = prefilledText ?? string.Empty,
-            FontSize = Math.Max(8, displayFontSize),
+            FontSize = Math.Max(1, displayFontSize),
             FontFamily = new FontFamily(_vm.CurrentFontFamily),
             FontWeight = _vm.CurrentFontBold ? FontWeights.Bold : FontWeights.Normal,
             FontStyle = _vm.CurrentFontItalic ? FontStyles.Italic : FontStyles.Normal,
             TextDecorations = _vm.CurrentFontUnderline ? TextDecorations.Underline : null,
             Foreground = ParseBrush(_vm.CurrentFontColor),
-            Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 200)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0, 120, 215)),
+            Background = Brushes.Transparent,
+            BorderBrush = AdobeBlue,
             BorderThickness = new Thickness(1),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            Padding = new Thickness(2),
+            Padding = new Thickness(0),
             TextAlignment = _vm.CurrentTextAlignment,
-            ToolTip = vertical ? "Vertical text — click away to commit"
-                               : "Type here, then click away to commit",
         };
 
         double initialRotation = vertical ? -90.0 : 0.0;

@@ -12,6 +12,14 @@ internal sealed class PdfGraphicsState
     public Color StrokeColor { get; set; } = Colors.Black;
     public Color FillColor   { get; set; } = Colors.Black;
 
+    // Current color spaces (a name like /DeviceRGB or an array like [/ICCBased ...]).
+    // Null means the device default implied by the last color operator.
+    public PdfObject? StrokeColorSpace { get; set; }
+    public PdfObject? FillColorSpace   { get; set; }
+
+    // Number of DrawingContext clip pushes active at this state level (popped on Q).
+    public int ClipPushes { get; set; }
+
     // Line style
     public double LineWidth    { get; set; } = 1.0;
     public PenLineCap  LineCap  { get; set; } = PenLineCap.Flat;
@@ -39,6 +47,9 @@ internal sealed class PdfGraphicsState
             Ctm          = Ctm,
             StrokeColor  = StrokeColor,
             FillColor    = FillColor,
+            StrokeColorSpace = StrokeColorSpace,
+            FillColorSpace   = FillColorSpace,
+            ClipPushes   = ClipPushes,
             LineWidth    = LineWidth,
             LineCap      = LineCap,
             LineJoin     = LineJoin,
