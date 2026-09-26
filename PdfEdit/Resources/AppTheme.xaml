@@ -150,6 +150,80 @@
         <Setter Property="SelectionBrush"    Value="{DynamicResource AccentBrush}"/>
     </Style>
 
+    <!-- ── Property Inspector (VB3 / WinForms PropertyGrid look) ──────────────── -->
+    <!-- Category header row: spans both columns, slightly contrasting background -->
+    <Style x:Key="PropGridCategory" TargetType="Border">
+        <Setter Property="Background"      Value="{DynamicResource ContentBgBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource AppBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding"         Value="5,0"/>
+        <Setter Property="Height"          Value="20"/>
+    </Style>
+    <Style x:Key="PropGridCategoryText" TargetType="TextBlock">
+        <Setter Property="FontSize"         Value="11"/>
+        <Setter Property="FontWeight"       Value="SemiBold"/>
+        <Setter Property="Foreground"       Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <!-- Name cell (left column): slightly inset background, right+bottom border -->
+    <Style x:Key="PropGridNameBorder" TargetType="Border">
+        <Setter Property="Background"      Value="{DynamicResource InputBgBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource AppBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Padding"         Value="5,0"/>
+        <Setter Property="Height"          Value="21"/>
+    </Style>
+    <Style x:Key="PropGridNameText" TargetType="TextBlock">
+        <Setter Property="FontSize"         Value="11"/>
+        <Setter Property="Foreground"       Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextTrimming"     Value="CharacterEllipsis"/>
+    </Style>
+    <!-- Value cell (right column): lighter background, bottom border only -->
+    <Style x:Key="PropGridValueBorder" TargetType="Border">
+        <Setter Property="Background"      Value="{DynamicResource SidebarBgBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource AppBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Height"          Value="21"/>
+    </Style>
+    <!-- Flat inline text editor: no visible border, transparent background -->
+    <Style x:Key="PropGridInlineTextBox" TargetType="TextBox">
+        <Setter Property="Background"        Value="Transparent"/>
+        <Setter Property="BorderThickness"   Value="0"/>
+        <Setter Property="FontSize"          Value="11"/>
+        <Setter Property="FontFamily"        Value="Segoe UI, Arial"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Padding"           Value="3,1"/>
+        <Setter Property="Foreground"        Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="CaretBrush"        Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="SelectionBrush"    Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <!-- Flat color-swatch button: no chrome, hover tint only -->
+    <Style x:Key="PropGridColorButton" TargetType="Button">
+        <Setter Property="Background"                 Value="Transparent"/>
+        <Setter Property="BorderThickness"            Value="0"/>
+        <Setter Property="Padding"                    Value="3,0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="Cursor"                     Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" BorderThickness="0">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ── TabControl ─────────────────────────────────────────────────────────── -->
     <Style TargetType="TabControl">
         <Setter Property="Background"  Value="{DynamicResource SidebarBgBrush}"/>

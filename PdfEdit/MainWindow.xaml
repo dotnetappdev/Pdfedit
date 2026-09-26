@@ -2907,227 +2907,215 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <!-- Design Inspector tab (VB/VS-style two-column property grid) -->
+                        <!-- Design Inspector tab (VB3/WinForms PropertyGrid style) -->
                         <TabItem Header="Inspector"
                                  Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVisibilityConverter}}"
                                  AutomationProperties.Name="Design element property inspector">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Margin="8,4,8,8">
+                                <StackPanel>
 
-                                    <!-- No selection placeholder -->
-                                    <TextBlock Text="Select an element to edit its properties."
-                                               FontSize="11"
-                                               Foreground="{DynamicResource DimForegroundBrush}"
-                                               TextWrapping="Wrap"
-                                               Margin="0,12,0,0"
-                                               Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                    <!-- No-selection placeholder -->
+                                    <TextBlock Text="Select an element to inspect its properties."
+                                               Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                                               FontSize="11" Foreground="{DynamicResource DimForegroundBrush}"
+                                               TextWrapping="Wrap" Margin="8,12"/>
 
                                     <!-- ── LAYOUT ──────────────────────────────────── -->
-                                    <TextBlock Text="LAYOUT" Style="{StaticResource SectionHeader}"
-                                               Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <Grid Margin="0,2"
-                                          Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="72"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                    <StackPanel Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}">
+                                            <TextBlock Text="Layout" Style="{StaticResource PropGridCategoryText}"/>
+                                        </Border>
+                                        <!-- X -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="X" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.SelectedX, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="X position"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Y -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Y" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.SelectedY, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Y position"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Width -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Width" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.SelectedWidth, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Width"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Height -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Height" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.SelectedHeight, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Height"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Opacity -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Opacity %" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.ElementOpacity, Converter={StaticResource PercentConverter}, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="0–100" AutomationProperties.Name="Opacity percent"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Locked -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Locked" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.ElementLocked}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Lock element"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="X" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.SelectedX, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Element X position"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Y" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.SelectedY, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Element Y position"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Width" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="2" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.SelectedWidth, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Element width"/>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Height" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="3" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.SelectedHeight, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Element height"/>
-
-                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Opacity %" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="4" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.ElementOpacity, Converter={StaticResource PercentConverter}, UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   ToolTip="0–100"
-                                                   AutomationProperties.Name="Element opacity percent"/>
-
-                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Locked" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <CheckBox  Grid.Row="5" Grid.Column="1"
-                                                   IsChecked="{Binding DesignCanvas.ElementLocked}"
-                                                   VerticalAlignment="Center" Margin="0,3"
-                                                   AutomationProperties.Name="Lock element"/>
-                                    </Grid>
-
-                                    <!-- ── TEXT ──────────────────────────────────── -->
-                                    <TextBlock Text="TEXT" Style="{StaticResource SectionHeader}"
-                                               Visibility="{Binding DesignCanvas.SelectedIsText, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <Grid Margin="0,2"
-                                          Visibility="{Binding DesignCanvas.SelectedIsText, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="72"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Font" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.FontFamily, UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Font family"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Size" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.FontSize, StringFormat='F0', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Font size"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Style" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,3">
-                                            <CheckBox Content="B" FontWeight="Bold"
-                                                      IsChecked="{Binding DesignCanvas.Bold}"
-                                                      Margin="0,0,8,0" FontSize="11"
-                                                      AutomationProperties.Name="Bold"/>
-                                            <CheckBox Content="I" FontStyle="Italic"
-                                                      IsChecked="{Binding DesignCanvas.Italic}"
-                                                      Margin="0,0,8,0" FontSize="11"
-                                                      AutomationProperties.Name="Italic"/>
-                                            <CheckBox Content="U"
-                                                      IsChecked="{Binding DesignCanvas.Underline}"
-                                                      FontSize="11"
-                                                      AutomationProperties.Name="Underline">
-                                                <CheckBox.TextDecorations>
-                                                    <TextDecoration Location="Underline"/>
-                                                </CheckBox.TextDecorations>
-                                            </CheckBox>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Color" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <Button    Grid.Row="3" Grid.Column="1"
-                                                   Height="22" Margin="0,2"
-                                                   Click="InspectorTextColor_Click"
-                                                   ToolTip="Click to change text color"
-                                                   AutomationProperties.Name="Text color picker">
-                                            <Border Height="12" Margin="2,0"
-                                                    Background="{Binding DesignCanvas.TextColor, Converter={StaticResource ColorToBrushConverter}}"/>
-                                        </Button>
-                                    </Grid>
+                                    <!-- ── TEXT ───────────────────────────────────── -->
+                                    <StackPanel Visibility="{Binding DesignCanvas.SelectedIsText, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}">
+                                            <TextBlock Text="Text" Style="{StaticResource PropGridCategoryText}"/>
+                                        </Border>
+                                        <!-- Font family -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Font" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FontFamily, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Font family"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Font size -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Size" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FontSize, StringFormat='F0', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Font size"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Bold -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Bold" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.Bold}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Bold"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Italic -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Italic" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.Italic}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Italic"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Underline -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Underline" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.Underline}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Underline"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Text color -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Color" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <Button Style="{StaticResource PropGridColorButton}" Click="InspectorTextColor_Click" ToolTip="Click to change text color" AutomationProperties.Name="Text color">
+                                                    <Rectangle Width="18" Height="13" Stroke="{DynamicResource AppBorderBrush}" StrokeThickness="1"
+                                                               Fill="{Binding DesignCanvas.TextColor, Converter={StaticResource ColorToBrushConverter}}"/>
+                                                </Button>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
 
                                     <!-- ── SHAPE ──────────────────────────────────── -->
-                                    <TextBlock Text="SHAPE" Style="{StaticResource SectionHeader}"
-                                               Visibility="{Binding DesignCanvas.SelectedIsShape, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <Grid Margin="0,2"
-                                          Visibility="{Binding DesignCanvas.SelectedIsShape, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="72"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                    <StackPanel Visibility="{Binding DesignCanvas.SelectedIsShape, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}">
+                                            <TextBlock Text="Shape" Style="{StaticResource PropGridCategoryText}"/>
+                                        </Border>
+                                        <!-- Fill color -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Fill" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <Button Style="{StaticResource PropGridColorButton}" Click="InspectorFillColor_Click" ToolTip="Click to change fill color" AutomationProperties.Name="Fill color">
+                                                    <Rectangle Width="18" Height="13" Stroke="{DynamicResource AppBorderBrush}" StrokeThickness="1"
+                                                               Fill="{Binding DesignCanvas.FillColor, Converter={StaticResource ColorToBrushConverter}}"/>
+                                                </Button>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Stroke color -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Stroke" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <Button Style="{StaticResource PropGridColorButton}" Click="InspectorStrokeColor_Click" ToolTip="Click to change stroke color" AutomationProperties.Name="Stroke color">
+                                                    <Rectangle Width="18" Height="13" Stroke="{DynamicResource AppBorderBrush}" StrokeThickness="1"
+                                                               Fill="{Binding DesignCanvas.StrokeColor, Converter={StaticResource ColorToBrushConverter}}"/>
+                                                </Button>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Stroke thickness -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Thickness" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.StrokeThickness, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Stroke thickness"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Corner radius -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Radius" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.CornerRadius, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Corner radius"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Fill" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <Button    Grid.Row="0" Grid.Column="1"
-                                                   Height="22" Margin="0,2"
-                                                   Click="InspectorFillColor_Click"
-                                                   ToolTip="Click to change fill color"
-                                                   AutomationProperties.Name="Fill color picker">
-                                            <Border Height="12" Margin="2,0"
-                                                    Background="{Binding DesignCanvas.FillColor, Converter={StaticResource ColorToBrushConverter}}"/>
-                                        </Button>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Stroke" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <Button    Grid.Row="1" Grid.Column="1"
-                                                   Height="22" Margin="0,2"
-                                                   Click="InspectorStrokeColor_Click"
-                                                   ToolTip="Click to change stroke color"
-                                                   AutomationProperties.Name="Stroke color picker">
-                                            <Border Height="12" Margin="2,0"
-                                                    Background="{Binding DesignCanvas.StrokeColor, Converter={StaticResource ColorToBrushConverter}}"/>
-                                        </Button>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Thickness" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="2" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.StrokeThickness, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Stroke thickness"/>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Radius" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="3" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.CornerRadius, StringFormat='F1', UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Corner radius"/>
-                                    </Grid>
-
-                                    <!-- ── FORM FIELD ────────────────────────────── -->
-                                    <TextBlock Text="FORM FIELD" Style="{StaticResource SectionHeader}"
-                                               Visibility="{Binding DesignCanvas.SelectedIsFormField, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    <Grid Margin="0,2"
-                                          Visibility="{Binding DesignCanvas.SelectedIsFormField, Converter={StaticResource BoolToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="72"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.FieldName, UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Field name"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Label" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <TextBox   Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.FieldLabel, UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   AutomationProperties.Name="Field label text"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Required" FontSize="11" VerticalAlignment="Center" Margin="0,3"/>
-                                        <CheckBox  Grid.Row="2" Grid.Column="1"
-                                                   IsChecked="{Binding DesignCanvas.FieldRequired}"
-                                                   VerticalAlignment="Center" Margin="0,3"
-                                                   AutomationProperties.Name="Field required"/>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Options" FontSize="11" VerticalAlignment="Top" Margin="0,5"/>
-                                        <TextBox   Grid.Row="3" Grid.Column="1"
-                                                   Text="{Binding DesignCanvas.FieldOptionsCsv, UpdateSourceTrigger=LostFocus}"
-                                                   Style="{StaticResource PropTextBox}" Margin="0,2"
-                                                   TextWrapping="Wrap" AcceptsReturn="False"
-                                                   ToolTip="Comma-separated options (ComboBox only)"
-                                                   AutomationProperties.Name="ComboBox options"/>
-                                    </Grid>
+                                    <!-- ── FORM FIELD ─────────────────────────────── -->
+                                    <StackPanel Visibility="{Binding DesignCanvas.SelectedIsFormField, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}">
+                                            <TextBlock Text="Form Field" Style="{StaticResource PropGridCategoryText}"/>
+                                        </Border>
+                                        <!-- Field name -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Name" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FieldName, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field name"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Field label -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Label" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FieldLabel, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field label"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Required -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Required" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.FieldRequired}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Field required"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Options (ComboBox) -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Options" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FieldOptionsCsv, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Comma-separated list" AutomationProperties.Name="ComboBox options"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
 
                                 </StackPanel>
                             </ScrollViewer>
