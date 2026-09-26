@@ -284,7 +284,7 @@ public partial class DesignCanvas : UserControl
             var elem = VM.CreateTextElement(pos.X, pos.Y);
             elem.Text      = isCheck ? "✓" : "✗";
             elem.FontSize  = 24;
-            elem.Color     = isCheck ? Color.FromRgb(0, 122, 69) : Color.FromRgb(192, 57, 43);
+            elem.Color     = Color.FromRgb(0, 0, 0);
             elem.Width     = 40;
             elem.Height    = 40;
             VM.AddElement(elem);

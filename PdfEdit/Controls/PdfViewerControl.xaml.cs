@@ -1869,8 +1869,8 @@ public partial class PdfViewerControl : UserControl
             FinalizeAnnotationBox();
             (string glyph, string colour) = tool switch
             {
-                ActiveTool.Checkmark => ("✓", "#2E7D32"),
-                ActiveTool.XMark => ("✕", "#C62828"),
+                ActiveTool.Checkmark => ("✓", "#1A1A1A"),
+                ActiveTool.XMark => ("✕", "#1A1A1A"),
                 ActiveTool.Dot => ("●", "#1A1A1A"),
                 ActiveTool.Line => ("—", "#1A1A1A"),
                 _ => ("○", "#1A1A1A"), // Circle
