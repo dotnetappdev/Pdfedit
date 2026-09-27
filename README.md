@@ -145,14 +145,15 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 **Drawing Tools**
 - **Text Box** — Click to place editable text; double-click to edit in-place; supports font family, size, bold/italic/underline, colour, background colour, and text alignment
 - **Rectangle / Ellipse** — Draw filled or stroked shapes with configurable fill colour, stroke colour, stroke width, and corner radius
-- **Line / Arrow** — Draw straight lines and arrows between points
+- **Line / Arrow** — Draw straight lines and arrows in any direction (the arrowhead points where you finished dragging); perfectly horizontal / vertical lines are supported
 - **Table** — Insert configurable tables with N rows × M columns; header row styled separately; border colour, thickness, and cell text editable
-- **Pen (Freehand)** — Draw smooth freehand strokes at any thickness and colour
+- **Pen (Freehand)** — Draw smooth freehand strokes at any thickness and colour, with a live preview while drawing; drawings can be moved and resized like any other element
 - **Image** — Insert PNG, JPG, BMP, GIF, or TIFF images; drag to resize
 
 **Element Operations**
 - **Select & Move** — Click any element to select it; drag to reposition; arrow keys for 1px nudge (Shift+arrow = 10px)
-- **Resize** — 8-handle resize (NW/N/NE/W/E/SW/S/SE) with drag handles on the selection border
+- **Resize** — 8-handle resize (NW/N/NE/W/E/SW/S/SE) with drag handles on the selection border; hold Shift on a corner handle to keep proportions; snaps to the grid when enabled
+- **Edit text in place** — click inside text being edited to place the caret or select; click outside (or Esc) to finish
 - **Copy / Paste** — Ctrl+C / Ctrl+V; paste creates an offset clone ready to position
 - **Duplicate** — Ctrl+D to duplicate-in-place with 20px offset
 - **Delete** — Del key or ribbon button
@@ -196,7 +197,9 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 
 ### PDF Form Filling
 
-- **Visual Form Overlay** — Click any AcroForm field directly on the rendered page
+- **Visual Form Overlay** — Click any AcroForm field directly on the rendered page and type (Hand, Select or Text Fill tool)
+- **Whole-field click targets** — Checkboxes and radio buttons toggle when clicked anywhere in the field and scale with the field size
+- **Properties panel value editing** — Editing the selected field's value in the Properties panel updates the page and is saved with the form
 - **All Field Types** — Text, checkboxes, radio buttons, combo boxes, list boxes, signature fields, password fields
 - **Field Highlights** — Blue = optional, red = required, blue border = focused; toggle from ribbon
 - **Clear All Fields** — Reset all values in one click
@@ -215,6 +218,18 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - **Combo Box** — Drag a rectangle; enter field name and dropdown choices (one per line)
 - **Radio Button** — Drag a square; enter a group name; multiple fields with the same group name form an exclusive radio group
 - All new fields are immediately saved to the PDF and available for filling
+- After placing a field the **Edit Fields** tool is active with the new field selected, ready to adjust
+
+### Edit Fields (move & resize, Acrobat "Prepare Form" style)
+
+Use **Edit Fields** (ribbon *Add Form Field* group, or press **E**) to rearrange existing form fields in the Live View:
+
+- Fields are shown as named boxes — click one to select it (blue frame with 8 resize handles)
+- **Drag** the field to move it; **drag a handle** to resize (Shift on a corner keeps proportions)
+- **Arrow keys** nudge 1 pt (Shift = 10 pt); **Ctrl+Arrow** resizes; **Del** deletes; **Esc** deselects
+- Right-click any field while filling → **Move / resize field** jumps straight into Edit Fields
+- Changes are undoable (Ctrl+Z) and written to the PDF on save (widget rectangle updated and appearance regenerated)
+- Switch back to Hand / Select to fill the form in
 
 ### Security
 
@@ -420,6 +435,7 @@ The Custom engine is a full Adobe-spec PDF implementation written entirely in C#
 | Nudge 10px | Shift+Arrow |
 | Resize element 1px / 10px | Ctrl+Arrow / Ctrl+Shift+Arrow |
 | Select tool | V |
+| Edit Fields (move / resize form fields) | E |
 | Text tool | T |
 | Rectangle / Ellipse / Line | R / E / L |
 | Arrow / Pen / Image | A / P / I |
@@ -439,6 +455,8 @@ The Custom engine is a full Adobe-spec PDF implementation written entirely in C#
 | Export annotations (XFDF) | Ctrl+Shift+E |
 | Import annotations (XFDF) | Ctrl+Shift+I |
 | Keyboard shortcuts reference | F1 |
+
+Single-letter tool shortcuts only apply when you are not typing — they never fire while a form field, text box, table cell or drop-down has focus.
 
 ---
 
