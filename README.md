@@ -65,9 +65,13 @@ Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the W
 |---|---|
 | ![Live View](docs/screenshots/live-view.svg) | ![Design Canvas](docs/screenshots/design-canvas-view.svg) |
 
-| High Contrast Theme | Page Management |
+| Form Filling — Live View | Edit Fields — Move & Resize (Acrobat "Prepare Form" style) |
 |---|---|
-| ![High Contrast](docs/screenshots/high-contrast-theme.svg) | ![Page Management](docs/screenshots/page-management.png) |
+| ![Form filling in Live View: focused field with mini toolbar, whole-box checkboxes, Properties panel value synced](docs/screenshots/form-filling-live.svg) | ![Edit Fields: selected form field with 8 resize handles being dragged](docs/screenshots/edit-fields.svg) |
+
+| Design Canvas — In-place Text, Directional Arrows & Pen | High Contrast Theme |
+|---|---|
+| ![Design canvas: text edited in place, arrow drawn bottom-left to top-right with resize handles, freehand pen stroke](docs/screenshots/design-canvas-editing.svg) | ![High Contrast](docs/screenshots/high-contrast-theme.svg) |
 
 | AI Features | Settings & Accessibility |
 |---|---|
@@ -77,9 +81,9 @@ Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the W
 |---|---|
 | ![Render Engine Settings](docs/screenshots/settings-render-engine.svg) | ![Form Filling](docs/screenshots/form-filling.png) |
 
-| Ribbon Icons | |
+| Page Management | Ribbon Icons |
 |---|---|
-| ![Ribbon Icons](docs/screenshots/ribbon-icons.png) | |
+| ![Page Management](docs/screenshots/page-management.png) | ![Ribbon Icons](docs/screenshots/ribbon-icons.png) |
 
 ---
 
