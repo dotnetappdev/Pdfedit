@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -86,6 +87,7 @@ public partial class DesignCanvas : UserControl
                 Template = BuildHandleTemplate(),
                 Tag = i
             };
+            t.DragStarted += Handle_DragStarted;
             t.DragDelta += Handle_DragDelta;
             t.DragCompleted += Handle_DragCompleted;
             _handles[i] = t;
@@ -197,6 +199,7 @@ public partial class DesignCanvas : UserControl
                 else if (VM.HasMultiSelection && VM.MultiSelection.Contains(hit))
                 {
                     // drag all selected elements
+                    VM.BeginInteractiveEdit();
                     _dragMode = DragMode.MovingMulti;
                     _multiOrigins = VM.MultiSelection.ToDictionary(el => el, el => new Point(el.X, el.Y));
                     _dragStart = pos;
@@ -214,6 +217,7 @@ public partial class DesignCanvas : UserControl
                     }
                     if (!hit.IsLocked)
                     {
+                        VM.BeginInteractiveEdit();
                         _dragMode = DragMode.Moving;
                         _dragElement = hit;
                         _elemOrigin = new Point(hit.X, hit.Y);
@@ -311,6 +315,7 @@ public partial class DesignCanvas : UserControl
             var dy = pos.Y - _dragStart.Y;
             _dragElement.X = VM.Snap(Math.Max(0, _elemOrigin.X + dx));
             _dragElement.Y = VM.Snap(Math.Max(0, _elemOrigin.Y + dy));
+            VM.NotifyPositionProperties();
             RefreshSelectionHandles();
             return;
         }
@@ -843,31 +848,74 @@ public partial class DesignCanvas : UserControl
         foreach (var h in _handles) h.Visibility = Visibility.Collapsed;
     }
 
+    // Resize is computed from the absolute mouse position relative to the rect captured at
+    // DragStarted (not by accumulating Thumb deltas), so snapping and the minimum-size clamp
+    // never make the handle drift away from the cursor.
+    private const double MinElementSize = 4;
+    private Rect _resizeOrigin;
+    private Point _resizeMouseStart;
+    private bool _isResizing;
+
+    private void Handle_DragStarted(object sender, DragStartedEventArgs e)
+    {
+        var sel = VM?.SelectedElement;
+        if (VM == null || sel == null || sel.IsLocked) { _isResizing = false; return; }
+        VM.BeginInteractiveEdit();
+        _resizeOrigin = new Rect(sel.X, sel.Y, sel.Width, sel.Height);
+        _resizeMouseStart = Mouse.GetPosition(SelectionOverlay);
+        _isResizing = true;
+    }
+
     private void Handle_DragDelta(object sender, DragDeltaEventArgs e)
     {
         var sel = VM?.SelectedElement;
-        if (sel == null || sender is not Thumb t || t.Tag is not int idx) return;
+        if (!_isResizing || VM == null || sel == null || sender is not Thumb t || t.Tag is not int idx) return;
 
-        double dx = e.HorizontalChange, dy = e.VerticalChange;
+        var mouse = Mouse.GetPosition(SelectionOverlay);
+        double dx = mouse.X - _resizeMouseStart.X;
+        double dy = mouse.Y - _resizeMouseStart.Y;
 
-        switch (idx)
+        double left   = _resizeOrigin.Left;
+        double top    = _resizeOrigin.Top;
+        double right  = _resizeOrigin.Right;
+        double bottom = _resizeOrigin.Bottom;
+
+        // 0=NW 1=N 2=NE 3=W 4=E 5=SW 6=S 7=SE
+        bool moveLeft   = idx is 0 or 3 or 5;
+        bool moveRight  = idx is 2 or 4 or 7;
+        bool moveTop    = idx is 0 or 1 or 2;
+        bool moveBottom = idx is 5 or 6 or 7;
+
+        if (moveLeft)   left   = Math.Min(VM.Snap(Math.Max(0, left + dx)), right - MinElementSize);
+        if (moveRight)  right  = Math.Max(VM.Snap(right + dx), left + MinElementSize);
+        if (moveTop)    top    = Math.Min(VM.Snap(Math.Max(0, top + dy)), bottom - MinElementSize);
+        if (moveBottom) bottom = Math.Max(VM.Snap(bottom + dy), top + MinElementSize);
+
+        // Shift on a corner handle keeps the original aspect ratio (Acrobat / Office behaviour).
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && idx is 0 or 2 or 5 or 7
+            && _resizeOrigin.Width > 0 && _resizeOrigin.Height > 0)
         {
-            case 0: sel.X += dx; sel.Y += dy; sel.Width -= dx; sel.Height -= dy; break; // NW
-            case 1:              sel.Y += dy;                   sel.Height -= dy; break; // N
-            case 2:              sel.Y += dy; sel.Width += dx;  sel.Height -= dy; break; // NE
-            case 3: sel.X += dx;              sel.Width -= dx;                    break; // W
-            case 4:               sel.Width += dx;                                break; // E
-            case 5: sel.X += dx;              sel.Width -= dx;  sel.Height += dy; break; // SW
-            case 6:                                             sel.Height += dy; break; // S
-            case 7:               sel.Width += dx;              sel.Height += dy; break; // SE
+            double ratio = _resizeOrigin.Width / _resizeOrigin.Height;
+            double w = right - left, h = bottom - top;
+            if (w / ratio > h) h = w / ratio; else w = h * ratio;
+            if (moveLeft) left = right - w; else right = left + w;
+            if (moveTop)  top = bottom - h; else bottom = top + h;
         }
 
+        sel.X = left;
+        sel.Y = top;
+        sel.Width = right - left;
+        sel.Height = bottom - top;
+
+        VM.NotifyPositionProperties();
         RefreshSelectionHandles();
+        e.Handled = true;
     }
 
     private void Handle_DragCompleted(object sender, DragCompletedEventArgs e)
     {
-        // Selection handles do their own drag; nothing extra needed
+        _isResizing = false;
+        VM?.NotifyPositionProperties();
     }
 
     // ── Cursor ────────────────────────────────────────────────────────────────
@@ -975,7 +1023,9 @@ public partial class DesignCanvas : UserControl
         else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control) { VM.DuplicateSelected(); e.Handled = true; }
         else if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control) { VM.SelectAll(); e.Handled = true; }
         // Tool shortcuts (no modifier, not editing text)
-        else if (Keyboard.Modifiers == ModifierKeys.None && VM.SelectedElement is not TextDesignElement { IsEditing: true })
+        else if (Keyboard.Modifiers == ModifierKeys.None
+                 && e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down)
+                 && VM.SelectedElement is not TextDesignElement { IsEditing: true })
         {
             DesignTool? tool = e.Key switch
             {

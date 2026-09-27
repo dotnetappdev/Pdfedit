@@ -127,6 +127,7 @@ public partial class PdfViewerControl : UserControl
         MouseLeftButtonUp += OnMouseLeftButtonUp;
         MouseMove += OnMouseMove;
         KeyDown += OnKeyDown;
+        PreviewKeyDown += OnLayoutPreviewKeyDown;
         AllowDrop = true;
         Focusable = true;
 
@@ -189,6 +190,15 @@ public partial class PdfViewerControl : UserControl
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // Switching between a fill tool and the Select / Add-field tools toggles the live view
+        // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
+        {
+            if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.Select)
+                _vm.StatusText = "Select: click a form field to move it, drag its handles to resize, Del to delete.";
+            RebuildFieldOverlay();
+        }
+
         if (_focusedAnnotationTb == null || _focusedAnnotation == null || _vm == null) return;
 
         switch (e.PropertyName)
@@ -730,9 +740,13 @@ public partial class PdfViewerControl : UserControl
         _fieldChromeToday = null;
         _activeTb = null;
         _activeFieldInfo = null;
+        ResetLayoutChrome();
 
         FieldOverlayCanvas.Children.Clear();
         HighlightCanvas.Children.Clear();
+
+        bool layoutMode = IsFieldLayoutMode;
+        _builtInLayoutMode = layoutMode;
 
         if (_vm?.Document == null) return;
 
@@ -756,6 +770,12 @@ public partial class PdfViewerControl : UserControl
             double y = (pageHeightPts - field.Bottom - field.Height) * Scale;
             double w = field.Width * Scale;
             double h = field.Height * Scale;
+
+            if (layoutMode)
+            {
+                AddLayoutFieldBox(field, x, y, w, h);
+                continue;
+            }
 
             if (highlight)
                 AddHighlight(x, y, w, h, field.IsRequired);
@@ -846,6 +866,10 @@ public partial class PdfViewerControl : UserControl
                 menu.Items.Add(applyAllItem);
                 menu.Items.Add(new Separator());
             }
+
+            var layout = new MenuItem { Header = "Move / resize field" };
+            layout.Click += (_, _) => BeginFieldLayoutEdit(field);
+            menu.Items.Add(layout);
 
             var del = new MenuItem { Header = $"Delete field \"{field.Name}\"" };
             del.Click += (_, _) => _vm?.DeleteField(field);
@@ -1829,6 +1853,15 @@ public partial class PdfViewerControl : UserControl
 
         var tool = _vm.ActiveTool;
 
+        // Field boxes handle their own clicks in layout mode; a click that reaches here landed on
+        // empty page space, so drop the current field selection (Add-field tools then start drawing).
+        if (IsFieldLayoutMode)
+        {
+            ClearLayoutSelection();
+            Focus();
+            if (tool == ActiveTool.Select) { e.Handled = true; return; }
+        }
+
         if (tool == ActiveTool.Hand)
         {
             _isPanning = true;
@@ -2334,6 +2367,13 @@ public partial class PdfViewerControl : UserControl
                             try
                             {
                                 var svc = new PdfEdit.Services.PdfFormService();
+                                // Adding a field reloads the document, so first bake in any fields
+                                // the user has moved/resized but not saved yet.
+                                if (_vm.ModifiedFieldBounds.Count > 0)
+                                {
+                                    svc.ApplyFieldBounds(srcPath, tmpPath, _vm.ModifiedFieldBounds);
+                                    System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
+                                }
                                 if (fTool == ActiveTool.AddCheckbox)
                                     svc.AddCheckboxField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname);
                                 else if (fTool == ActiveTool.AddComboBox)
@@ -2345,6 +2385,10 @@ public partial class PdfViewerControl : UserControl
                                 System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
                                 _vm.StatusText = $"Field '{fname}' added to page {pageNum}.";
                                 PdfEdit.Services.ToastService.Instance.Success($"Form field '{fname}' added.");
+                                // Like Acrobat: after placing a field, drop back to Select with the
+                                // new field selected so it can be moved/resized straight away.
+                                _layoutSelectedKey = (fname, 0);
+                                _vm.ActiveTool = ActiveTool.Select;
                                 _ = _vm.ReloadCurrentFileAsync();
                             }
                             catch (Exception ex)

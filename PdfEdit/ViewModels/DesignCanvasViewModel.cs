@@ -845,6 +845,9 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     // ── Undo / Redo ───────────────────────────────────────────────────────────
 
+    /// <summary>Snapshots the page for undo just before an interactive mouse move/resize begins.</summary>
+    public void BeginInteractiveEdit() => SaveUndo();
+
     private void SaveUndo()
     {
         _undoStack.Push(Elements.Select(CloneElement).ToList());

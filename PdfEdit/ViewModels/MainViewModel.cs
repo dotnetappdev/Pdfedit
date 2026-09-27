@@ -587,6 +587,9 @@ public class MainViewModel : INotifyPropertyChanged
     // Names of existing fields the user has deleted; stripped from the PDF on save.
     public HashSet<string> DeletedFieldNames { get; } = new();
 
+    // Widget rectangles moved/resized in the live view (PDF points); written to the PDF on save.
+    public Dictionary<(string Name, int WidgetIndex), FieldBounds> ModifiedFieldBounds { get; } = new();
+
     public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
     public ObservableCollection<Models.PdfAttachmentInfo> Attachments { get; } = new();
 
@@ -1283,6 +1286,7 @@ public class MainViewModel : INotifyPropertyChanged
             FieldExportValues.Clear();
             AllFields.Clear();
             DeletedFieldNames.Clear();
+            ModifiedFieldBounds.Clear();
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
@@ -1411,7 +1415,7 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             StatusText = "Saved successfully.";
@@ -1458,7 +1462,7 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
             _currentFilePath = dlg.FileName;
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
@@ -1498,7 +1502,7 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1583,6 +1587,8 @@ public class MainViewModel : INotifyPropertyChanged
         if (field == null) return;
 
         DeletedFieldNames.Add(field.Name);
+        foreach (var key in ModifiedFieldBounds.Keys.Where(k => k.Name == field.Name).ToList())
+            ModifiedFieldBounds.Remove(key);
         AllFields.Remove(field);
         CurrentPageFields.Remove(field);
         FieldValues.Remove(field.Name);
@@ -1591,6 +1597,31 @@ public class MainViewModel : INotifyPropertyChanged
         PageChanged?.Invoke();
         StatusText = $"Deleted field \"{field.Name}\". Save to make it permanent.";
         ToastService.Instance.Info($"Deleted field \"{field.Name}\".");
+    }
+
+    /// <summary>
+    /// Moves/resizes a form field widget (Acrobat "Prepare Form" style). The new rectangle is in
+    /// PDF points and is written to the PDF on the next save. Undoable with Ctrl+Z.
+    /// </summary>
+    public void SetFieldBounds(FormFieldInfo field, FieldBounds bounds, bool recordUndo = true)
+    {
+        var previous = new FieldBounds(field.Left, field.Bottom, field.Width, field.Height);
+        if (previous == bounds) return;
+
+        field.Left = bounds.Left;
+        field.Bottom = bounds.Bottom;
+        field.Width = bounds.Width;
+        field.Height = bounds.Height;
+        ModifiedFieldBounds[(field.Name, field.WidgetIndex)] = bounds;
+
+        if (recordUndo)
+        {
+            PushUndo(
+                () => { SetFieldBounds(field, previous, recordUndo: false); PageChanged?.Invoke(); },
+                () => { SetFieldBounds(field, bounds, recordUndo: false); PageChanged?.Invoke(); });
+        }
+        StatusText = $"Field \"{field.Name}\" — X {bounds.Left:F0}, Y {bounds.Bottom:F0}, " +
+                     $"W {bounds.Width:F0}, H {bounds.Height:F0} pt. Save to make it permanent.";
     }
 
     private async Task ExportDataAsync()

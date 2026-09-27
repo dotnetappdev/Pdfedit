@@ -348,12 +348,6 @@
                             </ItemsControl.ItemTemplateSelector>
                         </ItemsControl>
 
-                        <!-- Selection handles overlay (drawn in code-behind over selected element) -->
-                        <Canvas x:Name="SelectionOverlay" IsHitTestVisible="False"
-                                Width="{Binding PageWidth}" Height="{Binding PageHeight}">
-                            <!-- selection rect + handles drawn programmatically -->
-                        </Canvas>
-
                         <!-- Draw preview (rubber-band rect while drawing) -->
                         <Canvas x:Name="DrawPreviewCanvas" IsHitTestVisible="False"
                                 Width="{Binding PageWidth}" Height="{Binding PageHeight}">
@@ -385,6 +379,15 @@
                                 MouseLeftButtonUp="InteractionCanvas_MouseLeftButtonUp"
                                 MouseMove="InteractionCanvas_MouseMove"
                                 MouseRightButtonDown="InteractionCanvas_MouseRightButtonDown"/>
+
+                        <!-- Selection handles overlay (drawn in code-behind over selected element).
+                             Sits ABOVE InteractionCanvas so the resize handles and the text mini-toolbar
+                             receive the mouse. It has no Background, so empty areas stay click-through
+                             and the selection outline rectangles are individually non-hit-testable. -->
+                        <Canvas x:Name="SelectionOverlay"
+                                Width="{Binding PageWidth}" Height="{Binding PageHeight}">
+                            <!-- selection rect + handles drawn programmatically -->
+                        </Canvas>
                     </Grid>
                 </Border>
             </Grid>

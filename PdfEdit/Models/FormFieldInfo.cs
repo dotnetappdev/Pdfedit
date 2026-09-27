@@ -26,4 +26,11 @@ public class FormFieldInfo
     public bool IsPassword { get; set; }
     public string? Tooltip { get; set; }
     public string? RadioGroup { get; set; }
+
+    // Index of this widget within its field's /Kids (a radio group or a field repeated on several
+    // pages has several widgets). Used to write moved/resized geometry back to the right widget.
+    public int WidgetIndex { get; set; }
 }
+
+/// <summary>A widget rectangle in PDF points (Y from bottom-left).</summary>
+public readonly record struct FieldBounds(double Left, double Bottom, double Width, double Height);

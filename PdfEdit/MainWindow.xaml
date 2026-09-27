@@ -1084,6 +1084,18 @@
                 <!-- Form Field Creator group -->
                 <Fluent:RibbonGroupBox Header="Add Form Field"
                                         AutomationProperties.Name="Add new form fields to PDF">
+                    <Fluent:ToggleButton Header="Edit Fields"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Select"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Edit Fields (V) — click a form field to select it, drag to move, drag the handles to resize, arrow keys to nudge, Del to delete"
+                                         AutomationProperties.Name="Edit form field layout">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Text Field"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=AddTextField, Mode=TwoWay}"
@@ -1367,7 +1379,7 @@
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Select"
-                                         ToolTip="Selection tool (V)"
+                                         ToolTip="Selection tool (V) — select form fields to move and resize them"
                                          AutomationProperties.Name="Selection tool"/>
                     <Fluent:ToggleButton Header="Text Fill"
                                          GroupName="ToolGroup"

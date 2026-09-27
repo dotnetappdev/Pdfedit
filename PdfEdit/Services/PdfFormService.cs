@@ -51,8 +51,10 @@ public class PdfFormService
                 var widgets = field.GetWidgets();
                 if (widgets == null || widgets.Count == 0) continue;
 
+                int widgetIndex = -1;
                 foreach (var widget in widgets)
                 {
+                    widgetIndex++;
                     var page = widget.GetPage();
                     if (page == null) continue;
 
@@ -65,6 +67,7 @@ public class PdfFormService
                     var fieldInfo = new FormFieldInfo
                     {
                         Name = name,
+                        WidgetIndex = widgetIndex,
                         PageNumber = pageNum,
                         Left = rect.GetX(),
                         Bottom = rect.GetY(),
@@ -161,6 +164,45 @@ public class PdfFormService
     }
 
     /// <summary>
+    /// Writes moved/resized widget rectangles (PDF points) into <paramref name="outputPath"/>
+    /// without touching anything else in the document.
+    /// </summary>
+    public List<string> ApplyFieldBounds(string inputPath, string outputPath,
+        IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds> fieldBounds)
+    {
+        var errors = new List<string>();
+        using var reader = new PdfReader(inputPath);
+        using var writer = new PdfWriter(outputPath);
+        using var doc = new PdfDocument(reader, writer);
+        var form = PdfAcroForm.GetAcroForm(doc, false);
+        if (form != null) ApplyFieldBounds(form, fieldBounds, errors);
+        return errors;
+    }
+
+    /// <summary>Sets each widget's /Rect and regenerates its appearance so it renders at the new size.</summary>
+    private static void ApplyFieldBounds(PdfAcroForm form,
+        IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds> fieldBounds, List<string> errors)
+    {
+        foreach (var ((name, widgetIndex), r) in fieldBounds)
+        {
+            var field = form.GetField(name);
+            if (field == null) continue;
+            var widgets = field.GetWidgets();
+            if (widgets == null || widgetIndex < 0 || widgetIndex >= widgets.Count) continue;
+            try
+            {
+                widgets[widgetIndex].SetRectangle(new PdfArray(new iText.Kernel.Geom.Rectangle(
+                    (float)r.Left, (float)r.Bottom, (float)r.Width, (float)r.Height)));
+                field.RegenerateField();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Field '{name}' position: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
     /// Saves the PDF with filled form fields, page rotations, free-text annotations, and placed signatures.
     /// </summary>
     public List<string> SaveFull(string sourcePath, string destPath,
@@ -173,7 +215,8 @@ public class PdfFormService
         Dictionary<string, string>? fieldExportValues = null,
         IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null,
         IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null,
-        IEnumerable<Models.ShapeAnnotation>? shapeAnnotations = null)
+        IEnumerable<Models.ShapeAnnotation>? shapeAnnotations = null,
+        IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds>? fieldBounds = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -195,6 +238,10 @@ public class PdfFormService
                         form.RemoveField(name);
                 }
             }
+
+            // Apply widget rectangles the user moved/resized in the live view.
+            if (fieldBounds != null)
+                ApplyFieldBounds(form, fieldBounds, saveErrors);
 
             foreach (var (name, value) in fieldValues)
             {
