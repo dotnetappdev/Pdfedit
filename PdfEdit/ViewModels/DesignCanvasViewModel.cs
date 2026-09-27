@@ -492,7 +492,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         SaveUndo();
         element.ZOrder = Elements.Count;
         Elements.Add(element);
-        SelectedElement = element;
+        // Reset any previous multi-selection so the new element gets single-selection resize handles.
+        SetMultiSelection([element]);
     }
 
     public void DeleteSelected()
@@ -877,12 +878,20 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         SelectedElement = null;
         Elements.Clear();
         foreach (var e in state) Elements.Add(e);
+        OnPropertyChanged(nameof(HasMultiSelection));
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
         OnPropertyChanged(nameof(HasMultiSelection));
     }
 
-    private static DesignElement CloneElement(DesignElement src) => src switch
+    private static DesignElement CloneElement(DesignElement src)
+    {
+        var clone = CloneElementCore(src);
+        clone.IsLocked = src.IsLocked; // undo/redo snapshots must not silently unlock elements
+        return clone;
+    }
+
+    private static DesignElement CloneElementCore(DesignElement src) => src switch
     {
         TextDesignElement t     => CloneText(t),
         ShapeDesignElement sh   => CloneShape(sh),
@@ -912,7 +921,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     {
         X = sh.X, Y = sh.Y, Width = sh.Width, Height = sh.Height, ZOrder = sh.ZOrder, Opacity = sh.Opacity,
         FillColor = sh.FillColor, StrokeColor = sh.StrokeColor,
-        StrokeThickness = sh.StrokeThickness, CornerRadius = sh.CornerRadius
+        StrokeThickness = sh.StrokeThickness, CornerRadius = sh.CornerRadius,
+        FlipX = sh.FlipX, FlipY = sh.FlipY
     };
 
     private static ImageDesignElement CloneImage(ImageDesignElement im) => new()

@@ -22,14 +22,17 @@
                          Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True" TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                          BorderThickness="0" Background="Transparent"
-                         Foreground="{DynamicResource ForegroundBrush}"
+                         CaretBrush="Black"
                          FontFamily="{Binding FontFamily}"
                          FontSize="{Binding FontSize}"
                          FontWeight="{Binding Bold, Converter={StaticResource BoolToFontWeightConverter}}"
                          FontStyle="{Binding Italic, Converter={StaticResource BoolToFontStyleConverter}}"
                          TextAlignment="{Binding Alignment}"
                          Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
-                         Padding="2"/>
+                         Padding="2">
+                    <!-- Same colour as the rendered text: the theme foreground was white-on-white in dark mode. -->
+                    <TextBox.Foreground><SolidColorBrush Color="{Binding Color}"/></TextBox.Foreground>
+                </TextBox>
                 <!-- Display text block (shown when not editing) -->
                 <TextBlock x:Name="DisplayBlock"
                            Text="{Binding Text}"
@@ -70,16 +73,22 @@
         </DataTemplate>
 
         <!-- ── Line / Arrow template ─────────────────────────────────────── -->
+        <!-- Geometry honours FlipX/FlipY (any drawing direction) and adds the arrowhead for arrows. -->
         <DataTemplate x:Key="LineTemplate" DataType="{x:Type models:ShapeDesignElement}">
-            <Canvas>
-                <Line x:Name="MainLine"
-                      X1="0" Y1="0"
-                      X2="{Binding Width}" Y2="{Binding Height}"
-                      StrokeThickness="{Binding StrokeThickness}"
-                      StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-                    <Line.Stroke><SolidColorBrush Color="{Binding StrokeColor}"/></Line.Stroke>
-                </Line>
-            </Canvas>
+            <Path StrokeThickness="{Binding StrokeThickness}"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+                <Path.Data>
+                    <MultiBinding Converter="{StaticResource LineGeometryConverter}">
+                        <Binding/>
+                        <Binding Path="Width"/>
+                        <Binding Path="Height"/>
+                        <Binding Path="FlipX"/>
+                        <Binding Path="FlipY"/>
+                        <Binding Path="StrokeThickness"/>
+                    </MultiBinding>
+                </Path.Data>
+                <Path.Stroke><SolidColorBrush Color="{Binding StrokeColor}"/></Path.Stroke>
+            </Path>
         </DataTemplate>
 
         <!-- ── Image template ────────────────────────────────────────────── -->
@@ -89,8 +98,18 @@
 
         <!-- ── Freehand template ──────────────────────────────────────────── -->
         <DataTemplate x:Key="FreehandTemplate" DataType="{x:Type models:FreehandDesignElement}">
-            <!-- Rendered programmatically in code-behind via a Canvas child -->
-            <Canvas x:Name="FreehandCanvas" Tag="{Binding}"/>
+            <!-- Strokes scaled to the element's current bounds, so move / resize work. -->
+            <Path StrokeThickness="{Binding Thickness}"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
+                <Path.Data>
+                    <MultiBinding Converter="{StaticResource FreehandGeometryConverter}">
+                        <Binding/>
+                        <Binding Path="Width"/>
+                        <Binding Path="Height"/>
+                    </MultiBinding>
+                </Path.Data>
+                <Path.Stroke><SolidColorBrush Color="{Binding Color}"/></Path.Stroke>
+            </Path>
         </DataTemplate>
 
         <!-- ── Table template ────────────────────────────────────────────── -->
@@ -120,7 +139,7 @@
                 <!-- Label to the left of the field -->
                 <TextBlock Grid.Column="0" Text="{Binding Label}"
                            VerticalAlignment="Center"
-                           Foreground="{DynamicResource ForegroundBrush}"
+                           Foreground="#222"
                            Margin="{Binding LabelOffset, Converter={StaticResource DoubleToRightMarginConverter}}"
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Left}"/>
 
@@ -191,7 +210,7 @@
                 <!-- Label to the right of the field -->
                 <TextBlock Grid.Column="2" Text="{Binding Label}"
                            VerticalAlignment="Center"
-                           Foreground="{DynamicResource ForegroundBrush}"
+                           Foreground="#222"
                            Margin="{Binding LabelOffset, Converter={StaticResource DoubleToLeftMarginConverter}}"
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Right}"/>
             </Grid>

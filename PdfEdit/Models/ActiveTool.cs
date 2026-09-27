@@ -32,5 +32,7 @@ public enum ActiveTool
     DrawRectangle,
     DrawEllipse,
     DrawArrow,
-    DrawCallout
+    DrawCallout,
+    // Acrobat "Prepare Form": select, move and resize existing form fields in the live view.
+    EditFields
 }

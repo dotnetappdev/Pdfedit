@@ -11,7 +11,7 @@ namespace PdfEdit.Controls;
 /// <summary>
 /// Acrobat "Prepare Form"-style field layout editing for the live view.
 ///
-/// While the Select tool (or one of the Add Form Field tools) is active, form fields are drawn as
+/// While the Edit Fields tool (or one of the Add Form Field tools) is active, form fields are drawn as
 /// named placeholder boxes instead of live fill-in controls. Click a field to select it — a blue
 /// frame with eight resize handles appears — drag the body to move it, drag a handle to resize it
 /// (Shift on a corner keeps the aspect ratio), use the arrow keys to nudge (Shift = 10 pt,
@@ -48,7 +48,7 @@ public partial class PdfViewerControl
     private Rect _layoutOrigin;
 
     /// <summary>True when fields should be edited (moved/resized) rather than filled in.</summary>
-    private bool IsFieldLayoutMode => _vm?.ActiveTool is ActiveTool.Select
+    private bool IsFieldLayoutMode => _vm?.ActiveTool is ActiveTool.EditFields
         or ActiveTool.AddTextField or ActiveTool.AddCheckbox
         or ActiveTool.AddComboBox or ActiveTool.AddRadioButton;
 
@@ -57,7 +57,7 @@ public partial class PdfViewerControl
     {
         if (_vm == null) return;
         _layoutSelectedKey = (field.Name, field.WidgetIndex);
-        _vm.ActiveTool = ActiveTool.Select; // triggers an overlay rebuild that restores the selection
+        _vm.ActiveTool = ActiveTool.EditFields; // triggers an overlay rebuild that restores the selection
         if (!_builtInLayoutMode) RebuildFieldOverlay();
     }
 

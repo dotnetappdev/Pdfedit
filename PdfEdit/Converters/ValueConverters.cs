@@ -186,3 +186,66 @@ public class ColorToBrushConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is System.Windows.Media.SolidColorBrush b ? b.Color : System.Windows.Media.Colors.Transparent;
 }
+
+/// <summary>
+/// Builds the on-canvas geometry for a design-view freehand element, scaled to its current size.
+/// Bind as a MultiBinding of (element, Width, Height) so it refreshes on resize.
+/// </summary>
+public class FreehandGeometryConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length == 0 || values[0] is not Models.FreehandDesignElement fh) return System.Windows.Media.Geometry.Empty;
+        var geo = new System.Windows.Media.StreamGeometry();
+        using (var ctx = geo.Open())
+        {
+            foreach (var stroke in fh.GetLocalStrokes())
+            {
+                var pts = stroke.ToList();
+                if (pts.Count == 0) continue;
+                ctx.BeginFigure(pts[0], false, false);
+                if (pts.Count == 1) ctx.LineTo(pts[0], true, true);
+                else ctx.PolyLineTo(pts.Skip(1).ToList(), true, true);
+            }
+        }
+        geo.Freeze();
+        return geo;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Builds the geometry for a design-view Line / Arrow element (direction from FlipX / FlipY, plus an
+/// arrowhead for arrows). Bind as a MultiBinding of (element, Width, Height, FlipX, FlipY, StrokeThickness).
+/// </summary>
+public class LineGeometryConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length == 0 || values[0] is not Models.ShapeDesignElement s) return System.Windows.Media.Geometry.Empty;
+        var (start, end) = s.GetLocalEndpoints();
+        var geo = new System.Windows.Media.StreamGeometry();
+        using (var ctx = geo.Open())
+        {
+            ctx.BeginFigure(start, false, false);
+            ctx.LineTo(end, true, true);
+            if (s.ElementType == Models.DesignElementType.Arrow)
+            {
+                double angle = Math.Atan2(end.Y - start.Y, end.X - start.X);
+                double len = Math.Max(10, s.StrokeThickness * 4);
+                var a1 = new Point(end.X - len * Math.Cos(angle - 0.4), end.Y - len * Math.Sin(angle - 0.4));
+                var a2 = new Point(end.X - len * Math.Cos(angle + 0.4), end.Y - len * Math.Sin(angle + 0.4));
+                ctx.BeginFigure(a1, false, false);
+                ctx.LineTo(end, true, true);
+                ctx.LineTo(a2, true, true);
+            }
+        }
+        geo.Freeze();
+        return geo;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

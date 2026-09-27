@@ -49,12 +49,8 @@
         <KeyBinding Key="E" Modifiers="Control+Shift" Command="{Binding ExportXfdfCommand}"/>
         <KeyBinding Key="I" Modifiers="Control+Shift" Command="{Binding ImportXfdfCommand}"/>
         <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
-        <KeyBinding Key="D" Command="{Binding SetToolCommand}" CommandParameter="DateStamp"/>
-        <KeyBinding Key="K" Command="{Binding SetToolCommand}" CommandParameter="Checkmark"/>
-        <KeyBinding Key="H" Command="{Binding SetToolCommand}" CommandParameter="Hand"/>
-        <KeyBinding Key="V" Command="{Binding SetToolCommand}" CommandParameter="Select"/>
-        <KeyBinding Key="T" Command="{Binding SetToolCommand}" CommandParameter="AddText"/>
-        <KeyBinding Key="M" Command="{Binding SetToolCommand}" CommandParameter="Stamp"/>
+        <!-- Single-letter tool shortcuts (D K H V T M E) are handled in MainWindow.OnToolShortcutKeyDown:
+             as KeyBindings they fired even while typing in a form field and swallowed the letter. -->
     </Fluent:RibbonWindow.InputBindings>
 
     <Grid>
@@ -1086,11 +1082,11 @@
                                         AutomationProperties.Name="Add new form fields to PDF">
                     <Fluent:ToggleButton Header="Edit Fields"
                                          GroupName="ToolGroup"
-                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=EditFields, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
-                                         CommandParameter="Select"
+                                         CommandParameter="EditFields"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Edit Fields (V) — click a form field to select it, drag to move, drag the handles to resize, arrow keys to nudge, Del to delete"
+                                         ToolTip="Edit Fields (E) — click a form field to select it, drag to move, drag the handles to resize, arrow keys to nudge, Del to delete"
                                          AutomationProperties.Name="Edit form field layout">
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
@@ -1379,7 +1375,7 @@
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Select"
-                                         ToolTip="Selection tool (V) — select form fields to move and resize them"
+                                         ToolTip="Selection tool (V) — click form fields to fill them in"
                                          AutomationProperties.Name="Selection tool"/>
                     <Fluent:ToggleButton Header="Text Fill"
                                          GroupName="ToolGroup"
@@ -2847,7 +2843,7 @@
 
                                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Value:" FontSize="11" VerticalAlignment="Top" Margin="0,6,0,0"/>
                                         <TextBox Grid.Row="4" Grid.Column="1"
-                                                 Text="{Binding SelectedField.Value, UpdateSourceTrigger=PropertyChanged}"
+                                                 Text="{Binding SelectedFieldValue, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource PropTextBox}"
                                                  Margin="0,4,0,0"
                                                  IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}"

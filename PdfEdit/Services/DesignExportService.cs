@@ -179,14 +179,19 @@ public static class DesignExportService
                 break;
 
             case DesignElementType.Line:
-                canvas.MoveTo(x, y + h).LineTo(x + w, y);
-                if (hasStroke) canvas.Stroke();
-                break;
-
             case DesignElementType.Arrow:
-                DrawArrow(canvas, x, y + h, x + w, y, (float)s.StrokeThickness);
+            {
+                // Local endpoints are WPF (y down) relative to the top-left; PDF y runs up from y + h.
+                var (a, b) = s.GetLocalEndpoints();
+                float x1 = x + (float)a.X, y1 = y + h - (float)a.Y;
+                float x2 = x + (float)b.X, y2 = y + h - (float)b.Y;
+                if (s.ElementType == DesignElementType.Arrow)
+                    DrawArrow(canvas, x1, y1, x2, y2, (float)s.StrokeThickness);
+                else
+                    canvas.MoveTo(x1, y1).LineTo(x2, y2);
                 if (hasStroke) canvas.Stroke();
                 break;
+            }
         }
 
         canvas.RestoreState();
@@ -250,12 +255,13 @@ public static class DesignExportService
         canvas.SetLineCapStyle(1);  // 1 = Round
         canvas.SetLineJoinStyle(1); // 1 = Round
 
-        foreach (var stroke in fh.Strokes)
+        // Map through the element's current bounds so moved / resized drawings export where shown.
+        foreach (var stroke in fh.GetTransformedStrokes())
         {
-            if (stroke.Count == 0) continue;
-            var first = stroke[0];
-            canvas.MoveTo(first.X, pageH - first.Y);
-            foreach (var pt in stroke.Skip(1))
+            var pts = stroke.ToList();
+            if (pts.Count == 0) continue;
+            canvas.MoveTo(pts[0].X, pageH - pts[0].Y);
+            foreach (var pt in pts.Skip(1))
                 canvas.LineTo(pt.X, pageH - pt.Y);
             canvas.Stroke();
         }

@@ -49,6 +49,7 @@
 
                 <TextBlock Style="{StaticResource Hdr}" Text="DESIGN CANVAS"/>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="V"/><TextBlock Style="{StaticResource Desc}" Text="Select tool"/></StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="E"/><TextBlock Style="{StaticResource Desc}" Text="Edit Fields — move / resize form fields"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="T  /  R  /  E  /  L"/><TextBlock Style="{StaticResource Desc}" Text="Text / Rect / Ellipse / Line tool"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="A  /  P  /  I"/><TextBlock Style="{StaticResource Desc}" Text="Arrow / Pen / Image tool"/></StackPanel>
                 <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Key}" Text="Ctrl+A"/><TextBlock Style="{StaticResource Desc}" Text="Select all elements"/></StackPanel>

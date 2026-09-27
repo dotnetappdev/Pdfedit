@@ -100,6 +100,9 @@ public static class DesignSerializerService
         // freehand
         public double   Thickness    { get; set; }
         public List<List<PointDto>>? Strokes { get; set; }
+        // line / arrow direction
+        public bool FlipX { get; set; }
+        public bool FlipY { get; set; }
         // table
         public int     Rows          { get; set; }
         public int     Columns       { get; set; }
@@ -166,6 +169,8 @@ public static class DesignSerializerService
                 dto.StrokeColor = ColorToHex(s.StrokeColor);
                 dto.StrokeThick = s.StrokeThickness;
                 dto.CornerRadius= s.CornerRadius;
+                dto.FlipX       = s.FlipX;
+                dto.FlipY       = s.FlipY;
                 break;
 
             case ImageDesignElement im:
@@ -233,7 +238,9 @@ public static class DesignSerializerService
                 FillColor        = ParseColor(dto.FillColor),
                 StrokeColor      = ParseColor(dto.StrokeColor, Colors.Black),
                 StrokeThickness  = dto.StrokeThick > 0 ? dto.StrokeThick : 2,
-                CornerRadius     = dto.CornerRadius
+                CornerRadius     = dto.CornerRadius,
+                FlipX            = dto.FlipX,
+                FlipY            = dto.FlipY
             },
 
         "image" => new ImageDesignElement

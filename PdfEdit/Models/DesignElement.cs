@@ -140,6 +140,18 @@ public class ShapeDesignElement : DesignElement
     public Color StrokeColor { get => _strokeColor; set { _strokeColor = value; OnPropertyChanged(); } }
     public double StrokeThickness { get => _strokeThickness; set { _strokeThickness = Math.Max(0.5, value); OnPropertyChanged(); } }
     public double CornerRadius { get => _cornerRadius; set { _cornerRadius = value; OnPropertyChanged(); } }
+
+    // Line / Arrow direction inside the bounding box. By default a line runs top-left → bottom-right;
+    // FlipX / FlipY mirror the start and end so lines can be drawn in any direction (the arrowhead
+    // is always at the end point).
+    private bool _flipX, _flipY;
+    public bool FlipX { get => _flipX; set { _flipX = value; OnPropertyChanged(); } }
+    public bool FlipY { get => _flipY; set { _flipY = value; OnPropertyChanged(); } }
+
+    /// <summary>Line start / end relative to the element's top-left corner (WPF coordinates).</summary>
+    public (Point Start, Point End) GetLocalEndpoints() => (
+        new Point(FlipX ? Width : 0, FlipY ? Height : 0),
+        new Point(FlipX ? 0 : Width, FlipY ? 0 : Height));
 }
 
 public class ImageDesignElement : DesignElement
@@ -160,8 +172,33 @@ public class FreehandDesignElement : DesignElement
 
     public override DesignElementType ElementType => DesignElementType.Freehand;
 
-    // Each inner list is one stroke (sequence of points)
+    // Each inner list is one stroke (sequence of points), in the page coordinates the strokes were
+    // drawn in. The element's X/Y/Width/Height may change afterwards (move / resize), so always map
+    // points through GetTransformedStrokes() rather than using them directly.
     public List<List<Point>> Strokes { get; set; } = new();
+
+    /// <summary>Strokes mapped into the element's current bounds (page coordinates).</summary>
+    public IEnumerable<IEnumerable<Point>> GetTransformedStrokes() => GetStrokes(X, Y);
+
+    /// <summary>Strokes mapped into the element's current size, relative to its top-left corner.</summary>
+    public IEnumerable<IEnumerable<Point>> GetLocalStrokes() => GetStrokes(0, 0);
+
+    private IEnumerable<IEnumerable<Point>> GetStrokes(double originX, double originY)
+    {
+        double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+        foreach (var stroke in Strokes)
+            foreach (var p in stroke)
+            {
+                minX = Math.Min(minX, p.X); minY = Math.Min(minY, p.Y);
+                maxX = Math.Max(maxX, p.X); maxY = Math.Max(maxY, p.Y);
+            }
+        if (minX == double.MaxValue) yield break;
+
+        double sx = maxX - minX > 0.5 ? Width / (maxX - minX) : 1;
+        double sy = maxY - minY > 0.5 ? Height / (maxY - minY) : 1;
+        foreach (var stroke in Strokes)
+            yield return stroke.Select(p => new Point(originX + (p.X - minX) * sx, originY + (p.Y - minY) * sy)).ToList();
+    }
     public Color Color { get => _color; set { _color = value; OnPropertyChanged(); } }
     public double Thickness { get => _thickness; set { _thickness = value; OnPropertyChanged(); } }
 }

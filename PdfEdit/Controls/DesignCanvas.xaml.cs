@@ -56,6 +56,7 @@ public partial class DesignCanvas : UserControl
     private bool _isInking;
     private List<Point> _currentStroke = new();
     private List<List<Point>> _currentFreehandStrokes = new();
+    private Polyline? _inkPreview;
 
     // Selection handles (8 Thumb elements placed on SelectionOverlay)
     private readonly Thumb[] _handles = new Thumb[8];
@@ -76,6 +77,7 @@ public partial class DesignCanvas : UserControl
     {
         InitializeComponent();
         DataContextChanged += (_, _) => OnVmChanged();
+        PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDownWhileEditing;
 
         // Create resize handles
         for (int i = 0; i < 8; i++)
@@ -185,6 +187,10 @@ public partial class DesignCanvas : UserControl
         FinishTextEdit();
         FinishTableCellEdit();
 
+        // Take keyboard focus so Delete, arrow-key nudging, Ctrl+C/V/Z and tool shortcuts work
+        // after clicking the page (Canvas itself is not focusable, so focus never moved here).
+        Focus();
+
         if (VM.ActiveTool == DesignTool.Select)
         {
             var hit = HitTestElement(pos);
@@ -247,10 +253,20 @@ public partial class DesignCanvas : UserControl
             _isInking = true;
             _currentStroke = new List<Point> { pos };
             _currentFreehandStrokes = new List<List<Point>>();
-            InkSurface.EditingMode = InkCanvasEditingMode.Ink;
-            InkSurface.DefaultDrawingAttributes.Color = VM.PenColor;
-            InkSurface.DefaultDrawingAttributes.Width = VM.PenThickness;
-            InkSurface.DefaultDrawingAttributes.Height = VM.PenThickness;
+            // Live preview: InkSurface sits under InteractionCanvas and never received the mouse,
+            // so nothing was drawn while dragging. Draw a polyline on the preview layer instead.
+            _inkPreview = new Polyline
+            {
+                Stroke = new SolidColorBrush(VM.PenColor),
+                StrokeThickness = VM.PenThickness,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                IsHitTestVisible = false,
+            };
+            _inkPreview.Points.Add(pos);
+            DrawPreviewCanvas.Children.Add(_inkPreview);
+            InteractionCanvas.CaptureMouse();
             return;
         }
 
@@ -374,6 +390,7 @@ public partial class DesignCanvas : UserControl
         if (_isInking && e.LeftButton == MouseButtonState.Pressed)
         {
             _currentStroke.Add(pos);
+            _inkPreview?.Points.Add(pos);
         }
     }
 
@@ -449,6 +466,12 @@ public partial class DesignCanvas : UserControl
             if (shapeType.HasValue)
             {
                 var elem = VM.CreateShapeElement(shapeType.Value, x, y, w, h);
+                if (shapeType is DesignElementType.Line or DesignElementType.Arrow)
+                {
+                    // Keep the direction the user dragged (bounds are normalised to top-left).
+                    elem.FlipX = pos.X < _dragStart.X;
+                    elem.FlipY = pos.Y < _dragStart.Y;
+                }
                 VM.AddElement(elem);
             }
 
@@ -475,6 +498,8 @@ public partial class DesignCanvas : UserControl
         if (_isInking)
         {
             _isInking = false;
+            InteractionCanvas.ReleaseMouseCapture();
+            if (_inkPreview != null) { DrawPreviewCanvas.Children.Remove(_inkPreview); _inkPreview = null; }
             if (_currentStroke.Count > 1)
             {
                 _currentFreehandStrokes.Add(_currentStroke);
@@ -514,6 +539,7 @@ public partial class DesignCanvas : UserControl
         base.OnMouseDoubleClick(e);
         var pos = e.GetPosition(InteractionCanvas);
         var hit = HitTestElement(pos);
+        if (hit is TextDesignElement { IsEditing: true }) return; // let the TextBox select the word
         if (hit is TextDesignElement t)
             BeginTextEdit(t);
         else if (hit is TableDesignElement tbl)
@@ -531,6 +557,9 @@ public partial class DesignCanvas : UserControl
     private void BeginTextEdit(TextDesignElement elem)
     {
         elem.IsEditing = true;
+        // The edit TextBox lives in ElementsHost, underneath InteractionCanvas. Let the mouse through
+        // while editing so the caret can be placed / text selected by clicking and dragging.
+        InteractionCanvas.IsHitTestVisible = false;
         // Focus the TextBox inside its container
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
         {
@@ -550,7 +579,37 @@ public partial class DesignCanvas : UserControl
         if (VM == null) return;
         foreach (var e in VM.Elements.OfType<TextDesignElement>())
             e.IsEditing = false;
+        InteractionCanvas.IsHitTestVisible = true;
         HideTextToolbar();
+    }
+
+    /// <summary>
+    /// While a text element is being edited InteractionCanvas is click-through; a click outside the
+    /// edited element ends the edit and is then handled as a normal canvas click (select / draw).
+    /// </summary>
+    private void OnPreviewMouseLeftButtonDownWhileEditing(object sender, MouseButtonEventArgs e)
+    {
+        if (VM == null || InteractionCanvas.IsHitTestVisible) return;
+        var editing = VM.Elements.OfType<TextDesignElement>().FirstOrDefault(t => t.IsEditing);
+        if (editing == null) { InteractionCanvas.IsHitTestVisible = true; return; }
+
+        if (e.OriginalSource is DependencyObject src && _textToolbar != null
+            && (_textToolbar == src || _textToolbar.IsAncestorOf(src)))
+            return; // toolbar buttons keep the edit open
+
+        var pos = e.GetPosition(InteractionCanvas);
+        if (new Rect(editing.X, editing.Y, editing.Width, editing.Height).Contains(pos)) return;
+
+        // Outside the page entirely (grey margin / scrollbars): just end the edit.
+        if (pos.X < 0 || pos.Y < 0 || pos.X > InteractionCanvas.ActualWidth || pos.Y > InteractionCanvas.ActualHeight)
+        {
+            FinishTextEdit();
+            return;
+        }
+
+        FinishTextEdit();
+        InteractionCanvas_MouseLeftButtonDown(InteractionCanvas, e);
+        e.Handled = true;
     }
 
     // ── Text mini toolbar (Adobe-style: font size, delete) ─────────────────────
@@ -757,6 +816,10 @@ public partial class DesignCanvas : UserControl
         {
             var e = VM.Elements[i];
             var bounds = new Rect(e.X, e.Y, e.Width, e.Height);
+            // Horizontal / vertical lines have ~0 height / width — give thin elements a grab margin.
+            if (e is ShapeDesignElement { ElementType: DesignElementType.Line or DesignElementType.Arrow }
+                  or FreehandDesignElement)
+                bounds.Inflate(5, 5);
             if (bounds.Contains(pos)) return e;
         }
         return null;
@@ -886,10 +949,13 @@ public partial class DesignCanvas : UserControl
         bool moveTop    = idx is 0 or 1 or 2;
         bool moveBottom = idx is 5 or 6 or 7;
 
-        if (moveLeft)   left   = Math.Min(VM.Snap(Math.Max(0, left + dx)), right - MinElementSize);
-        if (moveRight)  right  = Math.Max(VM.Snap(right + dx), left + MinElementSize);
-        if (moveTop)    top    = Math.Min(VM.Snap(Math.Max(0, top + dy)), bottom - MinElementSize);
-        if (moveBottom) bottom = Math.Max(VM.Snap(bottom + dy), top + MinElementSize);
+        // Lines may be perfectly horizontal / vertical, so they have no minimum extent.
+        double min = sel is ShapeDesignElement { ElementType: DesignElementType.Line or DesignElementType.Arrow }
+            ? 0 : MinElementSize;
+        if (moveLeft)   left   = Math.Min(VM.Snap(Math.Max(0, left + dx)), right - min);
+        if (moveRight)  right  = Math.Max(VM.Snap(right + dx), left + min);
+        if (moveTop)    top    = Math.Min(VM.Snap(Math.Max(0, top + dy)), bottom - min);
+        if (moveBottom) bottom = Math.Max(VM.Snap(bottom + dy), top + min);
 
         // Shift on a corner handle keeps the original aspect ratio (Acrobat / Office behaviour).
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && idx is 0 or 2 or 5 or 7
@@ -1007,6 +1073,20 @@ public partial class DesignCanvas : UserControl
     {
         base.OnKeyDown(e);
         if (VM == null) return;
+
+        // Typing in a text element, table cell or ribbon box: never treat letters, arrows, Delete
+        // or Backspace as canvas shortcuts (they used to switch tools / nudge / delete the element).
+        if (PdfViewerControl.IsTextInputFocused())
+        {
+            if (e.Key == Key.Escape)
+            {
+                FinishTextEdit();
+                FinishTableCellEdit();
+                Focus();
+                e.Handled = true;
+            }
+            return;
+        }
 
         if (e.Key == Key.Delete || e.Key == Key.Back)
         {

@@ -21,9 +21,13 @@ public partial class PdfViewerControl : UserControl
     private double Scale => PdfRenderService.PointsToDips * (_vm?.Zoom ?? 1.0);
 
     // Adobe Acrobat DC-accurate form-field appearance brushes (frozen for reuse).
-    private static readonly Brush FieldFillBrush          = Freeze(Color.FromArgb( 45,   0,  85, 215));
+    // The fills are OPAQUE on purpose: the rendered page bitmap already contains each field's
+    // saved appearance (its old value / check mark). A see-through fill let that show through
+    // under the live control, so typed text overlapped the old text and an unticked box still
+    // looked ticked. Acrobat likewise paints over the appearance while a form is being filled.
+    private static readonly Brush FieldFillBrush          = Freeze(Color.FromRgb(0xE1, 0xE9, 0xFF));
     private static readonly Brush FieldBorderBrush        = Freeze(Color.FromArgb(170,   0,  80, 200));
-    private static readonly Brush FieldFocusBrush         = Freeze(Color.FromArgb( 80,   0, 100, 220));
+    private static readonly Brush FieldFocusBrush         = Freeze(Colors.White);
     private static readonly Brush FieldFocusBorderBrush   = Freeze(Color.FromArgb(230,  30, 120, 220));
     private static readonly Brush FieldRequiredBorderBrush= Freeze(Color.FromArgb(210, 200,  30,  30));
     private static readonly SolidColorBrush SigBlueBrush  = new(Color.FromRgb(0, 80, 200));
@@ -154,6 +158,7 @@ public partial class PdfViewerControl : UserControl
             _vm.DocumentLoaded -= OnDocumentLoaded;
             _vm.AnnotationFormattingChanged -= OnAnnotationFormattingChanged;
             _vm.PropertyChanged -= OnVmPropertyChanged;
+            _vm.FieldValueChangedExternally -= OnFieldValueChangedExternally;
         }
         _vm = DataContext as MainViewModel;
         if (_vm != null)
@@ -162,12 +167,30 @@ public partial class PdfViewerControl : UserControl
             _vm.DocumentLoaded += OnDocumentLoaded;
             _vm.AnnotationFormattingChanged += OnAnnotationFormattingChanged;
             _vm.PropertyChanged += OnVmPropertyChanged;
+            _vm.FieldValueChangedExternally += OnFieldValueChangedExternally;
 
             // If a document is already loaded when DataContext arrives, show it
             if (_vm.Document != null)
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
                     new Action(OnDocumentLoaded));
         }
+    }
+
+    /// <summary>A field value was edited elsewhere (e.g. the properties panel) — mirror it on the page.</summary>
+    private void OnFieldValueChangedExternally(string name, string value)
+    {
+        if (_builtInLayoutMode) return;
+        bool updated = false;
+        foreach (var tb in FieldOverlayCanvas.Children.OfType<TextBox>())
+        {
+            if (tb.Tag is FormFieldInfo f && f.Name == name)
+            {
+                if (tb.Text != value) tb.Text = value;
+                updated = true;
+            }
+        }
+        // Checkboxes, radios and lists have no simple text to patch — rebuild the overlay instead.
+        if (!updated) RebuildFieldOverlay();
     }
 
     private void OnDocumentLoaded()
@@ -194,8 +217,8 @@ public partial class PdfViewerControl : UserControl
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
-            if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.Select)
-                _vm.StatusText = "Select: click a form field to move it, drag its handles to resize, Del to delete.";
+            if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
+                _vm.StatusText = "Edit Fields: click a form field to move it, drag its handles to resize, Del to delete.";
             RebuildFieldOverlay();
         }
 
@@ -986,6 +1009,7 @@ public partial class PdfViewerControl : UserControl
             IsChecked = isChecked,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+            Focusable = true,
         };
         System.Windows.Automation.AutomationProperties.SetName(cb, $"Checkbox: {field.Name}");
         cb.Checked   += (_, _) => _vm!.UpdateFieldValue(field.Name, field.ExportValue);
@@ -1000,10 +1024,20 @@ public partial class PdfViewerControl : UserControl
             BorderBrush = FieldBorderBrush,
             BorderThickness = new Thickness(1),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
-            Child = cb,
+            Cursor = Cursors.Hand,
+            // Scale the glyph with the field (like Acrobat) instead of a fixed 13px box.
+            Child = new Viewbox { Child = cb, Margin = new Thickness(Math.Min(2, h * 0.1)) },
         };
         container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
         container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        // Clicking anywhere in the field toggles it, not just on the small glyph.
+        container.MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.Handled) return;
+            cb.IsChecked = cb.IsChecked != true;
+            cb.Focus();
+            e.Handled = true;
+        };
         return container;
     }
 
@@ -1028,10 +1062,18 @@ public partial class PdfViewerControl : UserControl
             BorderBrush = FieldBorderBrush,
             BorderThickness = new Thickness(1),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
-            Child = rb,
+            Cursor = Cursors.Hand,
+            Child = new Viewbox { Child = rb, Margin = new Thickness(Math.Min(2, h * 0.1)) },
         };
         container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
         container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        container.MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.Handled) return;
+            rb.IsChecked = true;
+            rb.Focus();
+            e.Handled = true;
+        };
         return container;
     }
 
@@ -1157,7 +1199,7 @@ public partial class PdfViewerControl : UserControl
         // Apply 2px blue border + light blue tint to the TextBox
         tb.BorderBrush = AdobeBlue;
         tb.BorderThickness = new Thickness(2);
-        tb.Background = new SolidColorBrush(Color.FromArgb(20, 0, 120, 215));
+        tb.Background = FieldFocusBrush;
 
         EnsureFieldChrome();
 
@@ -1859,7 +1901,7 @@ public partial class PdfViewerControl : UserControl
         {
             ClearLayoutSelection();
             Focus();
-            if (tool == ActiveTool.Select) { e.Handled = true; return; }
+            if (tool == ActiveTool.EditFields) { e.Handled = true; return; }
         }
 
         if (tool == ActiveTool.Hand)
@@ -2385,10 +2427,10 @@ public partial class PdfViewerControl : UserControl
                                 System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
                                 _vm.StatusText = $"Field '{fname}' added to page {pageNum}.";
                                 PdfEdit.Services.ToastService.Instance.Success($"Form field '{fname}' added.");
-                                // Like Acrobat: after placing a field, drop back to Select with the
-                                // new field selected so it can be moved/resized straight away.
+                                // Like Acrobat: after placing a field, drop back to Edit Fields with
+                                // the new field selected so it can be moved/resized straight away.
                                 _layoutSelectedKey = (fname, 0);
-                                _vm.ActiveTool = ActiveTool.Select;
+                                _vm.ActiveTool = ActiveTool.EditFields;
                                 _ = _vm.ReloadCurrentFileAsync();
                             }
                             catch (Exception ex)
@@ -2714,10 +2756,17 @@ public partial class PdfViewerControl : UserControl
             && pos.X <= PageImage.ActualWidth && pos.Y <= PageImage.ActualHeight;
     }
 
+    /// <summary>
+    /// True when keyboard focus is on something that takes typed characters (text/password boxes,
+    /// drop-downs and list boxes that select by typing). Single-letter shortcuts must not fire then.
+    /// </summary>
+    public static bool IsTextInputFocused() => Keyboard.FocusedElement is TextBoxBase or PasswordBox
+        or ComboBox or ComboBoxItem or ListBox or ListBoxItem;
+
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
         // Don't steal shortcuts when a TextBox / field has focus
-        bool textboxFocused = Keyboard.FocusedElement is TextBox or PasswordBox;
+        bool textboxFocused = IsTextInputFocused();
 
         if (e.Key == Key.Escape)
         {

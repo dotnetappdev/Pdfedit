@@ -34,6 +34,8 @@
             <conv:DoubleToRightMarginConverter x:Key="DoubleToRightMarginConverter"/>
             <conv:BoolToTextWrapConverter x:Key="BoolToTextWrapConverter"/>
             <conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
+            <conv:FreehandGeometryConverter x:Key="FreehandGeometryConverter"/>
+            <conv:LineGeometryConverter x:Key="LineGeometryConverter"/>
 
             <!-- Per-area interface font sizes (defaults; overridden live by FontService
                  from the user's settings). Controls bind via DynamicResource. -->

@@ -195,8 +195,27 @@ public class MainViewModel : INotifyPropertyChanged
     public FormFieldInfo? SelectedField
     {
         get => _selectedField;
-        set { _selectedField = value; OnPropertyChanged(); }
+        set { _selectedField = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedFieldValue)); }
     }
+
+    /// <summary>
+    /// Value of the selected field for the properties panel. Writes go through UpdateFieldValue so
+    /// they are saved with the form and pushed to the live-view control.
+    /// </summary>
+    public string SelectedFieldValue
+    {
+        get => _selectedField == null ? string.Empty
+             : FieldValues.TryGetValue(_selectedField.Name, out var v) ? v : _selectedField.Value;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldValue) return;
+            UpdateFieldValue(_selectedField.Name, value ?? string.Empty);
+            FieldValueChangedExternally?.Invoke(_selectedField.Name, value ?? string.Empty);
+        }
+    }
+
+    /// <summary>Raised when a field value is changed somewhere other than its live-view control.</summary>
+    public event Action<string, string>? FieldValueChangedExternally;
 
     public FreeTextAnnotation? SelectedAnnotation
     {
@@ -1067,8 +1086,10 @@ public class MainViewModel : INotifyPropertyChanged
     public void UpdateFieldValue(string fieldName, string value)
     {
         FieldValues[fieldName] = value;
-        var field = AllFields.FirstOrDefault(f => f.Name == fieldName);
-        if (field != null) field.Value = value;
+        // Every widget of the field shares the value (radio groups, fields repeated across pages).
+        foreach (var field in AllFields.Where(f => f.Name == fieldName))
+            field.Value = value;
+        if (_selectedField?.Name == fieldName) OnPropertyChanged(nameof(SelectedFieldValue));
         StatusText = $"Field '{fieldName}' updated.";
     }
 
