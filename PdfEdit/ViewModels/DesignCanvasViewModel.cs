@@ -994,8 +994,22 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     private static int _fieldCounter;
 
-    /// <summary>Places a new form-field placeholder. Label + field box footprint (Width) varies by kind
-    /// so the default layout reads sensibly without any manual resizing.</summary>
+    /// <summary>Places a new form-field placeholder at a drag-defined bounding box.</summary>
+    public FormFieldDesignElement CreateFormFieldElement(FormFieldKind kind, double x, double y, double w, double h)
+    {
+        int n = ++_fieldCounter;
+        return new FormFieldDesignElement(kind)
+        {
+            X = x, Y = y, Width = Math.Max(8, w), Height = Math.Max(8, h),
+            FieldName = $"{kind}{n}",
+            Label = kind.ToString(),
+            LabelPosition = _fieldLabelPosition,
+            LabelOffset = _fieldLabelOffset,
+            Wrap = _wrap
+        };
+    }
+
+    /// <summary>Places a new form-field placeholder with kind-appropriate default sizing.</summary>
     public FormFieldDesignElement CreateFormFieldElement(FormFieldKind kind, double x, double y)
     {
         (double w, double h) = kind switch
@@ -1008,16 +1022,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             FormFieldKind.Signature => (220.0, 60.0),
             _                       => (180.0, 24.0)
         };
-        int n = ++_fieldCounter;
-        return new FormFieldDesignElement(kind)
-        {
-            X = x, Y = y, Width = w, Height = h,
-            FieldName = $"{kind}{n}",
-            Label = kind.ToString(),
-            LabelPosition = _fieldLabelPosition,
-            LabelOffset = _fieldLabelOffset,
-            Wrap = _wrap
-        };
+        return CreateFormFieldElement(kind, x, y, w, h);
     }
 
     public ShapeDesignElement CreateShapeElement(DesignElementType type, double x, double y, double w, double h)
