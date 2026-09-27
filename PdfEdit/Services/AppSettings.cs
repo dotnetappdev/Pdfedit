@@ -48,6 +48,10 @@ public class AppSettings
     public double ToolboxLeft { get; set; } = double.NaN;
     public double ToolboxTop  { get; set; } = double.NaN;
 
+    // ── Render engine ────────────────────────────────────────────────────────
+    /// <summary>"Pdfium" (default, Chrome/Adobe quality) or "WinRT" (legacy Windows renderer).</summary>
+    public string RenderEngine { get; set; } = "Custom";
+
     // ── Accessibility ────────────────────────────────────────────────────────
     public bool HighContrastFocusIndicators { get; set; }
 

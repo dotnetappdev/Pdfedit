@@ -26,6 +26,8 @@
     <PackageReference Include="Fluent.Ribbon" Version="10.0.3" />
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.4" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <!-- Pdfium render engine (same engine as Chrome/Edge — Adobe-quality rendering) -->
+    <PackageReference Include="Docnet.Core" Version="2.6.0" />
   </ItemGroup>
 
 </Project>
