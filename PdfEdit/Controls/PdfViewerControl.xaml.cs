@@ -937,14 +937,17 @@ public partial class PdfViewerControl : UserControl
             BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush,
             BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
             Cursor = Cursors.IBeam,
-            FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize : Math.Max(8, (vertical ? w : h) * 0.6),
+            FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize
+                     : field.FontSize > 0 ? field.FontSize * Scale
+                     : Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
+            TextAlignment = ToTextAlignment(field.Alignment),
             AcceptsReturn = field.IsMultiline,
             TextWrapping = field.IsMultiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Padding = new Thickness(2, 0, 2, 0),
-            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip
+            ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.DisplayName : field.Tooltip
         };
-        System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.Name}");
+        System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.DisplayName}");
 
         // Vertical-text fields already use LayoutTransform for their -90° orientation, so the
         // Adobe-style toolbar's Rotate button (which also targets LayoutTransform) is skipped there.
@@ -1058,7 +1061,8 @@ public partial class PdfViewerControl : UserControl
         var cb = new ComboBox
         {
             Width = w, Height = h,
-            FontSize = Math.Max(8, h * 0.55),
+            FontSize = field.FontSize > 0 ? field.FontSize * Scale : Math.Max(8, h * 0.55),
+            HorizontalContentAlignment = ToHorizontalAlignment(field.Alignment),
             ToolTip = field.Name
         };
         System.Windows.Automation.AutomationProperties.SetName(cb, $"Dropdown: {field.Name}");
@@ -1070,6 +1074,20 @@ public partial class PdfViewerControl : UserControl
         cb.GotFocus += (_, _) => _vm.SelectedField = field;
         return cb;
     }
+
+    private static TextAlignment ToTextAlignment(FieldAlignment a) => a switch
+    {
+        FieldAlignment.Center => TextAlignment.Center,
+        FieldAlignment.Right  => TextAlignment.Right,
+        _ => TextAlignment.Left,
+    };
+
+    private static HorizontalAlignment ToHorizontalAlignment(FieldAlignment a) => a switch
+    {
+        FieldAlignment.Center => HorizontalAlignment.Center,
+        FieldAlignment.Right  => HorizontalAlignment.Right,
+        _ => HorizontalAlignment.Left,
+    };
 
     private ListBox BuildListBox(FormFieldInfo field, double w, double h)
     {
@@ -1877,9 +1895,15 @@ public partial class PdfViewerControl : UserControl
         // empty page space, so drop the current field selection (Add-field tools then start drawing).
         if (IsFieldLayoutMode)
         {
-            ClearLayoutSelection();
             Focus();
-            if (tool == ActiveTool.EditFields) { e.Handled = true; return; }
+            if (tool == ActiveTool.EditFields)
+            {
+                // Drag on empty space = rubber-band selection (Ctrl/Shift adds to the selection).
+                BeginLayoutRubberBand(e.GetPosition(FieldOverlayCanvas));
+                e.Handled = true;
+                return;
+            }
+            ClearLayoutSelection();
         }
 
         if (tool == ActiveTool.Hand)
@@ -2141,6 +2165,12 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
+        if (EndLayoutRubberBand(e.GetPosition(FieldOverlayCanvas)))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (_vm?.ActiveTool == ActiveTool.Eraser && IsMouseCaptured)
         {
             ReleaseMouseCapture();
@@ -2575,6 +2605,9 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
+        if (e.LeftButton == MouseButtonState.Pressed && UpdateLayoutRubberBand(e.GetPosition(FieldOverlayCanvas)))
+            return;
+
         if (_isPanning && e.LeftButton == MouseButtonState.Pressed)
         {
             var pos = e.GetPosition(this);

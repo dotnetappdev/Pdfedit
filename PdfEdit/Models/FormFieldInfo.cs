@@ -30,7 +30,19 @@ public class FormFieldInfo
     // Index of this widget within its field's /Kids (a radio group or a field repeated on several
     // pages has several widgets). Used to write moved/resized geometry back to the right widget.
     public int WidgetIndex { get; set; }
+
+    // Text / choice field appearance (PDF /Q quadding and the /DA font size; 0 = auto-size).
+    public FieldAlignment Alignment { get; set; } = FieldAlignment.Left;
+    public double FontSize { get; set; }
+
+    // A rename made in the Properties panel. Name stays the PDF's current name (it is the key used
+    // for values, bounds and deletions) until the document is saved; the rename is applied last.
+    public string? PendingName { get; set; }
+    public string DisplayName => string.IsNullOrEmpty(PendingName) ? Name : PendingName;
 }
+
+/// <summary>Horizontal text alignment inside a form field (PDF /Q: 0 left, 1 centre, 2 right).</summary>
+public enum FieldAlignment { Left, Center, Right }
 
 /// <summary>A widget rectangle in PDF points (Y from bottom-left).</summary>
 public readonly record struct FieldBounds(double Left, double Bottom, double Width, double Height);

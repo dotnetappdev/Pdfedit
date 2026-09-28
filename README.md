@@ -164,9 +164,18 @@ Build PDFs from scratch with a word-processor-style canvas — no existing PDF r
 - **Undo / Redo** — Ctrl+Z / Ctrl+Y; unlimited history via state snapshot stacks
 - **Select All** — Ctrl+A
 
-**Alignment (relative to page)**
-- Align Left Edge, Right Edge, Center Horizontally
-- Align Top Edge, Bottom Edge, Center Vertically
+**Alignment & Arrange** (Design ribbon *Align* group, or the Inspector's *Arrange* row)
+- Select several elements (Shift+click or drag a rubber band) — the **last one clicked is the reference**, as in Visual Studio
+- Align **Lefts / Centres / Rights / Tops / Middles / Bottoms**; with a single element selected these align to the page
+- **Space Across / Space Down** — distribute 3+ elements with equal gaps
+- **Same Width / Same Height / Same Size** — match the reference element; **Center Page** centres the selection
+- Every arrange step is a single undo (Ctrl+Z)
+
+**Inspector (properties)**
+- Layout: X, Y, Width, Height, Opacity, Locked
+- Text: **Content** (edit the text directly), font, size, bold/italic/underline, colour, **alignment** (Left / Center / Right / Justify), wrap
+- Shape: fill, stroke, thickness, corner radius
+- Form field: **Name**, label, **label position** and gap, required, options, wrap
 
 **Layer Order**
 - Bring Forward, Send Backward (one step)
@@ -233,7 +242,25 @@ Use **Edit Fields** (ribbon *Add Form Field* group, or press **E**) to rearrange
 - **Arrow keys** nudge 1 pt (Shift = 10 pt); **Ctrl+Arrow** resizes; **Del** deletes; **Esc** deselects
 - Right-click any field while filling → **Move / resize field** jumps straight into Edit Fields
 - Changes are undoable (Ctrl+Z) and written to the PDF on save (widget rectangle updated and appearance regenerated)
+- **Multi-select**: Ctrl/Shift+click fields, drag a rubber band on empty page space, or Ctrl+A for every field on the page — the group moves, nudges and deletes together
+- **Arrange**: right-click → *Align / Distribute / Make Same Size / Center on Page*, the **Forms → Arrange Fields** ribbon group, or the Properties panel's Arrange row. The last field clicked is the reference; one field aligns to the page
 - Switch back to Hand / Select to fill the form in
+
+### Field Properties (Properties panel)
+
+Select a field (click it, or use Edit Fields) and edit it in the **Properties** panel:
+
+| Property | Notes |
+|---|---|
+| **Name** | Rename the field; for hierarchical names (`parent.child`) the last part can change. Duplicate names are rejected |
+| **Value** | Same as typing in the field |
+| **Tooltip** | Hover text (PDF `/TU`) |
+| **Required / Read-only / Multi-line** | Field flags |
+| **Alignment** | Left / Center / Right text alignment (PDF `/Q`) for text, combo and list fields |
+| **Font size** | Points; `0` = auto-size to fit |
+| **X / Y / Width / Height** | Position and size in PDF points (Y measured from the page bottom) |
+
+All changes are undoable and are written to the PDF on save (renames last, so values and positions are kept).
 
 ### Security
 

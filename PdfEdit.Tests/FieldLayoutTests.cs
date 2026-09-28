@@ -83,4 +83,33 @@ public class FieldLayoutTests : IDisposable
         Assert.Equal(50, field.Left, 1);
         Assert.Equal(600, field.Bottom, 1);
     }
+
+    [Fact]
+    public void SaveFull_WritesEditedPropertiesAndRename()
+    {
+        var svc = new PdfFormService();
+        string src = MakePdfWithTextField("name");
+        string dest = Path.Combine(_dir, "props.pdf");
+
+        var edit = svc.LoadDocument(src).FormFields.Single();
+        edit.IsRequired = true;
+        edit.IsMultiline = true;
+        edit.Tooltip = "Your full name";
+        edit.Alignment = FieldAlignment.Center;
+        edit.FontSize = 14;
+        edit.PendingName = "full_name";
+
+        var errors = svc.SaveFull(src, dest, new Dictionary<string, string> { ["name"] = "Alice" },
+            new Dictionary<int, int>(), Array.Empty<FreeTextAnnotation>(), fieldEdits: new[] { edit });
+        Assert.Empty(errors);
+
+        var saved = Assert.Single(svc.LoadDocument(dest).FormFields);
+        Assert.Equal("full_name", saved.Name);
+        Assert.Equal("Alice", saved.Value);
+        Assert.True(saved.IsRequired);
+        Assert.True(saved.IsMultiline);
+        Assert.Equal("Your full name", saved.Tooltip);
+        Assert.Equal(FieldAlignment.Center, saved.Alignment);
+        Assert.Equal(14, saved.FontSize, 1);
+    }
 }

@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using PdfEdit.Models;
+using PdfEdit.Services;
 
 namespace PdfEdit.Controls;
 
@@ -15,8 +16,10 @@ namespace PdfEdit.Controls;
 /// named placeholder boxes instead of live fill-in controls. Click a field to select it — a blue
 /// frame with eight resize handles appears — drag the body to move it, drag a handle to resize it
 /// (Shift on a corner keeps the aspect ratio), use the arrow keys to nudge (Shift = 10 pt,
-/// Ctrl = resize) and Delete to remove it. Changes go through <c>MainViewModel.SetFieldBounds</c>,
-/// are undoable, and are written to the PDF on save.
+/// Ctrl = resize) and Delete to remove it. Ctrl/Shift+click or drag a rubber band on empty page
+/// space to select several fields; they then move, nudge, delete and align (right-click → Align,
+/// or the ribbon's Arrange group) together. Changes go through <c>MainViewModel</c>, are undoable,
+/// and are written to the PDF on save.
 /// </summary>
 public partial class PdfViewerControl
 {
@@ -30,11 +33,26 @@ public partial class PdfViewerControl
 
     private bool _builtInLayoutMode;
 
-    // Selected field (tracked by name + widget index so the selection survives an overlay rebuild,
-    // e.g. after undo or after a newly-added field reloads the document).
-    private (string Name, int WidgetIndex)? _layoutSelectedKey;
+    // Selected fields, tracked by name + widget index so the selection survives an overlay rebuild
+    // (undo, property edits, a newly-added field reloading the document). The last key is the
+    // primary selection: it carries the resize handles and is the reference for alignment.
+    private readonly List<(string Name, int WidgetIndex)> _layoutSelectedKeys = new();
+    private readonly Dictionary<(string Name, int WidgetIndex), Border> _layoutBoxes = new();
+    private (string Name, int WidgetIndex)? _layoutSelectedKey
+    {
+        get => _layoutSelectedKeys.Count > 0 ? _layoutSelectedKeys[^1] : null;
+        set { _layoutSelectedKeys.Clear(); if (value is { } k) _layoutSelectedKeys.Add(k); }
+    }
     private FormFieldInfo? _layoutSelectedField;
     private Border? _layoutSelectedBox;
+
+    // Group move state: each selected box's position when the drag started
+    private readonly Dictionary<Border, Point> _layoutGroupOrigins = new();
+
+    // Rubber-band selection
+    private Rectangle? _layoutBand;
+    private Point _layoutBandStart;
+    private bool _layoutBandAdditive;
 
     // Selection chrome (recreated whenever FieldOverlayCanvas is cleared)
     private Rectangle? _layoutFrame;
@@ -84,7 +102,7 @@ public partial class PdfViewerControl
 
         var label = new TextBlock
         {
-            Text = glyph + field.Name,
+            Text = glyph + field.DisplayName,
             Foreground = LayoutBoxText,
             FontSize = Math.Clamp(h * 0.5, 7, 12),
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -104,61 +122,194 @@ public partial class PdfViewerControl
             Tag = field,
             Child = label,
             ClipToBounds = true,
-            ToolTip = $"{field.Name} ({field.FieldType}) — drag to move, drag the handles to resize",
+            ToolTip = $"{field.DisplayName} ({field.FieldType}) — drag to move, drag the handles to resize, Ctrl+click to multi-select",
         };
         System.Windows.Automation.AutomationProperties.SetName(box, $"Form field layout: {field.Name}");
 
         box.MouseLeftButtonDown += OnLayoutBoxMouseDown;
         box.MouseMove += OnLayoutBoxMouseMove;
         box.MouseLeftButtonUp += OnLayoutBoxMouseUp;
-        box.MouseRightButtonDown += (_, e) => { SelectLayoutBox(box); e.Handled = false; };
-
-        var menu = new ContextMenu();
-        var del = new MenuItem { Header = $"Delete field \"{field.Name}\"", InputGestureText = "Del" };
-        del.Click += (_, _) => DeleteLayoutSelection();
-        var fill = new MenuItem { Header = "Switch to fill mode (Hand tool)" };
-        fill.Click += (_, _) => { if (_vm != null) _vm.ActiveTool = ActiveTool.Hand; };
-        menu.Items.Add(del);
-        menu.Items.Add(new Separator());
-        menu.Items.Add(fill);
-        box.ContextMenu = menu;
+        box.MouseRightButtonDown += (_, e) =>
+        {
+            // Right-clicking inside the current multi-selection keeps it (so Align acts on the group).
+            if (!_layoutSelectedKeys.Contains(KeyOf(field))) SelectOnly(box);
+            e.Handled = false;
+        };
+        box.ContextMenu = BuildLayoutContextMenu();
 
         Canvas.SetLeft(box, x);
         Canvas.SetTop(box, y);
         FieldOverlayCanvas.Children.Add(box);
+        _layoutBoxes[KeyOf(field)] = box;
 
-        if (_layoutSelectedKey is { } key && key.Name == field.Name && key.WidgetIndex == field.WidgetIndex)
-            SelectLayoutBox(box);
+        // Restore the selection after a rebuild.
+        var key = KeyOf(field);
+        if (_layoutSelectedKeys.Contains(key))
+        {
+            StyleSelected(box, true);
+            if (_layoutSelectedKeys[^1] == key) MakePrimary(box);
+            SyncSelectionToVm();
+        }
+    }
+
+    private static (string Name, int WidgetIndex) KeyOf(FormFieldInfo f) => (f.Name, f.WidgetIndex);
+
+    private ContextMenu BuildLayoutContextMenu()
+    {
+        var menu = new ContextMenu();
+
+        MenuItem Op(string header, ArrangeOperation op, string? gesture = null)
+        {
+            var mi = new MenuItem { Header = header, InputGestureText = gesture ?? string.Empty };
+            mi.Click += (_, _) => _vm?.ArrangeFields(op);
+            return mi;
+        }
+
+        var align = new MenuItem { Header = "Align" };
+        align.Items.Add(Op("Lefts", ArrangeOperation.AlignLefts));
+        align.Items.Add(Op("Centres", ArrangeOperation.AlignCenters));
+        align.Items.Add(Op("Rights", ArrangeOperation.AlignRights));
+        align.Items.Add(new Separator());
+        align.Items.Add(Op("Tops", ArrangeOperation.AlignTops));
+        align.Items.Add(Op("Middles", ArrangeOperation.AlignMiddles));
+        align.Items.Add(Op("Bottoms", ArrangeOperation.AlignBottoms));
+
+        var distribute = new MenuItem { Header = "Distribute" };
+        distribute.Items.Add(Op("Horizontally", ArrangeOperation.DistributeHorizontally));
+        distribute.Items.Add(Op("Vertically", ArrangeOperation.DistributeVertically));
+
+        var size = new MenuItem { Header = "Make Same Size" };
+        size.Items.Add(Op("Width", ArrangeOperation.MakeSameWidth));
+        size.Items.Add(Op("Height", ArrangeOperation.MakeSameHeight));
+        size.Items.Add(Op("Both", ArrangeOperation.MakeSameSize));
+
+        var center = new MenuItem { Header = "Center on Page" };
+        center.Items.Add(Op("Horizontally", ArrangeOperation.CenterOnPageHorizontally));
+        center.Items.Add(Op("Vertically", ArrangeOperation.CenterOnPageVertically));
+
+        var del = new MenuItem { Header = "Delete", InputGestureText = "Del" };
+        del.Click += (_, _) => DeleteLayoutSelection();
+        var selectAll = new MenuItem { Header = "Select All Fields on Page", InputGestureText = "Ctrl+A" };
+        selectAll.Click += (_, _) => SelectAllLayoutBoxes();
+        var fill = new MenuItem { Header = "Switch to fill mode (Hand tool)" };
+        fill.Click += (_, _) => { if (_vm != null) _vm.ActiveTool = ActiveTool.Hand; };
+
+        menu.Items.Add(align);
+        menu.Items.Add(distribute);
+        menu.Items.Add(size);
+        menu.Items.Add(center);
+        menu.Items.Add(new Separator());
+        menu.Items.Add(selectAll);
+        menu.Items.Add(del);
+        menu.Items.Add(new Separator());
+        menu.Items.Add(fill);
+        return menu;
     }
 
     // ── Selection ────────────────────────────────────────────────────────────
 
-    private void SelectLayoutBox(Border box)
+    /// <summary>Selects just this box (plain click).</summary>
+    private void SelectOnly(Border box)
     {
         if (box.Tag is not FormFieldInfo field) return;
+        foreach (var k in _layoutSelectedKeys)
+            if (_layoutBoxes.TryGetValue(k, out var b)) StyleSelected(b, false);
+        _layoutSelectedKeys.Clear();
+        _layoutSelectedKeys.Add(KeyOf(field));
+        StyleSelected(box, true);
+        MakePrimary(box);
+        SyncSelectionToVm();
+    }
 
-        if (_layoutSelectedBox != null && _layoutSelectedBox != box)
-            _layoutSelectedBox.BorderThickness = new Thickness(1);
+    // Kept for callers that select a single field.
+    private void SelectLayoutBox(Border box) => SelectOnly(box);
 
+    /// <summary>Ctrl/Shift+click: add to or remove from the selection.</summary>
+    private void ToggleSelected(Border box)
+    {
+        if (box.Tag is not FormFieldInfo field) return;
+        var key = KeyOf(field);
+        if (_layoutSelectedKeys.Remove(key))
+        {
+            StyleSelected(box, false);
+            if (_layoutSelectedBox == box)
+            {
+                HideLayoutChrome();
+                _layoutSelectedBox = null;
+                _layoutSelectedField = null;
+                if (_layoutSelectedKeys.Count > 0 && _layoutBoxes.TryGetValue(_layoutSelectedKeys[^1], out var next))
+                    MakePrimary(next);
+            }
+        }
+        else
+        {
+            _layoutSelectedKeys.Add(key);
+            StyleSelected(box, true);
+            MakePrimary(box);
+        }
+        SyncSelectionToVm();
+    }
+
+    private void SelectAllLayoutBoxes()
+    {
+        _layoutSelectedKeys.Clear();
+        foreach (var (key, box) in _layoutBoxes)
+        {
+            _layoutSelectedKeys.Add(key);
+            StyleSelected(box, true);
+        }
+        if (_layoutSelectedKeys.Count > 0) MakePrimary(_layoutBoxes[_layoutSelectedKeys[^1]]);
+        SyncSelectionToVm();
+    }
+
+    private void MakePrimary(Border box)
+    {
         _layoutSelectedBox = box;
-        _layoutSelectedField = field;
-        _layoutSelectedKey = (field.Name, field.WidgetIndex);
-        if (_vm != null) _vm.SelectedField = field;
-
+        _layoutSelectedField = box.Tag as FormFieldInfo;
         Panel.SetZIndex(box, 5000);
         EnsureLayoutChrome();
         PositionLayoutChrome();
     }
 
-    private void ClearLayoutSelection()
+    private static void StyleSelected(Border box, bool selected)
     {
-        _layoutSelectedBox = null;
-        _layoutSelectedField = null;
-        _layoutSelectedKey = null;
-        _layoutMoving = _layoutResizing = false;
+        box.BorderBrush = selected ? LayoutSelectionBrush : LayoutBoxBorder;
+        box.BorderThickness = new Thickness(selected ? 2 : 1);
+        if (!selected) Panel.SetZIndex(box, 0);
+    }
+
+    /// <summary>Publishes the selection so the Properties panel and the Arrange commands see it.</summary>
+    private void SyncSelectionToVm()
+    {
+        if (_vm == null) return;
+        _vm.SelectedLayoutFields.Clear();
+        foreach (var k in _layoutSelectedKeys)
+            if (_layoutBoxes.TryGetValue(k, out var b) && b.Tag is FormFieldInfo f)
+                _vm.SelectedLayoutFields.Add(f);
+        if (_layoutSelectedField != null) _vm.SelectedField = _layoutSelectedField;
+        if (_layoutSelectedKeys.Count > 1)
+            _vm.StatusText = $"{_layoutSelectedKeys.Count} fields selected — right-click → Align, or use Forms → Arrange.";
+    }
+
+    private IEnumerable<Border> SelectedBoxes() =>
+        _layoutSelectedKeys.Where(_layoutBoxes.ContainsKey).Select(k => _layoutBoxes[k]);
+
+    private void HideLayoutChrome()
+    {
         if (_layoutFrame != null) _layoutFrame.Visibility = Visibility.Collapsed;
         foreach (var t in _layoutHandles)
             if (t != null) t.Visibility = Visibility.Collapsed;
+    }
+
+    private void ClearLayoutSelection()
+    {
+        foreach (var b in SelectedBoxes().ToList()) StyleSelected(b, false);
+        _layoutSelectedKeys.Clear();
+        _layoutSelectedBox = null;
+        _layoutSelectedField = null;
+        _layoutMoving = _layoutResizing = false;
+        HideLayoutChrome();
+        _vm?.SelectedLayoutFields.Clear();
     }
 
     /// <summary>Called at the start of BuildFieldOverlay — the canvas is about to be cleared.</summary>
@@ -167,16 +318,20 @@ public partial class PdfViewerControl
         _layoutSelectedBox = null;
         _layoutSelectedField = null;
         _layoutFrame = null;
+        _layoutBand = null;
         _layoutMoving = _layoutResizing = false;
+        _layoutBoxes.Clear();
+        _layoutGroupOrigins.Clear();
         for (int i = 0; i < _layoutHandles.Length; i++) _layoutHandles[i] = null;
     }
 
     private void DeleteLayoutSelection()
     {
-        if (_vm == null || _layoutSelectedField == null) return;
-        var field = _layoutSelectedField;
+        if (_vm == null) return;
+        var fields = SelectedBoxes().Select(b => b.Tag).OfType<FormFieldInfo>().ToList();
+        if (fields.Count == 0) return;
         ClearLayoutSelection();
-        _vm.DeleteField(field);
+        foreach (var f in fields) _vm.DeleteField(f);
     }
 
     private void EnsureLayoutChrome()
@@ -269,14 +424,27 @@ public partial class PdfViewerControl
 
     private void OnLayoutBoxMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Border box) return;
-        SelectLayoutBox(box);
+        if (sender is not Border box || box.Tag is not FormFieldInfo field) return;
         Focus();
+
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+        {
+            ToggleSelected(box);
+            e.Handled = true;
+            return;
+        }
+
+        // Clicking a field that is already part of the selection keeps the group (to drag it).
+        if (_layoutSelectedKeys.Contains(KeyOf(field))) MakePrimary(box);
+        else SelectOnly(box);
+        SyncSelectionToVm();
 
         _layoutMoving = true;
         _layoutMoved = false;
         _layoutMouseStart = e.GetPosition(FieldOverlayCanvas);
-        _layoutOrigin = new Rect(Canvas.GetLeft(box), Canvas.GetTop(box), box.Width, box.Height);
+        _layoutGroupOrigins.Clear();
+        foreach (var b in SelectedBoxes())
+            _layoutGroupOrigins[b] = new Point(Canvas.GetLeft(b), Canvas.GetTop(b));
         box.CaptureMouse();
         e.Handled = true;
     }
@@ -294,9 +462,18 @@ public partial class PdfViewerControl
         if (!_layoutMoved && Math.Abs(dx) < 3 && Math.Abs(dy) < 3) return;
         _layoutMoved = true;
 
+        // Clamp the delta so the whole group stays on the page.
         var (maxW, maxH) = LayoutCanvasSize();
-        Canvas.SetLeft(box, Math.Clamp(_layoutOrigin.X + dx, 0, Math.Max(0, maxW - box.Width)));
-        Canvas.SetTop(box, Math.Clamp(_layoutOrigin.Y + dy, 0, Math.Max(0, maxH - box.Height)));
+        foreach (var (b, o) in _layoutGroupOrigins)
+        {
+            dx = Math.Clamp(dx, -o.X, Math.Max(-o.X, maxW - b.Width - o.X));
+            dy = Math.Clamp(dy, -o.Y, Math.Max(-o.Y, maxH - b.Height - o.Y));
+        }
+        foreach (var (b, o) in _layoutGroupOrigins)
+        {
+            Canvas.SetLeft(b, o.X + dx);
+            Canvas.SetTop(b, o.Y + dy);
+        }
         PositionLayoutChrome();
         e.Handled = true;
     }
@@ -312,8 +489,65 @@ public partial class PdfViewerControl
     {
         _layoutMoving = false;
         box.ReleaseMouseCapture();
-        if (_layoutMoved) CommitLayoutBox(box);
+        if (_layoutMoved) CommitLayoutBoxes(_layoutGroupOrigins.Keys.ToList(), "Moved");
         _layoutMoved = false;
+        _layoutGroupOrigins.Clear();
+    }
+
+    // ── Rubber-band selection (drag on empty page space) ─────────────────────
+
+    private void BeginLayoutRubberBand(Point start)
+    {
+        _layoutBandStart = start;
+        _layoutBandAdditive = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        if (!_layoutBandAdditive) ClearLayoutSelection();
+        _layoutBand = new Rectangle
+        {
+            Stroke = LayoutSelectionBrush,
+            StrokeThickness = 1,
+            StrokeDashArray = new DoubleCollection { 4, 2 },
+            Fill = new SolidColorBrush(Color.FromArgb(30, 0, 120, 215)),
+            IsHitTestVisible = false,
+        };
+        Canvas.SetLeft(_layoutBand, start.X);
+        Canvas.SetTop(_layoutBand, start.Y);
+        Panel.SetZIndex(_layoutBand, 9500);
+        FieldOverlayCanvas.Children.Add(_layoutBand);
+        CaptureMouse();
+    }
+
+    private bool UpdateLayoutRubberBand(Point pos)
+    {
+        if (_layoutBand == null) return false;
+        Canvas.SetLeft(_layoutBand, Math.Min(pos.X, _layoutBandStart.X));
+        Canvas.SetTop(_layoutBand, Math.Min(pos.Y, _layoutBandStart.Y));
+        _layoutBand.Width = Math.Abs(pos.X - _layoutBandStart.X);
+        _layoutBand.Height = Math.Abs(pos.Y - _layoutBandStart.Y);
+        return true;
+    }
+
+    private bool EndLayoutRubberBand(Point pos)
+    {
+        if (_layoutBand == null) return false;
+        var band = new Rect(_layoutBandStart, pos);
+        FieldOverlayCanvas.Children.Remove(_layoutBand);
+        _layoutBand = null;
+        ReleaseMouseCapture();
+        if (band.Width < 3 && band.Height < 3) return true; // plain click on empty space
+
+        foreach (var (key, box) in _layoutBoxes)
+        {
+            var r = new Rect(Canvas.GetLeft(box), Canvas.GetTop(box), box.Width, box.Height);
+            if (band.IntersectsWith(r) && !_layoutSelectedKeys.Contains(key))
+            {
+                _layoutSelectedKeys.Add(key);
+                StyleSelected(box, true);
+            }
+        }
+        if (_layoutSelectedKeys.Count > 0 && _layoutBoxes.TryGetValue(_layoutSelectedKeys[^1], out var primary))
+            MakePrimary(primary);
+        SyncSelectionToVm();
+        return true;
     }
 
     // ── Resize (drag a handle) ───────────────────────────────────────────────
@@ -375,7 +609,7 @@ public partial class PdfViewerControl
     {
         if (!_layoutResizing) return;
         _layoutResizing = false;
-        if (_layoutSelectedBox != null) CommitLayoutBox(_layoutSelectedBox);
+        if (_layoutSelectedBox != null) CommitLayoutBoxes(new[] { _layoutSelectedBox }, "Resized");
     }
 
     // ── Keyboard (nudge / resize / delete) ───────────────────────────────────
@@ -383,8 +617,16 @@ public partial class PdfViewerControl
     /// <summary>Handled in the tunnelling phase so the ScrollViewer doesn't swallow the arrow keys.</summary>
     private void OnLayoutPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_layoutSelectedBox == null || !IsFieldLayoutMode) return;
+        if (!IsFieldLayoutMode) return;
         if (Keyboard.FocusedElement is TextBox or PasswordBox) return;
+
+        if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            SelectAllLayoutBoxes();
+            e.Handled = true;
+            return;
+        }
+        if (_layoutSelectedBox == null) return;
 
         switch (e.Key)
         {
@@ -402,32 +644,34 @@ public partial class PdfViewerControl
                 return;
         }
 
-        var box = _layoutSelectedBox;
         // Canvas units are PDF points × Scale, so this nudges by 1 pt (10 pt with Shift).
         double step = (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1) * Scale;
         var (maxW, maxH) = LayoutCanvasSize();
+        var boxes = SelectedBoxes().ToList();
 
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        foreach (var box in boxes)
         {
             double l = Canvas.GetLeft(box), t = Canvas.GetTop(box);
-            if (e.Key == Key.Right) box.Width  = Math.Min(box.Width + step, maxW - l);
-            if (e.Key == Key.Left)  box.Width  = Math.Max(LayoutMinSize, box.Width - step);
-            if (e.Key == Key.Down)  box.Height = Math.Min(box.Height + step, maxH - t);
-            if (e.Key == Key.Up)    box.Height = Math.Max(LayoutMinSize, box.Height - step);
-        }
-        else
-        {
-            double l = Canvas.GetLeft(box), t = Canvas.GetTop(box);
-            if (e.Key == Key.Left)  l -= step;
-            if (e.Key == Key.Right) l += step;
-            if (e.Key == Key.Up)    t -= step;
-            if (e.Key == Key.Down)  t += step;
-            Canvas.SetLeft(box, Math.Clamp(l, 0, Math.Max(0, maxW - box.Width)));
-            Canvas.SetTop(box, Math.Clamp(t, 0, Math.Max(0, maxH - box.Height)));
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                if (e.Key == Key.Right) box.Width  = Math.Min(box.Width + step, maxW - l);
+                if (e.Key == Key.Left)  box.Width  = Math.Max(LayoutMinSize, box.Width - step);
+                if (e.Key == Key.Down)  box.Height = Math.Min(box.Height + step, maxH - t);
+                if (e.Key == Key.Up)    box.Height = Math.Max(LayoutMinSize, box.Height - step);
+            }
+            else
+            {
+                if (e.Key == Key.Left)  l -= step;
+                if (e.Key == Key.Right) l += step;
+                if (e.Key == Key.Up)    t -= step;
+                if (e.Key == Key.Down)  t += step;
+                Canvas.SetLeft(box, Math.Clamp(l, 0, Math.Max(0, maxW - box.Width)));
+                Canvas.SetTop(box, Math.Clamp(t, 0, Math.Max(0, maxH - box.Height)));
+            }
         }
 
         PositionLayoutChrome();
-        CommitLayoutBox(box);
+        CommitLayoutBoxes(boxes, Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ? "Resized" : "Nudged");
         e.Handled = true;
     }
 
@@ -440,20 +684,25 @@ public partial class PdfViewerControl
         return (w, h);
     }
 
-    /// <summary>Converts the box's canvas rectangle back to PDF points and stores it on the field.</summary>
-    private void CommitLayoutBox(Border box)
+    /// <summary>Converts the boxes' canvas rectangles back to PDF points and stores them (one undo step).</summary>
+    private void CommitLayoutBoxes(IReadOnlyList<Border> boxes, string description)
     {
-        if (_vm?.Document == null || box.Tag is not FormFieldInfo field) return;
+        if (_vm?.Document == null || boxes.Count == 0) return;
         int pageNum = _vm.CurrentPageIndex + 1;
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        double x = Canvas.GetLeft(box), y = Canvas.GetTop(box);
-        var bounds = new FieldBounds(
-            Left:   Math.Round(x / Scale, 2),
-            Bottom: Math.Round(pageH - (y + box.Height) / Scale, 2),
-            Width:  Math.Round(box.Width / Scale, 2),
-            Height: Math.Round(box.Height / Scale, 2));
-        _vm.SetFieldBounds(field, bounds);
+        var changes = new List<(FormFieldInfo, FieldBounds)>();
+        foreach (var box in boxes)
+        {
+            if (box.Tag is not FormFieldInfo field) continue;
+            double x = Canvas.GetLeft(box), y = Canvas.GetTop(box);
+            changes.Add((field, new FieldBounds(
+                Left:   Math.Round(x / Scale, 2),
+                Bottom: Math.Round(pageH - (y + box.Height) / Scale, 2),
+                Width:  Math.Round(box.Width / Scale, 2),
+                Height: Math.Round(box.Height / Scale, 2))));
+        }
+        _vm.SetFieldBoundsBatch(changes, description, refresh: false);
     }
 }

@@ -475,6 +475,9 @@ public partial class MainWindow : RibbonWindow
             case "AlignTop":     VM.DesignCanvas.AlignTop();     break;
             case "AlignBottom":  VM.DesignCanvas.AlignBottom();  break;
             case "AlignCenterV": VM.DesignCanvas.AlignCenterV(); break;
+            default:
+                if (Enum.TryParse<ArrangeOperation>(tag, out var op)) VM.DesignCanvas.Arrange(op);
+                break;
         }
     }
 

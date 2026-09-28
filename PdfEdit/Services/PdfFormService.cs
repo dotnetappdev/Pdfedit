@@ -81,6 +81,18 @@ public class PdfFormService
                         Tooltip = field.GetPdfObject().GetAsString(PdfName.TU)?.ToUnicodeString() ?? string.Empty,
                     };
 
+                    try
+                    {
+                        fieldInfo.Alignment = field.GetJustification() switch
+                        {
+                            iText.Layout.Properties.TextAlignment.CENTER => Models.FieldAlignment.Center,
+                            iText.Layout.Properties.TextAlignment.RIGHT  => Models.FieldAlignment.Right,
+                            _ => Models.FieldAlignment.Left,
+                        };
+                        fieldInfo.FontSize = Math.Max(0, field.GetFontSize());
+                    }
+                    catch { /* malformed /DA — keep defaults */ }
+
                     if (field is PdfTextFormField txt)
                     {
                         fieldInfo.IsMultiline = txt.IsMultiline();
@@ -179,6 +191,54 @@ public class PdfFormService
         return errors;
     }
 
+    private static void ApplyFieldProperties(PdfAcroForm form, Models.FormFieldInfo edit, List<string> errors)
+    {
+        var field = form.GetField(edit.Name);
+        if (field == null) return;
+        try
+        {
+            field.SetRequired(edit.IsRequired);
+            field.SetReadOnly(edit.IsReadOnly);
+            field.SetAlternativeName(edit.Tooltip ?? string.Empty);
+            if (field is PdfTextFormField txt) txt.SetMultiline(edit.IsMultiline);
+            if (edit.FieldType is Models.FieldType.Text or Models.FieldType.ComboBox or Models.FieldType.ListBox)
+            {
+                field.SetJustification(edit.Alignment switch
+                {
+                    Models.FieldAlignment.Center => iText.Layout.Properties.TextAlignment.CENTER,
+                    Models.FieldAlignment.Right  => iText.Layout.Properties.TextAlignment.RIGHT,
+                    _ => iText.Layout.Properties.TextAlignment.LEFT,
+                });
+                if (edit.FontSize > 0) field.SetFontSize((float)edit.FontSize);
+                else field.SetFontSizeAutoScale();
+            }
+            field.RegenerateField();
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Field '{edit.Name}' properties: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Renames a field. Only the last part of a hierarchical name ("parent.child") can change —
+    /// the caller validates that the prefix is unchanged.
+    /// </summary>
+    private static void RenameField(PdfAcroForm form, string oldName, string newName, List<string> errors)
+    {
+        var field = form.GetField(oldName);
+        if (field == null) return;
+        try
+        {
+            string partial = newName.Contains('.') ? newName[(newName.LastIndexOf('.') + 1)..] : newName;
+            field.SetFieldName(partial);
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Rename '{oldName}' → '{newName}': {ex.Message}");
+        }
+    }
+
     /// <summary>Sets each widget's /Rect and regenerates its appearance so it renders at the new size.</summary>
     private static void ApplyFieldBounds(PdfAcroForm form,
         IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds> fieldBounds, List<string> errors)
@@ -216,7 +276,8 @@ public class PdfFormService
         IEnumerable<Models.HighlightAnnotation>? highlightAnnotations = null,
         IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null,
         IEnumerable<Models.ShapeAnnotation>? shapeAnnotations = null,
-        IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds>? fieldBounds = null)
+        IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds>? fieldBounds = null,
+        IEnumerable<Models.FormFieldInfo>? fieldEdits = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -242,6 +303,11 @@ public class PdfFormService
             // Apply widget rectangles the user moved/resized in the live view.
             if (fieldBounds != null)
                 ApplyFieldBounds(form, fieldBounds, saveErrors);
+
+            // Properties edited in the Properties panel (tooltip, required, alignment, font size …).
+            var edits = fieldEdits?.ToList() ?? new List<Models.FormFieldInfo>();
+            foreach (var edit in edits)
+                ApplyFieldProperties(form, edit, saveErrors);
 
             foreach (var (name, value) in fieldValues)
             {
@@ -270,6 +336,10 @@ public class PdfFormService
                     saveErrors.Add($"Field '{name}': {ex.Message}");
                 }
             }
+
+            // Renames go last: everything above looks fields up by their current (old) name.
+            foreach (var edit in edits.Where(e => !string.IsNullOrEmpty(e.PendingName) && e.PendingName != e.Name))
+                RenameField(form, edit.Name, edit.PendingName!, saveErrors);
 
             if (flatten) form.FlattenFields();
         }

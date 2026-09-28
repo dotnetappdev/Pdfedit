@@ -119,6 +119,7 @@ public partial class DesignCanvas : UserControl
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
                 () => RebuildTableGrid(tbl));
         }
+        VM.ArrangeApplied += RefreshSelectionHandles;
         VM.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(DesignCanvasViewModel.SelectedElement)

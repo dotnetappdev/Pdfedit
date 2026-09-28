@@ -195,7 +195,7 @@ public class MainViewModel : INotifyPropertyChanged
     public FormFieldInfo? SelectedField
     {
         get => _selectedField;
-        set { _selectedField = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedFieldValue)); }
+        set { _selectedField = value; OnPropertyChanged(); NotifySelectedFieldProperties(); }
     }
 
     /// <summary>
@@ -216,6 +216,190 @@ public class MainViewModel : INotifyPropertyChanged
 
     /// <summary>Raised when a field value is changed somewhere other than its live-view control.</summary>
     public event Action<string, string>? FieldValueChangedExternally;
+
+    // ── Editable field properties (Properties panel) ─────────────────────────────
+
+    private IEnumerable<FormFieldInfo> WidgetsOf(FormFieldInfo f) => AllFields.Where(x => x.Name == f.Name);
+
+    /// <summary>Applies a property change to every widget of the selected field, with undo.</summary>
+    private void EditSelectedField(string description, Action<FormFieldInfo> apply, Action<FormFieldInfo> revert)
+    {
+        if (_selectedField == null) return;
+        var widgets = WidgetsOf(_selectedField).ToList();
+        if (widgets.Count == 0) widgets.Add(_selectedField);
+        void Do()   { foreach (var w in widgets) apply(w);  ModifiedFieldNames.Add(widgets[0].Name); NotifySelectedFieldProperties(); PageChanged?.Invoke(); }
+        void Undo() { foreach (var w in widgets) revert(w); NotifySelectedFieldProperties(); PageChanged?.Invoke(); }
+        Do();
+        PushUndo(Undo, Do);
+        StatusText = $"{description}. Save to write it to the PDF.";
+    }
+
+    private void NotifySelectedFieldProperties()
+    {
+        foreach (var n in new[] { nameof(SelectedFieldName), nameof(SelectedFieldTooltip), nameof(SelectedFieldRequired),
+                                  nameof(SelectedFieldReadOnly), nameof(SelectedFieldMultiline), nameof(SelectedFieldAlignment),
+                                  nameof(SelectedFieldFontSize), nameof(SelectedFieldX), nameof(SelectedFieldY),
+                                  nameof(SelectedFieldWidth), nameof(SelectedFieldHeight), nameof(SelectedFieldIsTextLike),
+                                  nameof(SelectedFieldValue) })
+            OnPropertyChanged(n);
+    }
+
+    /// <summary>Field name. A rename is shown immediately and written to the PDF on save.</summary>
+    public string SelectedFieldName
+    {
+        get => _selectedField?.DisplayName ?? string.Empty;
+        set
+        {
+            if (_selectedField == null) return;
+            var newName = (value ?? string.Empty).Trim();
+            var oldDisplay = _selectedField.DisplayName;
+            if (newName == oldDisplay) return;
+            var error = ValidateFieldName(_selectedField, newName);
+            if (error != null)
+            {
+                ToastService.Instance.Warning(error);
+                OnPropertyChanged(); // snap the text box back
+                return;
+            }
+            var oldPending = _selectedField.PendingName;
+            string? target = newName == _selectedField.Name ? null : newName;
+            EditSelectedField($"Field renamed to \"{newName}\"", w => w.PendingName = target, w => w.PendingName = oldPending);
+        }
+    }
+
+    /// <summary>Returns an error message, or null when <paramref name="newName"/> is a valid new name.</summary>
+    public string? ValidateFieldName(FormFieldInfo field, string newName)
+    {
+        if (string.IsNullOrWhiteSpace(newName)) return "A field name cannot be empty.";
+        // Hierarchical names ("parent.child"): only the last part can be changed.
+        int dot = field.Name.LastIndexOf('.');
+        string prefix = dot >= 0 ? field.Name[..(dot + 1)] : string.Empty;
+        if (!newName.StartsWith(prefix, StringComparison.Ordinal) || newName[prefix.Length..].Contains('.'))
+            return prefix.Length > 0
+                ? $"Only the last part of \"{field.Name}\" can be renamed (keep \"{prefix}\")."
+                : "Field names cannot contain '.'.";
+        bool taken = AllFields.Any(f => f.Name != field.Name && (f.DisplayName == newName || f.Name == newName));
+        return taken ? $"Another field is already called \"{newName}\"." : null;
+    }
+
+    public string SelectedFieldTooltip
+    {
+        get => _selectedField?.Tooltip ?? string.Empty;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldTooltip) return;
+            var old = _selectedField.Tooltip;
+            EditSelectedField("Tooltip changed", w => w.Tooltip = value, w => w.Tooltip = old);
+        }
+    }
+
+    public bool SelectedFieldRequired
+    {
+        get => _selectedField?.IsRequired ?? false;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldRequired) return;
+            EditSelectedField(value ? "Field marked required" : "Field no longer required",
+                w => w.IsRequired = value, w => w.IsRequired = !value);
+        }
+    }
+
+    public bool SelectedFieldReadOnly
+    {
+        get => _selectedField?.IsReadOnly ?? false;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldReadOnly) return;
+            EditSelectedField(value ? "Field made read-only" : "Field made editable",
+                w => w.IsReadOnly = value, w => w.IsReadOnly = !value);
+        }
+    }
+
+    public bool SelectedFieldMultiline
+    {
+        get => _selectedField?.IsMultiline ?? false;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldMultiline) return;
+            EditSelectedField(value ? "Field set to multi-line" : "Field set to single-line",
+                w => w.IsMultiline = value, w => w.IsMultiline = !value);
+        }
+    }
+
+    public bool SelectedFieldIsTextLike => _selectedField?.FieldType is FieldType.Text or FieldType.ComboBox or FieldType.ListBox;
+
+    public FieldAlignment SelectedFieldAlignment
+    {
+        get => _selectedField?.Alignment ?? FieldAlignment.Left;
+        set
+        {
+            if (_selectedField == null || value == SelectedFieldAlignment) return;
+            var old = _selectedField.Alignment;
+            EditSelectedField($"Text alignment: {value}", w => w.Alignment = value, w => w.Alignment = old);
+        }
+    }
+
+    public IReadOnlyList<FieldAlignment> FieldAlignments { get; } = Enum.GetValues<FieldAlignment>();
+
+    /// <summary>Font size in points; 0 = auto-size to fit the field.</summary>
+    public double SelectedFieldFontSize
+    {
+        get => _selectedField?.FontSize ?? 0;
+        set
+        {
+            value = Math.Clamp(value, 0, 144);
+            if (_selectedField == null || Math.Abs(value - SelectedFieldFontSize) < 0.01) return;
+            var old = _selectedField.FontSize;
+            EditSelectedField(value == 0 ? "Font size: auto" : $"Font size: {value:0.#} pt",
+                w => w.FontSize = value, w => w.FontSize = old);
+        }
+    }
+
+    // Position / size of the selected widget, in PDF points (Y measured from the page bottom).
+    public double SelectedFieldX      { get => _selectedField?.Left ?? 0;   set => SetSelectedFieldBounds(x: value); }
+    public double SelectedFieldY      { get => _selectedField?.Bottom ?? 0; set => SetSelectedFieldBounds(y: value); }
+    public double SelectedFieldWidth  { get => _selectedField?.Width ?? 0;  set => SetSelectedFieldBounds(w: value); }
+    public double SelectedFieldHeight { get => _selectedField?.Height ?? 0; set => SetSelectedFieldBounds(h: value); }
+
+    private void SetSelectedFieldBounds(double? x = null, double? y = null, double? w = null, double? h = null)
+    {
+        var f = _selectedField;
+        if (f == null) return;
+        var b = new FieldBounds(x ?? f.Left, y ?? f.Bottom, Math.Max(2, w ?? f.Width), Math.Max(2, h ?? f.Height));
+        SetFieldBounds(f, b);
+        NotifySelectedFieldProperties();
+        PageChanged?.Invoke();
+    }
+
+    /// <summary>One entry per edited field (first widget), for PdfFormService.SaveFull.</summary>
+    private List<FormFieldInfo> GetFieldEditsForSave() => AllFields
+        .Where(f => ModifiedFieldNames.Contains(f.Name))
+        .GroupBy(f => f.Name).Select(g => g.First()).ToList();
+
+    /// <summary>
+    /// After a successful save the PDF matches the model: apply pending renames to the in-memory
+    /// keys (so the next save finds the fields under their new names) and clear the change sets.
+    /// </summary>
+    private void CommitFieldEditsAfterSave()
+    {
+        foreach (var group in AllFields.Where(f => !string.IsNullOrEmpty(f.PendingName) && f.PendingName != f.Name)
+                                       .GroupBy(f => f.Name).ToList())
+        {
+            string oldName = group.Key, newName = group.First().PendingName!;
+            foreach (var f in AllFields.Where(f => f.Name == oldName))
+            {
+                f.Name = newName;
+                if (f.RadioGroup == oldName) f.RadioGroup = newName;
+            }
+            if (FieldValues.Remove(oldName, out var v)) FieldValues[newName] = v;
+            if (FieldExportValues.Remove(oldName, out var ev)) FieldExportValues[newName] = ev;
+        }
+        foreach (var f in AllFields) f.PendingName = null;
+        ModifiedFieldNames.Clear();
+        ModifiedFieldBounds.Clear();
+        NotifySelectedFieldProperties();
+        PageChanged?.Invoke();
+    }
 
     public FreeTextAnnotation? SelectedAnnotation
     {
@@ -609,6 +793,12 @@ public class MainViewModel : INotifyPropertyChanged
     // Widget rectangles moved/resized in the live view (PDF points); written to the PDF on save.
     public Dictionary<(string Name, int WidgetIndex), FieldBounds> ModifiedFieldBounds { get; } = new();
 
+    // Fields whose properties (name, tooltip, required, alignment …) were edited; written on save.
+    public HashSet<string> ModifiedFieldNames { get; } = new();
+
+    // Fields selected in the live view's Edit Fields mode (last = primary / reference for alignment).
+    public ObservableCollection<FormFieldInfo> SelectedLayoutFields { get; } = new();
+
     public ObservableCollection<Models.BookmarkItem> Bookmarks { get; } = new();
     public ObservableCollection<Models.PdfAttachmentInfo> Attachments { get; } = new();
 
@@ -710,6 +900,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ZoomActualCommand { get; }
     public ICommand ClearAllFieldsCommand { get; }
     public ICommand DeleteSelectedFieldCommand { get; }
+    public ICommand ArrangeFieldsCommand { get; }
     public ICommand ExportDataCommand { get; }
     public ICommand ImportDataCommand { get; }
     public ICommand SetToolCommand { get; }
@@ -874,6 +1065,10 @@ public class MainViewModel : INotifyPropertyChanged
         ZoomActualCommand = new RelayCommand(() => Zoom = 1.0, () => HasDocument);
         ClearAllFieldsCommand = new RelayCommand(ClearAllFields, () => HasDocument);
         DeleteSelectedFieldCommand = new RelayCommand(() => DeleteField(SelectedField), () => SelectedField != null);
+        ArrangeFieldsCommand = new RelayCommand(p =>
+        {
+            if (p is string s && Enum.TryParse<ArrangeOperation>(s, out var op)) ArrangeFields(op);
+        }, _ => HasDocument);
         ExportDataCommand = new AsyncRelayCommand(ExportDataAsync, () => HasDocument);
         ImportDataCommand = new AsyncRelayCommand(ImportDataAsync, () => HasDocument);
         SetToolCommand = new RelayCommand(p =>
@@ -1308,6 +1503,8 @@ public class MainViewModel : INotifyPropertyChanged
             AllFields.Clear();
             DeletedFieldNames.Clear();
             ModifiedFieldBounds.Clear();
+            ModifiedFieldNames.Clear();
+            SelectedLayoutFields.Clear();
             _pageRotations.Clear();
             FreeTextAnnotations.Clear();
             PlacedSignatures.Clear();
@@ -1436,9 +1633,11 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
+                fieldEdits: GetFieldEditsForSave());
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
+            CommitFieldEditsAfterSave();
             StatusText = "Saved successfully.";
             if (errors.Count > 0)
             {
@@ -1483,8 +1682,10 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: false,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
+                fieldEdits: GetFieldEditsForSave());
             _currentFilePath = dlg.FileName;
+            CommitFieldEditsAfterSave();
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1523,7 +1724,8 @@ public class MainViewModel : INotifyPropertyChanged
                 _pageRotations, FreeTextAnnotations, PlacedSignatures, flatten: true,
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
-                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds);
+                shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
+                fieldEdits: GetFieldEditsForSave());
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1644,6 +1846,78 @@ public class MainViewModel : INotifyPropertyChanged
         StatusText = $"Field \"{field.Name}\" — X {bounds.Left:F0}, Y {bounds.Bottom:F0}, " +
                      $"W {bounds.Width:F0}, H {bounds.Height:F0} pt. Save to make it permanent.";
     }
+
+    /// <summary>Moves / resizes several widgets as one undoable step.</summary>
+    /// <param name="refresh">False when the caller (the live view) already shows the new layout.</param>
+    public void SetFieldBoundsBatch(IReadOnlyList<(FormFieldInfo Field, FieldBounds Bounds)> changes, string description,
+        bool refresh = true)
+    {
+        var before = changes.Select(c => (c.Field, Bounds: new FieldBounds(c.Field.Left, c.Field.Bottom, c.Field.Width, c.Field.Height))).ToList();
+        if (changes.All(c => before.First(b => ReferenceEquals(b.Field, c.Field)).Bounds == c.Bounds)) return;
+
+        void Apply(IEnumerable<(FormFieldInfo Field, FieldBounds Bounds)> set)
+        {
+            foreach (var (f, b) in set) SetFieldBounds(f, b, recordUndo: false);
+            NotifySelectedFieldProperties();
+            PageChanged?.Invoke();
+        }
+        if (refresh) Apply(changes);
+        else
+        {
+            foreach (var (f, b) in changes) SetFieldBounds(f, b, recordUndo: false);
+            NotifySelectedFieldProperties();
+        }
+        PushUndo(() => Apply(before), () => Apply(changes));
+        StatusText = $"{description} ({changes.Count} field{(changes.Count == 1 ? "" : "s")}). Save to make it permanent.";
+    }
+
+    /// <summary>
+    /// Align / distribute / size the fields selected in Edit Fields mode (reference = last
+    /// selected). With one field, alignment is to the page.
+    /// </summary>
+    public void ArrangeFields(ArrangeOperation op)
+    {
+        var fields = SelectedLayoutFields.ToList();
+        if (fields.Count == 0 && _selectedField != null) fields.Add(_selectedField);
+        if (fields.Count == 0 || _document == null)
+        {
+            ToastService.Instance.Info("Select form fields with the Edit Fields tool first (Ctrl+click to add more).");
+            return;
+        }
+        if (ArrangeHelper.NeedsThree(op) && fields.Count < 3) { ToastService.Instance.Info("Select at least three fields to distribute."); return; }
+        if (ArrangeHelper.NeedsTwo(op) && fields.Count < 2) { ToastService.Instance.Info("Select at least two fields to match sizes."); return; }
+
+        int pageIdx = fields[^1].PageNumber - 1;
+        if (pageIdx < 0 || pageIdx >= _document.PageSizes.Count) return;
+        var page = _document.PageSizes[pageIdx];
+        double pageH = page.Height;
+
+        // PDF (y-up) → top-left (y-down) and back.
+        var rects = fields.Select(f => new Rect(f.Left, pageH - f.Bottom - f.Height, f.Width, f.Height)).ToList();
+        var arranged = ArrangeHelper.Arrange(rects, fields.Count - 1, op, new Size(page.Width, page.Height));
+        var changes = fields.Select((f, i) => (f, new FieldBounds(
+            Math.Round(arranged[i].Left, 2), Math.Round(pageH - arranged[i].Bottom, 2),
+            Math.Round(arranged[i].Width, 2), Math.Round(arranged[i].Height, 2)))).ToList();
+        SetFieldBoundsBatch(changes, DescribeArrange(op));
+    }
+
+    public static string DescribeArrange(ArrangeOperation op) => op switch
+    {
+        ArrangeOperation.AlignLefts   => "Aligned lefts",
+        ArrangeOperation.AlignCenters => "Aligned centres",
+        ArrangeOperation.AlignRights  => "Aligned rights",
+        ArrangeOperation.AlignTops    => "Aligned tops",
+        ArrangeOperation.AlignMiddles => "Aligned middles",
+        ArrangeOperation.AlignBottoms => "Aligned bottoms",
+        ArrangeOperation.DistributeHorizontally => "Distributed horizontally",
+        ArrangeOperation.DistributeVertically   => "Distributed vertically",
+        ArrangeOperation.MakeSameWidth  => "Made same width",
+        ArrangeOperation.MakeSameHeight => "Made same height",
+        ArrangeOperation.MakeSameSize   => "Made same size",
+        ArrangeOperation.CenterOnPageHorizontally => "Centred horizontally on page",
+        ArrangeOperation.CenterOnPageVertically   => "Centred vertically on page",
+        _ => op.ToString(),
+    };
 
     private async Task ExportDataAsync()
     {

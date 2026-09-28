@@ -1142,6 +1142,47 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
+                <!-- Arrange Fields: Visual Studio / Acrobat style alignment for fields selected with Edit Fields -->
+                <Fluent:RibbonGroupBox Header="Arrange Fields"
+                                        AutomationProperties.Name="Align and size selected form fields">
+                    <Fluent:Button Header="Lefts" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignLefts" ToolTip="Align lefts of the selected fields (Edit Fields, Ctrl+click to multi-select)" AutomationProperties.Name="Align lefts of the selected fields (Edit Fields, Ctrl+click to multi-select)">
+                        <Fluent:Button.Icon><TextBlock Text="⇤" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Centres" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignCenters" ToolTip="Align centres" AutomationProperties.Name="Align centres">
+                        <Fluent:Button.Icon><TextBlock Text="↔" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Rights" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignRights" ToolTip="Align rights" AutomationProperties.Name="Align rights">
+                        <Fluent:Button.Icon><TextBlock Text="⇥" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Tops" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignTops" ToolTip="Align tops" AutomationProperties.Name="Align tops">
+                        <Fluent:Button.Icon><TextBlock Text="⤒" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Middles" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignMiddles" ToolTip="Align middles" AutomationProperties.Name="Align middles">
+                        <Fluent:Button.Icon><TextBlock Text="↕" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Bottoms" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignBottoms" ToolTip="Align bottoms" AutomationProperties.Name="Align bottoms">
+                        <Fluent:Button.Icon><TextBlock Text="⤓" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Space Across" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="DistributeHorizontally" ToolTip="Distribute horizontally — equal gaps (3+ fields)" AutomationProperties.Name="Distribute horizontally — equal gaps (3+ fields)">
+                        <Fluent:Button.Icon><TextBlock Text="⋯" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Space Down" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="DistributeVertically" ToolTip="Distribute vertically — equal gaps (3+ fields)" AutomationProperties.Name="Distribute vertically — equal gaps (3+ fields)">
+                        <Fluent:Button.Icon><TextBlock Text="⋮" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Width" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameWidth" ToolTip="Make same width as the last-clicked field" AutomationProperties.Name="Make same width as the last-clicked field">
+                        <Fluent:Button.Icon><TextBlock Text="W" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Height" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameHeight" ToolTip="Make same height as the last-clicked field" AutomationProperties.Name="Make same height as the last-clicked field">
+                        <Fluent:Button.Icon><TextBlock Text="H" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Size" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameSize" ToolTip="Make same size as the last-clicked field" AutomationProperties.Name="Make same size as the last-clicked field">
+                        <Fluent:Button.Icon><TextBlock Text="▣" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Center Page" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="CenterOnPageHorizontally" ToolTip="Center horizontally on the page" AutomationProperties.Name="Center horizontally on the page">
+                        <Fluent:Button.Icon><TextBlock Text="⊟" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
             </Fluent:RibbonTabItem>
 
             <!-- ── VIEW TAB ──────────────────────────────────────────────── -->
@@ -2483,23 +2524,41 @@
                 <Fluent:RibbonGroupBox Header="Align"
                                         IsEnabled="{Binding IsDesignMode}"
                                         AutomationProperties.Name="Alignment group">
-                    <Fluent:Button Header="Left Edge"   Size="Middle" Tag="AlignLeft"    Click="DesignAlign_Click" ToolTip="Align to left edge of page">
+                    <Fluent:Button Header="Lefts"       Size="Middle" Tag="AlignLeft"    Click="DesignAlign_Click" ToolTip="Align lefts — to the last-clicked element, or to the page edge when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Center H"    Size="Middle" Tag="AlignCenterH" Click="DesignAlign_Click" ToolTip="Center horizontally on page">
+                    <Fluent:Button Header="Centres"     Size="Middle" Tag="AlignCenterH" Click="DesignAlign_Click" ToolTip="Align centres — to the last-clicked element, or centre on the page when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Right Edge"  Size="Middle" Tag="AlignRight"   Click="DesignAlign_Click" ToolTip="Align to right edge of page">
+                    <Fluent:Button Header="Rights"      Size="Middle" Tag="AlignRight"   Click="DesignAlign_Click" ToolTip="Align rights — to the last-clicked element, or to the page edge when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Top Edge"    Size="Middle" Tag="AlignTop"     Click="DesignAlign_Click" ToolTip="Align to top edge of page">
+                    <Fluent:Button Header="Tops"        Size="Middle" Tag="AlignTop"     Click="DesignAlign_Click" ToolTip="Align tops — to the last-clicked element, or to the page edge when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Center V"    Size="Middle" Tag="AlignCenterV" Click="DesignAlign_Click" ToolTip="Center vertically on page">
+                    <Fluent:Button Header="Middles"     Size="Middle" Tag="AlignCenterV" Click="DesignAlign_Click" ToolTip="Align middles — to the last-clicked element, or centre on the page when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Bottom Edge" Size="Middle" Tag="AlignBottom"  Click="DesignAlign_Click" ToolTip="Align to bottom edge of page">
+                    <Fluent:Button Header="Bottoms"     Size="Middle" Tag="AlignBottom"  Click="DesignAlign_Click" ToolTip="Align bottoms — to the last-clicked element, or to the page edge when one element is selected">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                                    <Fluent:Button Header="Space Across" Size="Middle" Tag="DistributeHorizontally" Click="DesignAlign_Click" ToolTip="Distribute horizontally — equal gaps (select 3+ elements)">
+                        <Fluent:Button.Icon><TextBlock Text="⋯" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Space Down" Size="Middle" Tag="DistributeVertically" Click="DesignAlign_Click" ToolTip="Distribute vertically — equal gaps (select 3+ elements)">
+                        <Fluent:Button.Icon><TextBlock Text="⋮" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Width" Size="Middle" Tag="MakeSameWidth" Click="DesignAlign_Click" ToolTip="Make same width as the last-clicked element">
+                        <Fluent:Button.Icon><TextBlock Text="W" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Height" Size="Middle" Tag="MakeSameHeight" Click="DesignAlign_Click" ToolTip="Make same height as the last-clicked element">
+                        <Fluent:Button.Icon><TextBlock Text="H" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Same Size" Size="Middle" Tag="MakeSameSize" Click="DesignAlign_Click" ToolTip="Make same size as the last-clicked element">
+                        <Fluent:Button.Icon><TextBlock Text="▣" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Center Page" Size="Middle" Tag="CenterOnPageHorizontally" Click="DesignAlign_Click" ToolTip="Centre the selection horizontally on the page">
+                        <Fluent:Button.Icon><TextBlock Text="⊟" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -2801,62 +2860,132 @@
                                     <Separator Margin="0,8" Background="{DynamicResource AppBorderBrush}"/>
 
                                     <TextBlock Text="SELECTED FIELD" Style="{StaticResource SectionHeader}"/>
+                                    <TextBlock Text="Select a form field (Edit Fields tool, or click a field) to edit its properties."
+                                               FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}" Margin="0,0,0,4"/>
 
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="60"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                                    <!-- Editable field properties (VB / WinForms PropertyGrid style). Renames, tooltip, flags,
+                                         alignment and font size are written to the PDF on save; position/size are in PDF points. -->
+                                    <StackPanel IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Field" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Name" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldName, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Rename the field (applied to the PDF on save)" AutomationProperties.Name="Field name"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Type" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBlock Text="{Binding SelectedField.FieldType, FallbackValue='—'}" Style="{StaticResource PropGridNameText}" AutomationProperties.Name="Field type"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Page" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBlock Text="{Binding SelectedField.PageNumber, FallbackValue='—'}" Style="{StaticResource PropGridNameText}" AutomationProperties.Name="Field page"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Value" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldValue, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field value"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Tooltip" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldTooltip, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Shown when hovering the field (PDF /TU)" AutomationProperties.Name="Field tooltip"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Required" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedFieldRequired}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Field required"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Read-only" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedFieldReadOnly}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Field read-only"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Multi-line" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedFieldMultiline}" VerticalAlignment="Center" Margin="3,0" IsEnabled="{Binding SelectedFieldIsTextLike}" AutomationProperties.Name="Field multi-line"/>
+                                            </Border>
+                                        </Grid>
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Appearance" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Alignment" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding FieldAlignments}" SelectedItem="{Binding SelectedFieldAlignment}" IsEnabled="{Binding SelectedFieldIsTextLike}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Field text alignment"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Font size" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldFontSize, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Points; 0 = auto-size to fit" IsEnabled="{Binding SelectedFieldIsTextLike}" AutomationProperties.Name="Field font size"/>
+                                            </Border>
+                                        </Grid>
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Layout (pt)" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="X" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldX, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field X"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Y" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldY, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Measured up from the bottom of the page, like PDF coordinates" AutomationProperties.Name="Field Y (from page bottom)"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Width" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldWidth, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field width"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Height" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedFieldHeight, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field height"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontSize="11" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding SelectedField.Name, FallbackValue='—'}"
-                                                   FontSize="11" TextTrimming="CharacterEllipsis"
-                                                   ToolTip="{Binding SelectedField.Name}"
-                                                   AutomationProperties.Name="Selected field name"/>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding SelectedField.FieldType, FallbackValue='—'}"
-                                                   FontSize="11" Margin="0,4,0,0"
-                                                   AutomationProperties.Name="Selected field type"/>
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Page:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                        <TextBlock Grid.Row="2" Grid.Column="1"
-                                                   Text="{Binding SelectedField.PageNumber, FallbackValue='—'}"
-                                                   FontSize="11" Margin="0,4,0,0"
-                                                   AutomationProperties.Name="Selected field page"/>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Required:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                        <TextBlock Grid.Row="3" Grid.Column="1"
-                                                   Text="{Binding SelectedField.IsRequired, FallbackValue='—'}"
-                                                   FontSize="11" Margin="0,4,0,0"
-                                                   AutomationProperties.Name="Selected field required status"/>
-
-                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Value:" FontSize="11" VerticalAlignment="Top" Margin="0,6,0,0"/>
-                                        <TextBox Grid.Row="4" Grid.Column="1"
-                                                 Text="{Binding SelectedFieldValue, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource PropTextBox}"
-                                                 Margin="0,4,0,0"
-                                                 IsEnabled="{Binding SelectedField, Converter={StaticResource NullToBoolConverter}}"
-                                                 AutomationProperties.Name="Field value editor"
-                                                 AutomationProperties.HelpText="Edit the value of the selected form field"/>
-
-                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tooltip:" FontSize="11" VerticalAlignment="Center" Margin="0,4,0,0"/>
-                                        <TextBlock Grid.Row="5" Grid.Column="1"
-                                                   Text="{Binding SelectedField.Tooltip, FallbackValue='—'}"
-                                                   FontSize="11" Margin="0,4,0,0"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   AutomationProperties.Name="Selected field tooltip"/>
-                                    </Grid>
+                                    <!-- Arrange: alignment tools for the fields selected with Edit Fields (Ctrl+click to multi-select) -->
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Arrange (Edit Fields selection)" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                    <WrapPanel Margin="0,2,0,4">
+                                            <Button Content="⇤" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignLefts" ToolTip="Align lefts" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align lefts"/>
+                                            <Button Content="↔" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignCenters" ToolTip="Align centres" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align centres"/>
+                                            <Button Content="⇥" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignRights" ToolTip="Align rights" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align rights"/>
+                                            <Button Content="⤒" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignTops" ToolTip="Align tops" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align tops"/>
+                                            <Button Content="↕" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignMiddles" ToolTip="Align middles" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align middles"/>
+                                            <Button Content="⤓" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignBottoms" ToolTip="Align bottoms" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align bottoms"/>
+                                            <Button Content="⋯" Command="{Binding ArrangeFieldsCommand}" CommandParameter="DistributeHorizontally" ToolTip="Distribute horizontally (3+ fields)" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Distribute horizontally (3+ fields)"/>
+                                            <Button Content="⋮" Command="{Binding ArrangeFieldsCommand}" CommandParameter="DistributeVertically" ToolTip="Distribute vertically (3+ fields)" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Distribute vertically (3+ fields)"/>
+                                            <Button Content="W" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameWidth" ToolTip="Make same width" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same width"/>
+                                            <Button Content="H" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameHeight" ToolTip="Make same height" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same height"/>
+                                            <Button Content="▣" Command="{Binding ArrangeFieldsCommand}" CommandParameter="MakeSameSize" ToolTip="Make same size" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same size"/>
+                                    </WrapPanel>
+                                    <TextBlock Text="The last field you clicked is the reference. With one field selected, alignment is to the page."
+                                               FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"/>
 
                                     <Separator Margin="0,8" Background="{DynamicResource AppBorderBrush}"/>
 
@@ -2988,6 +3117,30 @@
                                         <Border Style="{StaticResource PropGridCategory}">
                                             <TextBlock Text="Text" Style="{StaticResource PropGridCategoryText}"/>
                                         </Border>
+                                        <!-- Content (the text itself) -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Content" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.SelectedElement.Text, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="80" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Text content"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Text alignment -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Align" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding DesignCanvas.TextAlignments}" SelectedItem="{Binding DesignCanvas.TextAlignment}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Text alignment"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Wrap -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Wrap" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.Wrap}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Wrap text"/>
+                                            </Border>
+                                        </Grid>
                                         <!-- Font family -->
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -3123,6 +3276,51 @@
                                                 <TextBox Text="{Binding DesignCanvas.FieldOptionsCsv, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Comma-separated list" AutomationProperties.Name="ComboBox options"/>
                                             </Border>
                                         </Grid>
+                                        <!-- Label position -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Label pos" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding DesignCanvas.FieldLabelPositions}" SelectedItem="{Binding DesignCanvas.FieldLabelPosition}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Field label position"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Label gap -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Label gap" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding DesignCanvas.FieldLabelOffset, StringFormat='F0', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Field label gap"/>
+                                            </Border>
+                                        </Grid>
+                                        <!-- Wrap (Text / Memo fields) -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Wrap" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding DesignCanvas.Wrap}" IsEnabled="{Binding DesignCanvas.SelectedIsTextLike}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Wrap field text"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- ── ARRANGE (alignment tools; Shift+click / rubber-band to multi-select) ── -->
+                                    <StackPanel Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}">
+                                            <TextBlock Text="Arrange" Style="{StaticResource PropGridCategoryText}"/>
+                                        </Border>
+                                        <WrapPanel Margin="2">
+                                            <Button Content="⇤" Tag="AlignLeft" Click="DesignAlign_Click" ToolTip="Align lefts" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align lefts"/>
+                                            <Button Content="↔" Tag="AlignCenterH" Click="DesignAlign_Click" ToolTip="Align centres" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align centres"/>
+                                            <Button Content="⇥" Tag="AlignRight" Click="DesignAlign_Click" ToolTip="Align rights" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align rights"/>
+                                            <Button Content="⤒" Tag="AlignTop" Click="DesignAlign_Click" ToolTip="Align tops" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align tops"/>
+                                            <Button Content="↕" Tag="AlignCenterV" Click="DesignAlign_Click" ToolTip="Align middles" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align middles"/>
+                                            <Button Content="⤓" Tag="AlignBottom" Click="DesignAlign_Click" ToolTip="Align bottoms" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Align bottoms"/>
+                                            <Button Content="⋯" Tag="DistributeHorizontally" Click="DesignAlign_Click" ToolTip="Distribute horizontally (3+)" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Distribute horizontally (3+)"/>
+                                            <Button Content="⋮" Tag="DistributeVertically" Click="DesignAlign_Click" ToolTip="Distribute vertically (3+)" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Distribute vertically (3+)"/>
+                                            <Button Content="W" Tag="MakeSameWidth" Click="DesignAlign_Click" ToolTip="Make same width" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same width"/>
+                                            <Button Content="H" Tag="MakeSameHeight" Click="DesignAlign_Click" ToolTip="Make same height" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same height"/>
+                                            <Button Content="▣" Tag="MakeSameSize" Click="DesignAlign_Click" ToolTip="Make same size" Width="26" Height="24" Margin="1" FontSize="13" Padding="0" AutomationProperties.Name="Make same size"/>
+                                        </WrapPanel>
+                                        <TextBlock Text="Reference = last element clicked. One element selected aligns to the page." FontSize="10" TextWrapping="Wrap" Margin="4,0,4,4" Foreground="{DynamicResource DimForegroundBrush}"/>
                                     </StackPanel>
 
                                 </StackPanel>

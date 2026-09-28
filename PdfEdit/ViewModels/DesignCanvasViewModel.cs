@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PdfEdit.Models;
+using PdfEdit.Services;
 
 namespace PdfEdit.ViewModels;
 
@@ -609,48 +610,50 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     }
 
     // ── Alignment ─────────────────────────────────────────────────────────────
+    // One element selected → align to the page. Several selected → align to the primary
+    // selection (the last one clicked), like Visual Studio's Format → Align.
 
-    public void AlignLeft()
+    public void AlignLeft()    => Arrange(ArrangeOperation.AlignLefts);
+    public void AlignRight()   => Arrange(ArrangeOperation.AlignRights);
+    public void AlignCenterH() => Arrange(ArrangeOperation.AlignCenters);
+    public void AlignTop()     => Arrange(ArrangeOperation.AlignTops);
+    public void AlignBottom()  => Arrange(ArrangeOperation.AlignBottoms);
+    public void AlignCenterV() => Arrange(ArrangeOperation.AlignMiddles);
+
+    /// <summary>Align / distribute / size the selection as one undoable step.</summary>
+    public void Arrange(ArrangeOperation op)
     {
-        if (_selectedElement == null) return;
+        var items = (_multiSelection.Count > 1 ? _multiSelection.ToList()
+                     : _selectedElement != null ? new List<DesignElement> { _selectedElement }
+                     : new List<DesignElement>())
+                    .Where(e => !e.IsLocked).ToList();
+        if (items.Count == 0) return;
+        if (ArrangeHelper.NeedsThree(op) && items.Count < 3) return;
+        if (ArrangeHelper.NeedsTwo(op) && items.Count < 2) return;
+
+        int reference = _selectedElement != null ? Math.Max(0, items.IndexOf(_selectedElement)) : items.Count - 1;
+        var rects = items.Select(e => new Rect(e.X, e.Y, e.Width, e.Height)).ToList();
+        var arranged = ArrangeHelper.Arrange(rects, reference, op, new Size(PageWidth, PageHeight));
+
         SaveUndo();
-        _selectedElement.X = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            items[i].X = arranged[i].X;
+            items[i].Y = arranged[i].Y;
+            items[i].Width = arranged[i].Width;
+            items[i].Height = arranged[i].Height;
+        }
+        NotifyPositionProperties();
+        ArrangeApplied?.Invoke();
     }
 
-    public void AlignRight()
-    {
-        if (_selectedElement == null) return;
-        SaveUndo();
-        _selectedElement.X = PageWidth - _selectedElement.Width;
-    }
+    /// <summary>Raised after Arrange so the canvas can redraw its selection handles.</summary>
+    public event Action? ArrangeApplied;
 
-    public void AlignCenterH()
-    {
-        if (_selectedElement == null) return;
-        SaveUndo();
-        _selectedElement.X = (PageWidth - _selectedElement.Width) / 2;
-    }
-
-    public void AlignTop()
-    {
-        if (_selectedElement == null) return;
-        SaveUndo();
-        _selectedElement.Y = 0;
-    }
-
-    public void AlignBottom()
-    {
-        if (_selectedElement == null) return;
-        SaveUndo();
-        _selectedElement.Y = PageHeight - _selectedElement.Height;
-    }
-
-    public void AlignCenterV()
-    {
-        if (_selectedElement == null) return;
-        SaveUndo();
-        _selectedElement.Y = (PageHeight - _selectedElement.Height) / 2;
-    }
+    // Choices for the Inspector drop-downs
+    public IReadOnlyList<TextAlignment> TextAlignments { get; } =
+        new[] { TextAlignment.Left, TextAlignment.Center, TextAlignment.Right, TextAlignment.Justify };
+    public IReadOnlyList<FieldLabelPosition> FieldLabelPositions { get; } = Enum.GetValues<FieldLabelPosition>();
 
     // ── Templates ─────────────────────────────────────────────────────────────
 
