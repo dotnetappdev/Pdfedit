@@ -56,22 +56,36 @@
 <text x="275" y="134" text-anchor="middle" fill="#999" font-family="Segoe UI, Arial, sans-serif" font-size="11" >Design</text>
 <rect x="0" y="538" width="900" height="22" fill="#007ACC" rx="0" />
 <text x="10" y="553" text-anchor="start" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="10" >Field 'email' updated.</text>
-<rect x="0" y="142" width="140" height="396" fill="#252526" stroke="#3F3F46" stroke-width="1" rx="0" />
-<text x="70" y="160" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, Arial, sans-serif" font-size="10" >TOOLS</text>
-<text x="12" y="180" text-anchor="start" fill="#777" font-family="Segoe UI, Arial, sans-serif" font-size="9" >PDF TOOLS</text>
-<rect x="8" y="188" width="124" height="24" fill="#2D2D30" stroke="#3F3F46" stroke-width="1" rx="3" />
-<text x="70" y="204" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="10" >☜ Hand (Pan)</text>
-<rect x="8" y="216" width="124" height="24" fill="#094771" stroke="#0A84FF" stroke-width="1" rx="3" />
-<text x="70" y="232" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="10" >➤ Select (V)</text>
-<rect x="8" y="244" width="124" height="24" fill="#2D2D30" stroke="#3F3F46" stroke-width="1" rx="3" />
-<text x="70" y="260" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="10" >I Text Fill</text>
-<rect x="8" y="272" width="124" height="24" fill="#2D2D30" stroke="#3F3F46" stroke-width="1" rx="3" />
-<text x="70" y="288" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="10" >✥ Edit Fields (E)</text>
-<text x="12" y="312" text-anchor="start" fill="#777" font-family="Segoe UI, Arial, sans-serif" font-size="9" >SIGN</text>
-<rect x="8" y="320" width="124" height="24" fill="#2D2D30" stroke="#3F3F46" stroke-width="1" rx="3" />
-<text x="70" y="336" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="10" >✒ Signature</text>
-<rect x="8" y="348" width="124" height="24" fill="#2D2D30" stroke="#3F3F46" stroke-width="1" rx="3" />
-<text x="70" y="364" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="10" >📅 Date Stamp</text>
+<rect x="0" y="142" width="120" height="396" fill="#252526" stroke="#3F3F46" stroke-width="1" rx="0" />
+<text x="60" y="160" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, Arial, sans-serif" font-size="10" >THUMBNAILS</text>
+<rect x="26" y="172" width="68" height="90" fill="#FFFFFF" stroke="#0A84FF" stroke-width="2" rx="0" />
+<rect x="34" y="184" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="194" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="204" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="214" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="224" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="234" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="244" width="52" height="3" fill="#C8C8C8" rx="0" />
+<text x="60" y="276" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="9" >1</text>
+<rect x="26" y="290" width="68" height="90" fill="#FFFFFF" stroke="#555" stroke-width="1" rx="0" />
+<rect x="34" y="302" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="312" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="322" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="332" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="342" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="352" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="362" width="52" height="3" fill="#C8C8C8" rx="0" />
+<text x="60" y="394" text-anchor="middle" fill="#888" font-family="Segoe UI, Arial, sans-serif" font-size="9" >2</text>
+<rect x="26" y="408" width="68" height="90" fill="#FFFFFF" stroke="#555" stroke-width="1" rx="0" />
+<rect x="34" y="420" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="430" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="440" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="450" width="52" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="460" width="42" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="470" width="32" height="3" fill="#C8C8C8" rx="0" />
+<rect x="34" y="480" width="52" height="3" fill="#C8C8C8" rx="0" />
+<text x="60" y="512" text-anchor="middle" fill="#888" font-family="Segoe UI, Arial, sans-serif" font-size="9" >3</text>
+<g transform="translate(132,178) scale(0.82) translate(-160,-150)">
 <rect x="160" y="150" width="520" height="380" fill="#FFFFFF" stroke="#999" stroke-width="1" rx="0" />
 <text x="420" y="180" text-anchor="middle" fill="#111" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold">JOB APPLICATION</text>
 <text x="180" y="206" text-anchor="start" fill="#555" font-family="Segoe UI, Arial, sans-serif" font-size="9" >Please complete all sections. Fields marked * are required.</text>
@@ -116,6 +130,56 @@
 <rect x="290" y="468" width="220" height="30" fill="#E1E9FF" rx="0" />
 <rect x="291" y="469" width="218" height="28" fill="none" stroke="#0050C8" stroke-width="1.5" rx="0" stroke-dasharray="5,3"/>
 <text x="400" y="488" text-anchor="middle" fill="#0050C8" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-style="italic">✍ Click to Sign</text>
+</g>
+<rect x="608" y="162.0" width="88" height="364" fill="#080810" rx="13" opacity="0.6"/>
+<rect x="606" y="159.0" width="86" height="362" fill="#20203A" stroke="#3C3C58" stroke-width="1" rx="12" />
+<text x="649.0" y="155.0" text-anchor="middle" fill="#4E80FF" font-family="Segoe UI, Arial, sans-serif" font-size="8" font-weight="bold">LIVE VIEW</text>
+<rect x="612" y="165.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="184.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☜</text>
+<rect x="612" y="196.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="215.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >🔍</text>
+<rect x="612" y="227.0" width="34" height="28" fill="#4E80FF" rx="7" />
+<text x="629.0" y="246.0" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="13" >➤</text>
+<rect x="612" y="258.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="277.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✥</text>
+<line x1="616" y1="293.0" x2="642" y2="293.0" stroke="#3C3C58" stroke-width="1.5"/>
+<rect x="612" y="298.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="317.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >I</text>
+<rect x="612" y="329.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="348.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☑</text>
+<rect x="612" y="360.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="379.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >📅</text>
+<line x1="616" y1="395.0" x2="642" y2="395.0" stroke="#3C3C58" stroke-width="1.5"/>
+<rect x="612" y="400.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="419.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >T</text>
+<rect x="612" y="431.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="450.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✒</text>
+<line x1="616" y1="466.0" x2="642" y2="466.0" stroke="#3C3C58" stroke-width="1.5"/>
+<rect x="612" y="471.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="629.0" y="490.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▮</text>
+<rect x="652" y="165.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="184.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >⎘</text>
+<rect x="652" y="196.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="215.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✎</text>
+<rect x="652" y="227.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="246.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▭</text>
+<rect x="652" y="258.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="277.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >◯</text>
+<rect x="652" y="289.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="308.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >➚</text>
+<rect x="652" y="320.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="339.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >💬</text>
+<rect x="652" y="351.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="370.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >⌫</text>
+<line x1="656" y1="386.0" x2="682" y2="386.0" stroke="#3C3C58" stroke-width="1.5"/>
+<rect x="652" y="391.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="410.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▤</text>
+<rect x="652" y="422.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="441.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☐</text>
+<rect x="652" y="453.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="472.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >◉</text>
+<rect x="652" y="484.0" width="34" height="28" fill="#20203A" rx="7" />
+<text x="669.0" y="503.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▾</text>
 <rect x="700" y="142" width="200" height="396" fill="#252526" stroke="#3F3F46" stroke-width="1" rx="0" />
 <text x="800" y="160" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, Arial, sans-serif" font-size="10" >PROPERTIES</text>
 <text x="712" y="180" text-anchor="start" fill="#777" font-family="Segoe UI, Arial, sans-serif" font-size="9" >SELECTED FIELD</text>

@@ -70,49 +70,36 @@
   <rect x="478" y="68" width="26" height="18" fill="#FFFDE7" rx="2" stroke="#888" stroke-width="0.5"/>
   <text x="491" y="101" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="9">Fill</text>
 
-  <!-- Left toolbox panel -->
-  <rect x="0" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1"/>
-  <text x="70" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI" font-size="10">TOOLS</text>
-  <line x1="8" y1="140" x2="132" y2="140" stroke="#3F3F46" stroke-width="1"/>
-
-  <!-- PDF Tools section -->
-  <text x="14" y="155" fill="#777" font-family="Segoe UI" font-size="9">PDF TOOLS</text>
-
-  <rect x="8" y="160" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="178" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">☜ Hand (Pan)</text>
-
-  <rect x="8" y="192" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="210" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">T Add Text</text>
-
-  <rect x="8" y="224" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="242" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">✒ Signature</text>
-
-  <rect x="8" y="256" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="274" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">▮ Highlight</text>
-
-  <!-- Draw section -->
-  <line x1="8" y1="292" x2="132" y2="292" stroke="#3F3F46" stroke-width="1"/>
-  <text x="14" y="305" fill="#777" font-family="Segoe UI" font-size="9">DRAW / ANNOTATE</text>
-
-  <rect x="8" y="310" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="328" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">▭ Rectangle</text>
-
-  <rect x="8" y="342" width="124" height="28" fill="#3C3C3C" rx="3"/>
-  <text x="60" y="360" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI" font-size="10">◯ Ellipse</text>
-
-  <!-- Active tool - Callout -->
-  <rect x="8" y="374" width="124" height="28" fill="#0A84FF" rx="3"/>
-  <text x="60" y="392" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="10">💬 Callout ✓</text>
-
-  <!-- Design section -->
-  <line x1="8" y1="412" x2="132" y2="412" stroke="#0A84FF" stroke-width="1.5"/>
-  <text x="14" y="426" fill="#0A84FF" font-family="Segoe UI" font-size="9">DESIGN CANVAS</text>
-
-  <rect x="8" y="432" width="124" height="28" fill="#2D2D30" stroke="#555" stroke-width="1" rx="3"/>
-  <text x="60" y="450" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="10">⬤ Select</text>
-
-  <rect x="8" y="464" width="124" height="28" fill="#2D2D30" stroke="#555" stroke-width="1" rx="3"/>
-  <text x="60" y="482" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="10">T Text Box</text>
+  <!-- Page thumbnails (left dock) -->
+  <rect x="0" y="116" width="140" height="444" fill="#252526" stroke="#3F3F46" stroke-width="1" rx="0" />
+  <text x="70" y="135" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, Arial, sans-serif" font-size="10" >THUMBNAILS</text>
+  <rect x="34" y="148" width="72" height="96" fill="#FFFFFF" stroke="#0A84FF" stroke-width="2" rx="0" />
+  <rect x="42" y="160" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="171" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="182" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="193" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="204" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="215" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="226" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <text x="70" y="258" text-anchor="middle" fill="#CCCCCC" font-family="Segoe UI, Arial, sans-serif" font-size="9" >1</text>
+  <rect x="34" y="276" width="72" height="96" fill="#FFFFFF" stroke="#555" stroke-width="1" rx="0" />
+  <rect x="42" y="288" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="299" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="310" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="321" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="332" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="343" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="354" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <text x="70" y="386" text-anchor="middle" fill="#888" font-family="Segoe UI, Arial, sans-serif" font-size="9" >2</text>
+  <rect x="34" y="404" width="72" height="96" fill="#FFFFFF" stroke="#555" stroke-width="1" rx="0" />
+  <rect x="42" y="416" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="427" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="438" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="449" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="460" width="46" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="471" width="36" height="3" fill="#C8C8C8" rx="0" />
+  <rect x="42" y="482" width="56" height="3" fill="#C8C8C8" rx="0" />
+  <text x="70" y="514" text-anchor="middle" fill="#888" font-family="Segoe UI, Arial, sans-serif" font-size="9" >3</text>
 
   <!-- Main view area -->
   <rect x="140" y="116" width="620" height="444" fill="#1E1E1E"/>
@@ -202,60 +189,54 @@
   <rect x="270" y="490" width="360" height="30" fill="#1A56A0" rx="4"/>
   <text x="450" y="510" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12" font-weight="bold">Live View — PDF with Callout + Highlight Annotations</text>
 
-  <!-- Floating PDF-mode pill toolbox (right edge of PDF view, vertically centred) -->
-  <!-- Drop shadow -->
-  <rect x="702" y="172" width="54" height="362" rx="13" fill="#080810" opacity="0.6"/>
-  <!-- Pill body -->
-  <rect x="700" y="169" width="52" height="360" rx="12" fill="#20203A" stroke="#3C3C58" stroke-width="1"/>
-  <!-- "PDF" mode label above pill -->
-  <text x="726" y="165" text-anchor="middle" fill="#888" font-family="Segoe UI" font-size="7">PDF</text>
-
-  <!-- Hand button (ACTIVE) -->
-  <rect x="706" y="177" width="40" height="32" rx="7" fill="#4E80FF"/>
-  <text x="726" y="198" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI" font-size="12">✋</text>
-
-  <!-- Zoom button -->
-  <rect x="706" y="213" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="234" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="13">⊕</text>
-
-  <!-- Separator -->
-  <line x1="710" y1="250" x2="746" y2="250" stroke="#3C3C58" stroke-width="1.5"/>
-
-  <!-- Fill button -->
-  <rect x="706" y="256" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="277" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">⌨</text>
-
-  <!-- Check button -->
-  <rect x="706" y="292" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="313" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">☑</text>
-
-  <!-- Date button -->
-  <rect x="706" y="328" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="349" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="10">📅</text>
-
-  <!-- Separator -->
-  <line x1="710" y1="365" x2="746" y2="365" stroke="#3C3C58" stroke-width="1.5"/>
-
-  <!-- Text/Mark button -->
-  <rect x="706" y="371" width="40" height="32" rx="7" fill="#20203A"/>
-  <rect x="714" y="378" width="24" height="18" fill="none" stroke="#AFAFD2" stroke-width="1"/>
-  <text x="726" y="392" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="10" font-weight="bold">A</text>
-
-  <!-- Separator -->
-  <line x1="710" y1="408" x2="746" y2="408" stroke="#3C3C58" stroke-width="1.5"/>
-
-  <!-- Sign button -->
-  <rect x="706" y="414" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="435" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="12">✍</text>
-
-  <!-- Separator -->
-  <line x1="710" y1="451" x2="746" y2="451" stroke="#3C3C58" stroke-width="1.5"/>
-
-  <!-- Highlight button -->
-  <rect x="706" y="457" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="478" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="13">▌</text>
-
-  <!-- Stamp button -->
-  <rect x="706" y="493" width="40" height="32" rx="7" fill="#20203A"/>
-  <text x="726" y="514" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI" font-size="11">⬡</text>
+  <!-- Floating Live View toolbox (right edge of the document, wraps into columns) -->
+  <rect x="676" y="162.0" width="80" height="364" fill="#080810" rx="13" opacity="0.6"/>
+  <rect x="674" y="159.0" width="78" height="362" fill="#20203A" stroke="#3C3C58" stroke-width="1" rx="12" />
+  <text x="713.0" y="155.0" text-anchor="middle" fill="#4E80FF" font-family="Segoe UI, Arial, sans-serif" font-size="8" font-weight="bold">LIVE VIEW</text>
+  <rect x="680" y="165.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="184.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☜</text>
+  <rect x="680" y="196.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="215.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >🔍</text>
+  <rect x="680" y="227.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="246.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >➤</text>
+  <rect x="680" y="258.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="277.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✥</text>
+  <line x1="684" y1="293.0" x2="706" y2="293.0" stroke="#3C3C58" stroke-width="1.5"/>
+  <rect x="680" y="298.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="317.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >I</text>
+  <rect x="680" y="329.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="348.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☑</text>
+  <rect x="680" y="360.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="379.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >📅</text>
+  <line x1="684" y1="395.0" x2="706" y2="395.0" stroke="#3C3C58" stroke-width="1.5"/>
+  <rect x="680" y="400.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="419.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >T</text>
+  <rect x="680" y="431.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="450.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✒</text>
+  <line x1="684" y1="466.0" x2="706" y2="466.0" stroke="#3C3C58" stroke-width="1.5"/>
+  <rect x="680" y="471.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="695.0" y="490.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▮</text>
+  <rect x="716" y="165.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="184.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >⎘</text>
+  <rect x="716" y="196.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="215.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >✎</text>
+  <rect x="716" y="227.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="246.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▭</text>
+  <rect x="716" y="258.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="277.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >◯</text>
+  <rect x="716" y="289.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="308.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >➚</text>
+  <rect x="716" y="320.0" width="30" height="28" fill="#4E80FF" rx="7" />
+  <text x="731.0" y="339.0" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="13" >💬</text>
+  <rect x="716" y="351.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="370.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >⌫</text>
+  <line x1="720" y1="386.0" x2="742" y2="386.0" stroke="#3C3C58" stroke-width="1.5"/>
+  <rect x="716" y="391.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="410.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▤</text>
+  <rect x="716" y="422.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="441.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >☐</text>
+  <rect x="716" y="453.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="472.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >◉</text>
+  <rect x="716" y="484.0" width="30" height="28" fill="#20203A" rx="7" />
+  <text x="731.0" y="503.0" text-anchor="middle" fill="#AFAFD2" font-family="Segoe UI, Arial, sans-serif" font-size="13" >▾</text>
 </svg>
