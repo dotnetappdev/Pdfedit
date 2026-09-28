@@ -23,15 +23,61 @@ public partial class ToolboxPanel : UserControl
     public ToolboxPanel()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
     }
 
     private MainViewModel? VM => DataContext as MainViewModel;
+
+    // True while the buttons are being updated to mirror a tool chosen elsewhere
+    // (ribbon, keyboard shortcut, Edit Fields after adding a field …).
+    private bool _syncing;
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is MainViewModel oldVm)
+        {
+            oldVm.PropertyChanged -= OnVmPropertyChanged;
+            oldVm.DesignCanvas.PropertyChanged -= OnDesignVmPropertyChanged;
+        }
+        if (e.NewValue is MainViewModel vm)
+        {
+            vm.PropertyChanged += OnVmPropertyChanged;
+            vm.DesignCanvas.PropertyChanged += OnDesignVmPropertyChanged;
+            SyncChecked(PdfToolsPanel, vm.ActiveTool.ToString());
+            SyncChecked(DesignToolsPanel, vm.DesignCanvas.ActiveTool.ToString());
+        }
+    }
+
+    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool) && VM is { } vm)
+            SyncChecked(PdfToolsPanel, vm.ActiveTool.ToString());
+    }
+
+    private void OnDesignVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DesignCanvasViewModel.ActiveTool) && VM is { } vm)
+            SyncChecked(DesignToolsPanel, vm.DesignCanvas.ActiveTool.ToString());
+    }
+
+    /// <summary>Checks the button whose Tag matches the active tool (or clears the group if none does).</summary>
+    private void SyncChecked(Panel panel, string toolName)
+    {
+        _syncing = true;
+        try
+        {
+            foreach (var rb in panel.Children.OfType<RadioButton>())
+                rb.IsChecked = rb.Tag as string == toolName;
+        }
+        finally { _syncing = false; }
+    }
 
     // ── Tool selection ────────────────────────────────────────────────────────
 
     // Live-View tools: set ActiveTool and switch to Live View tab
     private void Tool_Checked(object sender, RoutedEventArgs e)
     {
+        if (_syncing) return;
         if (sender is RadioButton rb && rb.Tag is string toolName
             && Enum.TryParse<ActiveTool>(toolName, out var tool)
             && VM is MainViewModel vm)
@@ -44,6 +90,7 @@ public partial class ToolboxPanel : UserControl
     // Design-Canvas tools: set DesignCanvas.ActiveTool and switch to Design tab
     private void DesignTool_Checked(object sender, RoutedEventArgs e)
     {
+        if (_syncing) return;
         if (sender is RadioButton rb && rb.Tag is string toolName
             && Enum.TryParse<DesignTool>(toolName, out var tool)
             && VM is MainViewModel vm)
@@ -238,6 +285,7 @@ public partial class ToolboxPanel : UserControl
 
     private void HighlightTool_Checked(object sender, RoutedEventArgs e)
     {
+        if (_syncing) return;
         Tool_Checked(sender, e); // activate the tool
         HighlightColorPopup.IsOpen = true;
     }
