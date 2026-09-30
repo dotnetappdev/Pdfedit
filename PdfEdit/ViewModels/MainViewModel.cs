@@ -4028,6 +4028,9 @@ public partial class MainViewModel : INotifyPropertyChanged
                 Name = f.Name, PendingName = f.PendingName, Tooltip = f.Tooltip,
                 IsRequired = f.IsRequired, IsReadOnly = f.IsReadOnly, IsMultiline = f.IsMultiline,
                 Alignment = f.Alignment, FontSize = f.FontSize,
+                BorderColor = f.BorderColor, FillColor = f.FillColor, TextColor = f.TextColor,
+                MaxLength = f.MaxLength, IsComb = f.IsComb, IsEditable = f.IsEditable,
+                DateFormat = f.DateFormat, DefaultValue = f.DefaultValue, Options = f.Options.ToList(),
             }).ToList(),
             DeletedFields = DeletedFieldNames.ToList(),
         });
@@ -4055,6 +4058,15 @@ public partial class MainViewModel : INotifyPropertyChanged
                 w.IsMultiline = e.IsMultiline;
                 w.Alignment = e.Alignment;
                 w.FontSize = e.FontSize;
+                w.BorderColor = e.BorderColor;
+                w.FillColor = e.FillColor;
+                w.TextColor = e.TextColor;
+                w.MaxLength = e.MaxLength;
+                w.IsComb = e.IsComb;
+                w.IsEditable = e.IsEditable;
+                w.DateFormat = e.DateFormat;
+                w.DefaultValue = e.DefaultValue;
+                if (e.Options.Count > 0) w.Options = e.Options.ToList();
             }
             ModifiedFieldNames.Add(e.Name);
         }

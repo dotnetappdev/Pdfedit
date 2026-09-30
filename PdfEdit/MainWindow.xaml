@@ -3742,6 +3742,11 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <!-- AI Chat — own dock pane so it is always visible -->
+                                <avalonDock:LayoutAnchorable Title="Fields" ContentId="fields" CanClose="False" CanHide="False">
+                                    <controls:FieldsPanel DataContext="{Binding}"
+                                                          FontSize="{DynamicResource PanelFontSize}"
+                                                          AutomationProperties.Name="Form fields list"/>
+                                </avalonDock:LayoutAnchorable>
                                 <avalonDock:LayoutAnchorable Title="AI Assistant" ContentId="aichat"
                                                              CanHide="False" CanClose="False">
                                     <controls:AiChatPanel DataContext="{Binding}"

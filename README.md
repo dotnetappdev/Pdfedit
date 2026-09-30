@@ -233,6 +233,27 @@ Draw new fillable form fields onto any PDF (even scanned, non-form PDFs):
 - All new fields are immediately saved to the PDF and available for filling
 - After placing a field the **Edit Fields** tool is active with the new field selected, ready to adjust
 
+### Prepare Form (Acrobat Pro style)
+
+Choose **Prepare a form** (All tools), **Prepare Form** on the fill notice, or **E**. A toolbar appears across the top of the page:
+
+**Select · Text · Check Box · Radio Button · List Box · Dropdown · Signature · Date** — plus **Fields**, **Preview** and **Close**.
+
+- **Click** on the page to drop a default-size field, or **drag** to size it
+- Fields are **named automatically** like Acrobat (`Text1`, `Check Box1`, `Group1` / `Choice1`, `Dropdown1`, `List Box1`, `Signature1`, `Date1`); a popup under the new field lets you rename it, tick **Required**, open **All Properties** or (radio buttons) **Add another button** to the same group
+- **Double-click** a field (or right-click → Properties…) for the tabbed **Field Properties** dialog:
+  - **General** — name, tooltip, read only, required
+  - **Appearance** — border colour, fill colour, font size (Auto or points), text colour
+  - **Options** — text: alignment, default value, multi-line, character limit, comb, **date format**; dropdown / list box: item list (add, delete, reorder), default value, allow custom text; check box / radio: export value
+- **Fields panel** (right-hand dock, next to Properties) lists every field by page in reading order; click to jump to and select it, double-click for its properties
+- Everything is undoable and written to the PDF on save — date fields use Acrobat's own `AFDate` scripts, so they format the same in Acrobat Reader
+
+### Filling forms (Acrobat Pro style)
+
+- When a PDF has fields, the purple **"This document contains interactive form fields"** bar offers **Highlight Existing Fields** and **Prepare Form**
+- With highlighting on, fields are shaded light blue; with it off, they show their own fill, border and text colours
+- **Date fields** show a calendar button — pick a date and it is entered in the field's format
+
 ### Edit Fields (move & resize, Acrobat "Prepare Form" style)
 
 Use **Edit Fields** (ribbon *Add Form Field* group, or press **E**) to rearrange existing form fields in the Live View:

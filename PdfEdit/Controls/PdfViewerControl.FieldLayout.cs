@@ -68,7 +68,12 @@ public partial class PdfViewerControl
     /// <summary>True when fields should be edited (moved/resized) rather than filled in.</summary>
     private bool IsFieldLayoutMode => _vm?.ActiveTool is ActiveTool.EditFields
         or ActiveTool.AddTextField or ActiveTool.AddCheckbox
-        or ActiveTool.AddComboBox or ActiveTool.AddRadioButton;
+        or ActiveTool.AddComboBox or ActiveTool.AddRadioButton
+        or ActiveTool.AddListBox or ActiveTool.AddSignatureField or ActiveTool.AddDateField;
+
+    private static bool IsAddFieldTool(ActiveTool t) => t is ActiveTool.AddTextField or ActiveTool.AddCheckbox
+        or ActiveTool.AddComboBox or ActiveTool.AddRadioButton or ActiveTool.AddListBox
+        or ActiveTool.AddSignatureField or ActiveTool.AddDateField;
 
     /// <summary>Switches to the Select tool and selects <paramref name="field"/> for moving/resizing.</summary>
     private void BeginFieldLayoutEdit(FormFieldInfo field)
@@ -97,7 +102,7 @@ public partial class PdfViewerControl
             FieldType.ComboBox    => "▾ ",
             FieldType.ListBox     => "☰ ",
             FieldType.Signature   => "✍ ",
-            _                     => string.Empty,
+            _                     => field.IsDateField ? "📅 " : string.Empty,
         };
 
         var label = new TextBlock
@@ -150,6 +155,7 @@ public partial class PdfViewerControl
             if (_layoutSelectedKeys[^1] == key) MakePrimary(box);
             SyncSelectionToVm();
         }
+        MaybeShowNamePopup(box, field);
     }
 
     private static (string Name, int WidgetIndex) KeyOf(FormFieldInfo f) => (f.Name, f.WidgetIndex);
@@ -187,6 +193,8 @@ public partial class PdfViewerControl
         center.Items.Add(Op("Horizontally", ArrangeOperation.CenterOnPageHorizontally));
         center.Items.Add(Op("Vertically", ArrangeOperation.CenterOnPageVertically));
 
+        var props = new MenuItem { Header = "Properties…", FontWeight = FontWeights.SemiBold };
+        props.Click += (_, _) => _vm?.OpenFieldProperties(_layoutSelectedField);
         var del = new MenuItem { Header = "Delete", InputGestureText = "Del" };
         del.Click += (_, _) => DeleteLayoutSelection();
         var selectAll = new MenuItem { Header = "Select All Fields on Page", InputGestureText = "Ctrl+A" };
@@ -194,6 +202,8 @@ public partial class PdfViewerControl
         var fill = new MenuItem { Header = "Switch to fill mode (Hand tool)" };
         fill.Click += (_, _) => { if (_vm != null) _vm.ActiveTool = ActiveTool.Hand; };
 
+        menu.Items.Add(props);
+        menu.Items.Add(new Separator());
         menu.Items.Add(align);
         menu.Items.Add(distribute);
         menu.Items.Add(size);
@@ -426,6 +436,15 @@ public partial class PdfViewerControl
     {
         if (sender is not Border box || box.Tag is not FormFieldInfo field) return;
         Focus();
+
+        // Double-click: Acrobat's Field Properties dialog.
+        if (e.ClickCount == 2)
+        {
+            SelectOnly(box);
+            _vm?.OpenFieldProperties(field);
+            e.Handled = true;
+            return;
+        }
 
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {

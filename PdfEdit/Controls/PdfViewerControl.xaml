@@ -7,9 +7,142 @@
              Background="{DynamicResource ContentBgBrush}"
              d:DesignHeight="700" d:DesignWidth="900">
 
+    <UserControl.Resources>
+        <!-- Flat buttons for the Acrobat-style form bars -->
+        <Style x:Key="FormBarButton" TargetType="ButtonBase">
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBgBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="FormBarToggle" TargetType="ToggleButton" BasedOn="{StaticResource FormBarButton}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <!-- ── Acrobat Pro "Prepare Form" toolbar (shown while editing fields) ── -->
+            <Border x:Name="PrepareFormBar" Visibility="Collapsed"
+                    Background="{DynamicResource PanelBgBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Left" Text="Prepare Form" FontWeight="SemiBold" FontSize="13"
+                               VerticalAlignment="Center" Margin="4,0,14,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <StackPanel x:Name="PrepareFormToolbar" DockPanel.Dock="Left" Orientation="Horizontal">
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="EditFields" ToolTip="Select, move, resize and align fields (E)" AutomationProperties.Name="Select">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Select" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddTextField" ToolTip="Add a text field — click to place, drag to size" AutomationProperties.Name="Text">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Text" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddCheckbox" ToolTip="Add a check box" AutomationProperties.Name="Check Box">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Check Box" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddRadioButton" ToolTip="Add a radio button (use “Add another button” for more choices in the group)" AutomationProperties.Name="Radio Button">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="◉" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Radio Button" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddListBox" ToolTip="Add a list box" AutomationProperties.Name="List Box">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="List Box" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddComboBox" ToolTip="Add a dropdown" AutomationProperties.Name="Dropdown">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Dropdown" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddSignatureField" ToolTip="Add a digital signature field" AutomationProperties.Name="Signature">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xEE56;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Signature" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource FormBarToggle}" Tag="AddDateField" ToolTip="Add a date field (dd/mm/yyyy, with calendar)" AutomationProperties.Name="Date">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Date" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ToggleButton>
+                    </StackPanel>
+                    <Button x:Name="PrepareCloseBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
+                            Content="Close" ToolTip="Close Prepare Form" AutomationProperties.Name="Close Prepare Form"/>
+                    <Button x:Name="PreparePreviewBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
+                            Content="Preview" ToolTip="Preview — fill in the form" AutomationProperties.Name="Preview form"/>
+                    <Button x:Name="PrepareFieldsBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
+                            ToolTip="Show the Fields panel" AutomationProperties.Name="Fields panel">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Fields" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </DockPanel>
+            </Border>
+
+            <!-- ── Acrobat fill notice (shown while filling a form) ── -->
+            <Border x:Name="FormNoticeBar" Visibility="Collapsed" Background="#E6E3F7"
+                    BorderBrush="#C9C2EE" BorderThickness="0,0,0,1" Padding="10,5">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Left" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="#4B3FA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock DockPanel.Dock="Left" Text="This document contains interactive form fields."
+                               Foreground="#222" VerticalAlignment="Center"/>
+                    <Button x:Name="NoticeCloseBtn" DockPanel.Dock="Right" Content="✕" Padding="6,2" Margin="6,0,0,0"
+                            Background="Transparent" BorderThickness="0" Foreground="#444" Cursor="Hand"
+                            ToolTip="Hide this message" AutomationProperties.Name="Hide form notice"/>
+                    <Button x:Name="NoticePrepareBtn" DockPanel.Dock="Right" Content="Prepare Form" Padding="10,3" Margin="6,0,0,0"
+                            Background="White" BorderBrush="#9A90D8" Foreground="#222" Cursor="Hand"
+                            AutomationProperties.Name="Prepare Form"/>
+                    <ToggleButton DockPanel.Dock="Right" Content="Highlight Existing Fields" Padding="10,3"
+                                  IsChecked="{Binding HighlightFields, Mode=TwoWay}"
+                                  Background="White" BorderBrush="#9A90D8" Foreground="#222" Cursor="Hand"
+                                  AutomationProperties.Name="Highlight existing fields"/>
+                </DockPanel>
+            </Border>
+        </StackPanel>
+
         <!-- Loading overlay -->
-        <Border x:Name="LoadingOverlay"
+        <Border x:Name="LoadingOverlay" Grid.Row="1"
                 Background="#80000000"
                 Visibility="Collapsed"
                 Panel.ZIndex="100">
@@ -22,7 +155,7 @@
         </Border>
 
         <!-- No-document placeholder -->
-        <Border x:Name="PlaceholderPanel"
+        <Border x:Name="PlaceholderPanel" Grid.Row="1"
                 Background="{DynamicResource ContentBgBrush}"
                 Visibility="Visible">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -40,7 +173,7 @@
         </Border>
 
         <!-- PDF ScrollViewer -->
-        <ScrollViewer x:Name="PdfScrollViewer"
+        <ScrollViewer x:Name="PdfScrollViewer" Grid.Row="1"
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
                       Visibility="Collapsed"

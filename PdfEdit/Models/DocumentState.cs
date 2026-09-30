@@ -41,6 +41,15 @@ public class FieldEditState
     public bool IsMultiline { get; set; }
     public FieldAlignment Alignment { get; set; }
     public double FontSize { get; set; }
+    public string? BorderColor { get; set; }
+    public string? FillColor { get; set; }
+    public string TextColor { get; set; } = "#000000";
+    public int MaxLength { get; set; }
+    public bool IsComb { get; set; }
+    public bool IsEditable { get; set; }
+    public string? DateFormat { get; set; }
+    public string? DefaultValue { get; set; }
+    public List<string> Options { get; set; } = new();
 }
 
 /// <summary>A recent-file entry exposing filename separately so XAML needs no converter.</summary>

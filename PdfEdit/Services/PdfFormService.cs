@@ -92,6 +92,8 @@ public class PdfFormService
                         fieldInfo.FontSize = Math.Max(0, field.GetFontSize());
                     }
                     catch { /* malformed /DA — keep defaults */ }
+                    try { ReadAcrobatFieldProperties(field, widget, fieldInfo); }
+                    catch { /* optional appearance/options — keep defaults */ }
 
                     if (field is PdfTextFormField txt)
                     {
@@ -191,6 +193,96 @@ public class PdfFormService
         return errors;
     }
 
+    // ── Acrobat field properties: /MK colours, text colour, MaxLen, comb, edit, date format ──
+
+    private static string? ToHex(PdfArray? arr)
+    {
+        if (arr == null || arr.Size() == 0) return null;
+        float r, g, b;
+        if (arr.Size() >= 3) { r = arr.GetAsNumber(0).FloatValue(); g = arr.GetAsNumber(1).FloatValue(); b = arr.GetAsNumber(2).FloatValue(); }
+        else if (arr.Size() == 1) { r = g = b = arr.GetAsNumber(0).FloatValue(); }
+        else return null;
+        return $"#{(int)Math.Round(r * 255):X2}{(int)Math.Round(g * 255):X2}{(int)Math.Round(b * 255):X2}";
+    }
+
+    private static DeviceRgb? FromHex(string? hex) =>
+        !string.IsNullOrWhiteSpace(hex) && ParseHexColor(hex, out float r, out float g, out float b) ? new DeviceRgb(r, g, b) : null;
+
+    private static readonly System.Text.RegularExpressions.Regex AfDateRx =
+        new(@"AFDate_(?:FormatEx|KeystrokeEx)\(\s*""([^""]+)""", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static void ReadAcrobatFieldProperties(PdfFormField field, iText.Kernel.Pdf.Annot.PdfWidgetAnnotation widget, Models.FormFieldInfo info)
+    {
+        var mk = widget.GetPdfObject().GetAsDictionary(PdfName.MK);
+        info.BorderColor = ToHex(mk?.GetAsArray(PdfName.BC));
+        info.FillColor = ToHex(mk?.GetAsArray(PdfName.BG));
+        if (field.GetColor() is { } c && c.GetColorValue() is { Length: >= 3 } v)
+            info.TextColor = $"#{(int)Math.Round(v[0] * 255):X2}{(int)Math.Round(v[1] * 255):X2}{(int)Math.Round(v[2] * 255):X2}";
+        if (field is PdfTextFormField t)
+        {
+            info.MaxLength = Math.Max(0, t.GetMaxLen());
+            info.IsComb = t.IsComb();
+        }
+        if (field is PdfChoiceFormField ch) info.IsEditable = ch.IsEdit();
+
+        var aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
+        string js = aa?.GetAsDictionary(PdfName.F)?.GetAsString(PdfName.JS)?.ToUnicodeString()
+                 ?? aa?.GetAsDictionary(PdfName.K)?.GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
+        var m = AfDateRx.Match(js);
+        if (m.Success) info.DateFormat = m.Groups[1].Value;
+    }
+
+    private static void WriteAcrobatFieldProperties(PdfFormField field, Models.FormFieldInfo edit)
+    {
+        foreach (var annot in field.GetChildFormAnnotations())
+        {
+            var border = FromHex(edit.BorderColor);
+            var fill = FromHex(edit.FillColor);
+            var mk = annot.GetPdfObject().GetAsDictionary(PdfName.MK);
+            if (border != null) { annot.SetBorderColor(border); if (annot.GetBorderWidth() <= 0) annot.SetBorderWidth(1); }
+            else mk?.Remove(PdfName.BC);
+            if (fill != null) annot.SetBackgroundColor(fill);
+            else mk?.Remove(PdfName.BG);
+        }
+        if (FromHex(edit.TextColor) is { } tc) field.SetColor(tc);
+
+        if (field is PdfTextFormField t)
+        {
+            if (edit.MaxLength > 0) t.SetMaxLen(edit.MaxLength);
+            else t.GetPdfObject().Remove(PdfName.MaxLen);
+            t.SetComb(edit.IsComb && edit.MaxLength > 0);
+        }
+
+        if (field is PdfChoiceFormField ch)
+        {
+            if (edit.FieldType == Models.FieldType.ComboBox) ch.SetEdit(edit.IsEditable);
+            var opts = new PdfArray();
+            foreach (var o in edit.Options.Where(o => !string.IsNullOrWhiteSpace(o))) opts.Add(new PdfString(o));
+            ch.SetOptions(opts);
+        }
+
+        if (!string.IsNullOrEmpty(edit.DefaultValue))
+            field.SetDefaultValue(new PdfString(edit.DefaultValue));
+
+        // Date fields use Acrobat's standard format / keystroke scripts, so Acrobat and other
+        // viewers format and validate the date too.
+        var aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
+        if (edit.IsDateField)
+        {
+            string fmt = edit.DateFormat!.Replace("\"", "");
+            field.SetAdditionalAction(PdfName.F, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript($"AFDate_FormatEx(\"{fmt}\");"));
+            field.SetAdditionalAction(PdfName.K, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript($"AFDate_KeystrokeEx(\"{fmt}\");"));
+        }
+        else if (aa != null)
+        {
+            foreach (var key in new[] { PdfName.F, PdfName.K })
+            {
+                string js = aa.GetAsDictionary(key)?.GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
+                if (js.Contains("AFDate_")) aa.Remove(key);
+            }
+        }
+    }
+
     private static void ApplyFieldProperties(PdfAcroForm form, Models.FormFieldInfo edit, List<string> errors)
     {
         var field = form.GetField(edit.Name);
@@ -212,6 +304,7 @@ public class PdfFormService
                 if (edit.FontSize > 0) field.SetFontSize((float)edit.FontSize);
                 else field.SetFontSizeAutoScale();
             }
+            WriteAcrobatFieldProperties(field, edit);
             field.RegenerateField();
         }
         catch (Exception ex)
@@ -1298,6 +1391,54 @@ public class PdfFormService
         var field = builder.CreateComboBox();
         field.SetFont(font).SetFontSize(fontSize);
         form.AddField(field, page);
+    }
+
+    /// <summary>Adds a list box (scrolling list of choices).</summary>
+    public void AddListBoxField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height,
+        string fieldName, IEnumerable<string> choices, float fontSize = 10f)
+    {
+        using var pdf = new PdfDocument(new PdfReader(inputPath), new PdfWriter(outputPath));
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var builder = new iText.Forms.Fields.ChoiceFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(new Rectangle(left, bottom, width, height));
+        var list = choices.ToArray();
+        if (list.Length > 0) builder.SetOptions(list);
+        var field = builder.CreateList();
+        field.SetFont(PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA)).SetFontSize(fontSize);
+        form.AddField(field, pdf.GetPage(pageNumber));
+    }
+
+    /// <summary>Adds an (unsigned) signature field — Acrobat's "Add a signature field".</summary>
+    public void AddSignatureField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height, string fieldName)
+    {
+        using var pdf = new PdfDocument(new PdfReader(inputPath), new PdfWriter(outputPath));
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var field = new iText.Forms.Fields.SignatureFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(new Rectangle(left, bottom, width, height))
+            .CreateSignature();
+        form.AddField(field, pdf.GetPage(pageNumber));
+    }
+
+    /// <summary>Adds a date field: a text field with Acrobat's AFDate format / keystroke scripts.</summary>
+    public void AddDateField(string inputPath, string outputPath,
+        int pageNumber, float left, float bottom, float width, float height,
+        string fieldName, string format = "dd/mm/yyyy", float fontSize = 10f)
+    {
+        using var pdf = new PdfDocument(new PdfReader(inputPath), new PdfWriter(outputPath));
+        var form = PdfAcroForm.GetAcroForm(pdf, true);
+        if (pageNumber < 1 || pageNumber > pdf.GetNumberOfPages()) return;
+        var field = new iText.Forms.Fields.TextFormFieldBuilder(pdf, fieldName)
+            .SetWidgetRectangle(new Rectangle(left, bottom, width, height))
+            .CreateText();
+        field.SetValue(string.Empty);
+        field.SetFont(PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA)).SetFontSize(fontSize);
+        field.SetAdditionalAction(PdfName.F, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript($"AFDate_FormatEx(\"{format}\");"));
+        field.SetAdditionalAction(PdfName.K, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript($"AFDate_KeystrokeEx(\"{format}\");"));
+        form.AddField(field, pdf.GetPage(pageNumber));
     }
 
     public void AddRadioButtonField(string inputPath, string outputPath,

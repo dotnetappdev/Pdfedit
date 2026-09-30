@@ -39,6 +39,16 @@ public class FormFieldInfo
     // for values, bounds and deletions) until the document is saved; the rename is applied last.
     public string? PendingName { get; set; }
     public string DisplayName => string.IsNullOrEmpty(PendingName) ? Name : PendingName;
+
+    // ── Acrobat "Field Properties" (Appearance / Options tabs) ──────────────────
+    public string? BorderColor { get; set; }        // "#RRGGBB"; null = no border
+    public string? FillColor { get; set; }          // "#RRGGBB"; null = transparent
+    public string TextColor { get; set; } = "#000000";
+    public int MaxLength { get; set; }              // text fields: 0 = unlimited
+    public bool IsComb { get; set; }                // text fields: spread MaxLength chars evenly
+    public bool IsEditable { get; set; }            // combo boxes: allow typing a custom value
+    public string? DateFormat { get; set; }         // e.g. "dd/mm/yyyy" → a date field (AFDate_FormatEx)
+    public bool IsDateField => !string.IsNullOrEmpty(DateFormat);
 }
 
 /// <summary>Horizontal text alignment inside a form field (PDF /Q: 0 left, 1 centre, 2 right).</summary>

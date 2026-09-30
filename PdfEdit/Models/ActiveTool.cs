@@ -34,5 +34,9 @@ public enum ActiveTool
     DrawArrow,
     DrawCallout,
     // Acrobat "Prepare Form": select, move and resize existing form fields in the live view.
-    EditFields
+    EditFields,
+    // Acrobat Prepare Form field types added alongside the originals above
+    AddListBox,
+    AddSignatureField,
+    AddDateField
 }

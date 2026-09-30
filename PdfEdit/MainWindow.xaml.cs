@@ -65,7 +65,16 @@ public partial class MainWindow : RibbonWindow
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainViewModel vm)
+        {
             vm.GoToPageRequested += FocusPageNumberBox;
+            // Prepare Form toolbar → bring the Fields panel to the front.
+            vm.FieldsPanelRequested += () =>
+            {
+                var fields = DockManager.Layout.Descendents().OfType<AvalonDock.Layout.LayoutAnchorable>()
+                    .FirstOrDefault(a => a.ContentId == "fields");
+                if (fields != null) { fields.IsSelected = true; fields.IsActive = true; }
+            };
+        }
 
         var s = AppSettings.Current;
         if (!double.IsNaN(s.WindowLeft) && !double.IsNaN(s.WindowTop))

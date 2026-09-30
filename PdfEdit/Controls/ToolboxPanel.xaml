@@ -517,6 +517,24 @@
                                     <TextBlock Text="Add combo box" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
+                            <Button Style="{StaticResource PopupItem}" Tag="AddListBox" Click="MoreTool_Click" AutomationProperties.Name="Add list box">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Add list box" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PopupItem}" Tag="AddSignatureField" Click="MoreTool_Click" AutomationProperties.Name="Add signature field">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xEE56;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Add signature field" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PopupItem}" Tag="AddDateField" Click="MoreTool_Click" AutomationProperties.Name="Add date field">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Add date field" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

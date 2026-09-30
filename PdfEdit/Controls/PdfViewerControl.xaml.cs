@@ -136,6 +136,7 @@ public partial class PdfViewerControl : UserControl
         Focusable = true;
 
         _annotToolbar = BuildAnnotationToolbar();
+        InitFormBars();
         _resizeThumb = BuildResizeThumb();
 
         // Report viewport size to VM whenever the scroll viewer is resized
@@ -160,6 +161,7 @@ public partial class PdfViewerControl : UserControl
             _vm.PropertyChanged -= OnVmPropertyChanged;
             _vm.FieldValueChangedExternally -= OnFieldValueChangedExternally;
             _vm.AnnotationChanged -= OnAnnotationChanged;
+            _vm.FieldSelectionRequested -= OnFieldSelectionRequested;
         }
         _vm = DataContext as MainViewModel;
         if (_vm != null)
@@ -170,6 +172,7 @@ public partial class PdfViewerControl : UserControl
             _vm.PropertyChanged += OnVmPropertyChanged;
             _vm.FieldValueChangedExternally += OnFieldValueChangedExternally;
             _vm.AnnotationChanged += OnAnnotationChanged;
+            _vm.FieldSelectionRequested += OnFieldSelectionRequested;
 
             // If a document is already loaded when DataContext arrives, show it
             if (_vm.Document != null)
@@ -217,6 +220,7 @@ public partial class PdfViewerControl : UserControl
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) SyncFormBars();
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
             if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
@@ -668,6 +672,7 @@ public partial class PdfViewerControl : UserControl
 
             _vm.RefreshCurrentPageFields();
             BuildFieldOverlay(_vm.CurrentPageFields, _vm.HighlightFields);
+            SyncFormBars();
             BuildHighlightAnnotationOverlay(_vm.GetHighlightAnnotationsForCurrentPage());
             BuildRedactAnnotationOverlay(_vm.GetRedactRegionsForCurrentPage());
             BuildAnnotationOverlay(_vm.GetAnnotationsForCurrentPage());
@@ -899,6 +904,7 @@ public partial class PdfViewerControl : UserControl
         // Wire up Adobe-style chrome for every focusable field control
         if (ctrl is TextBox tb)
         {
+            if (field.IsDateField) AddDatePicker(field, tb, x, y, w, h);
             tb.Tag = field;  // used by Tab navigation
             tb.GotFocus  += (_, _) => ShowFieldChrome(field, x, y, w, h, tb);
             tb.LostFocus += (_, _) => HideFieldChrome(tb);
@@ -923,10 +929,10 @@ public partial class PdfViewerControl : UserControl
             var pb = new PasswordBox
             {
                 Width = dw, Height = dh,
-                Background = FieldFillBrush,
-                Foreground = Brushes.Black,
+                Background = FieldFill(field),
+                Foreground = FieldText(field),
                 CaretBrush = Brushes.Black,
-                BorderBrush = FieldBorderBrush,
+                BorderBrush = FieldBorder(field),
                 BorderThickness = new Thickness(1),
                 FontSize = Math.Max(8, dh * 0.6),
                 Padding = new Thickness(2, 0, 2, 0),
@@ -936,7 +942,7 @@ public partial class PdfViewerControl : UserControl
             System.Windows.Automation.AutomationProperties.SetName(pb, $"Password field: {field.Name}");
             pb.PasswordChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, pb.Password);
             pb.GotFocus  += (_, _) => pb.Background = FieldFocusBrush;
-            pb.LostFocus += (_, _) => pb.Background = FieldFillBrush;
+            pb.LostFocus += (_, _) => pb.Background = FieldFill(field);
             return pb;
         }
 
@@ -946,11 +952,11 @@ public partial class PdfViewerControl : UserControl
             Text = _vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value,
             // Acrobat-style fillable field: faint blue fill + subtle border so the
             // user can clearly see where the fields are and that they are editable.
-            Background = FieldFillBrush,
-            Foreground = Brushes.Black,
+            Background = FieldFill(field),
+            Foreground = FieldText(field),
             CaretBrush = Brushes.Black,
             // Required fields get a red outline, matching Acrobat's convention.
-            BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorderBrush,
+            BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorder(field),
             BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
             Cursor = Cursors.IBeam,
             FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize
@@ -984,10 +990,10 @@ public partial class PdfViewerControl : UserControl
         };
         tb.LostFocus += (_, _) =>
         {
-            tb.Background = FieldFillBrush;
+            tb.Background = FieldFill(field);
             tb.BorderBrush = field.IsRequired && string.IsNullOrWhiteSpace(tb.Text)
                 ? FieldRequiredBorderBrush
-                : FieldBorderBrush;
+                : FieldBorder(field);
             tb.BorderThickness = new Thickness(field.IsRequired && string.IsNullOrWhiteSpace(tb.Text) ? 1.5 : 1);
         };
         return tb;
@@ -1015,8 +1021,8 @@ public partial class PdfViewerControl : UserControl
         var container = new Border
         {
             Width = w, Height = h,
-            Background = FieldFillBrush,
-            BorderBrush = FieldBorderBrush,
+            Background = FieldFill(field),
+            BorderBrush = FieldBorder(field),
             BorderThickness = new Thickness(1),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
             Cursor = Cursors.Hand,
@@ -1024,7 +1030,7 @@ public partial class PdfViewerControl : UserControl
             Child = new Viewbox { Child = cb, Margin = new Thickness(Math.Min(2, h * 0.1)) },
         };
         container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
-        container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        container.LostFocus += (_, _) => container.Background = FieldFill(field);
         // Clicking anywhere in the field toggles it, not just on the small glyph.
         container.MouseLeftButtonDown += (_, e) =>
         {
@@ -1053,15 +1059,15 @@ public partial class PdfViewerControl : UserControl
         var container = new Border
         {
             Width = w, Height = h,
-            Background = FieldFillBrush,
-            BorderBrush = FieldBorderBrush,
+            Background = FieldFill(field),
+            BorderBrush = FieldBorder(field),
             BorderThickness = new Thickness(1),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
             Cursor = Cursors.Hand,
             Child = new Viewbox { Child = rb, Margin = new Thickness(Math.Min(2, h * 0.1)) },
         };
         container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
-        container.LostFocus += (_, _) => container.Background = FieldFillBrush;
+        container.LostFocus += (_, _) => container.Background = FieldFill(field);
         container.MouseLeftButtonDown += (_, e) =>
         {
             if (e.Handled) return;
@@ -1090,6 +1096,18 @@ public partial class PdfViewerControl : UserControl
         cb.GotFocus += (_, _) => _vm.SelectedField = field;
         return cb;
     }
+
+    // Acrobat: "Highlight Existing Fields" shades every field light blue; with it off, fields show
+    // their own appearance (fill / border / text colours from Field Properties).
+    private static Brush? HexBrush(string? hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) return null;
+        try { var b = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)); b.Freeze(); return b; }
+        catch { return null; }
+    }
+    private Brush FieldFill(FormFieldInfo f) => _vm?.HighlightFields != false ? FieldFillBrush : HexBrush(f.FillColor) ?? Brushes.White;
+    private Brush FieldBorder(FormFieldInfo f) => _vm?.HighlightFields != false ? FieldBorderBrush : HexBrush(f.BorderColor) ?? Brushes.Transparent;
+    private static Brush FieldText(FormFieldInfo f) => HexBrush(f.TextColor) ?? Brushes.Black;
 
     private static TextAlignment ToTextAlignment(FieldAlignment a) => a switch
     {
@@ -1132,7 +1150,7 @@ public partial class PdfViewerControl : UserControl
         };
 
         // Light-blue field fill
-        grid.Children.Add(new Rectangle { Fill = FieldFillBrush });
+        grid.Children.Add(new Rectangle { Fill = FieldFill(field) });
 
         // Dashed border (WPF Border doesn't support dash; use Rectangle)
         grid.Children.Add(new Rectangle
@@ -2147,7 +2165,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.AddTextField or ActiveTool.AddCheckbox or ActiveTool.AddComboBox or ActiveTool.AddRadioButton)
+        if (IsAddFieldTool(tool))
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
@@ -2408,68 +2426,8 @@ public partial class PdfViewerControl : UserControl
                 AnnotationCanvas.Children.Remove(_formFieldRubberBand);
                 _formFieldRubberBand = null;
 
-                if (rectW > 8 && rectH > 8)
-                {
-                    var nameDlg = new Dialogs.FieldNameDialog
-                    {
-                        Owner = Window.GetWindow(this),
-                        FieldType = _formFieldTool == ActiveTool.AddCheckbox ? "Checkbox"
-                                  : _formFieldTool == ActiveTool.AddComboBox ? "Combo Box"
-                                  : _formFieldTool == ActiveTool.AddRadioButton ? "Radio Button"
-                                  : "Text Field",
-                    };
-                    if (nameDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(nameDlg.FieldName))
-                    {
-                        int pageNum = _vm.CurrentPageIndex + 1;
-                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
-                        {
-                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                            float left   = (float)(canvasX / Scale);
-                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
-                            float width  = (float)(rectW / Scale);
-                            float height = (float)(rectH / Scale);
-                            string fname = nameDlg.FieldName;
-                            ActiveTool fTool = _formFieldTool;
-                            string srcPath = _vm.CurrentFilePath!;
-                            string tmpPath = srcPath + ".tmp";
-                            try
-                            {
-                                var svc = new PdfEdit.Services.PdfFormService();
-                                // Adding a field reloads the document, so first bake in any fields
-                                // the user has moved/resized but not saved yet.
-                                if (_vm.ModifiedFieldBounds.Count > 0)
-                                {
-                                    svc.ApplyFieldBounds(srcPath, tmpPath, _vm.ModifiedFieldBounds);
-                                    System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
-                                }
-                                if (fTool == ActiveTool.AddCheckbox)
-                                    svc.AddCheckboxField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname);
-                                else if (fTool == ActiveTool.AddComboBox)
-                                    svc.AddComboBoxField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname, nameDlg.ComboChoices ?? Array.Empty<string>());
-                                else if (fTool == ActiveTool.AddRadioButton)
-                                    svc.AddRadioButtonField(srcPath, tmpPath, pageNum, left, bottom, Math.Min(width, height), fname, fname);
-                                else
-                                    svc.AddTextFormField(srcPath, tmpPath, pageNum, left, bottom, width, height, fname);
-                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
-                                _vm.StatusText = $"Field '{fname}' added to page {pageNum}.";
-                                PdfEdit.Services.ToastService.Instance.Success($"Form field '{fname}' added.");
-                                // Like Acrobat: after placing a field, drop back to Edit Fields with
-                                // the new field selected so it can be moved/resized straight away.
-                                _layoutSelectedKey = (fname, 0);
-                                _vm.ActiveTool = ActiveTool.EditFields;
-                                _ = _vm.ReloadCurrentFileAsync();
-                            }
-                            catch (Exception ex)
-                            {
-                                Dialogs.AppDialog.ShowError("Add form field failed.", ex);
-                            }
-                            finally
-                            {
-                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
-                            }
-                        }
-                    }
-                }
+                // Acrobat: a click places a default-size field, a drag sets the size.
+                CreateFormField(_formFieldTool, new Rect(canvasX, canvasY, rectW, rectH));
             }
             e.Handled = true;
         }
