@@ -57,33 +57,40 @@ Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the EXE and the W
 
 ## Screenshots
 
-| Dark Theme — Form Filling | Light Theme (IRS W-4) |
-|---|---|
-| ![Dark Theme](docs/screenshots/dark-theme.png) | ![Light Theme](docs/screenshots/light-theme.png) |
+> These images are rendered mock-ups of the current UI (All tools list, Thumbnails, the floating
+> Fill & Sign / Design toolbox, and the Properties / Fields panels), not captures of a running app.
 
-| Live View — PDF Annotations & Callouts | Design Canvas — Invoice Template |
+| Dark Theme — Fill & Sign text with mini toolbar | Light Theme — Prepare Form, field name popup, Fields panel |
 |---|---|
-| ![Live View](docs/screenshots/live-view.svg) | ![Design Canvas](docs/screenshots/design-canvas-view.svg) |
+| ![Dark theme: Add Text box with the Acrobat-style mini toolbar, Properties panel editing the selected text](docs/screenshots/dark-theme.png) | ![Light theme: Prepare Form toolbar, new field with name popup, Fields panel grouped by page](docs/screenshots/light-theme.png) |
 
-| Form Filling — Live View | Edit Fields — Move & Resize (Acrobat "Prepare Form" style) |
+| Field Properties dialog (Date field) | Edit Fields — multi-select, Align menu |
 |---|---|
-| ![Form filling in Live View: focused field with mini toolbar, whole-box checkboxes, Properties panel value synced](docs/screenshots/form-filling-live.svg) | ![Edit Fields: selected form field with 8 resize handles being dragged](docs/screenshots/edit-fields.svg) |
+| ![Field properties dialog with General, Appearance and Options tabs](docs/screenshots/field-properties.png) | ![Three fields selected with the right-click Align submenu open](docs/screenshots/edit-fields.png) |
 
-| Design Canvas — In-place Text, Directional Arrows & Pen | High Contrast Theme |
+| Filling a form — date picker | Live View — highlights, comments, stamps |
 |---|---|
-| ![Design canvas: text edited in place, arrow drawn bottom-left to top-right with resize handles, freehand pen stroke](docs/screenshots/design-canvas-editing.svg) | ![High Contrast](docs/screenshots/high-contrast-theme.svg) |
+| ![Filling a form in Live View with the date field calendar open](docs/screenshots/form-filling.png) | ![Live view with highlight, callout, sticky note, stamp and signature](docs/screenshots/live-view.png) |
 
-| AI Features | Settings & Accessibility |
+| All tools — Scan & OCR | Organize pages |
 |---|---|
-| ![AI Features](docs/screenshots/ai-features.png) | ![Accessibility Settings](docs/screenshots/settings-accessibility.png) |
+| ![All tools list with Scan and OCR expanded and an OCR complete toast](docs/screenshots/all-tools.png) | ![Organize pages actions expanded in the All tools list](docs/screenshots/page-management.png) |
 
-| Render Engine Settings | Form Filling |
+| Design Canvas — Invoice Template | Design Canvas — Text, Arrows & Pen |
 |---|---|
-| ![Render Engine Settings](docs/screenshots/settings-render-engine.svg) | ![Form Filling](docs/screenshots/form-filling.png) |
+| ![Design canvas with a selected table and the Design toolbox](docs/screenshots/design-canvas-view.png) | ![Design canvas with in-place text editing, a selected arrow and a pen stroke](docs/screenshots/design-canvas-editing.png) |
 
-| Page Management | Ribbon Icons |
+| AI Assistant — Smart Fill | High Contrast Theme |
 |---|---|
-| ![Page Management](docs/screenshots/page-management.png) | ![Ribbon Icons](docs/screenshots/ribbon-icons.png) |
+| ![AI Assistant panel after Smart Fill](docs/screenshots/ai-features.png) | ![High contrast theme](docs/screenshots/high-contrast-theme.png) |
+
+| Render Engine Settings | Settings & Accessibility |
+|---|---|
+| ![Render Engine Settings](docs/screenshots/settings-render-engine.svg) | ![Accessibility Settings](docs/screenshots/settings-accessibility.png) |
+
+| Forms Ribbon |
+|---|
+| ![Forms ribbon with Edit Fields, Arrange Fields and Validate groups](docs/screenshots/ribbon-icons.png) |
 
 ---
 
