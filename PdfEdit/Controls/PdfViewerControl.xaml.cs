@@ -159,6 +159,7 @@ public partial class PdfViewerControl : UserControl
             _vm.AnnotationFormattingChanged -= OnAnnotationFormattingChanged;
             _vm.PropertyChanged -= OnVmPropertyChanged;
             _vm.FieldValueChangedExternally -= OnFieldValueChangedExternally;
+            _vm.AnnotationChanged -= OnAnnotationChanged;
         }
         _vm = DataContext as MainViewModel;
         if (_vm != null)
@@ -168,6 +169,7 @@ public partial class PdfViewerControl : UserControl
             _vm.AnnotationFormattingChanged += OnAnnotationFormattingChanged;
             _vm.PropertyChanged += OnVmPropertyChanged;
             _vm.FieldValueChangedExternally += OnFieldValueChangedExternally;
+            _vm.AnnotationChanged += OnAnnotationChanged;
 
             // If a document is already loaded when DataContext arrives, show it
             if (_vm.Document != null)
@@ -253,8 +255,11 @@ public partial class PdfViewerControl : UserControl
 
     private void OnAnnotationFormattingChanged()
     {
-        if (_focusedAnnotationTb == null || _focusedAnnotation == null || _vm == null) return;
-        ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb);
+        // Ribbon / Properties panel formatting applies to the selected text even after focus has
+        // moved to the panel (the text box no longer has focus then).
+        var ann = _focusedAnnotation ?? _vm?.SelectedAnnotation;
+        if (ann == null) return;
+        RefreshAnnotationVisual(ann);
     }
 
     // ── Annotation Toolbar (canvas-based) ────────────────────────────────────
@@ -298,6 +303,11 @@ public partial class PdfViewerControl : UserControl
 
         panel.Children.Add(MakeToolbarBtn("", "Delete (Del)", DeleteFocusedAnnotation,
             fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
+
+        // Rotate 90° clockwise and character spacing — the rest of Acrobat's Fill & Sign toolbar
+        panel.Children.Add(MakeToolbarBtn("\uE7AD", "Rotate 90°", RotateFocusedAnnotation,
+            fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
+        panel.Children.Add(MakeToolbarBtn("VA", "Character spacing", ToggleSpacingPopup, fontSize: 11));
 
         // Swap: cycles a placed mark through ✓ ✕ ○ — ● (only shown for marks)
         _swapMarkBtn = MakeToolbarBtn("", "Swap mark", SwapFocusedMark,
@@ -450,6 +460,7 @@ public partial class PdfViewerControl : UserControl
                 double newTop = Canvas.GetTop(_focusedAnnotationTb);
                 _focusedAnnotation.Left = newLeft / Scale;
                 _focusedAnnotation.Bottom = pageH - (newTop / Scale) - _focusedAnnotation.Height;
+                _vm.NotifyAnnotationEdited(_focusedAnnotation);
             }
         }
         e.Handled = true;
@@ -512,6 +523,10 @@ public partial class PdfViewerControl : UserControl
         thumb.DragStarted += (_, _) =>
         {
             if (_focusedAnnotation == null) return;
+            // Resizing by hand switches off Acrobat-style auto-size; the text now wraps in the box.
+            _focusedAnnotation.AutoSize = false;
+            if (_focusedAnnotationTb != null && !IsMarkGlyph(_focusedAnnotation.Text))
+                _focusedAnnotationTb.TextWrapping = TextWrapping.Wrap;
             _resizeStartAnnW = _focusedAnnotation.Width;
             _resizeStartAnnH = _focusedAnnotation.Height;
             _resizeStartAnnBottom = _focusedAnnotation.Bottom;
@@ -535,7 +550,7 @@ public partial class PdfViewerControl : UserControl
             ann.Height = newH;
 
             // Resize the TextBox directly (avoid full RefreshPage during drag)
-            if (!ann.IsVertical)
+            if (!IsQuarterTurn(ann.RotationAngle))
             {
                 tb.Width = ann.Width * Scale;
                 tb.Height = ann.Height * Scale;
@@ -554,6 +569,7 @@ public partial class PdfViewerControl : UserControl
         thumb.DragCompleted += (_, _) =>
         {
             if (_focusedAnnotation == null) return;
+            _vm?.NotifyAnnotationEdited(_focusedAnnotation);
             // Reposition toolbar (width may have changed)
             if (_focusedAnnotationTb != null)
                 PositionAnnotationToolbar(Canvas.GetLeft(_focusedAnnotationTb),
@@ -1429,6 +1445,7 @@ public partial class PdfViewerControl : UserControl
     private void BuildAnnotationOverlay(IEnumerable<FreeTextAnnotation> annotations)
     {
         AnnotationCanvas.Children.Clear();
+        ResetAnnotationBoxes();
 
         if (_vm?.Document == null) return;
         int pageNum = _vm.CurrentPageIndex + 1;
@@ -1525,8 +1542,8 @@ public partial class PdfViewerControl : UserControl
         // a thin outline only appears while the item is selected.
         var tb = new TextBox
         {
-            Width = ann.IsVertical ? h : w,
-            Height = ann.IsVertical ? w : h,
+            Width = IsQuarterTurn(ann.RotationAngle) ? h : w,
+            Height = IsQuarterTurn(ann.RotationAngle) ? w : h,
             Text = ann.ForceUpperCase ? ann.Text.ToUpperInvariant() : ann.Text,
             AcceptsReturn = !isMark,
             TextWrapping = isMark ? TextWrapping.NoWrap : TextWrapping.Wrap,
@@ -1652,6 +1669,7 @@ public partial class PdfViewerControl : UserControl
         Canvas.SetLeft(tb, x);
         Canvas.SetTop(tb, y);
         AnnotationCanvas.Children.Add(tb);
+        RegisterAnnotationBox(ann, tb, isMark);
     }
 
     private void ApplyAnnotationFormatting(FreeTextAnnotation ann, TextBox tb)
@@ -3060,76 +3078,34 @@ public partial class PdfViewerControl : UserControl
 
     // ── Free-text TextBox placement ───────────────────────────────────────────
 
+    /// <summary>
+    /// Add Text (Acrobat Fill &amp; Sign): creates the annotation straight away and focuses it, so the
+    /// mini toolbar is available while typing and the text can be re-selected, dragged and resized
+    /// immediately. An annotation left empty is removed again when it loses focus.
+    /// </summary>
     private void PlaceNewAnnotationBox(Point posOnCanvas, bool vertical, string? prefilledText)
     {
         if (_vm?.Document == null) return;
-
-        double defaultW = vertical ? 24 * Scale : 140 * Scale;
-        double defaultH = vertical ? 100 * Scale : 28 * Scale;
-
-        double displayFontSize = _vm.CurrentFontSize * Scale / RendererFactory.PointsToDips;
-
-        var tb = new TextBox
-        {
-            Width = defaultW,
-            Height = defaultH,
-            Text = prefilledText ?? string.Empty,
-            FontSize = Math.Max(1, displayFontSize),
-            FontFamily = new FontFamily(_vm.CurrentFontFamily),
-            FontWeight = _vm.CurrentFontBold ? FontWeights.Bold : FontWeights.Normal,
-            FontStyle = _vm.CurrentFontItalic ? FontStyles.Italic : FontStyles.Normal,
-            TextDecorations = _vm.CurrentFontUnderline ? TextDecorations.Underline : null,
-            Foreground = ParseBrush(_vm.CurrentFontColor),
-            Background = Brushes.Transparent,
-            BorderBrush = AdobeBlue,
-            BorderThickness = new Thickness(1),
-            AcceptsReturn = true,
-            TextWrapping = TextWrapping.Wrap,
-            Padding = new Thickness(0),
-            TextAlignment = _vm.CurrentTextAlignment,
-        };
-
-        double initialRotation = vertical ? -90.0 : 0.0;
-        if (initialRotation != 0)
-            tb.LayoutTransform = new RotateTransform(initialRotation);
-
-        if (_vm.ForceUpperCase)
-        {
-            tb.TextChanged += (_, _) =>
-            {
-                string upper = tb.Text.ToUpperInvariant();
-                if (tb.Text != upper)
-                {
-                    int caret = tb.CaretIndex;
-                    tb.Text = upper;
-                    tb.CaretIndex = Math.Min(caret, upper.Length);
-                }
-            };
-        }
-
-        Canvas.SetLeft(tb, posOnCanvas.X);
-        Canvas.SetTop(tb, posOnCanvas.Y);
-        AnnotationCanvas.Children.Add(tb);
-
-        _activeAnnotationBox = tb;
-
         int pageNum = _vm.CurrentPageIndex + 1;
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        double pdfX = posOnCanvas.X / Scale;
-        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (defaultH / Scale);
-        double pdfW = defaultW / Scale;
-        double pdfH = defaultH / Scale;
+        // Acrobat places the text baseline roughly at the click; start with a one-line box.
+        double lineH = Math.Max(10, _vm.CurrentFontSize * 1.4);
+        double wPt = vertical ? lineH : 60;
+        double hPt = vertical ? 100 : lineH;
+        double leftPt = posOnCanvas.X / Scale;
+        double topPt = posOnCanvas.Y / Scale - (vertical ? 0 : lineH / 2);
 
-        _pendingAnnotation = new FreeTextAnnotation
+        var ann = new FreeTextAnnotation
         {
             PageNumber = pageNum,
-            Left = pdfX,
-            Bottom = pdfY,
-            Width = pdfW,
-            Height = pdfH,
-            RotationAngle = initialRotation,
+            Left = leftPt,
+            Bottom = pageHeightPts - topPt - hPt,
+            Width = wPt,
+            Height = hPt,
+            Text = prefilledText ?? string.Empty,
+            RotationAngle = vertical ? -90.0 : 0.0,
             FontSize = _vm.CurrentFontSize,
             FontFamily = _vm.CurrentFontFamily,
             IsBold = _vm.CurrentFontBold,
@@ -3138,19 +3114,39 @@ public partial class PdfViewerControl : UserControl
             FontColor = _vm.CurrentFontColor,
             TextAlignment = _vm.CurrentTextAlignment,
             ForceUpperCase = _vm.ForceUpperCase,
+            AutoSize = !vertical,
         };
 
-        tb.LostFocus += (_, _) => FinalizeAnnotationBox();
+        _vm.FreeTextAnnotations.Add(ann);
+        PlaceAnnotationVisual(ann, pageHeightPts);
+        if (!_annotationBoxes.TryGetValue(ann, out var tb)) return;
+
+        var vm = _vm;
+        vm.PushUndo(
+            undo: () => { vm.FreeTextAnnotations.Remove(ann); RefreshPage(); },
+            redo: () => { vm.FreeTextAnnotations.Add(ann);    RefreshPage(); });
+
+        // Empty text is discarded when the box loses focus (clicking elsewhere), like Acrobat.
+        void RemoveIfEmpty(object? sender, RoutedEventArgs e)
+        {
+            tb.LostFocus -= RemoveIfEmpty;
+            if (!string.IsNullOrWhiteSpace(ann.Text)) return;
+            vm.FreeTextAnnotations.Remove(ann);
+            AnnotationCanvas.Children.Remove(tb);
+            _annotationBoxes.Remove(ann);
+            if (ReferenceEquals(vm.SelectedAnnotation, ann)) vm.SelectedAnnotation = null;
+            HideAnnotationToolbar();
+        }
+        tb.LostFocus += RemoveIfEmpty;
+
         tb.Focus();
         Keyboard.Focus(tb);
+        if (!string.IsNullOrEmpty(prefilledText)) tb.SelectAll();
 
-        if (!string.IsNullOrEmpty(prefilledText))
-            tb.SelectAll();
-
-        if (_vm != null) _vm.StatusText = vertical
-            ? "Vertical text: type, then click away to place."
-            : prefilledText != null ? $"Date stamp: '{prefilledText}' — click away to place."
-            : "Add text: type, then click away to place.";
+        vm.StatusText = vertical
+            ? "Vertical text: type, then click away. Use the toolbar above the text to resize, rotate or delete."
+            : prefilledText != null ? $"Date stamp: '{prefilledText}' — edit it or click away."
+            : "Add text: type, then click away. Use the toolbar above the text to change size, rotate, space or delete.";
     }
 
     private void FinalizeAnnotationBox()

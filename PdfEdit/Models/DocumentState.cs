@@ -11,6 +11,36 @@ public class DocumentState
     public List<PlacedSignature> Signatures { get; set; } = new();
     // Persisted field values (filled-in form data)
     public Dictionary<string, string> FieldValues { get; set; } = new();
+
+    // Unsaved form-layout work (Edit Fields / Properties panel / Design), kept like Acrobat keeps an
+    // edited document open: re-applied on reload and when the file is reopened, until it is saved.
+    public List<FieldLayoutState> FieldLayouts { get; set; } = new();
+    public List<FieldEditState> FieldEdits { get; set; } = new();
+    public List<string> DeletedFields { get; set; } = new();
+}
+
+/// <summary>A moved / resized form-field widget (PDF points).</summary>
+public class FieldLayoutState
+{
+    public string Name { get; set; } = string.Empty;
+    public int WidgetIndex { get; set; }
+    public double Left { get; set; }
+    public double Bottom { get; set; }
+    public double Width { get; set; }
+    public double Height { get; set; }
+}
+
+/// <summary>Form-field properties edited in the Properties panel.</summary>
+public class FieldEditState
+{
+    public string Name { get; set; } = string.Empty;
+    public string? PendingName { get; set; }
+    public string? Tooltip { get; set; }
+    public bool IsRequired { get; set; }
+    public bool IsReadOnly { get; set; }
+    public bool IsMultiline { get; set; }
+    public FieldAlignment Alignment { get; set; }
+    public double FontSize { get; set; }
 }
 
 /// <summary>A recent-file entry exposing filename separately so XAML needs no converter.</summary>

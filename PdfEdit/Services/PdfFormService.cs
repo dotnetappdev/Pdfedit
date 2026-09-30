@@ -418,7 +418,9 @@ public class PdfFormService
                 ? $"{r:F3} {g:F3} {b:F3} rg"
                 : "0 0 0 rg";
 
-            pdfAnn.SetDefaultAppearance(new PdfString($"/{fontName} {ann.FontSize:F1} Tf {colorStr}"));
+            string spacing = ann.CharacterSpacing > 0.01
+                ? $" {ann.CharacterSpacing.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} Tc" : string.Empty;
+            pdfAnn.SetDefaultAppearance(new PdfString($"/{fontName} {ann.FontSize:F1} Tf{spacing} {colorStr}"));
 
             page.AddAnnotation(pdfAnn);
         }

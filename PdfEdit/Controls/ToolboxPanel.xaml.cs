@@ -43,15 +43,29 @@ public partial class ToolboxPanel : UserControl
         {
             vm.PropertyChanged += OnVmPropertyChanged;
             vm.DesignCanvas.PropertyChanged += OnDesignVmPropertyChanged;
-            SyncChecked(PdfToolsPanel, vm.ActiveTool.ToString());
+            ApplyMode(vm);
+            SyncLiveChecked(vm.ActiveTool);
             SyncChecked(DesignToolsPanel, vm.DesignCanvas.ActiveTool.ToString());
+            UpdateInkDot(vm.CurrentFontColor);
         }
     }
 
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.ActiveTool) && VM is { } vm)
-            SyncChecked(PdfToolsPanel, vm.ActiveTool.ToString());
+        if (VM is not { } vm) return;
+        switch (e.PropertyName)
+        {
+            case nameof(MainViewModel.ActiveTool):
+                SyncLiveChecked(vm.ActiveTool);
+                break;
+            case nameof(MainViewModel.IsDesignMode):
+            case nameof(MainViewModel.IsPdfMode):
+                ApplyMode(vm);
+                break;
+            case nameof(MainViewModel.CurrentFontColor):
+                UpdateInkDot(vm.CurrentFontColor);
+                break;
+        }
     }
 
     private void OnDesignVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -60,16 +74,98 @@ public partial class ToolboxPanel : UserControl
             SyncChecked(DesignToolsPanel, vm.DesignCanvas.ActiveTool.ToString());
     }
 
-    /// <summary>Checks the button whose Tag matches the active tool (or clears the group if none does).</summary>
-    private void SyncChecked(Panel panel, string toolName)
+    /// <summary>Shows the Live (Fill &amp; Sign) or the Design tool set to match the active view.</summary>
+    private void ApplyMode(MainViewModel vm)
     {
+        PdfToolsPanel.Visibility    = vm.IsDesignMode ? Visibility.Collapsed : Visibility.Visible;
+        DesignToolsPanel.Visibility = vm.IsDesignMode ? Visibility.Visible : Visibility.Collapsed;
+        AnnotPopup.IsOpen = SigPopup.IsOpen = HighlightColorPopup.IsOpen = InkColorPopup.IsOpen = MorePopup.IsOpen = false;
+    }
+
+    // Text-mark tools share the "Add text" button (its corner arrow picks the mark).
+    private static readonly HashSet<ActiveTool> TextMarkTools = new()
+    {
+        ActiveTool.AddText, ActiveTool.VerticalText, ActiveTool.Checkmark, ActiveTool.XMark,
+        ActiveTool.Dot, ActiveTool.Circle, ActiveTool.Line,
+    };
+
+    private void SyncLiveChecked(ActiveTool tool)
+    {
+        string name = TextMarkTools.Contains(tool) ? "AddText" : tool.ToString();
+        bool found = SyncChecked(PdfToolsPanel, name);
+        // Tools that live in the More popup light up the "…" button instead.
+        MoreBtn.Background = found ? Brushes.Transparent : (Brush)FindResource("AccentBrush");
+    }
+
+    /// <summary>Checks the button whose Tag matches the active tool; returns false if none does.</summary>
+    private bool SyncChecked(Panel panel, string toolName)
+    {
+        bool found = false;
         _syncing = true;
         try
         {
-            foreach (var rb in panel.Children.OfType<RadioButton>())
-                rb.IsChecked = rb.Tag as string == toolName;
+            foreach (var rb in Descendants<RadioButton>(panel))
+            {
+                bool match = rb.Tag as string == toolName;
+                rb.IsChecked = match;
+                found |= match;
+            }
         }
         finally { _syncing = false; }
+        return found;
+    }
+
+    private static IEnumerable<T> Descendants<T>(Panel panel) where T : DependencyObject
+    {
+        foreach (var child in panel.Children.OfType<DependencyObject>())
+        {
+            if (child is T t) yield return t;
+            if (child is Panel p)
+                foreach (var d in Descendants<T>(p)) yield return d;
+        }
+    }
+
+    private void UpdateInkDot(string? hex)
+    {
+        try { InkColorDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex ?? "#000000")); }
+        catch { InkColorDot.Fill = Brushes.Black; }
+    }
+
+    // ── Add text / marks ──────────────────────────────────────────────────────
+
+    private void AddTextTool_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_syncing || VM is not MainViewModel vm) return;
+        vm.IsDesignMode = false;
+        vm.ActiveTool = _activeAnnotTool;
+    }
+
+    // ── Colour ────────────────────────────────────────────────────────────────
+
+    private void InkColorBtn_Click(object sender, RoutedEventArgs e) => InkColorPopup.IsOpen = !InkColorPopup.IsOpen;
+
+    private void InkColor_Click(object sender, RoutedEventArgs e)
+    {
+        InkColorPopup.IsOpen = false;
+        if (sender is not Button { Tag: string hex } || VM is not MainViewModel vm) return;
+        vm.CurrentFontColor = hex;     // text and marks (also recolours the selected text)
+        vm.CurrentDrawingColor = hex;  // freehand pen and shapes
+        UpdateInkDot(hex);
+    }
+
+    // ── More tools ────────────────────────────────────────────────────────────
+
+    private void MoreBtn_Click(object sender, RoutedEventArgs e) => MorePopup.IsOpen = !MorePopup.IsOpen;
+
+    private void MoreTool_Click(object sender, RoutedEventArgs e)
+    {
+        MorePopup.IsOpen = false;
+        if (sender is Button { Tag: string toolName } && Enum.TryParse<ActiveTool>(toolName, out var tool)
+            && VM is MainViewModel vm)
+        {
+            vm.IsDesignMode = false;
+            vm.ActiveTool = tool;
+        }
     }
 
     // ── Tool selection ────────────────────────────────────────────────────────
@@ -115,8 +211,17 @@ public partial class ToolboxPanel : UserControl
             && VM is MainViewModel vm)
         {
             _activeAnnotTool = tool;
+            vm.IsDesignMode = false;
             vm.ActiveTool = tool;
-            AnnotBtn.Background = (Brush)FindResource("AccentBrush");
+            AddTextGlyph.Text = tool switch
+            {
+                ActiveTool.Checkmark => "✓",
+                ActiveTool.XMark     => "✕",
+                ActiveTool.Dot       => "●",
+                ActiveTool.Circle    => "○",
+                ActiveTool.Line      => "—",
+                _                    => "A",
+            };
         }
     }
 

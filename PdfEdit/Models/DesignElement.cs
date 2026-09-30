@@ -115,6 +115,12 @@ public class FormFieldDesignElement : DesignElement
 
     /// <summary>Comma-separated option list, used by ComboBox kind only.</summary>
     public string OptionsCsv { get => _optionsCsv; set { _optionsCsv = value; OnPropertyChanged(); } }
+
+    // When imported from the open PDF: the Live View field this element stands for, so moving /
+    // resizing / renaming it in Design is carried back to Live View (and vice versa).
+    public string? SourceFieldName { get; set; }
+    public int SourceWidgetIndex { get; set; } = -1;
+    public int SourcePageNumber { get; set; }
     public IReadOnlyList<string> Options =>
         _optionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

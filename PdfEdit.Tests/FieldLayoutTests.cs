@@ -112,4 +112,26 @@ public class FieldLayoutTests : IDisposable
         Assert.Equal(FieldAlignment.Center, saved.Alignment);
         Assert.Equal(14, saved.FontSize, 1);
     }
+
+    [Fact]
+    public void SaveFull_WritesCharacterSpacingIntoFreeTextAppearance()
+    {
+        var svc = new PdfFormService();
+        string src = MakePdfWithTextField("name");
+        string dest = Path.Combine(_dir, "spacing.pdf");
+
+        var ann = new FreeTextAnnotation
+        {
+            PageNumber = 1, Left = 100, Bottom = 500, Width = 120, Height = 20,
+            Text = "1234", FontSize = 12, CharacterSpacing = 6,
+        };
+        var errors = svc.SaveFull(src, dest, new Dictionary<string, string>(),
+            new Dictionary<int, int>(), new[] { ann });
+        Assert.Empty(errors);
+
+        using var doc = new PdfDocument(new PdfReader(dest));
+        var freeText = doc.GetPage(1).GetAnnotations()
+            .OfType<iText.Kernel.Pdf.Annot.PdfFreeTextAnnotation>().Single();
+        Assert.Contains("6.00 Tc", freeText.GetDefaultAppearance().ToUnicodeString());
+    }
 }

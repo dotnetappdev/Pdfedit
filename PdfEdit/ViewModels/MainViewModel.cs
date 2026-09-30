@@ -121,8 +121,11 @@ public class MainViewModel : INotifyPropertyChanged
 
     public async Task ReloadCurrentFileAsync()
     {
-        if (_currentFilePath != null)
-            await LoadDocumentAsync(_currentFilePath);
+        if (_currentFilePath == null) return;
+        // Keep in-memory work (placed text, values, moved / edited fields) across the reload —
+        // it is written to the per-document state first and restored by LoadDocumentAsync.
+        SaveDocumentState();
+        await LoadDocumentAsync(_currentFilePath);
     }
 
     public int CurrentPageIndex
@@ -195,7 +198,14 @@ public class MainViewModel : INotifyPropertyChanged
     public FormFieldInfo? SelectedField
     {
         get => _selectedField;
-        set { _selectedField = value; OnPropertyChanged(); NotifySelectedFieldProperties(); }
+        set
+        {
+            _selectedField = value;
+            OnPropertyChanged();
+            NotifySelectedFieldProperties();
+            // The Properties panel edits one thing at a time: a field or a placed text / mark.
+            if (value != null && _selectedAnnotation != null) SelectedAnnotation = null;
+        }
     }
 
     /// <summary>
@@ -216,6 +226,103 @@ public class MainViewModel : INotifyPropertyChanged
 
     /// <summary>Raised when a field value is changed somewhere other than its live-view control.</summary>
     public event Action<string, string>? FieldValueChangedExternally;
+
+    // ── Selected placed text / mark (Properties panel) ──────────────────────────
+    // Font family / size / style / colour / alignment use the Current* properties above, which
+    // already write through to the selected annotation. These cover the rest.
+
+    /// <summary>Raised when a property of <see cref="SelectedAnnotation"/> changes, so the live view redraws it.</summary>
+    public event Action<FreeTextAnnotation>? AnnotationChanged;
+
+    private void NotifySelectedAnnotationProperties()
+    {
+        foreach (var n in new[] { nameof(HasSelectedAnnotation), nameof(SelectedAnnotationText), nameof(SelectedAnnotationRotation),
+                                  nameof(SelectedAnnotationCharSpacing), nameof(SelectedAnnotationX), nameof(SelectedAnnotationY),
+                                  nameof(SelectedAnnotationWidth), nameof(SelectedAnnotationHeight), nameof(SelectedAnnotationLocked),
+                                  nameof(SelectedAnnotationAutoSize) })
+            OnPropertyChanged(n);
+    }
+
+    /// <summary>Called by the live view after it changes the selected annotation (drag, resize, typing).</summary>
+    public void NotifyAnnotationEdited(FreeTextAnnotation ann)
+    {
+        if (ReferenceEquals(ann, _selectedAnnotation)) NotifySelectedAnnotationProperties();
+    }
+
+    private void EditSelectedAnnotation(Action<FreeTextAnnotation> apply)
+    {
+        if (_selectedAnnotation == null) return;
+        apply(_selectedAnnotation);
+        NotifySelectedAnnotationProperties();
+        AnnotationChanged?.Invoke(_selectedAnnotation);
+    }
+
+    public bool HasSelectedAnnotation => _selectedAnnotation != null;
+
+    public string SelectedAnnotationText
+    {
+        get => _selectedAnnotation?.Text ?? string.Empty;
+        set { if (value != SelectedAnnotationText) EditSelectedAnnotation(a => a.Text = value ?? string.Empty); }
+    }
+
+    public IReadOnlyList<double> RotationAngles { get; } = new double[] { 0, 90, 180, 270 };
+
+    /// <summary>Clockwise rotation in degrees (0 / 90 / 180 / 270).</summary>
+    public double SelectedAnnotationRotation
+    {
+        get => _selectedAnnotation == null ? 0 : ((_selectedAnnotation.RotationAngle % 360) + 360) % 360;
+        set { if (value != SelectedAnnotationRotation) EditSelectedAnnotation(a => a.RotationAngle = ((value % 360) + 360) % 360); }
+    }
+
+    /// <summary>Extra space between characters in points (0 = normal).</summary>
+    public double SelectedAnnotationCharSpacing
+    {
+        get => _selectedAnnotation?.CharacterSpacing ?? 0;
+        set
+        {
+            value = Math.Clamp(value, 0, 72);
+            if (Math.Abs(value - SelectedAnnotationCharSpacing) > 0.001) EditSelectedAnnotation(a => a.CharacterSpacing = value);
+        }
+    }
+
+    public double SelectedAnnotationX
+    {
+        get => _selectedAnnotation?.Left ?? 0;
+        set => EditSelectedAnnotation(a => a.Left = value);
+    }
+
+    public double SelectedAnnotationY
+    {
+        get => _selectedAnnotation?.Bottom ?? 0;
+        set => EditSelectedAnnotation(a => a.Bottom = value);
+    }
+
+    public double SelectedAnnotationWidth
+    {
+        get => _selectedAnnotation?.Width ?? 0;
+        set => EditSelectedAnnotation(a => { a.Width = Math.Max(4, value); a.AutoSize = false; });
+    }
+
+    public double SelectedAnnotationHeight
+    {
+        get => _selectedAnnotation?.Height ?? 0;
+        set => EditSelectedAnnotation(a => { a.Height = Math.Max(4, value); a.AutoSize = false; });
+    }
+
+    public bool SelectedAnnotationAutoSize
+    {
+        get => _selectedAnnotation?.AutoSize ?? false;
+        set => EditSelectedAnnotation(a => a.AutoSize = value);
+    }
+
+    public bool SelectedAnnotationLocked
+    {
+        get => _selectedAnnotation?.IsLocked ?? false;
+        set => EditSelectedAnnotation(a => a.IsLocked = value);
+    }
+
+    public IReadOnlyList<TextAlignment> TextAlignmentChoices { get; } =
+        new[] { TextAlignment.Left, TextAlignment.Center, TextAlignment.Right };
 
     // ── Editable field properties (Properties panel) ─────────────────────────────
 
@@ -397,6 +504,8 @@ public class MainViewModel : INotifyPropertyChanged
         foreach (var f in AllFields) f.PendingName = null;
         ModifiedFieldNames.Clear();
         ModifiedFieldBounds.Clear();
+        DeletedFieldNames.Clear();
+        SaveDocumentState();
         NotifySelectedFieldProperties();
         PageChanged?.Invoke();
     }
@@ -408,6 +517,8 @@ public class MainViewModel : INotifyPropertyChanged
         {
             _selectedAnnotation = value;
             OnPropertyChanged();
+            NotifySelectedAnnotationProperties();
+            if (value != null && _selectedField != null) SelectedField = null;
             if (value != null)
             {
                 _updatingFromAnnotation = true;
@@ -997,7 +1108,18 @@ public class MainViewModel : INotifyPropertyChanged
     public bool IsDesignMode
     {
         get => _isDesignMode;
-        set { _isDesignMode = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsPdfMode)); }
+        set
+        {
+            bool entering = !_isDesignMode && value;
+            bool leaving = _isDesignMode && !value;
+            _isDesignMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsPdfMode));
+            // Keep the two views in step: form fields moved / resized / renamed in one appear
+            // the same in the other, and switching views never throws away work.
+            if (leaving) SyncDesignFieldsToLive();
+            if (entering) EnsureDesignImported();
+        }
     }
     public bool IsPdfMode => !_isDesignMode;
 
@@ -1203,14 +1325,11 @@ public class MainViewModel : INotifyPropertyChanged
 
         NewDesignCommand = new RelayCommand(() =>
         {
+            // Switching to the Design tab keeps whatever is on the canvas; the current PDF page is
+            // imported only the first time (or when a different page / document is open).
             IsDesignMode = true;
-            if (HasDocument && _currentFilePath != null)
-                ImportCurrentPdfPageIntoDesign();
-            else
-            {
-                DesignCanvas.Elements.Clear();
+            if (!HasDocument && DesignCanvas.Elements.Count == 0)
                 StatusText = "Design Canvas — draw shapes, text, and images to create a PDF from scratch.";
-            }
         });
 
         CloseDesignCommand = new RelayCommand(() =>
@@ -1554,6 +1673,8 @@ public class MainViewModel : INotifyPropertyChanged
                 // Saved field values override the ones loaded from the PDF
                 foreach (var kv in docState.FieldValues)
                     FieldValues[kv.Key] = kv.Value;
+
+                RestoreFieldLayoutState(docState);
             }
 
             OnPropertyChanged(nameof(CurrentPageIndex));
@@ -3602,6 +3723,79 @@ public class MainViewModel : INotifyPropertyChanged
     /// a flat background image. Content-stream reconstruction is inherently approximate — see
     /// PdfToDesignImportService for the specific tradeoffs (line grouping, font substitution).
     /// </summary>
+    // The PDF page the Design canvas was imported from (null = a design made from scratch / template).
+    private (string Path, int Page)? _designSourceKey;
+
+    /// <summary>On entering Design: import the current page once, otherwise refresh field positions from Live.</summary>
+    private void EnsureDesignImported()
+    {
+        if (!HasDocument || _currentFilePath == null) return;
+        var key = (_currentFilePath, _currentPageIndex);
+        bool isScratchDesign = _designSourceKey == null && DesignCanvas.Elements.Count > 0;
+        if (isScratchDesign) return; // never overwrite a design the user started from scratch
+
+        if (DesignCanvas.Elements.Count == 0 || _designSourceKey != key)
+            ImportCurrentPdfPageIntoDesign();
+        else
+            SyncLiveFieldsToDesign();
+    }
+
+    private FormFieldInfo? FindSourceField(FormFieldDesignElement el) =>
+        el.SourceFieldName == null ? null
+        : AllFields.FirstOrDefault(f => f.Name == el.SourceFieldName && f.WidgetIndex == el.SourceWidgetIndex && f.PageNumber == el.SourcePageNumber);
+
+    /// <summary>Live → Design: fields moved or edited in Live View since the import.</summary>
+    private void SyncLiveFieldsToDesign()
+    {
+        if (_document == null || _designSourceKey is not { } key) return;
+        double pageH = _document.PageSizes[key.Page].Height;
+        foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
+        {
+            if (FindSourceField(el) is not { } f) continue;
+            double y = pageH - f.Bottom - f.Height;
+            if (Math.Abs(el.X - f.Left) > 0.01) el.X = f.Left;
+            if (Math.Abs(el.Y - y) > 0.01) el.Y = y;
+            if (Math.Abs(el.Width - f.Width) > 0.01) el.Width = f.Width;
+            if (Math.Abs(el.Height - f.Height) > 0.01) el.Height = f.Height;
+            if (el.FieldName != f.DisplayName) el.FieldName = f.DisplayName;
+            if (el.Required != f.IsRequired) el.Required = f.IsRequired;
+        }
+    }
+
+    /// <summary>Design → Live: fields moved / resized / renamed on the Design canvas (one undo step).</summary>
+    private void SyncDesignFieldsToLive()
+    {
+        if (_document == null || _currentFilePath == null || _designSourceKey is not { } key || key.Path != _currentFilePath) return;
+        if (key.Page < 0 || key.Page >= _document.PageSizes.Count) return;
+        double pageH = _document.PageSizes[key.Page].Height;
+
+        var moves = new List<(FormFieldInfo, FieldBounds)>();
+        foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
+        {
+            if (FindSourceField(el) is not { } f) continue;
+            var b = new FieldBounds(Math.Round(el.X, 2), Math.Round(pageH - el.Y - el.Height, 2),
+                                    Math.Round(el.Width, 2), Math.Round(el.Height, 2));
+            if (Math.Abs(b.Left - f.Left) > 0.01 || Math.Abs(b.Bottom - f.Bottom) > 0.01 ||
+                Math.Abs(b.Width - f.Width) > 0.01 || Math.Abs(b.Height - f.Height) > 0.01)
+                moves.Add((f, b));
+
+            string newName = (el.FieldName ?? string.Empty).Trim();
+            if (newName.Length > 0 && newName != f.DisplayName && ValidateFieldName(f, newName) == null)
+            {
+                foreach (var w in AllFields.Where(x => x.Name == f.Name))
+                    w.PendingName = newName == f.Name ? null : newName;
+                ModifiedFieldNames.Add(f.Name);
+            }
+            if (el.Required != f.IsRequired)
+            {
+                foreach (var w in AllFields.Where(x => x.Name == f.Name)) w.IsRequired = el.Required;
+                ModifiedFieldNames.Add(f.Name);
+            }
+        }
+        if (moves.Count > 0) SetFieldBoundsBatch(moves, "Updated from Design");
+        else PageChanged?.Invoke();
+    }
+
     private void ImportCurrentPdfPageIntoDesign()
     {
         if (_currentFilePath == null || _document == null) return;
@@ -3633,6 +3827,7 @@ public class MainViewModel : INotifyPropertyChanged
             catch { /* backdrop is best-effort; the editable elements still import */ }
 
             foreach (var e in elements) DesignCanvas.Elements.Add(e);
+            _designSourceKey = (_currentFilePath, _currentPageIndex);
             DesignCanvas.SelectedElement = null;
             DesignCanvas.PageSize = Models.DesignPageSize.Custom;
             DesignCanvas.CustomPageWidth = pageWidth;
@@ -3822,7 +4017,53 @@ public class MainViewModel : INotifyPropertyChanged
             Annotations = FreeTextAnnotations.ToList(),
             Signatures = PlacedSignatures.ToList(),
             FieldValues = FieldValues.ToDictionary(kv => kv.Key, kv => kv.Value),
+            FieldLayouts = ModifiedFieldBounds.Select(kv => new FieldLayoutState
+            {
+                Name = kv.Key.Name, WidgetIndex = kv.Key.WidgetIndex,
+                Left = kv.Value.Left, Bottom = kv.Value.Bottom, Width = kv.Value.Width, Height = kv.Value.Height,
+            }).ToList(),
+            FieldEdits = GetFieldEditsForSave().Select(f => new FieldEditState
+            {
+                Name = f.Name, PendingName = f.PendingName, Tooltip = f.Tooltip,
+                IsRequired = f.IsRequired, IsReadOnly = f.IsReadOnly, IsMultiline = f.IsMultiline,
+                Alignment = f.Alignment, FontSize = f.FontSize,
+            }).ToList(),
+            DeletedFields = DeletedFieldNames.ToList(),
         });
+    }
+
+    /// <summary>Re-applies unsaved form-layout work (positions, properties, deletions) after a (re)load.</summary>
+    private void RestoreFieldLayoutState(DocumentState state)
+    {
+        foreach (var l in state.FieldLayouts)
+        {
+            var f = AllFields.FirstOrDefault(x => x.Name == l.Name && x.WidgetIndex == l.WidgetIndex);
+            if (f == null) continue;
+            SetFieldBounds(f, new FieldBounds(l.Left, l.Bottom, l.Width, l.Height), recordUndo: false);
+        }
+        foreach (var e in state.FieldEdits)
+        {
+            var widgets = AllFields.Where(x => x.Name == e.Name).ToList();
+            if (widgets.Count == 0) continue;
+            foreach (var w in widgets)
+            {
+                w.PendingName = e.PendingName;
+                w.Tooltip = e.Tooltip;
+                w.IsRequired = e.IsRequired;
+                w.IsReadOnly = e.IsReadOnly;
+                w.IsMultiline = e.IsMultiline;
+                w.Alignment = e.Alignment;
+                w.FontSize = e.FontSize;
+            }
+            ModifiedFieldNames.Add(e.Name);
+        }
+        foreach (var name in state.DeletedFields)
+        {
+            if (!AllFields.Any(f => f.Name == name)) continue;
+            DeletedFieldNames.Add(name);
+            foreach (var f in AllFields.Where(f => f.Name == name).ToList()) AllFields.Remove(f);
+            FieldValues.Remove(name);
+        }
     }
 
     private void SyncRecentFileEntries()

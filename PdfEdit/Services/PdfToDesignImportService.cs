@@ -92,13 +92,16 @@ public static class PdfToDesignImportService
                 Y = pageHeightPt - f.Bottom - f.Height,
                 Width = Math.Max(10, f.Width),
                 Height = Math.Max(10, f.Height),
-                FieldName = f.Name,
-                Label = f.Name,
+                FieldName = f.DisplayName,
+                Label = f.DisplayName,
                 // The field's own page position already stands in for a caption — don't
                 // duplicate it as a separate printed label.
                 LabelPosition = FieldLabelPosition.None,
                 Required = f.IsRequired,
                 OptionsCsv = string.Join(", ", f.Options),
+                SourceFieldName = f.Name,
+                SourceWidgetIndex = f.WidgetIndex,
+                SourcePageNumber = f.PageNumber,
                 ZOrder = z++
             });
         }

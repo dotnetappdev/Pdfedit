@@ -917,7 +917,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     {
         X = f.X, Y = f.Y, Width = f.Width, Height = f.Height, ZOrder = f.ZOrder, Opacity = f.Opacity,
         FieldName = f.FieldName, Label = f.Label, LabelPosition = f.LabelPosition,
-        LabelOffset = f.LabelOffset, Required = f.Required, Wrap = f.Wrap, OptionsCsv = f.OptionsCsv
+        LabelOffset = f.LabelOffset, Required = f.Required, Wrap = f.Wrap, OptionsCsv = f.OptionsCsv,
+        SourceFieldName = f.SourceFieldName, SourceWidgetIndex = f.SourceWidgetIndex, SourcePageNumber = f.SourcePageNumber
     };
 
     private static ShapeDesignElement CloneShape(ShapeDesignElement sh) => new(sh.ElementType)

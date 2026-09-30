@@ -288,10 +288,13 @@ All changes are undoable and are written to the PDF on save (renames last, so va
 
 ### Annotations & Signatures
 
-**Free-Text Annotations**
-- Add text anywhere on any page; rich formatting (font, size, bold, italic, underline, colour)
-- Vertical text rotation (−90°); force uppercase mode
-- Drag the toolbar grip to reposition; Delete key or right-click to remove
+**Free-Text Annotations (Acrobat Fill & Sign style)**
+- **Add text** — click on the page and type; the box is created immediately with its mini toolbar and grows to fit the text as you type
+- **Mini toolbar**: drag grip · smaller **A** · larger **A** · delete · **rotate 90°** · **VA character spacing** (slider — spreads letters, e.g. to line up with comb boxes) · colours
+- The corner arrow on the Add text button picks ✓ checkmark, ✕ cross, ● dot, ○ circle or — line marks
+- Resize with the corner handle (switches off auto-size; the text then wraps in the box); re-select any time to edit
+- Rich formatting (font, size, bold, italic, underline, colour, alignment); vertical text; force uppercase mode
+- **Properties panel → Selected Text**: text, font, size, colour, bold/italic/underline, alignment, rotation, character spacing, auto-size, X/Y/width/height and lock — linked to the selected text, so edits apply straight away
 
 **Highlight / Underline / Strikethrough**
 - Drag to draw on any page; five colours: Yellow, Green, Blue, Pink, Orange (picker in ribbon)
@@ -438,7 +441,9 @@ The Custom engine is a full Adobe-spec PDF implementation written entirely in C#
 - **Fluent Ribbon** — Home, Fill & Sign, Forms, Tools, AI Assistant, **Design** tabs
 - **Dockable Panels** — Properties, thumbnails, AI Chat via AvalonDock
 - **Separate Live View / Design Canvas tabs** — the main editor area has two tabs: **Live View** (PDF viewer with annotations and form filling) and **Design** (blank-canvas designer); switching is seamless with full state preserved in each
-- **Unified Toolbox with Auto-Tab Switching** — the left toolbox lists all tools in one panel; selecting a PDF annotation/fill tool automatically activates the Live View tab; selecting a design canvas tool automatically switches to the Design tab — no manual tab clicks needed
+- **Floating toolbox that follows the view** — Live View shows Acrobat's Fill & Sign rail (Select · Comment · Highlight · Draw · Add text · Sign · colour · **…** More for hand, zoom, date, stamp, shapes, eraser and form-field tools); Design shows the full canvas tool set. It switches with the Live View / Design tabs, and picking a tool from either set switches to its view
+- **Live View ⇄ Design stay in sync** — the current page is imported into Design once; after that switching tabs keeps your design, and form fields moved / resized / renamed in either view appear the same in the other (one undo step)
+- **Unsaved layout work is kept** — moved / edited / deleted fields survive reloads (e.g. after adding a field) and reopening the file, like annotations and filled values, until you save
 - **Toast Notifications** — Success/info/warning/error with auto-dismiss
 - **Themed Dialogs** — Error (expandable stack trace), Confirm (danger mode), Info
 - **UI Scale** — Independent of zoom; 75%–200%

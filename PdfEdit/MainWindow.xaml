@@ -2859,6 +2859,128 @@
 
                                     <Separator Margin="0,8" Background="{DynamicResource AppBorderBrush}"/>
 
+                                    <!-- ── SELECTED TEXT / MARK (placed with Add Text, ✓ ✕ ● …) ──────────────
+                                         Linked to the selected annotation: edits apply to the page immediately, even though
+                                         focus has moved here. Font / size / style / colour use the same Current* properties as
+                                         the ribbon and the text's mini toolbar. -->
+                                    <StackPanel Visibility="{Binding HasSelectedAnnotation, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,8">
+                                        <TextBlock Text="SELECTED TEXT" Style="{StaticResource SectionHeader}"/>
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Text" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Text" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="80" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Annotation text"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Font" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding CurrentFontFamily}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation font"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Size" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding CurrentFontSize, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Points" AutomationProperties.Name="Annotation font size"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Colour" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding CurrentFontColor, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Hex colour, e.g. #000000" AutomationProperties.Name="Annotation colour"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Bold" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding CurrentFontBold}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Bold"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Italic" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding CurrentFontItalic}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Italic"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Underline" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding CurrentFontUnderline}" VerticalAlignment="Center" Margin="3,0" AutomationProperties.Name="Underline"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Alignment" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding TextAlignmentChoices}" SelectedItem="{Binding CurrentTextAlignment}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation text alignment"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Rotation" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding RotationAngles}" SelectedItem="{Binding SelectedAnnotationRotation}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation rotation"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Spacing" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationCharSpacing, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Extra space between characters, in points (Acrobat 'VA')" AutomationProperties.Name="Character spacing"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Auto-size" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedAnnotationAutoSize}" VerticalAlignment="Center" Margin="3,0" ToolTip="Grow / shrink the box to fit the text" AutomationProperties.Name="Auto-size"/>
+                                            </Border>
+                                        </Grid>
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Layout (pt)" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="X" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationX, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Annotation X"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Y" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationY, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Annotation Y (from page bottom)"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Width" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationWidth, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Annotation width"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Height" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationHeight, StringFormat='F1', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AutomationProperties.Name="Annotation height"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Locked" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedAnnotationLocked}" VerticalAlignment="Center" Margin="3,0" ToolTip="Locked text cannot be moved, edited or deleted" AutomationProperties.Name="Lock annotation"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+
                                     <TextBlock Text="SELECTED FIELD" Style="{StaticResource SectionHeader}"/>
                                     <TextBlock Text="Select a form field (Edit Fields tool, or click a field) to edit its properties."
                                                FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}" Margin="0,0,0,4"/>
