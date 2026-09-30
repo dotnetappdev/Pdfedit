@@ -2697,6 +2697,17 @@
                 <avalonDock:LayoutRoot>
                     <avalonDock:LayoutPanel Orientation="Horizontal">
 
+                        <!-- ── All tools (Acrobat-style list; dockable / floatable) ──────── -->
+                        <avalonDock:LayoutAnchorablePaneGroup DockWidth="250">
+                            <avalonDock:LayoutAnchorablePane>
+                                <avalonDock:LayoutAnchorable Title="All tools" ContentId="alltools" CanClose="False" CanHide="False">
+                                    <controls:AllToolsPanel DataContext="{Binding}"
+                                                            FontSize="{DynamicResource PanelFontSize}"
+                                                            AutomationProperties.Name="All tools"/>
+                                </avalonDock:LayoutAnchorable>
+                            </avalonDock:LayoutAnchorablePane>
+                        </avalonDock:LayoutAnchorablePaneGroup>
+
                         <!-- ── Page thumbnails (dockable / floatable) ──────── -->
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="120">
                             <avalonDock:LayoutAnchorablePane>

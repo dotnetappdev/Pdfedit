@@ -435,6 +435,28 @@ The Custom engine is a full Adobe-spec PDF implementation written entirely in C#
 
 ---
 
+### All tools panel (Acrobat-style)
+
+A dockable **All tools** list on the left (before the page thumbnails). Click a tool to expand its actions; the filter box finds any action by name.
+
+| Tool | Actions |
+|---|---|
+| **Export a PDF** | Microsoft Word (.docx, text of every page), plain text, images (all pages / current page), PDF/A, form data, comments (XFDF), comment summary (CSV) |
+| **Edit a PDF** | Add text, edit the page on the Design canvas, watermark, header & footer, page numbers, Bates numbering, bookmarks, crop, find & replace in fields, document properties |
+| **Create a PDF** | Blank PDF, **from images** (one A4 page per image), design a PDF, export design |
+| **Combine files** | **Combine PDFs and images** into one PDF, merge into the open PDF, insert pages, compare two PDFs |
+| **Organize pages** | Thumbnails, rotate, insert blank, duplicate, move, delete (page / range), extract (page / range), split |
+| **AI Assistant** | Open the assistant, fill the form with AI, smart fill from another document, analyse contract, extract key data |
+| **Generative summary** | Summarise the document, document statistics |
+| **Request e-signatures** | **Send for signature** — opens an email to the signer and shows the file to attach; sign yourself; check required fields |
+| **Scan & OCR** | **Recognise text** — OCRs scanned pages with the OCR engine built into Windows and saves a searchable copy (invisible text layer); recognise text on the current page and copy it |
+| **Protect a PDF** | Password protect, remove password, flatten form |
+| **Redact a PDF** | Mark areas, apply redactions, find personal information (AI) |
+| **Compress a PDF** | Compress |
+| **Prepare a form** | Edit fields, add text field / checkbox / radio / combo box, check required fields, clear fields, import form data |
+
+> Scan & OCR uses Windows' own OCR (Windows 10/11); it needs an installed Windows language with OCR support. Export to Word converts text only — layout, fonts and images are not reproduced.
+
 ### UI & Themes
 
 - **Three Live Themes** — Dark, Light, and High Contrast (no restart required)

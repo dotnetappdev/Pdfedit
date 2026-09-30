@@ -9,7 +9,7 @@ using PdfEdit.Services;
 
 namespace PdfEdit.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public partial class MainViewModel : INotifyPropertyChanged
 {
     private readonly PdfFormService _formService = new();
     private readonly IPdfRenderer _renderService = RendererFactory.Create();
@@ -1357,6 +1357,7 @@ public class MainViewModel : INotifyPropertyChanged
         }, () => IsDesignMode && DesignCanvas.Elements.Count > 0);
 
         ExportPageAsImageCommand = new AsyncRelayCommand(ExportPageAsImageAsync, () => HasDocument);
+        InitAllToolsCommands();
 
         // Pre-select first profile if any exist
         if (Services.PersonalProfileStore.All.Count > 0)
