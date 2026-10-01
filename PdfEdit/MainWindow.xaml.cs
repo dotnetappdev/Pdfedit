@@ -62,12 +62,22 @@ public partial class MainWindow : RibbonWindow
         };
     }
 
+    private void ShowDockPane(string contentId)
+    {
+        var pane = DockManager.Layout.Descendents().OfType<AvalonDock.Layout.LayoutAnchorable>()
+            .FirstOrDefault(a => a.ContentId == contentId);
+        if (pane != null) { pane.IsSelected = true; pane.IsActive = true; }
+    }
+
+    private void ShowComments_Click(object sender, RoutedEventArgs e) => ShowDockPane("comments");
+
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainViewModel vm)
         {
             vm.GoToPageRequested += FocusPageNumberBox;
             // Prepare Form toolbar → bring the Fields panel to the front.
+            vm.CommentsPanelRequested += () => ShowDockPane("comments");
             vm.FieldsPanelRequested += () =>
             {
                 var fields = DockManager.Layout.Descendents().OfType<AvalonDock.Layout.LayoutAnchorable>()

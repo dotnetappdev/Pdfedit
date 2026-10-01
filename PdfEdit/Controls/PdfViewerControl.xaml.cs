@@ -688,6 +688,7 @@ public partial class PdfViewerControl : UserControl
             BuildSignatureOverlay(_vm.GetSignaturesForCurrentPage());
             BuildStickyNoteOverlay(_vm.GetStickyNotesForCurrentPage());
             BuildShapeOverlay(_vm.GetShapeAnnotationsForCurrentPage());
+            BuildTextEditOverlay();
         }
         catch (Exception ex)
         {
@@ -1501,6 +1502,7 @@ public partial class PdfViewerControl : UserControl
         // The canvas was cleared: drop any half-drawn polygon and the shape resize handle.
         _polyPreview = null; _polyLabel = null; _polyPts.Clear();
         _shapeResizeGrip = null;
+        _replacePreview = null;
 
         if (_vm?.Document == null) return;
         int pageNum = _vm.CurrentPageIndex + 1;
@@ -2200,6 +2202,24 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        // Acrobat text-edit comments
+        if (tool == ActiveTool.InsertText)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            PlaceInsertTextMark(posOnPage);
+            e.Handled = true;
+            return;
+        }
+        if (tool == ActiveTool.ReplaceText)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (!IsOnPage(posOnPage)) return;
+            BeginReplaceText(posOnPage);
+            e.Handled = true;
+            return;
+        }
+
         if (tool == ActiveTool.StickyNote)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -2505,6 +2525,12 @@ public partial class PdfViewerControl : UserControl
             e.Handled = true;
         }
 
+        if (EndReplaceText(e.GetPosition(AnnotationCanvas)))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (_isDrawingShape)
         {
             _isDrawingShape = false;
@@ -2748,6 +2774,8 @@ public partial class PdfViewerControl : UserControl
 
         if (_polyPreview != null)
             UpdatePolyPreview(e.GetPosition(AnnotationCanvas));
+        if (e.LeftButton == MouseButtonState.Pressed && UpdateReplaceText(e.GetPosition(AnnotationCanvas)))
+            return;
 
         if (_isDrawingShape && e.LeftButton == MouseButtonState.Pressed)
         {

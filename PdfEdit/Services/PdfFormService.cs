@@ -376,7 +376,8 @@ public class PdfFormService
         IEnumerable<Models.StickyNoteAnnotation>? stickyNotes = null,
         IEnumerable<Models.ShapeAnnotation>? shapeAnnotations = null,
         IReadOnlyDictionary<(string Name, int WidgetIndex), Models.FieldBounds>? fieldBounds = null,
-        IEnumerable<Models.FormFieldInfo>? fieldEdits = null)
+        IEnumerable<Models.FormFieldInfo>? fieldEdits = null,
+        IEnumerable<Models.TextEditMark>? textEdits = null)
     {
         var saveErrors = new List<string>();
         fieldExportValues ??= new Dictionary<string, string>();
@@ -384,6 +385,17 @@ public class PdfFormService
         using var reader = new PdfReader(sourcePath);
         using var writer = new PdfWriter(destPath);
         using var doc = new PdfDocument(reader, writer);
+
+        // PdfEdit's own annotations from an earlier save are re-written below from memory: remove
+        // those copies first, or every save would add another one.
+        var trackedIds = new HashSet<string>(
+            freeTextAnnotations.Select(a => a.Comment.Id)
+            .Concat(placedSignatures?.Select(sg => sg.Id) ?? Enumerable.Empty<string>())
+            .Concat(highlightAnnotations?.Select(h => h.Comment.Id) ?? Enumerable.Empty<string>())
+            .Concat(stickyNotes?.Select(n => n.Comment.Id) ?? Enumerable.Empty<string>())
+            .Concat(shapeAnnotations?.Select(sh => sh.Comment.Id) ?? Enumerable.Empty<string>())
+            .Concat(textEdits?.Select(t => t.Comment.Id) ?? Enumerable.Empty<string>()));
+        RemoveTrackedAnnotations(doc, trackedIds);
 
         // ── 1. Form fields ────────────────────────────────────────────────
         var form = PdfAcroForm.GetAcroForm(doc, false);
@@ -496,7 +508,7 @@ public class PdfFormService
                     var bs = new PdfDictionary();
                     bs.Put(PdfName.W, new PdfNumber(inkWidth));
                     inkAnnot.SetBorderStyle(bs);
-                    page.AddAnnotation(inkAnnot);
+                    AddTracked(page, inkAnnot, ann.Comment);
                 }
                 continue;
             }
@@ -536,7 +548,7 @@ public class PdfFormService
                 ? $" {ann.CharacterSpacing.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} Tc" : string.Empty;
             pdfAnn.SetDefaultAppearance(new PdfString($"/{fontName} {ann.FontSize:F1} Tf{spacing} {colorStr}"));
 
-            page.AddAnnotation(pdfAnn);
+            AddTracked(page, pdfAnn, ann.Comment);
         }
 
         // ── 4. Highlight annotations ──────────────────────────────────────
@@ -571,7 +583,7 @@ public class PdfFormService
 
                 pdfHL.SetColor(color);
                 pdfHL.Put(PdfName.CA, new PdfNumber(hl.Opacity));
-                page.AddAnnotation(pdfHL);
+                AddTracked(page, pdfHL, hl.Comment);
             }
         }
 
@@ -592,9 +604,8 @@ public class PdfFormService
                 textAnnot.SetContents(note.Text);
                 textAnnot.SetColor(noteColor);
                 textAnnot.SetOpen(false);
-                if (!string.IsNullOrEmpty(note.Author))
-                    textAnnot.Put(PdfName.T, new PdfString(note.Author));
-                page.AddAnnotation(textAnnot);
+                if (!string.IsNullOrEmpty(note.Author)) note.Comment.Author = note.Author;
+                AddTracked(page, textAnnot, note.Comment);
             }
         }
 
@@ -621,7 +632,7 @@ public class PdfFormService
                 if (BuildExtendedShapeAnnotation(shape, strokeColor, lw) is { } extra)
                 {
                     if (shape.Opacity < 0.999) extra.Put(PdfName.CA, new PdfNumber(shape.Opacity));
-                    page.AddAnnotation(extra);
+                    AddTracked(page, extra, shape.Comment);
                     continue;
                 }
 
@@ -633,7 +644,7 @@ public class PdfFormService
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
                         annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
-                    page.AddAnnotation(annot);
+                    AddTracked(page, annot, shape.Comment);
                 }
                 else if (shape.Kind == Models.ShapeKind.Ellipse)
                 {
@@ -643,7 +654,7 @@ public class PdfFormService
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
                         annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
-                    page.AddAnnotation(annot);
+                    AddTracked(page, annot, shape.Comment);
                 }
                 else if (shape.Kind == Models.ShapeKind.Arrow)
                 {
@@ -653,7 +664,7 @@ public class PdfFormService
                     annot.Put(PdfName.LE, new PdfArray(new[] { new PdfName("None"), new PdfName("OpenArrow") }));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     if (shape.Opacity < 0.999) annot.Put(PdfName.CA, new PdfNumber(shape.Opacity));
-                    page.AddAnnotation(annot);
+                    AddTracked(page, annot, shape.Comment);
                 }
                 else if (shape.Kind == Models.ShapeKind.Callout && !string.IsNullOrEmpty(shape.CalloutText))
                 {
@@ -672,7 +683,47 @@ public class PdfFormService
                     float attachY = (float)bottom;
                     annot.Put(PdfName.CL, new PdfArray(new float[] { tipX, tipY, kneeX, kneeY, attachX, attachY }));
                     annot.Put(new PdfName("IT"), new PdfName("FreeTextCallout"));
-                    page.AddAnnotation(annot);
+                    AddTracked(page, annot, shape.Comment);
+                }
+            }
+        }
+
+        // ── 6b. Insert / Replace text (Acrobat text-edit comments) ──────────
+        if (textEdits != null)
+        {
+            foreach (var mark in textEdits)
+            {
+                if (mark.PageNumber < 1 || mark.PageNumber > doc.GetNumberOfPages()) continue;
+                var page = doc.GetPage(mark.PageNumber);
+                ParseHexColor(mark.Color, out float tr, out float tg, out float tb);
+                var markColor = new DeviceRgb(tr, tg, tb);
+
+                if (mark.Kind == Models.TextEditKind.Insert)
+                {
+                    var caret = new PdfCaretAnnotation(new Rectangle((float)mark.Left, (float)mark.Bottom, (float)mark.Width, (float)mark.Height));
+                    caret.SetColor(markColor);
+                    caret.SetContents(mark.Comment.Note);
+                    AddTracked(page, caret, mark.Comment);
+                }
+                else
+                {
+                    // Acrobat's Replace text: a strikeout grouped with a caret holding the new text.
+                    float l = (float)mark.Left, bt = (float)mark.Bottom, r = l + (float)mark.Width, t = bt + (float)mark.Height;
+                    var strike = PdfTextMarkupAnnotation.CreateStrikeout(new Rectangle(l, bt, r - l, t - bt),
+                        new[] { l, t, r, t, l, bt, r, bt });
+                    strike.SetColor(markColor);
+                    strike.SetContents(mark.Comment.Note);
+                    strike.Put(new PdfName("IT"), new PdfName("StrikeOutTextEdit"));
+                    AddTracked(page, strike, mark.Comment);
+
+                    float ch = Math.Max(6f, t - bt);
+                    var caret = new PdfCaretAnnotation(new Rectangle(r - ch / 2, bt - ch * 0.2f, ch, ch));
+                    caret.SetColor(markColor);
+                    caret.SetContents(mark.Comment.Note);
+                    caret.Put(PdfName.IRT, strike.GetPdfObject());
+                    caret.Put(PdfName.RT, new PdfName("Group"));
+                    caret.Put(PdfName.NM, new PdfString(TrackedName(mark.Comment.Id) + ":caret"));
+                    page.AddAnnotation(caret);
                 }
             }
         }
@@ -691,12 +742,29 @@ public class PdfFormService
                 {
                     var imageData = ImageDataFactory.Create(sig.ImageBytes);
                     var xobj = new PdfImageXObject(imageData);
-                    var canvas = new PdfCanvas(page);
-                    // Transformation matrix: [scaleX 0 0 scaleY translateX translateY]
-                    canvas.AddXObjectWithTransformationMatrix(xobj,
-                        (float)sig.Width, 0f, 0f, (float)sig.Height,
-                        (float)sig.Left, (float)sig.Bottom);
-                    canvas.Release();
+                    if (flatten)
+                    {
+                        // Flattened copy: burn the signature into the page content.
+                        var canvas = new PdfCanvas(page);
+                        canvas.AddXObjectWithTransformationMatrix(xobj,
+                            (float)sig.Width, 0f, 0f, (float)sig.Height,
+                            (float)sig.Left, (float)sig.Bottom);
+                        canvas.Release();
+                    }
+                    else
+                    {
+                        // A stamp annotation showing the signature image (like Acrobat Fill & Sign), so a
+                        // later save replaces it rather than stacking another copy into the page.
+                        float w = (float)sig.Width, h = (float)sig.Height;
+                        var ap = new PdfFormXObject(new Rectangle(0, 0, w, h));
+                        new PdfCanvas(ap, doc).AddXObjectWithTransformationMatrix(xobj, w, 0, 0, h, 0, 0).Release();
+                        var stamp = new PdfStampAnnotation(new Rectangle((float)sig.Left, (float)sig.Bottom, w, h));
+                        stamp.SetNormalAppearance(ap.GetPdfObject());
+                        stamp.SetFlags(PdfAnnotation.PRINT | PdfAnnotation.LOCKED);
+                        stamp.SetContents("Signature");
+                        stamp.Put(PdfName.NM, new PdfString(TrackedName(sig.Id)));
+                        page.AddAnnotation(stamp);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1309,6 +1377,115 @@ public class PdfFormService
         annot.Put(PdfName.BS, BuildBorderStyle(lw));
         annot.SetFlags(PdfAnnotation.PRINT);
         return annot;
+    }
+
+    // ── Annotations written by PdfEdit (/NM "pdfedit:<id>") ──────────────────
+
+    public const string TrackedPrefix = "pdfedit:";
+    private static string TrackedName(string id) => TrackedPrefix + id;
+
+    /// <summary>The PdfEdit id in an annotation's /NM ("pdfedit:<id>[:suffix]"), or null.</summary>
+    public static string? TrackedId(PdfDictionary annot)
+    {
+        string? nm = annot.GetAsString(PdfName.NM)?.ToUnicodeString();
+        if (nm == null || !nm.StartsWith(TrackedPrefix, StringComparison.Ordinal)) return null;
+        string rest = nm[TrackedPrefix.Length..];
+        int colon = rest.IndexOf(':');
+        return colon < 0 ? rest : rest[..colon];
+    }
+
+    /// <summary>Removes PdfEdit annotations (and their replies) whose ids are in <paramref name="ids"/>.</summary>
+    public static int RemoveTrackedAnnotations(PdfDocument doc, ISet<string> ids)
+    {
+        int removed = 0;
+        if (ids.Count == 0) return 0;
+        for (int p = 1; p <= doc.GetNumberOfPages(); p++)
+        {
+            var page = doc.GetPage(p);
+            foreach (var annot in page.GetAnnotations().ToList())
+            {
+                if (TrackedId(annot.GetPdfObject()) is { } id && ids.Contains(id))
+                {
+                    page.RemoveAnnotation(annot);
+                    removed++;
+                }
+            }
+        }
+        return removed;
+    }
+
+    /// <summary>
+    /// A copy of the PDF without PdfEdit's own annotations listed in <paramref name="ids"/>, for the
+    /// page renderer — PdfEdit draws those itself (editable), so rendering them too showed them twice.
+    /// Returns null when nothing needed removing.
+    /// </summary>
+    public string? CreateRenderCopyWithout(string path, ISet<string> ids)
+    {
+        if (ids.Count == 0) return null;
+        try
+        {
+            using (var probe = new PdfDocument(new PdfReader(path)))
+            {
+                bool any = false;
+                for (int p = 1; p <= probe.GetNumberOfPages() && !any; p++)
+                    any = probe.GetPage(p).GetAnnotations().Any(a => TrackedId(a.GetPdfObject()) is { } id && ids.Contains(id));
+                if (!any) return null;
+            }
+            string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"pdfedit-render-{Guid.NewGuid():N}.pdf");
+            using (var doc = new PdfDocument(new PdfReader(path), new PdfWriter(tmp)))
+                RemoveTrackedAnnotations(doc, ids);
+            return tmp;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Adds an annotation with its comment the way Acrobat stores one: /NM id, author (/T), dates,
+    /// note (/Contents), review status and checkmark as /State replies, and the reply thread as
+    /// /IRT text annotations.
+    /// </summary>
+    private static void AddTracked(PdfPage page, PdfAnnotation annot, Models.CommentInfo c)
+    {
+        annot.Put(PdfName.NM, new PdfString(TrackedName(c.Id)));
+        annot.SetTitle(new PdfString(c.Author ?? string.Empty));
+        annot.Put(PdfName.CreationDate, new PdfDate(c.Created).GetPdfObject());
+        annot.SetDate(new PdfDate(c.Modified).GetPdfObject());
+        if (!string.IsNullOrEmpty(c.Note) && annot.GetContents() == null) annot.SetContents(c.Note);
+        page.AddAnnotation(annot);
+
+        var rect = annot.GetRectangle().ToRectangle();
+        int n = 0;
+        PdfTextAnnotation Reply(string author, string text, DateTime when)
+        {
+            var r = new PdfTextAnnotation(rect);
+            r.Put(PdfName.IRT, annot.GetPdfObject());
+            r.Put(PdfName.RT, new PdfName("R"));
+            r.SetTitle(new PdfString(author));
+            r.SetContents(text);
+            r.SetDate(new PdfDate(when).GetPdfObject());
+            r.SetOpen(false);
+            r.SetFlags(PdfAnnotation.NO_ZOOM | PdfAnnotation.NO_ROTATE | PdfAnnotation.PRINT);
+            r.Put(PdfName.NM, new PdfString(TrackedName(c.Id) + ":r" + n++));
+            return r;
+        }
+        foreach (var reply in c.Replies)
+            page.AddAnnotation(Reply(reply.Author, reply.Text, reply.Created));
+        if (c.Status != Models.CommentStatus.None)
+        {
+            var st = Reply(c.Author, $"{c.Status} set by {c.Author}", c.Modified);
+            st.Put(new PdfName("StateModel"), new PdfString("Review"));
+            st.Put(new PdfName("State"), new PdfString(c.Status.ToString()));
+            st.SetFlags(PdfAnnotation.HIDDEN);
+            page.AddAnnotation(st);
+        }
+        if (c.Checked)
+        {
+            var mk = Reply(c.Author, $"Marked set by {c.Author}", c.Modified);
+            mk.Put(new PdfName("StateModel"), new PdfString("Marked"));
+            mk.Put(new PdfName("State"), new PdfString("Marked"));
+            mk.SetFlags(PdfAnnotation.HIDDEN);
+            page.AddAnnotation(mk);
+        }
     }
 
     private static bool ParseHexColor(string hex, out float r, out float g, out float b)

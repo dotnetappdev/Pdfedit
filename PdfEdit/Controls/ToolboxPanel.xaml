@@ -253,8 +253,18 @@
                         <Button Style="{StaticResource PopupItem}" Tag="DrawCallout" Click="SubTool_Click" AutomationProperties.Name="Text callout">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Text callout" VerticalAlignment="Center"/></StackPanel>
                         </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="InsertText" Click="SubTool_Click" AutomationProperties.Name="Insert text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Insert text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="ReplaceText" Click="SubTool_Click" AutomationProperties.Name="Replace text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Replace text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
                         <Button Style="{StaticResource PopupItem}" Tag="Stamp" Click="SubTool_Click" AutomationProperties.Name="Stamp">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Stamp" VerticalAlignment="Center"/></StackPanel>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Stamp" VerticalAlignment="Center"/>                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <Button Style="{StaticResource PopupItem}" Click="ShowComments_Click" AutomationProperties.Name="Show comments list">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Comments list…" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                    </StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>

@@ -86,7 +86,8 @@ public partial class ToolboxPanel : UserControl
     private static readonly (string Rail, ActiveTool[] Tools)[] RailFamilies =
     {
         ("Select",    new[] { ActiveTool.Select, ActiveTool.Hand, ActiveTool.Zoom, ActiveTool.TextFill, ActiveTool.CheckboxToggle }),
-        ("Comment",   new[] { ActiveTool.StickyNote, ActiveTool.DrawCallout, ActiveTool.Stamp }),
+        ("Comment",   new[] { ActiveTool.StickyNote, ActiveTool.DrawCallout, ActiveTool.Stamp,
+                              ActiveTool.InsertText, ActiveTool.ReplaceText }),
         ("Highlight", new[] { ActiveTool.Highlight, ActiveTool.Underline, ActiveTool.Strikethrough }),
         ("Draw",      new[] { ActiveTool.DrawFreehand, ActiveTool.DrawRectangle, ActiveTool.DrawEllipse, ActiveTool.DrawArrow,
                               ActiveTool.DrawLine, ActiveTool.DrawCloud, ActiveTool.DrawPolygon, ActiveTool.DrawPolyline, ActiveTool.Eraser }),
@@ -98,6 +99,7 @@ public partial class ToolboxPanel : UserControl
     {
         [ActiveTool.Select] = "\uE8B0", [ActiveTool.Hand] = "\uE7C9", [ActiveTool.Zoom] = "\uE71E",
         [ActiveTool.TextFill] = "\uE8B0", [ActiveTool.CheckboxToggle] = "\uE8B0",
+        [ActiveTool.InsertText] = "\uE710", [ActiveTool.ReplaceText] = "\uE8AC",
         [ActiveTool.StickyNote] = "\uE90A", [ActiveTool.DrawCallout] = "\uE8F2", [ActiveTool.Stamp] = "\uE8F4",
         [ActiveTool.Highlight] = "\uE7C1", [ActiveTool.Underline] = "\uE8DC", [ActiveTool.Strikethrough] = "\uEDE0",
         [ActiveTool.DrawFreehand] = "\uEDC6", [ActiveTool.DrawRectangle] = "\uE7C2", [ActiveTool.DrawEllipse] = "\uEA3A",
@@ -222,6 +224,12 @@ public partial class ToolboxPanel : UserControl
             vm.IsDesignMode = false;
             vm.ActiveTool = tool;
         }
+    }
+
+    private void ShowComments_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var popup in RailPopups()) popup.IsOpen = false;
+        VM?.ShowCommentsPanel();
     }
 
     private void MeasureUnit_Click(object sender, RoutedEventArgs e)

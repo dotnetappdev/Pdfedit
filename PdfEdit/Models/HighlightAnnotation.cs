@@ -14,6 +14,9 @@ public class HighlightAnnotation
     public string Color     { get; set; } = "#FFFF00";  // hex colour of the highlight
     public float  Opacity   { get; set; } = 0.4f;
     public HighlightKind Kind { get; set; } = HighlightKind.Highlight;
+
+    // Author, date, note, replies and review status (Comments panel)
+    public CommentInfo Comment { get; set; } = new();
 }
 
 public enum HighlightKind { Highlight, Underline, Strikethrough }

@@ -44,4 +44,7 @@ public class FreeTextAnnotation
     // with it on (Add Text); it is off by default so annotations saved by older versions keep their
     // wrapped layout, and it turns off once the box is resized by hand.
     public bool AutoSize { get; set; }
+
+    // Author, date, note, replies and review status (Comments panel)
+    public CommentInfo Comment { get; set; } = new();
 }

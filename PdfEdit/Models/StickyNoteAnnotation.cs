@@ -8,4 +8,7 @@ public class StickyNoteAnnotation
     public string Text      { get; set; } = string.Empty;
     public string Color     { get; set; } = "#FFFF88"; // yellow sticky
     public string Author    { get; set; } = string.Empty;
+
+    // Author, date, note, replies and review status (Comments panel)
+    public CommentInfo Comment { get; set; } = new();
 }

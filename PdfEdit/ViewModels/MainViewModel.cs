@@ -67,6 +67,10 @@ public partial class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<Models.RedactRegion> RedactionRegions { get; } = new();
     public ObservableCollection<Models.StickyNoteAnnotation> StickyNotes { get; } = new();
     public ObservableCollection<Models.ShapeAnnotation> ShapeAnnotations { get; } = new();
+    // Acrobat Insert text / Replace text marks
+    public ObservableCollection<Models.TextEditMark> TextEditMarks { get; } = new();
+    // Temp copy the page renderer reads when PdfEdit's own saved annotations are left out of it
+    private string? _renderCopyPath;
     public ObservableCollection<SearchResult> SearchResults { get; } = new();
     public ObservableCollection<RecentFileEntry> RecentFileEntries { get; } = new();
 
@@ -1575,6 +1579,59 @@ public partial class MainViewModel : INotifyPropertyChanged
         RefreshUndoCanExecute();
     }
 
+    public void AddTextEditMark(Models.TextEditMark mark)
+    {
+        mark.PageNumber = _currentPageIndex + 1;
+        TextEditMarks.Add(mark);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = mark.Kind == Models.TextEditKind.Insert ? "Insert text" : "Replace text",
+            Execute     = () => TextEditMarks.Add(mark),
+            Undo        = () => TextEditMarks.Remove(mark),
+        });
+        RefreshUndoCanExecute();
+        NotifyCommentsChanged();
+    }
+
+    public void RemoveTextEditMark(Models.TextEditMark mark)
+    {
+        TextEditMarks.Remove(mark);
+        _undoService.Push(new Services.AnnotationAction
+        {
+            Description = "Delete text edit",
+            Execute     = () => TextEditMarks.Remove(mark),
+            Undo        = () => TextEditMarks.Add(mark),
+        });
+        RefreshUndoCanExecute();
+        NotifyCommentsChanged();
+    }
+
+    public IEnumerable<Models.TextEditMark> GetTextEditMarksForCurrentPage()
+        => TextEditMarks.Where(m => m.PageNumber == _currentPageIndex + 1);
+
+    // ── Comments panel ────────────────────────────────────────────────────────
+
+    /// <summary>A comment's note, replies, status or checkmark changed (not its position).</summary>
+    public event Action? CommentsChanged;
+    public void NotifyCommentsChanged() => CommentsChanged?.Invoke();
+
+    /// <summary>Asks the window to bring the Comments panel to the front.</summary>
+    public event Action? CommentsPanelRequested;
+    public void ShowCommentsPanel() => CommentsPanelRequested?.Invoke();
+
+    /// <summary>Goes to a comment's page and re-renders so it is on screen.</summary>
+    public void GoToComment(int pageNumber)
+    {
+        if (IsDesignMode) IsDesignMode = false;
+        if (Document == null) return;
+        int index = Math.Clamp(pageNumber - 1, 0, Document.PageCount - 1);
+        if (index != CurrentPageIndex) CurrentPageIndex = index;
+        else PageChanged?.Invoke();
+    }
+
+    /// <summary>Re-draws the page after a comment was deleted from the panel.</summary>
+    public void RefreshAfterCommentEdit() => PageChanged?.Invoke();
+
     public IEnumerable<Models.StickyNoteAnnotation> GetStickyNotesForCurrentPage()
         => StickyNotes.Where(n => n.PageNumber == _currentPageIndex + 1);
 
@@ -1658,6 +1715,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             RedactionRegions.Clear();
             StickyNotes.Clear();
             ShapeAnnotations.Clear();
+            TextEditMarks.Clear();
             _undoService.Clear();
             Bookmarks.Clear();
             Attachments.Clear();
@@ -1678,8 +1736,6 @@ public partial class MainViewModel : INotifyPropertyChanged
                     FieldExportValues[f.Name + "|" + f.ExportValue] = f.ExportValue;
             }
 
-            await _renderService.LoadAsync(path);
-
             _currentPageIndex = 0;
             _zoom = 1.0;
 
@@ -1696,6 +1752,11 @@ public partial class MainViewModel : INotifyPropertyChanged
                     FreeTextAnnotations.Add(ann);
                 foreach (var sig in docState.Signatures)
                     PlacedSignatures.Add(sig);
+                // Comments added since the last save (they used to be lost on reopen)
+                foreach (var hl in docState.Highlights ?? new()) HighlightAnnotations.Add(hl);
+                foreach (var note in docState.StickyNotes ?? new()) StickyNotes.Add(note);
+                foreach (var shape in docState.Shapes ?? new()) ShapeAnnotations.Add(shape);
+                foreach (var mark in docState.TextEdits ?? new()) TextEditMarks.Add(mark);
 
                 // Saved field values override the ones loaded from the PDF
                 foreach (var kv in docState.FieldValues)
@@ -1703,6 +1764,18 @@ public partial class MainViewModel : INotifyPropertyChanged
 
                 RestoreFieldLayoutState(docState);
             }
+
+            // PdfEdit draws its own annotations (editable). If an earlier save wrote them into the
+            // file, render from a copy without them — otherwise they showed twice after reopening.
+            var ownIds = new HashSet<string>(FreeTextAnnotations.Select(a => a.Comment.Id)
+                .Concat(PlacedSignatures.Select(sg => sg.Id))
+                .Concat(HighlightAnnotations.Select(h => h.Comment.Id))
+                .Concat(StickyNotes.Select(n => n.Comment.Id))
+                .Concat(ShapeAnnotations.Select(sh => sh.Comment.Id))
+                .Concat(TextEditMarks.Select(t => t.Comment.Id)));
+            if (_renderCopyPath != null) { try { System.IO.File.Delete(_renderCopyPath); } catch { } }
+            _renderCopyPath = await Task.Run(() => _formService.CreateRenderCopyWithout(path, ownIds));
+            await _renderService.LoadAsync(_renderCopyPath ?? path);
 
             OnPropertyChanged(nameof(CurrentPageIndex));
             OnPropertyChanged(nameof(CurrentPageRotation));
@@ -1783,7 +1856,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
                 shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
-                fieldEdits: GetFieldEditsForSave());
+                fieldEdits: GetFieldEditsForSave(), textEdits: TextEditMarks);
             System.IO.File.Copy(tmp, _currentFilePath, overwrite: true);
             System.IO.File.Delete(tmp);
             CommitFieldEditsAfterSave();
@@ -1833,7 +1906,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
                 shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
-                fieldEdits: GetFieldEditsForSave());
+                fieldEdits: GetFieldEditsForSave(), textEdits: TextEditMarks);
             _currentFilePath = dlg.FileName;
             CommitFieldEditsAfterSave();
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
@@ -1876,7 +1949,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 deletedFieldNames: DeletedFieldNames, fieldExportValues: BuildExportValuesForSave(),
                 highlightAnnotations: HighlightAnnotations, stickyNotes: StickyNotes,
                 shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
-                fieldEdits: GetFieldEditsForSave());
+                fieldEdits: GetFieldEditsForSave(), textEdits: TextEditMarks);
             StatusText = $"Flattened PDF saved: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
             {
@@ -1927,6 +2000,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         RedactionRegions.Clear();
         StickyNotes.Clear();
         ShapeAnnotations.Clear();
+        TextEditMarks.Clear();
         _undoService.Clear();
         _pageRotations.Clear();
         Attachments.Clear();
@@ -4155,6 +4229,10 @@ public partial class MainViewModel : INotifyPropertyChanged
             LastZoom = _zoom,
             Annotations = FreeTextAnnotations.ToList(),
             Signatures = PlacedSignatures.ToList(),
+            Highlights = HighlightAnnotations.ToList(),
+            StickyNotes = StickyNotes.ToList(),
+            Shapes = ShapeAnnotations.ToList(),
+            TextEdits = TextEditMarks.ToList(),
             FieldValues = FieldValues.ToDictionary(kv => kv.Key, kv => kv.Value),
             FieldLayouts = ModifiedFieldBounds.Select(kv => new FieldLayoutState
             {

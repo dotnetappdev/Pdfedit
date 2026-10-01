@@ -12,4 +12,6 @@ public class PlacedSignature
     public double Width { get; set; }
     public double Height { get; set; }
     public byte[] ImageBytes { get; set; } = Array.Empty<byte>();
+    // Written to the PDF as /NM "pdfedit:<id>" (see CommentInfo.Id)
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
 }

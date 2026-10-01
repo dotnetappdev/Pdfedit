@@ -43,5 +43,7 @@ public enum ActiveTool
     // double-click or Enter to finish)
     DrawLine, DrawCloud, DrawPolygon, DrawPolyline,
     // Acrobat Pro "Measure" tools
-    MeasureDistance, MeasurePerimeter, MeasureArea
+    MeasureDistance, MeasurePerimeter, MeasureArea,
+    // Acrobat comment tools: caret to insert text, strike + caret to replace text
+    InsertText, ReplaceText
 }

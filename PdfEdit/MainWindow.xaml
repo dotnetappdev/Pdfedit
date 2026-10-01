@@ -1525,6 +1525,37 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Insert Text" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=InsertText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="InsertText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Insert text — click where text is missing and type what to insert"
+                                         AutomationProperties.Name="Insert Text tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Replace Text" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ReplaceText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="ReplaceText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Replace text — drag across the words, then type the replacement"
+                                         AutomationProperties.Name="Replace Text tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Comments" Size="Middle" Click="ShowComments_Click"
+                                   ToolTip="Show the Comments list — search, filter, reply, set status"
+                                   AutomationProperties.Name="Show comments list">
+                        <Fluent:Button.Icon>
+                            <TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:ToggleButton Header="Rectangle"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawRectangle, Mode=TwoWay}"
@@ -3848,6 +3879,11 @@
                                     <controls:FieldsPanel DataContext="{Binding}"
                                                           FontSize="{DynamicResource PanelFontSize}"
                                                           AutomationProperties.Name="Form fields list"/>
+                                </avalonDock:LayoutAnchorable>
+                                <avalonDock:LayoutAnchorable Title="Comments" ContentId="comments" CanClose="False" CanHide="False">
+                                    <controls:CommentsPanel DataContext="{Binding}"
+                                                            FontSize="{DynamicResource PanelFontSize}"
+                                                            AutomationProperties.Name="Comments list"/>
                                 </avalonDock:LayoutAnchorable>
                                 <avalonDock:LayoutAnchorable Title="AI Assistant" ContentId="aichat"
                                                              CanHide="False" CanClose="False">

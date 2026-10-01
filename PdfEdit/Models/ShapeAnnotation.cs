@@ -30,6 +30,8 @@ public class ShapeAnnotation
     public List<System.Windows.Point>? Points { get; set; }
     // Unit the measurement label is shown in: "in", "mm", "cm" or "pt"
     public string    MeasureUnit { get; set; } = "in";
+    // Author, date, note, replies and review status (Comments panel)
+    public CommentInfo Comment     { get; set; } = new();
 
     public bool IsClosedShape => Kind is ShapeKind.Rectangle or ShapeKind.Ellipse or ShapeKind.Cloud
         or ShapeKind.Polygon or ShapeKind.Area or ShapeKind.Callout;

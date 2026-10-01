@@ -9,6 +9,11 @@ public class DocumentState
     // Persisted annotations and signatures so they survive app restarts
     public List<FreeTextAnnotation> Annotations { get; set; } = new();
     public List<PlacedSignature> Signatures { get; set; } = new();
+    // Comments (highlights, notes, shapes, text edits) — kept until saved, like the text above
+    public List<HighlightAnnotation> Highlights { get; set; } = new();
+    public List<StickyNoteAnnotation> StickyNotes { get; set; } = new();
+    public List<ShapeAnnotation> Shapes { get; set; } = new();
+    public List<TextEditMark> TextEdits { get; set; } = new();
     // Persisted field values (filled-in form data)
     public Dictionary<string, string> FieldValues { get; set; } = new();
 
