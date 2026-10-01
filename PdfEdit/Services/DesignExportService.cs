@@ -233,10 +233,13 @@ public static class DesignExportService
 
     private static void DrawImage(ImageDesignElement img, Document doc, float x, float y, float w, float h)
     {
-        if (string.IsNullOrEmpty(img.FilePath) || !System.IO.File.Exists(img.FilePath)) return;
+        bool hasFile = !string.IsNullOrEmpty(img.FilePath) && System.IO.File.Exists(img.FilePath);
+        if (!hasFile && img.SignatureBytes == null) return;
         try
         {
-            var imageData = iText.IO.Image.ImageDataFactory.Create(img.FilePath);
+            // Signatures placed with Fill & Sign carry their PNG bytes instead of a file.
+            var imageData = hasFile ? iText.IO.Image.ImageDataFactory.Create(img.FilePath)
+                                    : iText.IO.Image.ImageDataFactory.Create(img.SignatureBytes!);
             var image     = new iText.Layout.Element.Image(imageData)
                 .SetFixedPosition(x, y)
                 .ScaleToFit(w, h);
@@ -393,6 +396,7 @@ public static class DesignExportService
                     : f.Label;
                 var btn = new RadioFormFieldBuilder(pdf, rawName).CreateRadioButton(btnValue, rect);
                 info.Group.AddKid(btn);
+                if (f.IsOn) info.Group.SetValue(btnValue);   // selected with Fill & Sign
                 if (tooltip != null) info.Group.Put(PdfName.TU, new PdfString(tooltip));
                 radioGroups[rawName] = (info.Group, info.ButtonCount + 1);
                 return;
@@ -432,6 +436,12 @@ public static class DesignExportService
                 field.SetFont(font).SetFontSize(10f);
 
             field.SetRequired(f.Required);
+
+            // Value filled in with Fill & Sign
+            if (f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo or FormFieldKind.ComboBox && f.HasValue)
+                field.SetValue(f.Value);
+            else if (f.FieldKind == FormFieldKind.Checkbox && f.IsOn)
+                field.SetValue("Yes");
 
             // Tooltip / alternate description (/TU) — shown in Acrobat's tooltip on hover
             if (tooltip != null)

@@ -156,18 +156,36 @@
                                    TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                                    Visibility="Collapsed"/>
 
+                        <!-- Text / Memo / ComboBox: the filled-in value (Fill & Sign) -->
+                        <TextBlock x:Name="ValueText"
+                                   Text="{Binding Value}"
+                                   Foreground="Black"
+                                   Margin="4,0" Padding="0,1,0,0"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   Visibility="Collapsed"/>
+
                         <!-- Checkbox: small bordered square centered in the field area -->
                         <Border x:Name="CheckboxSquare"
                                 Width="13" Height="13"
                                 BorderBrush="#444" BorderThickness="1.5"
                                 Background="White" CornerRadius="1"
                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="Collapsed"/>
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="CheckGlyph" Text="✓" FontSize="11" FontWeight="Bold"
+                                       Foreground="Black" Margin="0,-3,0,0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
+                        </Border>
 
                         <!-- Radio: small circle centered -->
                         <Ellipse x:Name="RadioCircle"
                                  Width="13" Height="13"
                                  Stroke="#444" StrokeThickness="1.5" Fill="White"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Visibility="Collapsed"/>
+                        <Ellipse x:Name="RadioDot"
+                                 Width="7" Height="7" Fill="Black"
                                  HorizontalAlignment="Center" VerticalAlignment="Center"
                                  Visibility="Collapsed"/>
 
@@ -177,7 +195,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="16"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
+                            <TextBlock x:Name="ComboLabel" Grid.Column="0"
                                        Text="{Binding Label}"
                                        Foreground="#777" FontStyle="Italic" FontSize="11"
                                        Margin="4,0" VerticalAlignment="Center"/>
@@ -240,6 +258,50 @@
                     <Setter TargetName="FieldBox"   Property="BorderThickness" Value="0"/>
                     <Setter TargetName="SigContent" Property="Visibility"      Value="Visible"/>
                 </DataTrigger>
+
+                <!-- Filled in (Fill & Sign): show the value instead of the hint -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding HasValue}" Value="True"/>
+                        <Condition Binding="{Binding FieldKind}" Value="Text"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="TextHint"  Property="Visibility" Value="Collapsed"/>
+                    <Setter TargetName="ValueText" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding HasValue}" Value="True"/>
+                        <Condition Binding="{Binding FieldKind}" Value="Memo"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="TextHint"  Property="Visibility"        Value="Collapsed"/>
+                    <Setter TargetName="ValueText" Property="Visibility"        Value="Visible"/>
+                    <Setter TargetName="ValueText" Property="VerticalAlignment" Value="Top"/>
+                    <Setter TargetName="ValueText" Property="TextWrapping"      Value="Wrap"/>
+                    <Setter TargetName="ValueText" Property="TextTrimming"      Value="None"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding HasValue}" Value="True"/>
+                        <Condition Binding="{Binding FieldKind}" Value="ComboBox"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ComboLabel" Property="Text"       Value="{Binding Value}"/>
+                    <Setter TargetName="ComboLabel" Property="Foreground" Value="Black"/>
+                    <Setter TargetName="ComboLabel" Property="FontStyle"  Value="Normal"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsOn}" Value="True"/>
+                        <Condition Binding="{Binding FieldKind}" Value="Checkbox"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="CheckGlyph" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsOn}" Value="True"/>
+                        <Condition Binding="{Binding FieldKind}" Value="Radio"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="RadioDot" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 

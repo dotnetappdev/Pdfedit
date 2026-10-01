@@ -554,6 +554,23 @@
                 <TextBlock Style="{StaticResource Ico}" Text="&#xE8B0;"/>
             </RadioButton>
 
+            <!-- Fill & Sign on the Design canvas: fill in form fields, sign -->
+            <RadioButton Style="{StaticResource FToolBtn}" GroupName="DesignTools" Tag="Fill"
+                         Checked="DesignTool_Checked"
+                         ToolTip="Fill — click a form field to type in it, tick it or pick an option  (F). Tab moves to the next field."
+                         AutomationProperties.Name="Design fill form tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE70F;"/>
+            </RadioButton>
+
+            <RadioButton x:Name="DesignSignBtn" Style="{StaticResource FToolBtn}" GroupName="DesignTools" Tag="Sign"
+                         Click="DesignSign_Click"
+                         ToolTip="Sign — choose or create a signature, then click a signature field or the page  (S)"
+                         AutomationProperties.Name="Design sign tool">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xED63;" FontSize="18"/>
+            </RadioButton>
+
+            <Separator Style="{StaticResource FDiv}"/>
+
             <!-- Text -->
             <RadioButton Style="{StaticResource FToolBtn}" GroupName="DesignTools" Tag="Text"
                          Checked="DesignTool_Checked"

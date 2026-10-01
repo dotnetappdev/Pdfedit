@@ -9,7 +9,9 @@ namespace PdfEdit.Models;
 public enum DesignTool
 {
     Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table, Checkmark, XMark,
-    TextField, Memo, Checkbox, Radio, ComboBox, Signature
+    TextField, Memo, Checkbox, Radio, ComboBox, Signature,
+    // Fill & Sign on the Design canvas: Fill types into / ticks form fields, Sign places a signature.
+    Fill, Sign
 }
 
 public enum DesignElementType
@@ -123,6 +125,39 @@ public class FormFieldDesignElement : DesignElement
     public int SourcePageNumber { get; set; }
     public IReadOnlyList<string> Options =>
         _optionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // ── Filled-in value (Fill & Sign) ─────────────────────────────────────────
+    private string _value = string.Empty;
+    private string _exportValue = "Yes";
+
+    /// <summary>
+    /// The field's value. Text / Memo / ComboBox: the text. Checkbox: ExportValue when ticked, "Off"
+    /// (or empty) when not. Radio: the group's current selection (this button is on when it equals ExportValue).
+    /// </summary>
+    public string Value
+    {
+        get => _value;
+        set
+        {
+            _value = value ?? string.Empty;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasValue));
+            OnPropertyChanged(nameof(IsOn));
+        }
+    }
+
+    /// <summary>The value a checkbox / radio button stands for when it is on.</summary>
+    public string ExportValue
+    {
+        get => _exportValue;
+        set { _exportValue = string.IsNullOrEmpty(value) ? "Yes" : value; OnPropertyChanged(); OnPropertyChanged(nameof(IsOn)); }
+    }
+
+    public bool HasValue => _value.Length > 0;
+
+    /// <summary>Checkbox ticked / radio button selected.</summary>
+    public bool IsOn => _value.Length > 0 && (_value == _exportValue
+        || (_kind == FormFieldKind.Checkbox && _value is "Yes" or "On" or "true" or "1"));
 }
 
 public class ShapeDesignElement : DesignElement
@@ -169,6 +204,15 @@ public class ImageDesignElement : DesignElement
 
     public BitmapSource? Bitmap { get => _bitmap; set { _bitmap = value; OnPropertyChanged(); } }
     public string FilePath { get => _filePath; set { _filePath = value; OnPropertyChanged(); } }
+
+    /// <summary>
+    /// Set when this image is a signature placed with Fill &amp; Sign (PNG bytes). Signatures on a
+    /// design imported from the open PDF are carried over to Live View as placed signatures.
+    /// </summary>
+    public byte[]? SignatureBytes { get; set; }
+
+    /// <summary>The Live View signature this element stands for (not saved with the design).</summary>
+    public PlacedSignature? LinkedSignature { get; set; }
 }
 
 public class FreehandDesignElement : DesignElement

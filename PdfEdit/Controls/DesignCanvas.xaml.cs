@@ -184,13 +184,26 @@ public partial class DesignCanvas : UserControl
         var pos = e.GetPosition(InteractionCanvas);
         _dragStart = pos;
 
-        // Finish any active text/cell edit
+        // Finish any active text/cell/field edit
         FinishTextEdit();
         FinishTableCellEdit();
+        FinishFieldFillEdit(commit: true);
 
         // Take keyboard focus so Delete, arrow-key nudging, Ctrl+C/V/Z and tool shortcuts work
         // after clicking the page (Canvas itself is not focusable, so focus never moved here).
         Focus();
+
+        // Fill & Sign: type into / tick form fields, place signatures.
+        if (VM.ActiveTool == DesignTool.Fill)
+        {
+            if (HitTestField(pos) is { } field) FillField(field);
+            return;
+        }
+        if (VM.ActiveTool == DesignTool.Sign)
+        {
+            PlaceSignature(pos);
+            return;
+        }
 
         if (VM.ActiveTool == DesignTool.Select)
         {
@@ -543,6 +556,8 @@ public partial class DesignCanvas : UserControl
         if (hit is TextDesignElement { IsEditing: true }) return; // let the TextBox select the word
         if (hit is TextDesignElement t)
             BeginTextEdit(t);
+        else if (hit is FormFieldDesignElement field)
+            FillField(field);
         else if (hit is TableDesignElement tbl)
         {
             double relX = pos.X - tbl.X;
@@ -807,6 +822,180 @@ public partial class DesignCanvas : UserControl
         InteractionCanvas.Children.Remove(box);
     }
 
+    // ── Fill & Sign ───────────────────────────────────────────────────────────
+
+    // Inline editor over a Text / Memo / ComboBox field while its value is being typed.
+    private Control? _fieldFillEditor;
+    private FormFieldDesignElement? _fillingField;
+
+    /// <summary>Fills a form field the way Live View does: type text, tick a box, pick an option, sign.</summary>
+    private void FillField(FormFieldDesignElement field)
+    {
+        if (VM == null) return;
+        switch (field.FieldKind)
+        {
+            case FormFieldKind.Checkbox:
+            case FormFieldKind.Radio:
+                VM.ToggleField(field);
+                break;
+            case FormFieldKind.Signature:
+                PlaceSignature(new Point(field.X + field.Width / 2, field.Y + field.Height / 2));
+                break;
+            default:
+                BeginFieldFillEdit(field);
+                break;
+        }
+    }
+
+    private void BeginFieldFillEdit(FormFieldDesignElement field)
+    {
+        FinishFieldFillEdit(commit: true);
+        _fillingField = field;
+        var accent = new SolidColorBrush(Color.FromRgb(0x0A, 0x84, 0xFF));
+
+        if (field.FieldKind == FormFieldKind.ComboBox)
+        {
+            var combo = new ComboBox
+            {
+                ItemsSource     = field.Options,
+                IsEditable      = true,
+                Text            = field.Value,
+                Width           = field.Width,
+                Height          = field.Height,
+                FontSize        = Math.Clamp(field.Height * 0.55, 8, 14),
+                BorderBrush     = accent,
+                BorderThickness = new Thickness(1.5),
+            };
+            // Picking an option from the list ends the edit (the initial text matching an
+            // option selects it too, but not while the list is open).
+            bool picked = false;
+            combo.SelectionChanged += (_, _) => { if (combo.IsDropDownOpen) picked = true; };
+            combo.DropDownClosed += (_, _) =>
+            {
+                if (picked) Dispatcher.BeginInvoke(() => { if (_fieldFillEditor == combo) FinishFieldFillEdit(commit: true); });
+            };
+            _fieldFillEditor = combo;
+        }
+        else
+        {
+            bool memo = field.FieldKind == FormFieldKind.Memo;
+            _fieldFillEditor = new TextBox
+            {
+                Text                     = field.Value,
+                AcceptsReturn            = memo,
+                TextWrapping             = memo && field.Wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
+                VerticalContentAlignment = memo ? VerticalAlignment.Top : VerticalAlignment.Center,
+                Width                    = field.Width,
+                Height                   = field.Height,
+                FontSize                 = memo ? 11 : Math.Clamp(field.Height * 0.6, 8, 14),
+                Padding                  = new Thickness(2, 0, 2, 0),
+                Background               = Brushes.White,
+                Foreground               = Brushes.Black,
+                CaretBrush               = Brushes.Black,
+                BorderBrush              = accent,
+                BorderThickness          = new Thickness(1.5),
+            };
+        }
+
+        var editor = _fieldFillEditor;
+        System.Windows.Automation.AutomationProperties.SetName(editor, $"Fill {field.FieldName}");
+        Canvas.SetLeft(editor, field.X);
+        Canvas.SetTop(editor, field.Y);
+        InteractionCanvas.Children.Add(editor);
+
+        editor.LostKeyboardFocus += (_, ke) =>
+        {
+            // The combo's own text box / dropdown taking focus is still "inside" the editor.
+            if (ke.NewFocus is DependencyObject d && (editor == d || editor.IsAncestorOf(d))) return;
+            if (editor is ComboBox { IsDropDownOpen: true }) return;
+            FinishFieldFillEdit(commit: true);
+        };
+        editor.PreviewKeyDown += (_, ke) =>
+        {
+            bool memoEnter = ke.Key == Key.Return && editor is TextBox { AcceptsReturn: true }
+                             && !Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
+            if (ke.Key == Key.Escape) { FinishFieldFillEdit(commit: false); Focus(); ke.Handled = true; }
+            else if (ke.Key == Key.Return && !memoEnter) { FinishFieldFillEdit(commit: true); Focus(); ke.Handled = true; }
+            else if (ke.Key == Key.Tab) { var next = NextField(field, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)); FinishFieldFillEdit(commit: true); if (next != null) FillField(next); ke.Handled = true; }
+        };
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            editor.Focus();
+            if (editor is TextBox tb) tb.SelectAll();
+            else if (editor is ComboBox cb && field.Options.Count > 0) cb.IsDropDownOpen = true;
+        });
+    }
+
+    private void FinishFieldFillEdit(bool commit)
+    {
+        if (_fieldFillEditor == null) return;
+        var editor = _fieldFillEditor;
+        var field = _fillingField;
+        _fieldFillEditor = null;
+        _fillingField = null;
+        InteractionCanvas.Children.Remove(editor);
+
+        if (!commit || field == null || VM == null) return;
+        string value = editor switch
+        {
+            TextBox tb  => tb.Text,
+            ComboBox cb => cb.SelectedItem as string ?? cb.Text ?? string.Empty,
+            _           => field.Value,
+        };
+        VM.SetFieldValue(field, value);
+    }
+
+    /// <summary>Tab / Shift+Tab order: top-to-bottom, then left-to-right, over fillable fields.</summary>
+    private FormFieldDesignElement? NextField(FormFieldDesignElement current, bool backwards)
+    {
+        if (VM == null) return null;
+        var order = VM.Elements.OfType<FormFieldDesignElement>()
+            .Where(f => f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo or FormFieldKind.ComboBox)
+            .OrderBy(f => Math.Round(f.Y / 4)).ThenBy(f => f.X).ToList();
+        int i = order.IndexOf(current);
+        if (i < 0 || order.Count < 2) return null;
+        return order[(i + (backwards ? order.Count - 1 : 1)) % order.Count];
+    }
+
+    /// <summary>
+    /// Places the pending signature (asking for one first if there is none): fitted inside a
+    /// signature field under the click, otherwise centred on the click.
+    /// </summary>
+    private void PlaceSignature(Point pos)
+    {
+        if (VM == null) return;
+        var png = VM.PendingSignature;
+        if (png == null)
+        {
+            var dlg = new Dialogs.SignatureDialog { Owner = Window.GetWindow(this) };
+            if (dlg.ShowDialog() != true || dlg.Result?.ImageBytes is not { } created) return;
+            png = VM.PendingSignature = created;
+        }
+
+        var sigField = HitTestField(pos) is { FieldKind: FormFieldKind.Signature } f ? f : null;
+        var box = sigField != null ? new Rect(sigField.X, sigField.Y, sigField.Width, sigField.Height)
+                                   : new Rect(pos.X, pos.Y, 0, 0);
+        if (VM.CreateSignatureElement(png, box) is not { } elem)
+        {
+            Services.ToastService.Instance.Info("Could not read that signature image.");
+            return;
+        }
+        VM.AddElement(elem);
+        VM.ActiveTool = DesignTool.Select;
+        RefreshSelectionHandles();
+    }
+
+    /// <summary>The topmost form field under the point (ignores images / text drawn over it).</summary>
+    private FormFieldDesignElement? HitTestField(Point pos)
+    {
+        if (VM == null) return null;
+        for (int i = VM.Elements.Count - 1; i >= 0; i--)
+            if (VM.Elements[i] is FormFieldDesignElement f && new Rect(f.X, f.Y, f.Width, f.Height).Contains(pos))
+                return f;
+        return null;
+    }
+
     // ── Hit testing ───────────────────────────────────────────────────────────
 
     private DesignElement? HitTestElement(Point pos)
@@ -997,6 +1186,8 @@ public partial class DesignCanvas : UserControl
             DesignTool.Rectangle or DesignTool.Ellipse or DesignTool.Line or DesignTool.Arrow => Cursors.Cross,
             DesignTool.Image or DesignTool.Table or DesignTool.Checkmark or DesignTool.XMark => Cursors.Cross,
             DesignTool.TextField or DesignTool.Memo or DesignTool.Checkbox or DesignTool.Radio or DesignTool.ComboBox or DesignTool.Signature => Cursors.Cross,
+            DesignTool.Fill      => HitTestField(pos) != null ? Cursors.Hand : Cursors.Arrow,
+            DesignTool.Sign      => Cursors.Pen,
             _ => HitTestElement(pos) != null && !(HitTestElement(pos)?.IsLocked ?? false) ? Cursors.SizeAll : Cursors.Arrow
         };
     }
@@ -1121,6 +1312,8 @@ public partial class DesignCanvas : UserControl
                 Key.B => DesignTool.Table,
                 Key.K => DesignTool.Checkmark,
                 Key.X => DesignTool.XMark,
+                Key.F => DesignTool.Fill,
+                Key.S => DesignTool.Sign,
                 _     => null
             };
             if (tool.HasValue) { VM.ActiveTool = tool.Value; e.Handled = true; }

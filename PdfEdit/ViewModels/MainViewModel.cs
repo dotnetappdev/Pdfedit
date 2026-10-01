@@ -1195,8 +1195,13 @@ public partial class MainViewModel : INotifyPropertyChanged
         ImportDataCommand = new AsyncRelayCommand(ImportDataAsync, () => HasDocument);
         SetToolCommand = new RelayCommand(p =>
         {
-            if (p is ActiveTool t) ActiveTool = t;
-            else if (p is string s && Enum.TryParse<ActiveTool>(s, out var st)) ActiveTool = st;
+            ActiveTool? tool = p is ActiveTool t ? t
+                             : p is string s && Enum.TryParse<ActiveTool>(s, out var st) ? st : null;
+            if (tool is not { } chosen) return;
+            // Fill & Sign tools work on the Design canvas too; anything else needs Live View.
+            if (IsDesignMode && SelectFillSignToolInDesign(chosen)) return;
+            if (IsDesignMode) IsDesignMode = false;
+            ActiveTool = chosen;
         });
         FlattenAndSaveCommand = new AsyncRelayCommand(FlattenAndSaveAsync, () => HasDocument);
         RotatePageCWCommand = new RelayCommand(() => RotatePage(+90), () => HasDocument);
@@ -1746,6 +1751,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private async Task SaveAsync()
     {
+        if (IsDesignMode) SyncDesignFieldsToLive(); // fields filled / signed on the Design canvas
         if (_currentFilePath == null) { await SaveAsAsync(); return; }
 
         var tmp = _currentFilePath + ".tmp";
@@ -1787,6 +1793,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private async Task SaveAsAsync()
     {
+        if (IsDesignMode) SyncDesignFieldsToLive(); // fields filled / signed on the Design canvas
         var dlg = new SaveFileDialog
         {
             Title = "Save PDF As",
@@ -1831,6 +1838,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private async Task FlattenAndSaveAsync()
     {
+        if (IsDesignMode) SyncDesignFieldsToLive(); // fields filled / signed on the Design canvas
         var dlg = new SaveFileDialog
         {
             Title = "Save Flattened PDF",
@@ -3745,14 +3753,106 @@ public partial class MainViewModel : INotifyPropertyChanged
         el.SourceFieldName == null ? null
         : AllFields.FirstOrDefault(f => f.Name == el.SourceFieldName && f.WidgetIndex == el.SourceWidgetIndex && f.PageNumber == el.SourcePageNumber);
 
+    private string LiveFieldValue(FormFieldInfo f) =>
+        FieldValues.TryGetValue(f.Name, out var v) ? v : f.Value;
+
+    // Signatures the Design canvas shows for its source page, so ones deleted in Design are
+    // removed from Live View too (and ones placed in Live View appear in Design).
+    private readonly HashSet<PlacedSignature> _designSignatures = new();
+
+    /// <summary>Live → Design: signatures placed, moved or removed in Live View since the last sync.</summary>
+    private void SyncLiveSignaturesToDesign(int pageIndex, double pageH)
+    {
+        var onPage = PlacedSignatures.Where(s => s.PageNumber == pageIndex + 1).ToList();
+        var elements = DesignCanvas.Elements.OfType<ImageDesignElement>().Where(e => e.SignatureBytes != null).ToList();
+
+        foreach (var el in elements)
+        {
+            if (el.LinkedSignature is not { } sig) continue;
+            if (!onPage.Contains(sig) && _designSignatures.Contains(sig))
+            {
+                DesignCanvas.Elements.Remove(el);   // removed in Live View
+                continue;
+            }
+            el.X = sig.Left; el.Y = pageH - sig.Bottom - sig.Height;
+            el.Width = sig.Width; el.Height = sig.Height;
+        }
+        foreach (var sig in onPage.Where(s => elements.All(e => e.LinkedSignature != s)))
+        {
+            var el = DesignCanvas.CreateSignatureElement(sig.ImageBytes,
+                new Rect(sig.Left, pageH - sig.Bottom - sig.Height, sig.Width, sig.Height));
+            if (el == null) continue;
+            el.X = sig.Left; el.Y = pageH - sig.Bottom - sig.Height;
+            el.Width = sig.Width; el.Height = sig.Height;
+            el.LinkedSignature = sig;
+            el.ZOrder = DesignCanvas.Elements.Count;
+            DesignCanvas.Elements.Add(el);
+        }
+        _designSignatures.Clear();
+        _designSignatures.UnionWith(onPage);
+    }
+
+    /// <summary>Design → Live: signatures placed, moved or deleted on the Design canvas.</summary>
+    private void SyncDesignSignaturesToLive(int pageIndex, double pageH)
+    {
+        var current = new HashSet<PlacedSignature>();
+        foreach (var el in DesignCanvas.Elements.OfType<ImageDesignElement>().Where(e => e.SignatureBytes != null))
+        {
+            // A copy / paste of a signature shares its link: give the copy its own Live signature.
+            if (el.LinkedSignature is not { } sig || current.Contains(sig) || !PlacedSignatures.Contains(sig)
+                && !_designSignatures.Contains(sig))
+            {
+                sig = new PlacedSignature { PageNumber = pageIndex + 1, ImageBytes = el.SignatureBytes! };
+                el.LinkedSignature = sig;
+            }
+            sig.Left = Math.Round(el.X, 2);
+            sig.Bottom = Math.Round(pageH - el.Y - el.Height, 2);
+            sig.Width = Math.Round(el.Width, 2);
+            sig.Height = Math.Round(el.Height, 2);
+            if (!PlacedSignatures.Contains(sig)) PlacedSignatures.Add(sig);
+            current.Add(sig);
+        }
+        foreach (var gone in _designSignatures.Where(s => !current.Contains(s)).ToList())
+            PlacedSignatures.Remove(gone);   // deleted in Design
+        _designSignatures.Clear();
+        _designSignatures.UnionWith(current);
+    }
+
+    /// <summary>
+    /// Picks the Design-canvas equivalent of a Live View Fill &amp; Sign tool. Returns false when
+    /// the tool has none (the caller then switches to Live View).
+    /// </summary>
+    public bool SelectFillSignToolInDesign(ActiveTool tool)
+    {
+        DesignTool? designTool = tool switch
+        {
+            ActiveTool.Select or ActiveTool.TextFill or ActiveTool.CheckboxToggle => DesignTool.Fill,
+            ActiveTool.AddText   => DesignTool.Text,
+            ActiveTool.Checkmark => DesignTool.Checkmark,
+            ActiveTool.XMark     => DesignTool.XMark,
+            ActiveTool.Signature => DesignTool.Sign,
+            ActiveTool.DrawFreehand => DesignTool.Pen,
+            _ => null,
+        };
+        if (designTool is not { } dt) return false;
+        if (dt == DesignTool.Sign && _pendingLibrarySignature != null)
+            DesignCanvas.PendingSignature = _pendingLibrarySignature;
+        DesignCanvas.ActiveTool = dt;
+        return true;
+    }
+
     /// <summary>Live → Design: fields moved or edited in Live View since the import.</summary>
     private void SyncLiveFieldsToDesign()
     {
         if (_document == null || _designSourceKey is not { } key) return;
         double pageH = _document.PageSizes[key.Page].Height;
+        SyncLiveSignaturesToDesign(key.Page, pageH);
         foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
         {
             if (FindSourceField(el) is not { } f) continue;
+            string value = LiveFieldValue(f);
+            if (el.ExportValue != f.ExportValue) el.ExportValue = f.ExportValue;
+            if (el.Value != value) el.Value = value;
             double y = pageH - f.Bottom - f.Height;
             if (Math.Abs(el.X - f.Left) > 0.01) el.X = f.Left;
             if (Math.Abs(el.Y - y) > 0.01) el.Y = y;
@@ -3792,7 +3892,12 @@ public partial class MainViewModel : INotifyPropertyChanged
                 foreach (var w in AllFields.Where(x => x.Name == f.Name)) w.IsRequired = el.Required;
                 ModifiedFieldNames.Add(f.Name);
             }
+            // Filled in on the Design canvas (Fill & Sign).
+            if (el.Value != LiveFieldValue(f)
+                && !(f.FieldType is FieldType.Checkbox or FieldType.RadioButton && !el.HasValue && LiveFieldValue(f) is "" or "Off"))
+                UpdateFieldValue(f.Name, el.Value);
         }
+        SyncDesignSignaturesToLive(key.Page, pageH);
         if (moves.Count > 0) SetFieldBoundsBatch(moves, "Updated from Design");
         else PageChanged?.Invoke();
     }
@@ -3828,6 +3933,18 @@ public partial class MainViewModel : INotifyPropertyChanged
             catch { /* backdrop is best-effort; the editable elements still import */ }
 
             foreach (var e in elements) DesignCanvas.Elements.Add(e);
+
+            // Carry the filled-in values and placed signatures over, so the page can be
+            // filled and signed in Design as well as in Live View.
+            foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
+            {
+                if (FindSourceField(el) is not { } f) continue;
+                el.ExportValue = f.ExportValue;
+                el.Value = LiveFieldValue(f);
+            }
+            _designSignatures.Clear();
+            SyncLiveSignaturesToDesign(_currentPageIndex, pageHeight);
+
             _designSourceKey = (_currentFilePath, _currentPageIndex);
             DesignCanvas.SelectedElement = null;
             DesignCanvas.PageSize = Models.DesignPageSize.Custom;

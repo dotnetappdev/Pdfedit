@@ -918,7 +918,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         X = f.X, Y = f.Y, Width = f.Width, Height = f.Height, ZOrder = f.ZOrder, Opacity = f.Opacity,
         FieldName = f.FieldName, Label = f.Label, LabelPosition = f.LabelPosition,
         LabelOffset = f.LabelOffset, Required = f.Required, Wrap = f.Wrap, OptionsCsv = f.OptionsCsv,
-        SourceFieldName = f.SourceFieldName, SourceWidgetIndex = f.SourceWidgetIndex, SourcePageNumber = f.SourcePageNumber
+        SourceFieldName = f.SourceFieldName, SourceWidgetIndex = f.SourceWidgetIndex, SourcePageNumber = f.SourcePageNumber,
+        ExportValue = f.ExportValue, Value = f.Value
     };
 
     private static ShapeDesignElement CloneShape(ShapeDesignElement sh) => new(sh.ElementType)
@@ -932,7 +933,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     private static ImageDesignElement CloneImage(ImageDesignElement im) => new()
     {
         X = im.X, Y = im.Y, Width = im.Width, Height = im.Height, ZOrder = im.ZOrder, Opacity = im.Opacity,
-        Bitmap = im.Bitmap, FilePath = im.FilePath
+        Bitmap = im.Bitmap, FilePath = im.FilePath,
+        SignatureBytes = im.SignatureBytes, LinkedSignature = im.LinkedSignature
     };
 
     private static FreehandDesignElement CloneFreehand(FreehandDesignElement f) => new()
@@ -1040,6 +1042,94 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _                       => (180.0, 24.0)
         };
         return CreateFormFieldElement(kind, x, y, w, h);
+    }
+
+    // ── Fill & Sign ───────────────────────────────────────────────────────────
+
+    private byte[]? _pendingSignature;
+    /// <summary>The signature (PNG bytes) the Sign tool places on the next click.</summary>
+    public byte[]? PendingSignature
+    {
+        get => _pendingSignature;
+        set { _pendingSignature = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>Sets a form field's filled-in value as one undo step.</summary>
+    public void SetFieldValue(FormFieldDesignElement field, string value)
+    {
+        if (field.Value == value) return;
+        SaveUndo();
+        if (field.FieldKind == FormFieldKind.Radio)
+        {
+            // A radio group shares one value: selecting this button deselects its siblings.
+            foreach (var r in Elements.OfType<FormFieldDesignElement>()
+                         .Where(r => r.FieldKind == FormFieldKind.Radio && IsSameField(r, field)))
+                r.Value = value;
+        }
+        else
+        {
+            foreach (var f in Elements.OfType<FormFieldDesignElement>().Where(f => IsSameField(f, field)))
+                f.Value = value;
+        }
+        OnPropertyChanged(nameof(CanUndo));
+    }
+
+    private static bool IsSameField(FormFieldDesignElement a, FormFieldDesignElement b) =>
+        ReferenceEquals(a, b)
+        || (a.SourceFieldName != null ? a.SourceFieldName == b.SourceFieldName
+                                      : b.SourceFieldName == null && a.FieldName == b.FieldName);
+
+    /// <summary>Ticks / unticks a checkbox, or selects a radio button.</summary>
+    public void ToggleField(FormFieldDesignElement field)
+    {
+        if (field.FieldKind == FormFieldKind.Radio)
+            SetFieldValue(field, field.ExportValue);
+        else if (field.FieldKind == FormFieldKind.Checkbox)
+            SetFieldValue(field, field.IsOn ? "Off" : field.ExportValue);
+    }
+
+    /// <summary>
+    /// A signature image fitted inside <paramref name="box"/> (keeping its aspect ratio), or
+    /// centred on <paramref name="box"/>'s top-left at a default size when the box is empty.
+    /// </summary>
+    public ImageDesignElement? CreateSignatureElement(byte[] png, Rect box)
+    {
+        BitmapSource bmp;
+        try
+        {
+            using var ms = new System.IO.MemoryStream(png);
+            var bi = new BitmapImage();
+            bi.BeginInit();
+            bi.StreamSource = ms;
+            bi.CacheOption = BitmapCacheOption.OnLoad;
+            bi.EndInit();
+            bi.Freeze();
+            bmp = bi;
+        }
+        catch { return null; }
+
+        double aspect = bmp.PixelHeight > 0 ? (double)bmp.PixelWidth / bmp.PixelHeight : 3;
+        double w, h, x, y;
+        if (box.Width > 4 && box.Height > 4)
+        {
+            // Fit inside the signature field.
+            w = box.Width; h = w / aspect;
+            if (h > box.Height) { h = box.Height; w = h * aspect; }
+            x = box.X + (box.Width - w) / 2;
+            y = box.Y + (box.Height - h) / 2;
+        }
+        else
+        {
+            h = 50; w = h * aspect;
+            if (w > 200) { w = 200; h = w / aspect; }
+            x = box.X - w / 2;
+            y = box.Y - h / 2;
+        }
+        return new ImageDesignElement
+        {
+            X = x, Y = y, Width = w, Height = h,
+            Bitmap = bmp, SignatureBytes = png,
+        };
     }
 
     public ShapeDesignElement CreateShapeElement(DesignElementType type, double x, double y, double w, double h)

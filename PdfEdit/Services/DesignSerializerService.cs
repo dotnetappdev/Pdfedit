@@ -120,6 +120,10 @@ public static class DesignSerializerService
         public bool    Required         { get; set; }
         public bool    Wrap             { get; set; } = true;
         public string? OptionsCsv       { get; set; }
+        public string? Value            { get; set; }
+        public string? ExportValue      { get; set; }
+        // Fill & Sign signature image (base64 PNG)
+        public string? Signature        { get; set; }
     }
 
     private class PointDto { public double X { get; set; } public double Y { get; set; } }
@@ -160,6 +164,8 @@ public static class DesignSerializerService
                 dto.Required      = f.Required;
                 dto.Wrap          = f.Wrap;
                 dto.OptionsCsv    = f.OptionsCsv;
+                dto.Value         = f.Value;
+                dto.ExportValue   = f.ExportValue;
                 break;
 
             case ShapeDesignElement s:
@@ -176,6 +182,7 @@ public static class DesignSerializerService
             case ImageDesignElement im:
                 dto.Type     = "image";
                 dto.FilePath = im.FilePath;
+                if (im.SignatureBytes != null) dto.Signature = Convert.ToBase64String(im.SignatureBytes);
                 break;
 
             case FreehandDesignElement fh:
@@ -227,7 +234,9 @@ public static class DesignSerializerService
                 LabelOffset   = dto.LabelOffset,
                 Required      = dto.Required,
                 Wrap          = dto.Wrap,
-                OptionsCsv    = dto.OptionsCsv ?? ""
+                OptionsCsv    = dto.OptionsCsv ?? "",
+                ExportValue   = dto.ExportValue ?? "Yes",
+                Value         = dto.Value ?? ""
             },
 
         "shape" when Enum.TryParse<DesignElementType>(dto.ShapeType, out var st) =>
@@ -242,6 +251,8 @@ public static class DesignSerializerService
                 FlipX            = dto.FlipX,
                 FlipY            = dto.FlipY
             },
+
+        "image" when dto.Signature != null => LoadSignature(dto),
 
         "image" => new ImageDesignElement
         {
@@ -281,6 +292,29 @@ public static class DesignSerializerService
         if (dto.Cells != null)
             tb.Cells = dto.Cells.Select(r => r.ToList()).ToList();
         return tb;
+    }
+
+    private static DesignElement LoadSignature(ElementDto dto)
+    {
+        var png = Convert.FromBase64String(dto.Signature!);
+        System.Windows.Media.Imaging.BitmapImage? bmp = null;
+        try
+        {
+            using var ms = new MemoryStream(png);
+            bmp = new System.Windows.Media.Imaging.BitmapImage();
+            bmp.BeginInit();
+            bmp.StreamSource = ms;
+            bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+        }
+        catch { bmp = null; }
+        return new ImageDesignElement
+        {
+            X = dto.X, Y = dto.Y, Width = dto.W, Height = dto.H,
+            Opacity = dto.Opacity, IsLocked = dto.IsLocked,
+            Bitmap = bmp, SignatureBytes = png,
+        };
     }
 
     private static System.Windows.Media.Imaging.BitmapImage? LoadBitmapSafe(string? path)

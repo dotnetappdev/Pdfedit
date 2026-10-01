@@ -196,6 +196,32 @@ public partial class ToolboxPanel : UserControl
         }
     }
 
+    // Design-Canvas Sign: same signature popup as Live View, anchored to the Design button
+    // (Click, not Checked: clicking the already-selected Sign button reopens the popup.)
+    private void DesignSign_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM is not MainViewModel vm) return;
+        vm.IsDesignMode = true;
+        vm.DesignCanvas.ActiveTool = DesignTool.Sign;
+        SigPopup.PlacementTarget = DesignSignBtn;
+        SigPopup.IsOpen = true;
+    }
+
+    /// <summary>Arms the signature for placement in whichever view is showing.</summary>
+    private void UseSignature(MainViewModel vm, byte[] png)
+    {
+        if (vm.IsDesignMode)
+        {
+            vm.DesignCanvas.PendingSignature = png;
+            vm.DesignCanvas.ActiveTool = DesignTool.Sign;
+        }
+        else
+        {
+            vm.PendingLibrarySignature = png;
+            vm.ActiveTool = ActiveTool.Signature;
+        }
+    }
+
     // ── Annotation sub-type popup (image 2 style) ─────────────────────────────
 
     private void AnnotBtn_Click(object sender, RoutedEventArgs e)
@@ -229,6 +255,7 @@ public partial class ToolboxPanel : UserControl
 
     private void SignBtn_Click(object sender, RoutedEventArgs e)
     {
+        SigPopup.PlacementTarget = SignBtn;
         SigPopup.IsOpen = !SigPopup.IsOpen;
     }
 
@@ -343,10 +370,10 @@ public partial class ToolboxPanel : UserControl
             SigPopup.IsOpen = false;
             if (VM is MainViewModel vm)
             {
-                vm.IsDesignMode = false;
-                vm.PendingLibrarySignature = sig.ImageBytes;
-                vm.ActiveTool = ActiveTool.Signature;
-                ToastService.Instance.Info($"'{sig.Name}' selected — click the page to place.");
+                UseSignature(vm, sig.ImageBytes);
+                ToastService.Instance.Info(vm.IsDesignMode
+                    ? $"'{sig.Name}' selected — click a signature field or the page to place."
+                    : $"'{sig.Name}' selected — click the page to place.");
             }
         };
 
@@ -364,8 +391,7 @@ public partial class ToolboxPanel : UserControl
         var dlg = new SignatureDialog { Owner = Window.GetWindow(this) };
         if (dlg.ShowDialog() == true && dlg.Result?.ImageBytes != null && VM is MainViewModel vm)
         {
-            vm.PendingLibrarySignature = dlg.Result.ImageBytes;
-            vm.ActiveTool = ActiveTool.Signature;
+            UseSignature(vm, dlg.Result.ImageBytes);
             ToastService.Instance.Info("Signature created — click the page to place.");
         }
     }
@@ -380,8 +406,7 @@ public partial class ToolboxPanel : UserControl
         };
         if (dlg.ShowDialog() == true && dlg.Result?.ImageBytes != null && VM is MainViewModel vm)
         {
-            vm.PendingLibrarySignature = dlg.Result.ImageBytes;
-            vm.ActiveTool = ActiveTool.Signature;
+            UseSignature(vm, dlg.Result.ImageBytes);
             ToastService.Instance.Info("Initials created — click the page to place.");
         }
     }
@@ -411,9 +436,6 @@ public partial class ToolboxPanel : UserControl
     {
         var dlg = new SignatureDialog { Owner = Window.GetWindow(this) };
         if (dlg.ShowDialog() == true && dlg.Result?.ImageBytes != null && VM is MainViewModel vm)
-        {
-            vm.PendingLibrarySignature = dlg.Result.ImageBytes;
-            vm.ActiveTool = ActiveTool.Signature;
-        }
+            UseSignature(vm, dlg.Result.ImageBytes);
     }
 }
