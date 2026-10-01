@@ -144,9 +144,10 @@
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Left}"/>
 
                 <!-- Field box — default: Acrobat light-blue text field -->
+                <!-- Same look as Live View's fillable fields (Acrobat "Highlight Existing Fields") -->
                 <Border x:Name="FieldBox" Grid.Column="1"
-                        BorderBrush="#5B9BD5" BorderThickness="1"
-                        Background="#E8F0FE" CornerRadius="2" MinHeight="18" ClipToBounds="True">
+                        BorderBrush="#AA0050C8" BorderThickness="1"
+                        Background="#E1E9FF" MinHeight="8" ClipToBounds="True">
                     <Grid>
                         <!-- Text / Memo: italic label hint (always shown for these kinds) -->
                         <TextBlock x:Name="TextHint"
@@ -160,34 +161,33 @@
                         <TextBlock x:Name="ValueText"
                                    Text="{Binding Value}"
                                    Foreground="Black"
-                                   Margin="4,0" Padding="0,1,0,0"
+                                   FontSize="{Binding ValueFontSize}"
+                                   TextAlignment="{Binding TextAlign}"
+                                   Margin="3,0" Padding="0,1,0,0"
                                    VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"
                                    Visibility="Collapsed"/>
 
-                        <!-- Checkbox: small bordered square centered in the field area -->
-                        <Border x:Name="CheckboxSquare"
-                                Width="13" Height="13"
-                                BorderBrush="#444" BorderThickness="1.5"
-                                Background="White" CornerRadius="1"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="Collapsed">
-                            <TextBlock x:Name="CheckGlyph" Text="✓" FontSize="11" FontWeight="Bold"
-                                       Foreground="Black" Margin="0,-3,0,0"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Visibility="Collapsed"/>
-                        </Border>
+                        <!-- Checkbox: square scaled to the field (like Live View), ✓ when ticked -->
+                        <Viewbox x:Name="CheckboxSquare" Margin="2" Visibility="Collapsed">
+                            <Border Width="13" Height="13"
+                                    BorderBrush="#444" BorderThickness="1.2"
+                                    Background="White" CornerRadius="1">
+                                <TextBlock x:Name="CheckGlyph" Text="✓" FontSize="11" FontWeight="Bold"
+                                           Foreground="Black" Margin="0,-2,0,0"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </Border>
+                        </Viewbox>
 
-                        <!-- Radio: small circle centered -->
-                        <Ellipse x:Name="RadioCircle"
-                                 Width="13" Height="13"
-                                 Stroke="#444" StrokeThickness="1.5" Fill="White"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                 Visibility="Collapsed"/>
-                        <Ellipse x:Name="RadioDot"
-                                 Width="7" Height="7" Fill="Black"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                 Visibility="Collapsed"/>
+                        <!-- Radio: circle scaled to the field, dot when selected -->
+                        <Viewbox x:Name="RadioCircle" Margin="2" Visibility="Collapsed">
+                            <Grid Width="13" Height="13">
+                                <Ellipse Stroke="#444" StrokeThickness="1.2" Fill="White"/>
+                                <Ellipse x:Name="RadioDot" Width="6" Height="6" Fill="Black"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                        </Viewbox>
 
                         <!-- ComboBox: label text on left + dropdown glyph on right -->
                         <Grid x:Name="ComboContent" Visibility="Collapsed">
@@ -197,7 +197,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="ComboLabel" Grid.Column="0"
                                        Text="{Binding Label}"
-                                       Foreground="#777" FontStyle="Italic" FontSize="11"
+                                       Foreground="#777" FontStyle="Italic" FontSize="{Binding ValueFontSize}"
                                        Margin="4,0" VerticalAlignment="Center"/>
                             <Border Grid.Column="1"
                                     BorderBrush="#AAA" BorderThickness="1,0,0,0"
@@ -241,13 +241,9 @@
                     <Setter TargetName="TextHint" Property="Visibility" Value="Visible"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding FieldKind}" Value="Checkbox">
-                    <Setter TargetName="FieldBox"        Property="Background"  Value="#F8F8F8"/>
-                    <Setter TargetName="FieldBox"        Property="BorderBrush" Value="#888"/>
                     <Setter TargetName="CheckboxSquare"  Property="Visibility"  Value="Visible"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding FieldKind}" Value="Radio">
-                    <Setter TargetName="FieldBox"    Property="Background"  Value="#F8F8F8"/>
-                    <Setter TargetName="FieldBox"    Property="BorderBrush" Value="#888"/>
                     <Setter TargetName="RadioCircle" Property="Visibility"  Value="Visible"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding FieldKind}" Value="ComboBox">
@@ -258,6 +254,16 @@
                     <Setter TargetName="FieldBox"   Property="BorderThickness" Value="0"/>
                     <Setter TargetName="SigContent" Property="Visibility"      Value="Visible"/>
                 </DataTrigger>
+
+                <!-- Fields of the open PDF look like they do in Live View: an empty box, no hint -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsImported}" Value="True"/>
+                        <Condition Binding="{Binding HasValue}" Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="TextHint"   Property="Visibility" Value="Collapsed"/>
+                    <Setter TargetName="ComboLabel" Property="Text"       Value=""/>
+                </MultiDataTrigger>
 
                 <!-- Filled in (Fill & Sign): show the value instead of the hint -->
                 <MultiDataTrigger>

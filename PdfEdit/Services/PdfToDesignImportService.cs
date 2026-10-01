@@ -99,6 +99,13 @@ public static class PdfToDesignImportService
                 LabelPosition = FieldLabelPosition.None,
                 Required = f.IsRequired,
                 OptionsCsv = string.Join(", ", f.Options),
+                FontSizePt = f.FontSize,
+                TextAlign = f.Alignment switch
+                {
+                    FieldAlignment.Center => System.Windows.TextAlignment.Center,
+                    FieldAlignment.Right  => System.Windows.TextAlignment.Right,
+                    _                     => System.Windows.TextAlignment.Left,
+                },
                 SourceFieldName = f.Name,
                 SourceWidgetIndex = f.WidgetIndex,
                 SourcePageNumber = f.PageNumber,

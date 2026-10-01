@@ -183,6 +183,7 @@ public partial class DesignCanvas : UserControl
 
         var pos = e.GetPosition(InteractionCanvas);
         _dragStart = pos;
+        _clickToFill = null;
 
         // Finish any active text/cell/field edit
         FinishTextEdit();
@@ -235,6 +236,8 @@ public partial class DesignCanvas : UserControl
                         BeginTextEdit(clickedText);
                         return;
                     }
+                    // Like Live View / Acrobat: a click (no drag) in a form field fills it.
+                    _clickToFill = hit as FormFieldDesignElement;
                     if (!hit.IsLocked)
                     {
                         VM.BeginInteractiveEdit();
@@ -420,7 +423,24 @@ public partial class DesignCanvas : UserControl
         {
             InteractionCanvas.ReleaseMouseCapture();
             _dragMode = DragMode.None;
+            var moved = _dragElement;
             _dragElement = null;
+            if (_clickToFill is { } clicked && (pos - _dragStart).Length < ClickSlop)
+            {
+                // Just a click: put the field back exactly (sub-slop jitter) and fill it.
+                if (moved != null) { moved.X = _elemOrigin.X; moved.Y = _elemOrigin.Y; RefreshSelectionHandles(); }
+                _clickToFill = null;
+                FillField(clicked);
+            }
+            _clickToFill = null;
+            return;
+        }
+
+        if (_clickToFill is { } lockedField)
+        {
+            // Locked fields can't move but can still be filled.
+            _clickToFill = null;
+            if ((pos - _dragStart).Length < ClickSlop) FillField(lockedField);
             return;
         }
 
@@ -556,8 +576,6 @@ public partial class DesignCanvas : UserControl
         if (hit is TextDesignElement { IsEditing: true }) return; // let the TextBox select the word
         if (hit is TextDesignElement t)
             BeginTextEdit(t);
-        else if (hit is FormFieldDesignElement field)
-            FillField(field);
         else if (hit is TableDesignElement tbl)
         {
             double relX = pos.X - tbl.X;
@@ -824,6 +842,10 @@ public partial class DesignCanvas : UserControl
 
     // ── Fill & Sign ───────────────────────────────────────────────────────────
 
+    // A mouse-down on a form field with Select: filled on mouse-up unless it became a drag.
+    private FormFieldDesignElement? _clickToFill;
+    private const double ClickSlop = 3;
+
     // Inline editor over a Text / Memo / ComboBox field while its value is being typed.
     private Control? _fieldFillEditor;
     private FormFieldDesignElement? _fillingField;
@@ -885,9 +907,10 @@ public partial class DesignCanvas : UserControl
                 AcceptsReturn            = memo,
                 TextWrapping             = memo && field.Wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
                 VerticalContentAlignment = memo ? VerticalAlignment.Top : VerticalAlignment.Center,
+                TextAlignment            = field.TextAlign,
                 Width                    = field.Width,
                 Height                   = field.Height,
-                FontSize                 = memo ? 11 : Math.Clamp(field.Height * 0.6, 8, 14),
+                FontSize                 = field.ValueFontSize,
                 Padding                  = new Thickness(2, 0, 2, 0),
                 Background               = Brushes.White,
                 Foreground               = Brushes.Black,
@@ -1188,7 +1211,14 @@ public partial class DesignCanvas : UserControl
             DesignTool.TextField or DesignTool.Memo or DesignTool.Checkbox or DesignTool.Radio or DesignTool.ComboBox or DesignTool.Signature => Cursors.Cross,
             DesignTool.Fill      => HitTestField(pos) != null ? Cursors.Hand : Cursors.Arrow,
             DesignTool.Sign      => Cursors.Pen,
-            _ => HitTestElement(pos) != null && !(HitTestElement(pos)?.IsLocked ?? false) ? Cursors.SizeAll : Cursors.Arrow
+            _ => HitTestElement(pos) switch
+            {
+                // Like Live View: I-beam over text fields, hand over boxes / buttons (drag still moves).
+                FormFieldDesignElement { FieldKind: FormFieldKind.Text or FormFieldKind.Memo } => Cursors.IBeam,
+                FormFieldDesignElement => Cursors.Hand,
+                { IsLocked: false } => Cursors.SizeAll,
+                _ => Cursors.Arrow,
+            }
         };
     }
 

@@ -961,6 +961,9 @@ public partial class PdfViewerControl : UserControl
             Cursor = Cursors.IBeam,
             FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize
                      : field.FontSize > 0 ? field.FontSize * Scale
+                     // Auto size like Acrobat: 12 pt for multi-line fields (60% of a 90 pt
+                     // memo box was unreadably large), 60% of the height for one line.
+                     : field.IsMultiline ? 12 * Scale
                      : Math.Max(8, (vertical ? w : h) * 0.6),
             VerticalContentAlignment = VerticalAlignment.Center,
             TextAlignment = ToTextAlignment(field.Alignment),

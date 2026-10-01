@@ -104,7 +104,14 @@ public class FormFieldDesignElement : DesignElement
     public override DesignElementType ElementType => DesignElementType.FormField;
     public FormFieldKind FieldKind => _kind;
 
-    public FormFieldDesignElement(FormFieldKind kind) => _kind = kind;
+    public FormFieldDesignElement(FormFieldKind kind)
+    {
+        _kind = kind;
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Height)) OnPropertyChanged(nameof(ValueFontSize));
+        };
+    }
 
     public string FieldName { get => _fieldName; set { _fieldName = value; OnPropertyChanged(); } }
     public string Label { get => _label; set { _label = value; OnPropertyChanged(); } }
@@ -154,6 +161,30 @@ public class FormFieldDesignElement : DesignElement
     }
 
     public bool HasValue => _value.Length > 0;
+
+    // ── Text appearance of the filled-in value (matches Live View) ────────────
+    private double _fontSizePt;
+    private TextAlignment _textAlign = TextAlignment.Left;
+
+    /// <summary>The field's own font size in points (PDF /DA); 0 = auto.</summary>
+    public double FontSizePt
+    {
+        get => _fontSizePt;
+        set { _fontSizePt = Math.Max(0, value); OnPropertyChanged(); OnPropertyChanged(nameof(ValueFontSize)); }
+    }
+
+    public TextAlignment TextAlign { get => _textAlign; set { _textAlign = value; OnPropertyChanged(); } }
+
+    /// <summary>
+    /// Font size the value is shown and typed in: the field's own size, otherwise auto like
+    /// Acrobat (60% of the box height for one line, 12 pt for multi-line fields).
+    /// </summary>
+    public double ValueFontSize => _fontSizePt > 0 ? _fontSizePt
+        : _kind == FormFieldKind.Memo ? 12
+        : Math.Max(8, Height * 0.6);
+
+    /// <summary>Stands for a field of the open PDF (shown like Live View: no caption hint).</summary>
+    public bool IsImported => SourceFieldName != null;
 
     /// <summary>Checkbox ticked / radio button selected.</summary>
     public bool IsOn => _value.Length > 0 && (_value == _exportValue

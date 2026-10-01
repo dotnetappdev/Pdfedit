@@ -166,6 +166,8 @@ public static class DesignSerializerService
                 dto.OptionsCsv    = f.OptionsCsv;
                 dto.Value         = f.Value;
                 dto.ExportValue   = f.ExportValue;
+                dto.FontSize      = f.FontSizePt;
+                dto.Alignment     = f.TextAlign.ToString();
                 break;
 
             case ShapeDesignElement s:
@@ -236,6 +238,8 @@ public static class DesignSerializerService
                 Wrap          = dto.Wrap,
                 OptionsCsv    = dto.OptionsCsv ?? "",
                 ExportValue   = dto.ExportValue ?? "Yes",
+                FontSizePt    = dto.FontSize,
+                TextAlign     = Enum.TryParse<System.Windows.TextAlignment>(dto.Alignment, out var fa) ? fa : System.Windows.TextAlignment.Left,
                 Value         = dto.Value ?? ""
             },
 
