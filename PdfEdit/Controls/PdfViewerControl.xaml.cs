@@ -241,7 +241,7 @@ public partial class PdfViewerControl : UserControl
         switch (e.PropertyName)
         {
             case nameof(MainViewModel.CurrentFontSize):
-                _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale / RendererFactory.PointsToDips;
+                _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale;
                 _focusedAnnotation.FontSize = _vm.CurrentFontSize;
                 break;
             case nameof(MainViewModel.CurrentFontFamily):
@@ -1503,6 +1503,7 @@ public partial class PdfViewerControl : UserControl
         _polyPreview = null; _polyLabel = null; _polyPts.Clear();
         _shapeResizeGrip = null;
         _replacePreview = null;
+        _selectionOutline = null;
 
         if (_vm?.Document == null) return;
         int pageNum = _vm.CurrentPageIndex + 1;
@@ -1700,7 +1701,7 @@ public partial class PdfViewerControl : UserControl
     private void ApplyAnnotationFormatting(FreeTextAnnotation ann, TextBox tb)
     {
         // True page scale at every zoom, like the rendered page underneath
-        double displayFontSize = ann.FontSize * Scale / RendererFactory.PointsToDips;
+        double displayFontSize = ann.FontSize * Scale;
         tb.FontSize = Math.Max(1, displayFontSize);
         tb.FontFamily = new FontFamily(ann.FontFamily);
         tb.FontWeight = ann.IsBold ? FontWeights.Bold : FontWeights.Normal;
@@ -2029,6 +2030,13 @@ public partial class PdfViewerControl : UserControl
             CaptureMouse();
             Cursor = Cursors.SizeAll;
             return;
+        }
+
+        // A click on the bare page drops the shape / drawing selection.
+        if (tool == ActiveTool.Select && _vm.SelectedGraphic != null)
+        {
+            _vm.SelectedGraphic = null;
+            HideSelectionOutline();
         }
 
         // Select / Fill on a flat form (boxes drawn on the page, no fillable fields): clicking in
@@ -3143,7 +3151,7 @@ public partial class PdfViewerControl : UserControl
         {
             Width = dispW, Height = dispH,
             Text = label,
-            FontSize = Math.Max(8, 18 * Scale / RendererFactory.PointsToDips),
+            FontSize = Math.Max(8, 18 * Scale),
             FontWeight = FontWeights.Bold,
             FontFamily = new FontFamily("Arial"),
             Foreground = new SolidColorBrush(c),
@@ -3515,7 +3523,7 @@ public partial class PdfViewerControl : UserControl
             {
                 X1 = x1c, Y1 = y1c, X2 = x2c, Y2 = y2c,
                 Stroke = strokeBrush,
-                StrokeThickness = shape.LineWidth,
+                StrokeThickness = Math.Max(0.5, shape.LineWidth * Scale),
                 StrokeEndLineCap = PenLineCap.Triangle,
             };
             line.Tag = shape;
@@ -3523,7 +3531,7 @@ public partial class PdfViewerControl : UserControl
             line.ToolTip = "Arrow — drag with Select to move, right-click for properties";
             line.Opacity = shape.Opacity;
             line.ContextMenu = BuildShapeMenu(shape, line);
-            MakeDraggable(line, (dx, dy) => MoveShape(shape, dx, dy));
+            MakeDraggable(line, (dx, dy) => MoveShape(shape, dx, dy), shape);
             visual = line;
         }
         else
@@ -3533,8 +3541,8 @@ public partial class PdfViewerControl : UserControl
             double width  = (shape.X2 - shape.X1) * Scale;
             double height = (shape.Y2 - shape.Y1) * Scale;
             System.Windows.Shapes.Shape sh = shape.Kind == Models.ShapeKind.Ellipse
-                ? new System.Windows.Shapes.Ellipse { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth }
-                : new Rectangle { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = shape.LineWidth };
+                ? new System.Windows.Shapes.Ellipse { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = Math.Max(0.5, shape.LineWidth * Scale) }
+                : new Rectangle { Width = width, Height = height, Fill = fillBrush, Stroke = strokeBrush, StrokeThickness = Math.Max(0.5, shape.LineWidth * Scale) };
             Canvas.SetLeft(sh, left);
             Canvas.SetTop(sh,  top);
             sh.Tag = shape;
@@ -3543,11 +3551,13 @@ public partial class PdfViewerControl : UserControl
             sh.Opacity = shape.Opacity;
             sh.ContextMenu = BuildShapeMenu(shape, sh);
             AttachShapeResize(shape, sh, pageH);
-            MakeDraggable(sh, (dx, dy) => MoveShape(shape, dx, dy));
+            MakeDraggable(sh, (dx, dy) => MoveShape(shape, dx, dy), shape);
             visual = sh;
         }
 
         AnnotationCanvas.Children.Add(visual);
+        if (ReferenceEquals(_vm?.SelectedGraphic, shape) && visual is FrameworkElement selFe)
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => ShowSelectionOutline(selFe));
     }
 
     private void PlaceCalloutVisual(Models.ShapeAnnotation shape, double pageH)
@@ -3580,7 +3590,7 @@ public partial class PdfViewerControl : UserControl
             Height          = height,
             Fill            = fillBrush,
             Stroke          = strokeBrush,
-            StrokeThickness = shape.LineWidth,
+            StrokeThickness = Math.Max(0.5, shape.LineWidth * Scale),
             RadiusX         = 3,
             RadiusY         = 3,
         };
@@ -3613,7 +3623,7 @@ public partial class PdfViewerControl : UserControl
             },
             Fill            = fillBrush,
             Stroke          = strokeBrush,
-            StrokeThickness = shape.LineWidth,
+            StrokeThickness = Math.Max(0.5, shape.LineWidth * Scale),
         };
         cv.Children.Add(pointer);
 
@@ -3623,7 +3633,7 @@ public partial class PdfViewerControl : UserControl
         cv.MouseRightButtonDown += (s2, e2) => { ctx.IsOpen = true; e2.Handled = true; };
         AttachShapeResize(shape, cv, pageH);
         cv.Background = Brushes.Transparent;   // grab anywhere in the callout's box
-        MakeDraggable(cv, (dx, dy) => MoveShape(shape, dx, dy));
+        MakeDraggable(cv, (dx, dy) => MoveShape(shape, dx, dy), shape);
 
         AnnotationCanvas.Children.Add(cv);
     }

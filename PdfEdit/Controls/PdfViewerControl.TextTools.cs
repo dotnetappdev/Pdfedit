@@ -33,7 +33,7 @@ public partial class PdfViewerControl
     private Slider? _spacingSlider;
 
     /// <summary>Display size factor for fonts and spacing (matches ApplyAnnotationFormatting).</summary>
-    private double FontDisplayScale => Scale / RendererFactory.PointsToDips;
+    private double FontDisplayScale => Scale;   // points → screen DIPs at this zoom (true page size)
 
     private static bool IsQuarterTurn(double angle)
     {

@@ -78,6 +78,7 @@ public partial class MainWindow : RibbonWindow
             vm.GoToPageRequested += FocusPageNumberBox;
             // Prepare Form toolbar → bring the Fields panel to the front.
             vm.CommentsPanelRequested += () => ShowDockPane("comments");
+            vm.PropertiesPanelRequested += () => ShowDockPane("properties");
             vm.FieldsPanelRequested += () =>
             {
                 var fields = DockManager.Layout.Descendents().OfType<AvalonDock.Layout.LayoutAnchorable>()

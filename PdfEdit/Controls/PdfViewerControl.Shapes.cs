@@ -114,7 +114,7 @@ public partial class PdfViewerControl
     {
         Point ToCanvas(double x, double y) => new(x * Scale, (pageH - y) * Scale);
         var stroke = new SolidColorBrush(ParseColor(shape.StrokeColor));
-        double sw = Math.Max(0.5, shape.LineWidth * Scale / RendererFactory.PointsToDips);
+        double sw = Math.Max(0.5, shape.LineWidth * Scale);
         FrameworkElement visual;
 
         switch (shape.Kind)
@@ -129,7 +129,7 @@ public partial class PdfViewerControl
             case ShapeKind.Cloud:
             {
                 var r = new Rect(ToCanvas(shape.X1, shape.Y2), ToCanvas(shape.X2, shape.Y1));
-                visual = new Path { Data = CloudGeometry(r, Math.Max(8, 14 * Scale / RendererFactory.PointsToDips)),
+                visual = new Path { Data = CloudGeometry(r, Math.Max(8, 14 * Scale)),
                                     Stroke = stroke, StrokeThickness = sw, Fill = ShapeFill(shape) };
                 break;
             }
@@ -155,9 +155,11 @@ public partial class PdfViewerControl
             ? $"{shape.Kind}: {MeasureLabel(shape)} — drag with Select to move, right-click for properties"
             : $"{shape.Kind} — drag with Select to move, right-click for properties";
         visual.ContextMenu = BuildShapeMenu(shape, visual);
-        MakeDraggable(visual, (dx, dy) => MoveShape(shape, dx, dy));
+        MakeDraggable(visual, (dx, dy) => MoveShape(shape, dx, dy), shape);
         if (shape.IsBoxShape) AttachShapeResize(shape, visual, pageH);
         AnnotationCanvas.Children.Add(visual);
+        if (ReferenceEquals(_vm?.SelectedGraphic, shape))
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => ShowSelectionOutline(visual));
         return true;
     }
 
@@ -218,6 +220,16 @@ public partial class PdfViewerControl
     private ContextMenu BuildShapeMenu(ShapeAnnotation shape, UIElement visual)
     {
         var menu = new ContextMenu();
+        var properties = new MenuItem { Header = "Properties…", FontWeight = FontWeights.SemiBold };
+        properties.Click += (_, _) =>
+        {
+            if (_vm == null) return;
+            _vm.SelectedGraphic = shape;
+            if (visual is FrameworkElement fe) ShowSelectionOutline(fe);
+            _vm.ShowPropertiesPanel();
+        };
+        menu.Items.Add(properties);
+        menu.Items.Add(new Separator());
 
         void Edit(string what, Action<ShapeAnnotation> change)
         {
@@ -390,7 +402,7 @@ public partial class PdfViewerControl
             _polyPreview = new Polyline
             {
                 Stroke = new SolidColorBrush(color),
-                StrokeThickness = Math.Max(1, (_vm?.CurrentStrokeWidth ?? 2) * Scale / RendererFactory.PointsToDips),
+                StrokeThickness = Math.Max(1, (_vm?.CurrentStrokeWidth ?? 2) * Scale),
                 StrokeDashArray = new DoubleCollection { 4, 2 },
                 IsHitTestVisible = false,
             };

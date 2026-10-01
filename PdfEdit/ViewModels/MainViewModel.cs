@@ -523,6 +523,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             NotifySelectedAnnotationProperties();
             if (value != null && _selectedField != null) SelectedField = null;
+            if (value != null && _selectedGraphic != null) SelectedGraphic = null;
             if (value != null)
             {
                 _updatingFromAnnotation = true;
@@ -1716,6 +1717,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             StickyNotes.Clear();
             ShapeAnnotations.Clear();
             TextEditMarks.Clear();
+            SelectedGraphic = null;
             _undoService.Clear();
             Bookmarks.Clear();
             Attachments.Clear();
@@ -3942,6 +3944,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (_document == null || _designSourceKey is not { } key) return;
         double pageH = _document.PageSizes[key.Page].Height;
         SyncLiveSignaturesToDesign(key.Page, pageH);
+        SyncLiveAnnotationsToDesign(key.Page, pageH);
         foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
         {
             if (FindSourceField(el) is not { } f) continue;
@@ -3964,6 +3967,9 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (_document == null || _currentFilePath == null || _designSourceKey is not { } key || key.Path != _currentFilePath) return;
         if (key.Page < 0 || key.Page >= _document.PageSizes.Count) return;
         double pageH = _document.PageSizes[key.Page].Height;
+
+        // Fields drawn in Design become real form fields (the document reloads afterwards).
+        CreateDesignFieldsInPdf(key.Page, pageH);
 
         var moves = new List<(FormFieldInfo, FieldBounds)>();
         foreach (var el in DesignCanvas.Elements.OfType<FormFieldDesignElement>())
@@ -3992,6 +3998,9 @@ public partial class MainViewModel : INotifyPropertyChanged
                 && !(f.FieldType is FieldType.Checkbox or FieldType.RadioButton && !el.HasValue && LiveFieldValue(f) is "" or "Off"))
                 UpdateFieldValue(f.Name, el.Value);
         }
+        // Shapes, text, marks, drawings and pictures added in Design (before signatures: pictures
+        // are placed like signature images).
+        SyncDesignAnnotationsToLive(key.Page, pageH);
         SyncDesignSignaturesToLive(key.Page, pageH);
         if (moves.Count > 0) SetFieldBoundsBatch(moves, "Updated from Design");
         else PageChanged?.Invoke();
@@ -4021,7 +4030,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                     DesignCanvas.Elements.Add(new Models.ImageDesignElement
                     {
                         X = 0, Y = 0, Width = pageWidth, Height = pageHeight,
-                        Bitmap = artwork, IsLocked = true, ZOrder = -1
+                        Bitmap = artwork, IsLocked = true, IsFromPage = true, ZOrder = -1
                     });
                 }
             }
@@ -4039,6 +4048,8 @@ public partial class MainViewModel : INotifyPropertyChanged
             }
             _designSignatures.Clear();
             SyncLiveSignaturesToDesign(_currentPageIndex, pageHeight);
+            _designLiveIds.Clear();
+            SyncLiveAnnotationsToDesign(_currentPageIndex, pageHeight);
 
             _designSourceKey = (_currentFilePath, _currentPageIndex);
             DesignCanvas.SelectedElement = null;

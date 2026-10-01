@@ -49,6 +49,7 @@ public static class PdfToDesignImportService
                     Width = Math.Max(4, img.W),
                     Height = Math.Max(4, img.H),
                     Bitmap = bmp,
+                    IsFromPage = true,
                     ZOrder = z++
                 });
             }
@@ -68,6 +69,7 @@ public static class PdfToDesignImportService
                     Italic = line.Italic,
                     Color = line.Color,
                     Wrap = false,
+                    IsFromPage = true,
                     ZOrder = z++
                 });
             }

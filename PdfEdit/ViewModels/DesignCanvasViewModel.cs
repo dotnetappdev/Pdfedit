@@ -122,6 +122,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(SelectedIsText));
             OnPropertyChanged(nameof(SelectedIsShape));
+            OnPropertyChanged(nameof(SelectedHasStroke));
             OnPropertyChanged(nameof(SelectedIsTable));
             OnPropertyChanged(nameof(SelectedIsFormField));
             OnPropertyChanged(nameof(SelectedIsTextLike));
@@ -133,6 +134,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     public bool HasSelection    => _selectedElement != null;
     public bool SelectedIsText  => _selectedElement is TextDesignElement;
     public bool SelectedIsShape => _selectedElement is ShapeDesignElement;
+    /// <summary>Shapes and freehand drawings: their colour / thickness show in the Inspector.</summary>
+    public bool SelectedHasStroke => _selectedElement is ShapeDesignElement or FreehandDesignElement;
     public bool SelectedIsTable => _selectedElement is TableDesignElement;
     public bool SelectedIsFormField => _selectedElement is FormFieldDesignElement;
     /// <summary>True when the selection is a text-based component (plain Text, or a Text/Memo field) — used to gate the Wrap toggle.</summary>
@@ -161,6 +164,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _strokeColor = value;
             OnPropertyChanged();
             if (_selectedElement is ShapeDesignElement s) s.StrokeColor = value;
+            else if (_selectedElement is FreehandDesignElement fh) fh.Color = value;   // drawings: pen colour
         }
     }
 
@@ -172,6 +176,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _strokeThickness = value;
             OnPropertyChanged();
             if (_selectedElement is ShapeDesignElement s) s.StrokeThickness = value;
+            else if (_selectedElement is FreehandDesignElement fh) fh.Thickness = value;
         }
     }
 
@@ -891,6 +896,11 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     {
         var clone = CloneElementCore(src);
         clone.IsLocked = src.IsLocked; // undo/redo snapshots must not silently unlock elements
+        // Undo snapshots keep the link to the page / Live View; a pasted copy that shares a LiveId
+        // is given its own annotation by MainViewModel's Design → Live sync.
+        clone.IsFromPage = src.IsFromPage;
+        clone.LiveId = src.LiveId;
+        if (src is FormFieldDesignElement sf && clone is FormFieldDesignElement cf) cf.LabelLiveId = sf.LabelLiveId;
         return clone;
     }
 
@@ -980,6 +990,11 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
             _textBgColor = t.BgColor;      OnPropertyChanged(nameof(TextBgColor));
             _textAlignment = t.Alignment;  OnPropertyChanged(nameof(TextAlignment));
             _wrap       = t.Wrap;         OnPropertyChanged(nameof(Wrap));
+        }
+        else if (_selectedElement is FreehandDesignElement fh)
+        {
+            _strokeColor     = fh.Color;     OnPropertyChanged(nameof(StrokeColor));
+            _strokeThickness = fh.Thickness; OnPropertyChanged(nameof(StrokeThickness));
         }
         else if (_selectedElement is ShapeDesignElement sh)
         {

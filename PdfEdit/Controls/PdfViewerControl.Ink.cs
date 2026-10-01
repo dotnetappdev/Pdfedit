@@ -147,8 +147,14 @@ public partial class PdfViewerControl
             var moved = cur.Points.Select(p => new Point(p.X + dxPt, p.Y + dyPt)).ToList();
             ann.Text = EncodeInk(cur.Color, cur.Width, moved);
             SetInkBounds(ann, moved, cur.Width);
-        });
+        }, ann);
+        var props = new MenuItem { Header = "Properties…" };
+        props.Click += (_, _) => { if (_vm != null) { _vm.SelectedGraphic = ann; ShowSelectionOutline(path); _vm.ShowPropertiesPanel(); } };
+        ctx.Items.Insert(0, props);
+        ctx.Items.Insert(1, new Separator());
         AnnotationCanvas.Children.Add(path);
+        if (ReferenceEquals(_vm?.SelectedGraphic, ann))
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => ShowSelectionOutline(path));
     }
 
     private void RemoveInk(FreeTextAnnotation ann, UIElement visual)
@@ -199,7 +205,7 @@ public partial class PdfViewerControl
     /// With the Select tool, drag <paramref name="visual"/> anywhere on the page. On drop,
     /// <paramref name="applyMove"/> receives the move in PDF points (y up); undo moves it back.
     /// </summary>
-    private void MakeDraggable(FrameworkElement visual, Action<double, double> applyMove)
+    private void MakeDraggable(FrameworkElement visual, Action<double, double> applyMove, object? selectable = null)
     {
         Point start = default;
         bool dragging = false;
@@ -213,6 +219,12 @@ public partial class PdfViewerControl
         visual.MouseLeftButtonDown += (_, e) =>
         {
             if (_vm?.ActiveTool != ActiveTool.Select) return;
+            // Clicking a shape / drawing selects it for the Properties panel (colour, width, fill…).
+            if (selectable != null)
+            {
+                _vm.SelectedGraphic = selectable;
+                ShowSelectionOutline(visual);
+            }
             start = e.GetPosition(AnnotationCanvas);
             dragging = true;
             visual.RenderTransform = shift;
@@ -253,5 +265,43 @@ public partial class PdfViewerControl
     {
         shape.X1 += dxPt; shape.X2 += dxPt;
         shape.Y1 += dyPt; shape.Y2 += dyPt;
+    }
+
+    // ── Selection outline (Live View shapes / drawings) ─────────────────────
+
+    private System.Windows.Shapes.Rectangle? _selectionOutline;
+
+    /// <summary>Dashed box around the selected shape / drawing, like Acrobat's selection.</summary>
+    private void ShowSelectionOutline(FrameworkElement visual)
+    {
+        Rect bounds;
+        try
+        {
+            bounds = VisualTreeHelper.GetDescendantBounds(visual);
+            if (bounds.IsEmpty) bounds = new Rect(visual.RenderSize);
+            bounds = visual.TransformToAncestor(AnnotationCanvas).TransformBounds(bounds);
+        }
+        catch { return; }   // not laid out yet
+        if (_selectionOutline == null || !AnnotationCanvas.Children.Contains(_selectionOutline))
+        {
+            _selectionOutline = new System.Windows.Shapes.Rectangle
+            {
+                Stroke = new SolidColorBrush(Color.FromRgb(0, 120, 215)), StrokeThickness = 1,
+                StrokeDashArray = new DoubleCollection { 4, 3 }, IsHitTestVisible = false,
+            };
+            Panel.SetZIndex(_selectionOutline, 9997);
+            AnnotationCanvas.Children.Add(_selectionOutline);
+        }
+        bounds.Inflate(3, 3);
+        Canvas.SetLeft(_selectionOutline, bounds.X);
+        Canvas.SetTop(_selectionOutline, bounds.Y);
+        _selectionOutline.Width = bounds.Width;
+        _selectionOutline.Height = bounds.Height;
+        _selectionOutline.Visibility = Visibility.Visible;
+    }
+
+    private void HideSelectionOutline()
+    {
+        if (_selectionOutline != null) _selectionOutline.Visibility = Visibility.Collapsed;
     }
 }

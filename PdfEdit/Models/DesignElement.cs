@@ -52,6 +52,18 @@ public abstract class DesignElement : INotifyPropertyChanged
     public double Opacity  { get => _opacity;   set { _opacity   = Math.Clamp(value, 0.0, 1.0); OnPropertyChanged(); } }
     public bool   IsLocked { get => _isLocked;  set { _isLocked  = value; OnPropertyChanged(); } }
 
+    /// <summary>
+    /// Reconstructed from the PDF page's own content (text lines, images, the artwork backdrop) when
+    /// it was imported into Design. Those are the page itself, so they are not added to Live View.
+    /// </summary>
+    public bool IsFromPage { get; set; }
+
+    /// <summary>
+    /// The Live View annotation(s) this element stands for (their CommentInfo ids, comma-separated),
+    /// so switching between Design and Live updates them instead of adding copies.
+    /// </summary>
+    public string? LiveId { get; set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -130,6 +142,8 @@ public class FormFieldDesignElement : DesignElement
     public string? SourceFieldName { get; set; }
     public int SourceWidgetIndex { get; set; } = -1;
     public int SourcePageNumber { get; set; }
+    // Live View text annotation holding this field's caption (a new field with a Left / Right label)
+    public string? LabelLiveId { get; set; }
     public IReadOnlyList<string> Options =>
         _optionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
