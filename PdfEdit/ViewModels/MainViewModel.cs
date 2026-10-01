@@ -822,6 +822,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(ModelDisplayLabel));
             AppSettings.Current.AiModel = value;
+            if (_aiProvider == Services.AiProviderService.LocalProvider) AppSettings.Current.LocalAiModel = value;
             AppSettings.Current.Save();
         }
     }
@@ -835,7 +836,27 @@ public partial class MainViewModel : INotifyPropertyChanged
     public bool IsClaudeConnected => !string.IsNullOrEmpty(AppSettings.Current.ClaudeApiKey);
     public bool IsOpenAiConnected => !string.IsNullOrEmpty(AppSettings.Current.OpenAiApiKey);
 
-    public string ProviderIcon => _aiProvider == "OpenAI" ? "☁" : "✦";
+    public bool IsLocalAiConnected => !string.IsNullOrWhiteSpace(AppSettings.Current.LocalAiEndpoint);
+
+    /// <summary>The key for the selected provider (local servers usually need none).</summary>
+    public string CurrentAiKey => _aiProvider switch
+    {
+        "OpenAI" => AppSettings.Current.OpenAiApiKey,
+        Services.AiProviderService.LocalProvider => AppSettings.Current.LocalAiApiKey,
+        _ => AppSettings.Current.ClaudeApiKey,
+    };
+
+    /// <summary>Ready to send: a cloud provider has its key; Local AI just needs a server address.</summary>
+    public bool IsAiConfigured => _aiProvider == Services.AiProviderService.LocalProvider
+        ? IsLocalAiConnected
+        : !string.IsNullOrWhiteSpace(CurrentAiKey);
+
+    public string ProviderIcon => _aiProvider switch
+    {
+        "OpenAI" => "☁",
+        Services.AiProviderService.LocalProvider => "🖥",
+        _ => "✦",
+    };
 
     public string ModelDisplayLabel
     {
@@ -3114,6 +3135,8 @@ public partial class MainViewModel : INotifyPropertyChanged
             CurrentFontSize = AppSettings.Current.DefaultFontSize;
             CurrentFontColor = AppSettings.Current.DefaultFontColor;
             ForceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
+            RefreshAiModels();   // local AI server / model may have changed
+            OnPropertyChanged(nameof(IsAiConfigured));
             ToastService.Instance.Success("Settings saved.");
         }
     }
@@ -3156,13 +3179,12 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private async Task RunAiFillAsync()
     {
-        var key = _aiProvider == "OpenAI"
-            ? AppSettings.Current.OpenAiApiKey
-            : AppSettings.Current.ClaudeApiKey;
-
-        if (string.IsNullOrWhiteSpace(key))
+        var key = CurrentAiKey;
+        if (!IsAiConfigured)
         {
-            ToastService.Instance.Warning($"No {_aiProvider} API key — set it in Settings → AI.");
+            ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
+                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                : $"No {_aiProvider} API key — set it in Settings → AI.");
             return;
         }
         if (string.IsNullOrWhiteSpace(AiPrompt))
@@ -3210,13 +3232,12 @@ public partial class MainViewModel : INotifyPropertyChanged
         var input = AiChatInput.Trim();
         if (string.IsNullOrEmpty(input)) return;
 
-        var key = _aiProvider == "OpenAI"
-            ? AppSettings.Current.OpenAiApiKey
-            : AppSettings.Current.ClaudeApiKey;
-
-        if (string.IsNullOrWhiteSpace(key))
+        var key = CurrentAiKey;
+        if (!IsAiConfigured)
         {
-            ToastService.Instance.Warning($"No {_aiProvider} API key — add it in Settings → AI.");
+            ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
+                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                : $"No {_aiProvider} API key — add it in Settings → AI.");
             return;
         }
 
@@ -3270,13 +3291,12 @@ public partial class MainViewModel : INotifyPropertyChanged
     // Called by AiChatPanel preset chips and by the new AI commands
     public async Task RunAnalysisPresetAsync(string analysisType, string? overridePrompt = null)
     {
-        var key = _aiProvider == "OpenAI"
-            ? AppSettings.Current.OpenAiApiKey
-            : AppSettings.Current.ClaudeApiKey;
-
-        if (string.IsNullOrWhiteSpace(key))
+        var key = CurrentAiKey;
+        if (!IsAiConfigured)
         {
-            ToastService.Instance.Warning($"No {_aiProvider} API key — add it via the ⚙ icon in the AI panel.");
+            ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
+                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                : $"No {_aiProvider} API key — add it via the ⚙ icon in the AI panel.");
             return;
         }
 
@@ -4312,6 +4332,15 @@ public partial class MainViewModel : INotifyPropertyChanged
         foreach (var p in AppSettings.Current.RecentFiles)
             RecentFileEntries.Add(new RecentFileEntry(p));
         OnPropertyChanged(nameof(HasNoRecentFiles));
+    }
+
+    /// <summary>Re-reads the model list (e.g. after detecting the local server's models).</summary>
+    public void RefreshAiModels()
+    {
+        SyncAiModels();
+        OnPropertyChanged(nameof(AiModel));
+        OnPropertyChanged(nameof(ModelDisplayLabel));
+        OnPropertyChanged(nameof(IsLocalAiConnected));
     }
 
     private void SyncAiModels()

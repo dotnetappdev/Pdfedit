@@ -286,8 +286,56 @@
                                      AutomationProperties.HelpText="Your OpenAI API key from platform.openai.com"/>
 
                         <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
-                                   Margin="0,6,0,0"
+                                   Margin="0,6,0,20"
                                    Text="Get your API key from platform.openai.com"/>
+
+                        <!-- Local AI: free, private, offline -->
+                        <TextBlock Style="{StaticResource SectionHead}" Text="LOCAL AI (FREE · PRIVATE · OFFLINE)"/>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12"
+                                   TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Run form filling, chat and document analysis on this PC with no API costs — nothing leaves the machine. Works with any OpenAI-compatible local server: Ollama, LM Studio, llama.cpp, Jan, GPT4All or LocalAI."/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
+                                   TextWrapping="Wrap" Margin="0,0,0,10"
+                                   Text="Quick start with Ollama: install from ollama.com, then run  ollama pull llama3.2  (or qwen2.5 / mistral / phi3). Then pick Local in the AI panel."/>
+
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Server:" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Button Content="Ollama" Tag="http://localhost:11434/v1" Click="LocalPreset_Click" Padding="8,2" Margin="0,0,4,0" AutomationProperties.Name="Use Ollama default address"/>
+                            <Button Content="LM Studio" Tag="http://localhost:1234/v1" Click="LocalPreset_Click" Padding="8,2" Margin="0,0,4,0" AutomationProperties.Name="Use LM Studio default address"/>
+                            <Button Content="llama.cpp" Tag="http://localhost:8080/v1" Click="LocalPreset_Click" Padding="8,2" Margin="0,0,4,0" AutomationProperties.Name="Use llama.cpp server default address"/>
+                            <Button Content="Jan" Tag="http://localhost:1337/v1" Click="LocalPreset_Click" Padding="8,2" AutomationProperties.Name="Use Jan default address"/>
+                        </StackPanel>
+                        <TextBox x:Name="LocalEndpointBox"
+                                 Background="{DynamicResource InputBgBrush}"
+                                 Foreground="{DynamicResource InputForegroundBrush}"
+                                 BorderBrush="{DynamicResource InputBorderBrush}"
+                                 BorderThickness="1" Padding="6,4" FontSize="13" Height="30"
+                                 AutomationProperties.Name="Local AI server address"
+                                 ToolTip="OpenAI-compatible base URL, e.g. http://localhost:11434/v1"/>
+
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Model:" Margin="0,10,0,4"/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Detect models" Click="DetectLocalModels_Click" Padding="10,2" Margin="6,0,0,0"
+                                    AutomationProperties.Name="Detect local models"/>
+                            <ComboBox x:Name="LocalModelBox" IsEditable="True" Height="30" FontSize="13"
+                                      AutomationProperties.Name="Local AI model"
+                                      ToolTip="The model name as the server knows it, e.g. llama3.2"/>
+                        </DockPanel>
+
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="API key (optional):" Margin="0,10,0,4"/>
+                        <PasswordBox x:Name="LocalKeyBox"
+                                     Background="{DynamicResource InputBgBrush}"
+                                     Foreground="{DynamicResource InputForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}"
+                                     BorderThickness="1" Padding="6,4" FontSize="13" Height="30"
+                                     AutomationProperties.Name="Local AI API key"
+                                     AutomationProperties.HelpText="Only needed if your local server requires one"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Test connection" Click="TestLocalAi_Click" Padding="10,3" AutomationProperties.Name="Test local AI connection"/>
+                            <TextBlock x:Name="LocalStatusText" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12"
+                                       TextWrapping="Wrap" MaxWidth="320" Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

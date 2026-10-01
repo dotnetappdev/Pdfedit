@@ -349,18 +349,19 @@
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="TabBd"
-                                            Background="{DynamicResource AccentBrush}"
+                                            Background="{DynamicResource InputBgBrush}"
                                             CornerRadius="5"
                                             Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="✦" Foreground="White" Margin="0,0,5,0" FontSize="11"/>
-                                            <TextBlock Text="Claude" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TabIco" Text="✦" Foreground="{DynamicResource DimForegroundBrush}" Margin="0,0,5,0" FontSize="11"/>
+                                            <TextBlock x:Name="TabTxt" Text="Claude" Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" FontWeight="SemiBold"/>
                                         </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding AiProvider}" Value="OpenAI">
-                                            <Setter TargetName="TabBd" Property="Background" Value="{DynamicResource InputBgBrush}"/>
-                                            <Setter TargetName="TabBd" Property="TextElement.Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                                        <DataTrigger Binding="{Binding AiProvider}" Value="Claude">
+                                            <Setter TargetName="TabBd" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter TargetName="TabIco" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="TabTxt" Property="Foreground" Value="White"/>
                                         </DataTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -379,16 +380,48 @@
                                             CornerRadius="5"
                                             Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="☁" Margin="0,0,5,0" FontSize="11"
+                                            <TextBlock x:Name="TabIco2" Text="☁" Margin="0,0,5,0" FontSize="11"
                                                        Foreground="{DynamicResource DimForegroundBrush}"/>
-                                            <TextBlock Text="ChatGPT" FontSize="11" FontWeight="SemiBold"
+                                            <TextBlock x:Name="TabTxt2" Text="ChatGPT" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource DimForegroundBrush}"/>
                                         </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <DataTrigger Binding="{Binding AiProvider}" Value="OpenAI">
                                             <Setter TargetName="TabBd2" Property="Background" Value="{DynamicResource AccentBrush}"/>
-                                            <Setter TargetName="TabBd2" Property="TextElement.Foreground" Value="White"/>
+                                            <Setter TargetName="TabIco2" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="TabTxt2" Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <!-- Local AI (Ollama / LM Studio …) — free, private, works offline -->
+                        <Button x:Name="LocalTabBtn"
+                                Tag="Local"
+                                Click="ProviderTab_Click"
+                                Padding="10,4" Margin="4,0,0,0"
+                                FontSize="11" FontWeight="SemiBold"
+                                ToolTip="Local AI — runs on this PC (Ollama, LM Studio…): free and private"
+                                AutomationProperties.Name="Local AI provider tab">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="TabBd3"
+                                            Background="{DynamicResource InputBgBrush}"
+                                            CornerRadius="5"
+                                            Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="TabIco3" Text="🖥" Margin="0,0,5,0" FontSize="11"
+                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                            <TextBlock x:Name="TabTxt3" Text="Local" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding AiProvider}" Value="Local">
+                                            <Setter TargetName="TabBd3" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter TargetName="TabIco3" Property="Foreground" Value="White"/>
+                                            <Setter TargetName="TabTxt3" Property="Foreground" Value="White"/>
                                         </DataTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>

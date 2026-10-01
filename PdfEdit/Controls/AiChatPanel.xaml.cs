@@ -123,11 +123,19 @@ public partial class AiChatPanel : UserControl
     private void RefreshPopupStatus()
     {
         if (_vm == null) return;
-        bool connected = _vm.AiProvider == "OpenAI" ? _vm.IsOpenAiConnected : _vm.IsClaudeConnected;
+        bool local = _vm.AiProvider == AiProviderService.LocalProvider;
+        bool connected = _vm.IsAiConfigured;
         var green = new SolidColorBrush(Color.FromRgb(52, 199, 89));
         var red   = new SolidColorBrush(Color.FromRgb(204, 68, 68));
         PopupStatusDot.Fill  = connected ? green : red;
-        PopupStatusText.Text = connected ? "Connected" : "Not connected — add key in ⚙";
+        PopupStatusText.Text = local
+            ? (connected ? $"Local · {AppSettings.Current.LocalAiEndpoint} · free" : "Set the server in Settings → AI")
+            : connected ? "Connected" : "Not connected — add key in ⚙";
+        if (local && AiProviderService.LocalModels.Count == 0 && connected)
+        {
+            // Fill the model list from the running server the first time Local is opened.
+            _ = DetectLocalModelsAsync();
+        }
     }
 
     private static string ModelShortName(string model) => model switch
@@ -175,6 +183,14 @@ public partial class AiChatPanel : UserControl
             var key = AppSettings.Current.OpenAiApiKey;
             OpenAiKeyHint.Text = MaskKey(key);
         }
+    }
+
+    private async Task DetectLocalModelsAsync()
+    {
+        var models = await AiProviderService.DiscoverLocalModelsAsync(AppSettings.Current.LocalAiEndpoint, AppSettings.Current.LocalAiApiKey);
+        if (models.Count == 0 || _vm == null) return;
+        _vm.RefreshAiModels();
+        RefreshModelList();
     }
 
     private static string MaskKey(string key)

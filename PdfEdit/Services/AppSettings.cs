@@ -42,6 +42,12 @@ public class AppSettings
     public string ClaudeApiKey { get; set; } = string.Empty;
     public string OpenAiApiKey { get; set; } = string.Empty;
     public string AiProvider { get; set; } = "Claude";
+    // Local AI (free, private, no API cost): any OpenAI-compatible server on this machine or the
+    // network — Ollama (http://localhost:11434/v1), LM Studio (http://localhost:1234/v1), llama.cpp
+    // server, Jan, GPT4All, LocalAI…
+    public string LocalAiEndpoint { get; set; } = "http://localhost:11434/v1";
+    public string LocalAiModel { get; set; } = "llama3.2";
+    public string LocalAiApiKey { get; set; } = string.Empty;   // most local servers need none
     public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
 
     // ── Floating toolbox position ────────────────────────────────────────────

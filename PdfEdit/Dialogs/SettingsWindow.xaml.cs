@@ -125,6 +125,10 @@ public partial class SettingsWindow : Window
         // AI
         ApiKeyBox.Password = s.ClaudeApiKey;
         OpenAiKeyBox.Password = s.OpenAiApiKey;
+        LocalEndpointBox.Text = s.LocalAiEndpoint;
+        LocalModelBox.ItemsSource = AiProviderService.LocalModels;
+        LocalModelBox.Text = s.LocalAiModel;
+        LocalKeyBox.Password = s.LocalAiApiKey;
 
         // Accessibility
         HighContrastFocusCb.IsChecked = s.HighContrastFocusIndicators;
@@ -239,12 +243,66 @@ public partial class SettingsWindow : Window
 
         s.ClaudeApiKey = ApiKeyBox.Password;
         s.OpenAiApiKey = OpenAiKeyBox.Password;
+        s.LocalAiEndpoint = LocalEndpointBox.Text.Trim();
+        s.LocalAiModel = LocalModelBox.Text.Trim();
+        s.LocalAiApiKey = LocalKeyBox.Password;
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
         s.DateFormat = GetSelectedDateFormat();
 
         s.Save();
         DialogResult = true;
         Close();
+    }
+
+    // ── Local AI ────────────────────────────────────────────────────────────
+
+    private void LocalPreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string url }) LocalEndpointBox.Text = url;
+    }
+
+    private async void DetectLocalModels_Click(object sender, RoutedEventArgs e)
+    {
+        LocalStatusText.Text = "Looking for models…";
+        var models = await AiProviderService.DiscoverLocalModelsAsync(LocalEndpointBox.Text.Trim(), LocalKeyBox.Password);
+        LocalModelBox.ItemsSource = models;
+        if (models.Count == 0)
+        {
+            LocalStatusText.Text = "No models found — is the server running? (Ollama: run  ollama pull llama3.2)";
+            return;
+        }
+        if (!models.Contains(LocalModelBox.Text)) LocalModelBox.Text = models[0];
+        LocalStatusText.Text = $"Found {models.Count} model(s).";
+    }
+
+    private async void TestLocalAi_Click(object sender, RoutedEventArgs e)
+    {
+        string endpoint = LocalEndpointBox.Text.Trim(), model = LocalModelBox.Text.Trim();
+        LocalStatusText.Text = $"Asking {model}…";
+        var saved = (AppSettings.Current.LocalAiEndpoint, AppSettings.Current.LocalAiModel, AppSettings.Current.LocalAiApiKey);
+        try
+        {
+            // Test with the values typed here (restored afterwards; Save keeps them).
+            AppSettings.Current.LocalAiEndpoint = endpoint;
+            AppSettings.Current.LocalAiModel = model;
+            AppSettings.Current.LocalAiApiKey = LocalKeyBox.Password;
+            var reply = new System.Text.StringBuilder();
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+            await AiProviderService.SendStreamingAsync(
+                new[] { new Models.AiChatMessage { Role = "user", Content = "Reply with just the word: ready" } },
+                AiProviderService.LocalProvider, model, LocalKeyBox.Password, chunk => reply.Append(chunk), cts.Token);
+            LocalStatusText.Text = reply.Length > 0
+                ? $"✓ Working — {model} replied \"{reply.ToString().Trim()[..Math.Min(40, reply.ToString().Trim().Length)]}\""
+                : "Connected, but the model returned nothing.";
+        }
+        catch (Exception ex)
+        {
+            LocalStatusText.Text = "✕ " + ex.Message;
+        }
+        finally
+        {
+            (AppSettings.Current.LocalAiEndpoint, AppSettings.Current.LocalAiModel, AppSettings.Current.LocalAiApiKey) = saved;
+        }
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)

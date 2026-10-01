@@ -11,6 +11,10 @@ namespace PdfEdit.Services;
 public static class AiProviderService
 {
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(120) };
+    // Local models can take minutes on a CPU — give them room.
+    private static readonly HttpClient _localHttp = new() { Timeout = TimeSpan.FromMinutes(15) };
+
+    public const string LocalProvider = "Local";
 
     public static readonly Dictionary<string, string[]> Providers = new()
     {
@@ -25,8 +29,13 @@ public static class AiProviderService
             "gpt-4o-mini",
             "gpt-4o",
             "gpt-3.5-turbo"
-        }
+        },
+        // Filled from the local server (Settings → AI → Detect models); see GetModels.
+        [LocalProvider] = Array.Empty<string>(),
     };
+
+    /// <summary>Models found on the local AI server by the last <see cref="DiscoverLocalModelsAsync"/>.</summary>
+    public static List<string> LocalModels { get; private set; } = new();
 
     public static readonly Dictionary<string, string> ModelDisplayNames = new()
     {
@@ -38,8 +47,68 @@ public static class AiProviderService
         ["gpt-3.5-turbo"]             = "GPT-3.5",
     };
 
-    public static string[] GetModels(string provider) =>
-        Providers.TryGetValue(provider, out var m) ? m : Array.Empty<string>();
+    public static string[] GetModels(string provider)
+    {
+        if (provider == LocalProvider)
+        {
+            var list = LocalModels.ToList();
+            string configured = AppSettings.Current.LocalAiModel;
+            if (!string.IsNullOrWhiteSpace(configured) && !list.Contains(configured)) list.Insert(0, configured);
+            return list.ToArray();
+        }
+        return Providers.TryGetValue(provider, out var m) ? m : Array.Empty<string>();
+    }
+
+    // ── Local AI (OpenAI-compatible server) ──────────────────────────────────
+
+    /// <summary>
+    /// Lists the models a local server offers: OpenAI-style <c>/models</c> (Ollama, LM Studio,
+    /// llama.cpp, Jan, LocalAI), falling back to Ollama's own <c>/api/tags</c>.
+    /// </summary>
+    public static async Task<List<string>> DiscoverLocalModelsAsync(string endpoint, string? apiKey = null, CancellationToken ct = default)
+    {
+        endpoint = endpoint.TrimEnd('/');
+        var found = new List<string>();
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, endpoint + "/models");
+            if (!string.IsNullOrWhiteSpace(apiKey)) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(8));
+            var resp = await _localHttp.SendAsync(req, cts.Token);
+            if (resp.IsSuccessStatusCode && JsonNode.Parse(await resp.Content.ReadAsStringAsync(cts.Token))?["data"] is JsonArray data)
+                found.AddRange(data.Select(d => d?["id"]?.GetValue<string>()).Where(id => !string.IsNullOrEmpty(id))!);
+        }
+        catch { }
+        if (found.Count == 0)
+        {
+            try
+            {
+                // Ollama native API lives at the server root, not under /v1
+                string root = endpoint.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) ? endpoint[..^3] : endpoint;
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(8));
+                var json = await _localHttp.GetStringAsync(root + "/api/tags", cts.Token);
+                if (JsonNode.Parse(json)?["models"] is JsonArray models)
+                    found.AddRange(models.Select(m => m?["name"]?.GetValue<string>()).Where(n => !string.IsNullOrEmpty(n))!);
+            }
+            catch { }
+        }
+        LocalModels = found.Distinct().OrderBy(m => m).ToList();
+        return LocalModels;
+    }
+
+    /// <summary>Sends every request to the selected provider (Claude, OpenAI or the local server).</summary>
+    private static Task RouteAsync(string provider, IEnumerable<AiChatMessage> messages, string model, string apiKey,
+        Action<string> onChunk, CancellationToken ct, string? systemPrompt, int maxTokens = 4096) => provider switch
+    {
+        "OpenAI" => SendOpenAiStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens),
+        LocalProvider => SendOpenAiStreamAsync(messages,
+            string.IsNullOrWhiteSpace(model) ? AppSettings.Current.LocalAiModel : model,
+            AppSettings.Current.LocalAiApiKey, onChunk, ct, systemPrompt, maxTokens,
+            baseUrl: AppSettings.Current.LocalAiEndpoint, local: true),
+        _ => SendClaudeStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens),
+    };
 
     // ── Streaming chat ───────────────────────────────────────────────────────
 
@@ -52,10 +121,7 @@ public static class AiProviderService
         CancellationToken ct = default,
         string? systemPrompt = null)
     {
-        if (provider == "OpenAI")
-            await SendOpenAiStreamAsync(history, model, apiKey, onChunk, ct, systemPrompt);
-        else
-            await SendClaudeStreamAsync(history, model, apiKey, onChunk, ct, systemPrompt);
+        await RouteAsync(provider, history, model, apiKey, onChunk, ct, systemPrompt);
     }
 
     // ── Form fill — now routes to the right provider ─────────────────────────
@@ -84,10 +150,7 @@ public static class AiProviderService
         var messages = new[] { new AiChatMessage { Role = "user", Content = fullPrompt } };
         var sb = new StringBuilder();
 
-        if (provider == "OpenAI")
-            await SendOpenAiStreamAsync(messages, model, apiKey, chunk => sb.Append(chunk), ct, systemPrompt);
-        else
-            await SendClaudeStreamAsync(messages, model, apiKey, chunk => sb.Append(chunk), ct, systemPrompt);
+        await RouteAsync(provider, messages, model, apiKey, chunk => sb.Append(chunk), ct, systemPrompt);
 
         var text = sb.ToString();
         int start = text.IndexOf('{');
@@ -123,10 +186,7 @@ public static class AiProviderService
             "You are an expert document analyst. Format your responses clearly with headers and bullet points where appropriate. " +
             "Be concise, accurate, and focus on actionable insights.";
 
-        if (provider == "OpenAI")
-            await SendOpenAiStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens: 4096);
-        else
-            await SendClaudeStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens: 4096);
+        await RouteAsync(provider, messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens: 4096);
     }
 
     private static string BuildAnalysisPrompt(string analysisType, string docText, IEnumerable<string>? fieldNames)
@@ -263,7 +323,9 @@ public static class AiProviderService
         Action<string> onChunk,
         CancellationToken ct,
         string? systemPrompt = null,
-        int maxTokens = 4096)
+        int maxTokens = 4096,
+        string? baseUrl = null,
+        bool local = false)
     {
         var msgList = history
             .Select(m => (object)new { role = m.Role, content = m.Content })
@@ -273,15 +335,28 @@ public static class AiProviderService
         var messages = msgList.ToArray();
 
         var body = JsonSerializer.Serialize(new { model, stream = true, max_tokens = maxTokens, messages });
-        var req = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        string url = (baseUrl ?? "https://api.openai.com/v1").TrimEnd('/') + "/chat/completions";
+        var req = new HttpRequestMessage(HttpMethod.Post, url);
+        if (!string.IsNullOrWhiteSpace(apiKey))
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         req.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-        var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        HttpResponseMessage resp;
+        try
+        {
+            resp = await (local ? _localHttp : _http).SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+        catch (HttpRequestException ex) when (local)
+        {
+            throw new InvalidOperationException(
+                $"Can't reach the local AI server at {baseUrl}. Start Ollama / LM Studio (or check Settings → AI → Local AI). {ex.Message}");
+        }
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException($"OpenAI API error {(int)resp.StatusCode}: {err}");
+            throw new InvalidOperationException(local
+                ? $"Local AI error {(int)resp.StatusCode} (model \"{model}\"): {err}"
+                : $"OpenAI API error {(int)resp.StatusCode}: {err}");
         }
 
         using var stream = await resp.Content.ReadAsStreamAsync(ct);
