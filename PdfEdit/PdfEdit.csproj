@@ -28,6 +28,8 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <!-- Pdfium render engine (same engine as Chrome/Edge — Adobe-quality rendering) -->
     <PackageReference Include="Docnet.Core" Version="2.6.0" />
+    <!-- TWAIN scanning (MIT) — talks to any TWAIN scanner driver via the TWAIN DSM -->
+    <PackageReference Include="NTwain" Version="3.7.6" />
   </ItemGroup>
 
 </Project>

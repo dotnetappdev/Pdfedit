@@ -77,6 +77,12 @@
                                                 Command="{Binding OpenCommand}"
                                                 AutomationProperties.Name="Open PDF file"/>
 
+                    <Fluent:MenuItem Header="Scan…"
+                                                KeyTip="N"
+                                                Command="{Binding ScanCommand}"
+                                                ToolTip="Scan from a TWAIN or WIA scanner — preview, then make a (searchable) PDF"
+                                                AutomationProperties.Name="Scan from scanner"/>
+
                     <Fluent:MenuItem Header="Save"
                                                 KeyTip="S"
                                                 Command="{Binding SaveCommand}"
@@ -241,6 +247,16 @@
                                    AutomationProperties.HelpText="Opens a file picker to select a PDF">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+
+                    <Fluent:Button Header="Scan"
+                                   Command="{Binding ScanCommand}"
+                                   KeyTip="N"
+                                   ToolTip="Scan from a TWAIN / WIA scanner with preview — make a new PDF or add pages (OCR optional)"
+                                   AutomationProperties.Name="Scan from scanner">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FE;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 

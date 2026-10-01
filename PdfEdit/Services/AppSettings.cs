@@ -48,6 +48,14 @@ public class AppSettings
     public string LocalAiEndpoint { get; set; } = "http://localhost:11434/v1";
     public string LocalAiModel { get; set; } = "llama3.2";
     public string LocalAiApiKey { get; set; } = string.Empty;   // most local servers need none
+
+    // Scan dialog: remembered between scans
+    public string? LastScanner { get; set; }
+    public int ScanDpi { get; set; } = 200;
+    public int ScanColorMode { get; set; }        // 0 colour, 1 grey, 2 black & white
+    public int ScanSource { get; set; }           // 0 flatbed, 1 feeder, 2 duplex
+    public bool ScanOcr { get; set; } = true;
+    public bool ScanShowDriverUi { get; set; }
     public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
 
     // ── Floating toolbox position ────────────────────────────────────────────

@@ -162,6 +162,7 @@ public partial class AllToolsPanel : UserControl
                 Description = "Make scanned pages searchable",
                 Actions = new()
                 {
+                    Run("Scan from scanner (TWAIN / WIA)…", vm.ScanCommand, "Preview, scan from flatbed or feeder, make a searchable PDF"),
                     Run("Recognise text (make searchable)", vm.OcrMakeSearchableCommand, "OCR every scanned page and save a searchable copy"),
                     Run("Recognise text on this page (copy)", vm.OcrCurrentPageCommand),
                     Run("Create PDF from scans / images", vm.CreatePdfFromImagesCommand),

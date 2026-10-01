@@ -19,6 +19,7 @@ public partial class MainViewModel
     public ICommand ExportWordCommand { get; private set; } = null!;
     public ICommand OcrCurrentPageCommand { get; private set; } = null!;
     public ICommand OcrMakeSearchableCommand { get; private set; } = null!;
+    public ICommand ScanCommand { get; private set; } = null!;
     public ICommand RequestSignaturesCommand { get; private set; } = null!;
 
     private const string ImageFilter = "Images (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff";
@@ -31,6 +32,7 @@ public partial class MainViewModel
         ExportWordCommand          = new AsyncRelayCommand(ExportWordAsync, () => HasDocument);
         OcrCurrentPageCommand      = new AsyncRelayCommand(OcrCurrentPageAsync, () => HasDocument);
         OcrMakeSearchableCommand   = new AsyncRelayCommand(OcrMakeSearchableAsync, () => HasDocument);
+        ScanCommand                = new AsyncRelayCommand(ScanAsync);
         RequestSignaturesCommand   = new AsyncRelayCommand(RequestSignaturesAsync, () => HasDocument);
     }
 
@@ -186,6 +188,83 @@ public partial class MainViewModel
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("OCR failed.", ex); }
         finally { IsLoading = false; }
+    }
+
+    /// <summary>
+    /// Scan from a TWAIN / WIA scanner (Scan dialog with preview and the standard controls), then
+    /// make a new PDF or add the pages to the open one — searchable when OCR is ticked.
+    /// </summary>
+    private async Task ScanAsync()
+    {
+        var dlg = new Dialogs.ScanDialog(HasDocument && _currentFilePath != null) { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || dlg.Pages.Count == 0) return;
+        var pages = dlg.Pages.ToList();
+        bool bw = dlg.BlackAndWhite, ocr = dlg.RecogniseText;
+        var output = dlg.Output;
+
+        string? dest = null;
+        if (output == Dialogs.ScanOutput.NewPdf)
+        {
+            dest = AskSavePath("Save scanned PDF", "PDF Files (*.pdf)|*.pdf", $"Scan {DateTime.Now:yyyy-MM-dd HHmm}.pdf");
+            if (dest == null) return;
+        }
+
+        string scanPdf = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"pdfedit-scan-{Guid.NewGuid():N}.pdf");
+        string? ocrPdf = null;
+        try
+        {
+            IsLoading = true;
+            StatusText = $"Making PDF from {pages.Count} scanned page(s)…";
+            PdfToolsService.CreatePdfFromScans(pages, scanPdf, bw);   // WPF encoders: stay on the UI thread
+
+            if (ocr)
+            {
+                if (!OcrService.IsAvailable)
+                    ToastService.Instance.Warning("Windows has no OCR language installed — the scan was saved without searchable text.");
+                else
+                {
+                    var byPage = new Dictionary<int, List<OcrWord>>();
+                    for (int i = 0; i < pages.Count; i++)
+                    {
+                        StatusText = $"OCR: page {i + 1} of {pages.Count}…";
+                        var (w, h) = PdfToolsService.ScanPageSize(pages[i]);
+                        var (_, words) = await OcrService.RecognizeAsync(pages[i].Image, w, h);
+                        byPage[i + 1] = words;
+                    }
+                    ocrPdf = System.IO.Path.ChangeExtension(scanPdf, ".ocr.pdf");
+                    string src = scanPdf, ocrDest = ocrPdf;
+                    await Task.Run(() => PdfToolsService.AddInvisibleTextLayer(src, ocrDest, byPage));
+                }
+            }
+            string result = ocrPdf ?? scanPdf;
+
+            if (output == Dialogs.ScanOutput.NewPdf)
+            {
+                System.IO.File.Copy(result, dest!, overwrite: true);
+                await LoadDocumentAsync(dest!);
+                ToastService.Instance.Success($"Scanned {pages.Count} page(s){(ocrPdf != null ? " — searchable" : "")}.");
+            }
+            else if (_currentFilePath != null && _document != null)
+            {
+                SaveDocumentState();
+                int after = output == Dialogs.ScanOutput.AfterCurrentPage ? _currentPageIndex : _document.PageCount - 1;
+                string cur = _currentFilePath, tmp = cur + ".scan.tmp";
+                await Task.Run(() => _formService.InsertPdfAt(cur, result, tmp, after));
+                System.IO.File.Copy(tmp, cur, overwrite: true);
+                System.IO.File.Delete(tmp);
+                await LoadDocumentAsync(cur);
+                CurrentPageIndex = after + 1;
+                ToastService.Instance.Success($"Added {pages.Count} scanned page(s).");
+            }
+            StatusText = $"Scanned {pages.Count} page(s).";
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not make the PDF from the scan.", ex); }
+        finally
+        {
+            IsLoading = false;
+            foreach (var f in new[] { scanPdf, ocrPdf })
+                if (f != null) try { System.IO.File.Delete(f); } catch { }
+        }
     }
 
     // ── Request e-signatures ──────────────────────────────────────────────────
