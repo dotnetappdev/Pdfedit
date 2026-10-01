@@ -498,6 +498,15 @@ public class PdfFormService
             var pdfAnn = new PdfFreeTextAnnotation(rect, new PdfString(ann.Text));
             pdfAnn.SetContents(ann.Text);
 
+            // ✓ ✕ ● ○ — : give the annotation a drawn (vector) appearance like Acrobat's marks —
+            // the standard fonts have no ✓ / ✕ glyphs, so other viewers showed nothing or a box.
+            if (MarkShapes.FromGlyph(ann.Text) is { } markKind)
+            {
+                pdfAnn.SetNormalAppearance(BuildMarkAppearance(doc, markKind, ann).GetPdfObject());
+                pdfAnn.SetBorder(new PdfArray(new float[] { 0, 0, 0 }));
+                pdfAnn.SetFlags(PdfAnnotation.PRINT);
+            }
+
             if (ann.RotationAngle != 0)
                 pdfAnn.Put(PdfName.Rotate, new PdfNumber((int)((-ann.RotationAngle % 360 + 360) % 360)));
 
@@ -1162,6 +1171,44 @@ public class PdfFormService
         bs.Put(PdfName.W, new PdfNumber(lineWidth));
         bs.Put(PdfName.S, PdfName.S); // Solid
         return bs;
+    }
+
+    /// <summary>Form XObject drawing a Fill &amp; Sign mark (see <see cref="MarkShapes"/>) in its box.</summary>
+    private static PdfFormXObject BuildMarkAppearance(PdfDocument doc, MarkShapes.Kind kind, FreeTextAnnotation ann)
+    {
+        float w = (float)ann.Width, h = (float)ann.Height;
+        var xobj = new PdfFormXObject(new Rectangle(0, 0, w, h));
+        var canvas = new PdfCanvas(xobj, doc);
+        ParseHexColor(ann.FontColor, out float r, out float g, out float b);
+        var color = new DeviceRgb(r, g, b);
+
+        // Unit square → box: centred square, or the full box for the line mark.
+        bool fill = MarkShapes.FillsWidth(kind);
+        float side = Math.Min(w, h);
+        float sx = fill ? w : side, sy = fill ? h : side;
+        float ox = (w - sx) / 2, oy = (h - sy) / 2;
+        float X(double ux) => ox + (float)ux * sx;
+        float Y(double uy) => oy + (1 - (float)uy) * sy;   // unit y runs down, PDF y runs up
+
+        canvas.SaveState()
+              .SetStrokeColor(color).SetFillColor(color)
+              .SetLineWidth((float)MarkShapes.StrokeWidth(kind) * Math.Min(sx, sy))
+              .SetLineCapStyle(PdfCanvasConstants.LineCapStyle.ROUND)
+              .SetLineJoinStyle(PdfCanvasConstants.LineJoinStyle.ROUND);
+        foreach (var stroke in MarkShapes.Strokes(kind))
+        {
+            canvas.MoveTo(X(stroke[0].X), Y(stroke[0].Y));
+            foreach (var pt in stroke.Skip(1)) canvas.LineTo(X(pt.X), Y(pt.Y));
+            canvas.Stroke();
+        }
+        double rad = MarkShapes.Radius(kind);
+        if (rad > 0)
+        {
+            canvas.Circle(X(0.5), Y(0.5), (float)rad * side);
+            if (kind == MarkShapes.Kind.Dot) canvas.Fill(); else canvas.Stroke();
+        }
+        canvas.RestoreState();
+        return xobj;
     }
 
     private static bool ParseHexColor(string hex, out float r, out float g, out float b)

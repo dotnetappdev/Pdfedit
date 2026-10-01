@@ -91,6 +91,11 @@ public static class DesignExportService
 
         switch (elem)
         {
+            case TextDesignElement t when MarkShapes.FromGlyph(t.Text.Trim()) is { } mark:
+                // ✓ ✕ ● ○ — drawn as shapes: the standard PDF fonts have no such glyphs.
+                DrawMark(mark, t.Color, pdfCanvas, x, y, w, h);
+                break;
+
             case TextDesignElement t:
                 DrawText(t, doc, x, y, w, h, pageW, pageH);
                 break;
@@ -246,6 +251,38 @@ public static class DesignExportService
             doc.Add(image);
         }
         catch { /* ignore missing/corrupt images */ }
+    }
+
+    // ── Fill & Sign marks ────────────────────────────────────────────────────
+
+    private static void DrawMark(MarkShapes.Kind kind, System.Windows.Media.Color color, PdfCanvas canvas,
+                                 float x, float y, float w, float h)
+    {
+        bool fill = MarkShapes.FillsWidth(kind);
+        float side = Math.Min(w, h);
+        float sx = fill ? w : side, sy = fill ? h : side;
+        float ox = x + (w - sx) / 2, oy = y + (h - sy) / 2;
+        float X(double ux) => ox + (float)ux * sx;
+        float Y(double uy) => oy + (1 - (float)uy) * sy;
+
+        var c = ToDeviceRgb(color);
+        canvas.SaveState().SetStrokeColor(c).SetFillColor(c)
+              .SetLineWidth((float)MarkShapes.StrokeWidth(kind) * Math.Min(sx, sy))
+              .SetLineCapStyle(PdfCanvasConstants.LineCapStyle.ROUND)
+              .SetLineJoinStyle(PdfCanvasConstants.LineJoinStyle.ROUND);
+        foreach (var stroke in MarkShapes.Strokes(kind))
+        {
+            canvas.MoveTo(X(stroke[0].X), Y(stroke[0].Y));
+            foreach (var pt in stroke.Skip(1)) canvas.LineTo(X(pt.X), Y(pt.Y));
+            canvas.Stroke();
+        }
+        double r = MarkShapes.Radius(kind);
+        if (r > 0)
+        {
+            canvas.Circle(X(0.5), Y(0.5), (float)r * side);
+            if (kind == MarkShapes.Kind.Dot) canvas.Fill(); else canvas.Stroke();
+        }
+        canvas.RestoreState();
     }
 
     // ── Freehand ─────────────────────────────────────────────────────────────

@@ -420,6 +420,7 @@ public partial class PdfViewerControl : UserControl
         string next = MarkGlyphs[(i + 1) % MarkGlyphs.Length];
         _focusedAnnotation.Text = next;
         _focusedAnnotationTb.Text = next;
+        ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb); // redraw the new shape
     }
 
     // Drag grip handlers
@@ -1712,6 +1713,57 @@ public partial class PdfViewerControl : UserControl
         tb.TextDecorations = ann.IsUnderline ? TextDecorations.Underline : null;
         tb.Foreground = ParseBrush(ann.FontColor);
         tb.TextAlignment = ann.TextAlignment;
+
+        // ✓ ✕ ● ○ — are drawn as shapes like Acrobat (not font glyphs): the box keeps the glyph
+        // as its text (for select / drag / swap), hidden, and shows the drawing as its background.
+        if (MarkShapes.FromGlyph(ann.Text) is { } kind)
+        {
+            tb.Background = MarkBrush(kind, ParseColor(ann.FontColor));
+            tb.Foreground = Brushes.Transparent;
+            tb.CaretBrush = Brushes.Transparent;
+            tb.SelectionOpacity = 0;
+        }
+        else if (tb.Background is DrawingBrush)
+        {
+            tb.Background = Brushes.Transparent;
+            tb.SelectionOpacity = 0.4;
+        }
+    }
+
+    /// <summary>The vector drawing of a Fill &amp; Sign mark, scaled to whatever box it fills.</summary>
+    private static Brush MarkBrush(MarkShapes.Kind kind, Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        var pen = new Pen(brush, MarkShapes.StrokeWidth(kind))
+        {
+            StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round,
+        };
+        var group = new DrawingGroup();
+        // Transparent frame so the unit square (not the ink) defines the drawing's bounds.
+        group.Children.Add(new GeometryDrawing(Brushes.Transparent, null, new RectangleGeometry(new Rect(0, 0, 1, 1))));
+        foreach (var stroke in MarkShapes.Strokes(kind))
+        {
+            var fig = new PathFigure { StartPoint = stroke[0], IsClosed = false };
+            fig.Segments.Add(new PolyLineSegment(stroke.Skip(1), isStroked: true));
+            group.Children.Add(new GeometryDrawing(null, pen, new PathGeometry(new[] { fig })));
+        }
+        double r = MarkShapes.Radius(kind);
+        if (r > 0)
+        {
+            var circle = new EllipseGeometry(new Point(0.5, 0.5), r, r);
+            group.Children.Add(kind == MarkShapes.Kind.Dot
+                ? new GeometryDrawing(brush, null, circle)
+                : new GeometryDrawing(null, pen, circle));
+        }
+        group.Freeze();
+        var db = new DrawingBrush(group)
+        {
+            Stretch = MarkShapes.FillsWidth(kind) ? Stretch.Fill : Stretch.Uniform,
+            AlignmentX = AlignmentX.Center,
+            AlignmentY = AlignmentY.Center,
+        };
+        db.Freeze();
+        return db;
     }
 
     // ── Signature overlay ─────────────────────────────────────────────────────
