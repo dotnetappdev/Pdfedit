@@ -213,6 +213,9 @@ public partial class PdfViewerControl : UserControl
             _vm?.UpdateViewerSize(PdfScrollViewer.ViewportWidth, PdfScrollViewer.ViewportHeight);
             _vm?.AutoFitOnLoad();
             RefreshPage();
+            // Flat form: tell the user how to fill it (the boxes are only drawn on the page).
+            if (_vm is { AllFields.Count: 0 })
+                ToastService.Instance.Info("This PDF has no fillable fields — click inside any box to type in it, like Acrobat Fill & Sign.");
         }));
     }
 
@@ -1956,21 +1959,40 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
+        // Select / Fill on a flat form (boxes drawn on the page, no fillable fields): clicking in
+        // a box lets you type in it, like Acrobat. Clicks on real fields never reach here.
+        if (tool is ActiveTool.Select or ActiveTool.TextFill or ActiveTool.CheckboxToggle)
+        {
+            var posOnPage = e.GetPosition(AnnotationCanvas);
+            if (IsOnPage(posOnPage) && TryFillDrawnBox(posOnPage))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (tool is ActiveTool.AddText or ActiveTool.VerticalText or ActiveTool.DateStamp)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
 
             FinalizeAnnotationBox();
+            // Inside a drawn box the text lines up with the box (Acrobat field detection).
+            var snap = tool == ActiveTool.VerticalText ? null : DetectBoxAt(posOnPage);
+            if (snap is { } filled && tool == ActiveTool.AddText && FocusExistingTextIn(filled))
+            {
+                e.Handled = true;
+                return;
+            }
 
             if (tool == ActiveTool.DateStamp)
             {
                 string dateText = DateTime.Now.ToString(AppSettings.Current.DateFormat);
-                PlaceNewAnnotationBox(posOnPage, false, dateText);
+                PlaceNewAnnotationBox(posOnPage, false, dateText, snap);
             }
             else
             {
-                PlaceNewAnnotationBox(posOnPage, tool == ActiveTool.VerticalText, null);
+                PlaceNewAnnotationBox(posOnPage, tool == ActiveTool.VerticalText, null, snap);
             }
             e.Handled = true;
             return;
@@ -1991,7 +2013,8 @@ public partial class PdfViewerControl : UserControl
                 ActiveTool.Line => ("—", "#1A1A1A"),
                 _ => ("○", "#1A1A1A"), // Circle
             };
-            PlaceStampAnnotation(posOnPage, glyph, colour);
+            var square = DetectBoxAt(posOnPage) is { } b && IsCheckBoxSized(b) ? b : (Rect?)null;
+            PlaceStampAnnotation(posOnPage, glyph, colour, square);
             e.Handled = true;
             return;
         }
@@ -2000,7 +2023,7 @@ public partial class PdfViewerControl : UserControl
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
-            PlaceSignatureAtPoint(posOnPage);
+            PlaceSignatureAtPoint(posOnPage, DetectBoxAt(posOnPage));
             e.Handled = true;
             return;
         }
@@ -2906,7 +2929,7 @@ public partial class PdfViewerControl : UserControl
 
     // ── Stamp annotations (Checkmark / XMark) ────────────────────────────────
 
-    private void PlaceStampAnnotation(Point posOnCanvas, string stampText, string colorHex)
+    private void PlaceStampAnnotation(Point posOnCanvas, string stampText, string colorHex, Rect? snapBox = null)
     {
         if (_vm?.Document == null) return;
 
@@ -2915,7 +2938,6 @@ public partial class PdfViewerControl : UserControl
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
         double fontSize = _vm.CurrentFontSize * 2;
-        double displayFontSize = fontSize * Scale / RendererFactory.PointsToDips;
         double defaultW = 32 * Scale;
         double defaultH = 32 * Scale;
 
@@ -2923,6 +2945,16 @@ public partial class PdfViewerControl : UserControl
         double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (defaultH / Scale);
         double pdfW = defaultW / Scale;
         double pdfH = defaultH / Scale;
+
+        // Clicked in a drawn checkbox (flat form): the mark fills that square, centred.
+        if (snapBox is { } box)
+        {
+            pdfX = box.X / Scale;
+            pdfW = box.Width / Scale;
+            pdfH = box.Height / Scale;
+            pdfY = pageHeightPts - box.Y / Scale - pdfH;
+            fontSize = Math.Max(6, pdfH * 0.8);
+        }
 
         var ann = new FreeTextAnnotation
         {
@@ -3044,7 +3076,7 @@ public partial class PdfViewerControl : UserControl
     /// mini toolbar is available while typing and the text can be re-selected, dragged and resized
     /// immediately. An annotation left empty is removed again when it loses focus.
     /// </summary>
-    private void PlaceNewAnnotationBox(Point posOnCanvas, bool vertical, string? prefilledText)
+    private void PlaceNewAnnotationBox(Point posOnCanvas, bool vertical, string? prefilledText, Rect? snapBox = null)
     {
         if (_vm?.Document == null) return;
         int pageNum = _vm.CurrentPageIndex + 1;
@@ -3052,11 +3084,24 @@ public partial class PdfViewerControl : UserControl
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
         // Acrobat places the text baseline roughly at the click; start with a one-line box.
-        double lineH = Math.Max(10, _vm.CurrentFontSize * 1.4);
+        double fontSize = _vm.CurrentFontSize;
+        double lineH = Math.Max(10, fontSize * 1.4);
         double wPt = vertical ? lineH : 60;
         double hPt = vertical ? 100 : lineH;
         double leftPt = posOnCanvas.X / Scale;
         double topPt = posOnCanvas.Y / Scale - (vertical ? 0 : lineH / 2);
+
+        // Clicked inside a drawn box (flat form, like Acrobat's detected fields): line the text
+        // up at the box's left edge, centred vertically, shrinking the font to fit a short box.
+        if (snapBox is { } box && !vertical)
+        {
+            double boxTop = box.Y / Scale, boxH = box.Height / Scale;
+            fontSize = Math.Max(6, Math.Min(fontSize, boxH * 0.7));
+            lineH = Math.Min(boxH, fontSize * 1.4);
+            hPt = lineH;
+            leftPt = box.X / Scale + 2;
+            topPt = boxTop + (boxH - lineH) / 2;
+        }
 
         var ann = new FreeTextAnnotation
         {
@@ -3067,7 +3112,7 @@ public partial class PdfViewerControl : UserControl
             Height = hPt,
             Text = prefilledText ?? string.Empty,
             RotationAngle = vertical ? -90.0 : 0.0,
-            FontSize = _vm.CurrentFontSize,
+            FontSize = fontSize,
             FontFamily = _vm.CurrentFontFamily,
             IsBold = _vm.CurrentFontBold,
             IsItalic = _vm.CurrentFontItalic,
@@ -3141,7 +3186,7 @@ public partial class PdfViewerControl : UserControl
 
     // ── Signature placement ───────────────────────────────────────────────────
 
-    private void PlaceSignatureAtPoint(Point posOnCanvas)
+    private void PlaceSignatureAtPoint(Point posOnCanvas, Rect? snapBox = null)
     {
         if (_vm?.Document == null) return;
 
@@ -3169,6 +3214,26 @@ public partial class PdfViewerControl : UserControl
         double pdfY = pageH - (posOnCanvas.Y / Scale) - (dispH / Scale);
         double pdfW = dispW / Scale;
         double pdfH = dispH / Scale;
+
+        // Clicked in a drawn signature box: fit the signature inside it, keeping its shape.
+        if (snapBox is { } box && !IsCheckBoxSized(box))
+        {
+            double aspect = 200.0 / 60.0;
+            try
+            {
+                using var ms = new System.IO.MemoryStream(bytes);
+                var frame = System.Windows.Media.Imaging.BitmapFrame.Create(ms,
+                    System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation,
+                    System.Windows.Media.Imaging.BitmapCacheOption.None);
+                if (frame.PixelHeight > 0) aspect = (double)frame.PixelWidth / frame.PixelHeight;
+            }
+            catch { }
+            double bw = box.Width / Scale, bh = box.Height / Scale;
+            pdfW = bw; pdfH = bw / aspect;
+            if (pdfH > bh) { pdfH = bh; pdfW = bh * aspect; }
+            pdfX = box.X / Scale + (bw - pdfW) / 2;
+            pdfY = pageH - (box.Y / Scale + (bh + pdfH) / 2);
+        }
 
         var sig = new PlacedSignature
         {
