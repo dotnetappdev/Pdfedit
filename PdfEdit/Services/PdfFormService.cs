@@ -468,7 +468,11 @@ public class PdfFormService
                 var parts = ann.Text.Split(':', 3);
                 if (parts.Length == 3)
                 {
-                    bool colorOk = ParseHexColor(parts[1], out float ir, out float ig, out float ib);
+                    // "#RRGGBB|width" (width in points; older files have just the colour)
+                    var head = parts[1].Split('|');
+                    bool colorOk = ParseHexColor(head[0], out float ir, out float ig, out float ib);
+                    float inkWidth = head.Length > 1 && float.TryParse(head[1], System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out float iw) ? iw : 2f;
                     var inkArr = new PdfArray();
                     var inkPts = new PdfArray();
                     foreach (var ptStr in parts[2].Split(';'))
@@ -489,7 +493,9 @@ public class PdfFormService
                         (float)ann.Width, (float)ann.Height);
                     var inkAnnot = new PdfInkAnnotation(inkRect, inkArr);
                     if (colorOk) inkAnnot.SetColor(new DeviceRgb(ir, ig, ib));
-                    inkAnnot.SetBorderStyle(new PdfDictionary());
+                    var bs = new PdfDictionary();
+                    bs.Put(PdfName.W, new PdfNumber(inkWidth));
+                    inkAnnot.SetBorderStyle(bs);
                     page.AddAnnotation(inkAnnot);
                 }
                 continue;

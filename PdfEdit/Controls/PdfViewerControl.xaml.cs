@@ -128,6 +128,8 @@ public partial class PdfViewerControl : UserControl
         DataContextChanged += OnDataContextChanged;
         MouseWheel += OnMouseWheel;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
+        // Drawing / shape tools must work over form fields and placed text too (they eat the click).
+        PreviewMouseLeftButtonDown += OnDrawToolPreviewMouseDown;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
         MouseMove += OnMouseMove;
         KeyDown += OnKeyDown;
@@ -1512,42 +1514,10 @@ public partial class PdfViewerControl : UserControl
 
     private void PlaceAnnotationVisual(FreeTextAnnotation ann, double pageHeightPts)
     {
-        // Handle ink stroke annotations stored as __INK__:<color>:<pts>
+        // Freehand drawings: stored as __INK__:<color>|<width>:<pts> (see PdfViewerControl.Ink)
         if (ann.Text.StartsWith("__INK__:", StringComparison.Ordinal))
         {
-            var parts = ann.Text.Split(':', 3);
-            if (parts.Length == 3)
-            {
-                var poly = new Polyline
-                {
-                    Stroke = new SolidColorBrush(ParseColor(parts[1])),
-                    StrokeThickness = 2,
-                    StrokeLineJoin = PenLineJoin.Round,
-                    StrokeStartLineCap = PenLineCap.Round,
-                    StrokeEndLineCap = PenLineCap.Round,
-                    IsHitTestVisible = true,
-                    ToolTip = "Ink stroke — right-click to delete"
-                };
-                foreach (var ptStr in parts[2].Split(';'))
-                {
-                    var xy = ptStr.Split(',');
-                    if (xy.Length == 2 &&
-                        double.TryParse(xy[0], System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out double ptX) &&
-                        double.TryParse(xy[1], System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out double ptY))
-                    {
-                        poly.Points.Add(new Point(ptX * Scale, (pageHeightPts - ptY) * Scale));
-                    }
-                }
-                poly.MouseRightButtonDown += (_, re) =>
-                {
-                    _vm?.FreeTextAnnotations.Remove(ann);
-                    AnnotationCanvas.Children.Remove(poly);
-                    re.Handled = true;
-                };
-                AnnotationCanvas.Children.Add(poly);
-            }
+            PlaceInkVisual(ann, pageHeightPts);
             return;
         }
 
@@ -2191,7 +2161,8 @@ public partial class PdfViewerControl : UserControl
             _freehandPolyline = new Polyline
             {
                 Stroke = new SolidColorBrush(ParseColor(_vm?.CurrentDrawingColor ?? "#1A1A1A")),
-                StrokeThickness = _vm?.CurrentStrokeWidth ?? 2.0,
+                // Width is in points, like the saved drawing, so it looks the same at every zoom.
+                StrokeThickness = Math.Max(0.5, (_vm?.CurrentStrokeWidth is > 0 ? _vm.CurrentStrokeWidth : 2.0) * Scale),
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -2467,46 +2438,12 @@ public partial class PdfViewerControl : UserControl
             _isDrawingFreehand = false;
             ReleaseMouseCapture();
 
-            if (_freehandPolyline != null && _freehandPolyline.Points.Count >= 2 && _vm?.Document != null)
+            if (_freehandPolyline != null)
             {
-                // Store the freehand polyline as a FreeTextAnnotation so it saves with the PDF.
-                // The visual representation is kept on AnnotationCanvas; the VM stores it in FreeTextAnnotations
-                // as a special "Ink" annotation type that gets serialized on save.
-                int pageNum = _vm.CurrentPageIndex + 1;
-                if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
-                {
-                    double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                    // Compute bounding box of points
-                    var xs = _freehandPolyline.Points.Select(p => p.X);
-                    var ys = _freehandPolyline.Points.Select(p => p.Y);
-                    double minX = xs.Min(), maxX = xs.Max();
-                    double minY = ys.Min(), maxY = ys.Max();
-
-                    // Encode path as a compact string stored as annotation content
-                    string encodedPts = string.Join(";", _freehandPolyline.Points.Select(p =>
-                        $"{p.X / Scale:F2},{(pageH - p.Y / Scale):F2}"));
-                    string colorHex = _vm.CurrentDrawingColor ?? "#000000";
-
-                    var annot = new Models.FreeTextAnnotation
-                    {
-                        PageNumber = pageNum,
-                        Left       = minX / Scale,
-                        Bottom     = pageH - (maxY / Scale),
-                        Width      = Math.Max((maxX - minX) / Scale, 2),
-                        Height     = Math.Max((maxY - minY) / Scale, 2),
-                        Text       = $"__INK__:{colorHex}:{encodedPts}",
-                        FontSize   = 0,
-                        FontFamily = "Ink",
-                        FontColor  = colorHex,
-                        IsBold     = false, IsItalic = false, IsUnderline = false,
-                    };
-                    _vm.FreeTextAnnotations.Add(annot);
-                    _vm.StatusText = "Ink stroke added.";
-                }
-            }
-            else if (_freehandPolyline != null)
-            {
+                // Replace the live preview with the saved, smoothed, undoable drawing (a click = a dot).
+                var pts = _freehandPolyline.Points.ToList();
                 AnnotationCanvas.Children.Remove(_freehandPolyline);
+                FinishFreehandStroke(pts);
             }
             _freehandPolyline = null;
             _freehandPoints.Clear();
@@ -2739,7 +2676,9 @@ public partial class PdfViewerControl : UserControl
         if (_isDrawingFreehand && _freehandPolyline != null && e.LeftButton == MouseButtonState.Pressed)
         {
             var pos = e.GetPosition(AnnotationCanvas);
-            _freehandPolyline.Points.Add(pos);
+            // Skip sub-pixel jitter so the smoothed stroke stays clean.
+            var last = _freehandPolyline.Points[^1];
+            if ((pos - last).Length >= 1.5) _freehandPolyline.Points.Add(pos);
             return;
         }
 
@@ -3495,6 +3434,7 @@ public partial class PdfViewerControl : UserControl
             delLine.Click += (_, _) => { AnnotationCanvas.Children.Remove(line); _vm?.RemoveShapeAnnotation(shape); };
             ctxLine.Items.Add(delLine);
             line.ContextMenu = ctxLine;
+            MakeDraggable(line, (dx, dy) => MoveShape(shape, dx, dy));
             visual = line;
         }
         else
@@ -3515,6 +3455,7 @@ public partial class PdfViewerControl : UserControl
             del.Click += (_, _) => { AnnotationCanvas.Children.Remove(sh); _vm?.RemoveShapeAnnotation(shape); };
             ctx.Items.Add(del);
             sh.ContextMenu = ctx;
+            MakeDraggable(sh, (dx, dy) => MoveShape(shape, dx, dy));
             visual = sh;
         }
 
@@ -3594,6 +3535,8 @@ public partial class PdfViewerControl : UserControl
         ctx.Items.Add(del);
         cv.ContextMenu = ctx;
         cv.MouseRightButtonDown += (s2, e2) => { ctx.IsOpen = true; e2.Handled = true; };
+        cv.Background = Brushes.Transparent;   // grab anywhere in the callout's box
+        MakeDraggable(cv, (dx, dy) => MoveShape(shape, dx, dy));
 
         AnnotationCanvas.Children.Add(cv);
     }
@@ -3621,9 +3564,10 @@ public partial class PdfViewerControl : UserControl
                         toRemoveUi.Add(sh);
                         toRemoveModel.Add(ann);
                     }
-                    else if (sh is Polyline)
+                    else if (sh.Tag is FreeTextAnnotation ink)
                     {
                         toRemoveUi.Add(sh);
+                        _vm.FreeTextAnnotations.Remove(ink);   // drawings used to come back after a refresh
                     }
                 }
             }
