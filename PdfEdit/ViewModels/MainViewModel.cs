@@ -705,6 +705,19 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    // Colour for Fill & Sign marks picked from the toolbox; null = Acrobat-style defaults
+    // (green ✓, black ✕ ● ○ —).
+    private string? _markColor;
+    public string? MarkColor
+    {
+        get => _markColor;
+        set { _markColor = string.IsNullOrEmpty(value) ? null : value; OnPropertyChanged(); }
+    }
+
+    /// <summary>The colour a ✓ / ✕ / ● / ○ / — mark is placed in.</summary>
+    public string MarkColorFor(ActiveTool mark) =>
+        _markColor ?? (mark == ActiveTool.Checkmark ? "#2E7D32" : "#000000");
+
     public string CurrentFontColor
     {
         get => _currentFontColor;

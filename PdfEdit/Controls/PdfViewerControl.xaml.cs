@@ -761,6 +761,7 @@ public partial class PdfViewerControl : UserControl
     {
         _fieldChromeBorder = null;
         _fieldChromeToday = null;
+        ResetFieldGrips();
         _activeTb = null;
         _activeFieldInfo = null;
         ResetLayoutChrome();
@@ -903,6 +904,10 @@ public partial class PdfViewerControl : UserControl
         Canvas.SetLeft(ctrl, x);
         Canvas.SetTop(ctrl, y);
         FieldOverlayCanvas.Children.Add(ctrl);
+
+        // Fields can be moved / resized right here while filling (hover → ✥ grip), not only in Edit Fields.
+        if (ctrl is FrameworkElement movable)
+            AttachFieldGrips(field, movable, new Rect(x, y, w, h));
 
         // Wire up Adobe-style chrome for every focusable field control
         if (ctrl is TextBox tb)
@@ -2005,14 +2010,16 @@ public partial class PdfViewerControl : UserControl
             if (!IsOnPage(posOnPage)) return;
 
             FinalizeAnnotationBox();
-            (string glyph, string colour) = tool switch
+            string glyph = tool switch
             {
-                ActiveTool.Checkmark => ("✓", "#1A1A1A"),
-                ActiveTool.XMark => ("✕", "#1A1A1A"),
-                ActiveTool.Dot => ("●", "#1A1A1A"),
-                ActiveTool.Line => ("—", "#1A1A1A"),
-                _ => ("○", "#1A1A1A"), // Circle
+                ActiveTool.Checkmark => "✓",
+                ActiveTool.XMark => "✕",
+                ActiveTool.Dot => "●",
+                ActiveTool.Line => "—",
+                _ => "○", // Circle
             };
+            // Green tick, black cross (Acrobat defaults) unless a colour was picked in the toolbox.
+            string colour = _vm.MarkColorFor(tool);
             var square = DetectBoxAt(posOnPage) is { } b && IsCheckBoxSized(b) ? b : (Rect?)null;
             PlaceStampAnnotation(posOnPage, glyph, colour, square);
             e.Handled = true;
@@ -2941,10 +2948,11 @@ public partial class PdfViewerControl : UserControl
         double defaultW = 32 * Scale;
         double defaultH = 32 * Scale;
 
-        double pdfX = posOnCanvas.X / Scale;
-        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (defaultH / Scale);
+        // The mark is centred on the click (it used to hang down-right of the pointer).
         double pdfW = defaultW / Scale;
         double pdfH = defaultH / Scale;
+        double pdfX = posOnCanvas.X / Scale - pdfW / 2;
+        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - pdfH / 2;
 
         // Clicked in a drawn checkbox (flat form): the mark fills that square, centred.
         if (snapBox is { } box)

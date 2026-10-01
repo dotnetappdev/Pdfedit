@@ -63,7 +63,7 @@ public partial class PdfViewerControl
         FinalizeAnnotationBox();
         if (FocusExistingTextIn(box)) return true;
         if (IsCheckBoxSized(box))
-            PlaceStampAnnotation(posOnPage, "✓", "#1A1A1A", box);
+            PlaceStampAnnotation(posOnPage, "✓", _vm!.MarkColorFor(ActiveTool.Checkmark), box);
         else
             PlaceNewAnnotationBox(posOnPage, false, null, box);
         return true;

@@ -196,8 +196,14 @@ public partial class ToolboxPanel : UserControl
     {
         foreach (var popup in RailPopups()) popup.IsOpen = false;
         if (sender is not Button { Tag: string hex } || VM is not MainViewModel vm) return;
-        vm.CurrentFontColor = hex;     // text and marks (also recolours the selected text)
+        if (hex.Length == 0)
+        {
+            vm.MarkColor = null;       // "Default": green ✓, black ✕
+            return;
+        }
+        vm.CurrentFontColor = hex;     // text (also recolours the selected text)
         vm.CurrentDrawingColor = hex;  // freehand pen and shapes
+        vm.MarkColor = hex;            // ✓ ✕ ● ○ — marks
     }
 
     // ── More tools ────────────────────────────────────────────────────────────

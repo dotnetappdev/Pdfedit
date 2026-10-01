@@ -319,11 +319,15 @@ public partial class DesignCanvas : UserControl
         {
             bool isCheck = VM.ActiveTool == DesignTool.Checkmark;
             var elem = VM.CreateTextElement(pos.X, pos.Y);
-            elem.Text      = isCheck ? "✓" : "✗";
+            elem.Text      = isCheck ? "✓" : "✕";
             elem.FontSize  = 24;
-            elem.Color     = Color.FromRgb(0, 0, 0);
+            // Acrobat Fill & Sign defaults: green tick, black cross.
+            elem.Color     = isCheck ? Color.FromRgb(0x2E, 0x7D, 0x32) : Color.FromRgb(0, 0, 0);
+            elem.Alignment = TextAlignment.Center;
             elem.Width     = 40;
             elem.Height    = 40;
+            elem.X         = pos.X - 20;   // centred on the click
+            elem.Y         = pos.Y - 20;
             VM.AddElement(elem);
             _dragMode = DragMode.None;
             InteractionCanvas.ReleaseMouseCapture();
