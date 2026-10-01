@@ -23,7 +23,9 @@ namespace PdfEdit.Controls;
 public partial class PdfViewerControl
 {
     private static bool IsDrawTool(ActiveTool t) => t is ActiveTool.DrawFreehand or ActiveTool.DrawRectangle
-        or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout or ActiveTool.Eraser;
+        or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout or ActiveTool.Eraser
+        or ActiveTool.DrawLine or ActiveTool.DrawCloud or ActiveTool.DrawPolygon or ActiveTool.DrawPolyline
+        or ActiveTool.MeasureDistance or ActiveTool.MeasurePerimeter or ActiveTool.MeasureArea;
 
     /// <summary>
     /// Fields and annotation text boxes handle their own mouse-down, so a drawing tool never got it

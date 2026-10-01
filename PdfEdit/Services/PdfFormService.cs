@@ -617,10 +617,19 @@ public class PdfFormService
                 double width  = Math.Abs(x2 - x1);
                 double height = Math.Abs(y2 - y1);
 
+                // Acrobat drawing / measuring kinds (line, cloud, polygon, polyline, distance, perimeter, area)
+                if (BuildExtendedShapeAnnotation(shape, strokeColor, lw) is { } extra)
+                {
+                    if (shape.Opacity < 0.999) extra.Put(PdfName.CA, new PdfNumber(shape.Opacity));
+                    page.AddAnnotation(extra);
+                    continue;
+                }
+
                 if (shape.Kind == Models.ShapeKind.Rectangle)
                 {
                     var annot = new PdfSquareAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
+                    if (shape.Opacity < 0.999) annot.Put(PdfName.CA, new PdfNumber(shape.Opacity));
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
                         annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
@@ -630,6 +639,7 @@ public class PdfFormService
                 {
                     var annot = new PdfCircleAnnotation(new Rectangle((float)left, (float)bottom, (float)width, (float)height));
                     annot.SetColor(strokeColor);
+                    if (shape.Opacity < 0.999) annot.Put(PdfName.CA, new PdfNumber(shape.Opacity));
                     if (!string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb))
                         annot.SetInteriorColor(new float[] { fr, fg, fb });
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
@@ -642,6 +652,7 @@ public class PdfFormService
                     annot.SetColor(strokeColor);
                     annot.Put(PdfName.LE, new PdfArray(new[] { new PdfName("None"), new PdfName("OpenArrow") }));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
+                    if (shape.Opacity < 0.999) annot.Put(PdfName.CA, new PdfNumber(shape.Opacity));
                     page.AddAnnotation(annot);
                 }
                 else if (shape.Kind == Models.ShapeKind.Callout && !string.IsNullOrEmpty(shape.CalloutText))
@@ -1221,6 +1232,83 @@ public class PdfFormService
         }
         canvas.RestoreState();
         return xobj;
+    }
+
+    /// <summary>
+    /// Standard PDF annotations for Acrobat's Line, Cloud, Polygon, Polyline and Measure tools, so
+    /// they show (and stay editable) in Acrobat and other readers. Null for the original kinds.
+    /// </summary>
+    private static PdfAnnotation? BuildExtendedShapeAnnotation(Models.ShapeAnnotation shape, DeviceRgb stroke, float lw)
+    {
+        float l = (float)Math.Min(shape.X1, shape.X2), b = (float)Math.Min(shape.Y1, shape.Y2);
+        float w = (float)Math.Max(Math.Abs(shape.X2 - shape.X1), 1), h = (float)Math.Max(Math.Abs(shape.Y2 - shape.Y1), 1);
+        var bounds = new Rectangle(l - lw, b - lw, w + 2 * lw, h + 2 * lw);
+        float[]? interior = !string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb)
+            ? new[] { fr, fg, fb } : null;
+        float[] Vertices() => (shape.Points ?? new()).SelectMany(p => new[] { (float)p.X, (float)p.Y }).ToArray();
+        string label = Controls.PdfViewerControl.MeasureLabel(shape);
+
+        PdfAnnotation annot;
+        switch (shape.Kind)
+        {
+            case Models.ShapeKind.Line:
+            case Models.ShapeKind.Distance:
+            {
+                var line = new PdfLineAnnotation(bounds, new[] { (float)shape.X1, (float)shape.Y1, (float)shape.X2, (float)shape.Y2 });
+                if (shape.Kind == Models.ShapeKind.Distance)
+                {
+                    // Dimension line: butt ends, caption shown on the line (Acrobat "Distance")
+                    line.Put(PdfName.LE, new PdfArray(new[] { new PdfName("Butt"), new PdfName("Butt") }));
+                    line.Put(new PdfName("Cap"), PdfBoolean.TRUE);
+                    line.Put(new PdfName("IT"), new PdfName("LineDimension"));
+                    line.SetContents(label);
+                }
+                annot = line;
+                break;
+            }
+            case Models.ShapeKind.Cloud:
+            {
+                var sq = new PdfSquareAnnotation(new Rectangle(l, b, w, h));
+                var be = new PdfDictionary();                   // border effect: cloudy
+                be.Put(PdfName.S, new PdfName("C"));
+                be.Put(PdfName.I, new PdfNumber(1));
+                sq.Put(new PdfName("BE"), be);
+                if (interior != null) sq.SetInteriorColor(interior);
+                annot = sq;
+                break;
+            }
+            case Models.ShapeKind.Polygon:
+            case Models.ShapeKind.Area:
+            {
+                var poly = PdfPolyGeomAnnotation.CreatePolygon(bounds, Vertices());
+                if (interior != null) poly.SetInteriorColor(interior);
+                if (shape.Kind == Models.ShapeKind.Area)
+                {
+                    poly.Put(new PdfName("IT"), new PdfName("PolygonDimension"));
+                    poly.SetContents(label);
+                }
+                annot = poly;
+                break;
+            }
+            case Models.ShapeKind.Polyline:
+            case Models.ShapeKind.Perimeter:
+            {
+                var poly = PdfPolyGeomAnnotation.CreatePolyLine(bounds, Vertices());
+                if (shape.Kind == Models.ShapeKind.Perimeter)
+                {
+                    poly.Put(new PdfName("IT"), new PdfName("PolyLineDimension"));
+                    poly.SetContents(label);
+                }
+                annot = poly;
+                break;
+            }
+            default:
+                return null;
+        }
+        annot.SetColor(stroke);
+        annot.Put(PdfName.BS, BuildBorderStyle(lw));
+        annot.SetFlags(PdfAnnotation.PRINT);
+        return annot;
     }
 
     private static bool ParseHexColor(string hex, out float r, out float g, out float b)

@@ -705,6 +705,14 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    // Unit for the Measure tools (distance / perimeter / area labels): "in", "mm", "cm" or "pt".
+    private string _measureUnit = "in";
+    public string MeasureUnit
+    {
+        get => _measureUnit;
+        set { _measureUnit = value is "in" or "mm" or "cm" or "pt" ? value : "in"; OnPropertyChanged(); }
+    }
+
     // Colour for Fill & Sign marks picked from the toolbox; null = Acrobat-style defaults
     // (green ✓, black ✕ ● ○ —).
     private string? _markColor;

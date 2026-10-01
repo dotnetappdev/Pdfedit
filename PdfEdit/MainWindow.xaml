@@ -1573,6 +1573,54 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Line" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawLine, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawLine"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Line — drag to draw a straight line"
+                                         AutomationProperties.Name="Line tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE738;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Cloud" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawCloud, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawCloud"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Cloud — drag to draw a revision cloud (Acrobat)"
+                                         AutomationProperties.Name="Cloud tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Polygon" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawPolygon, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawPolygon"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Polygon — click the corners, double-click or Enter to close"
+                                         AutomationProperties.Name="Polygon tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE7C2;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Polyline" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawPolyline, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="DrawPolyline"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Polyline — click the points, double-click or Enter to finish"
+                                         AutomationProperties.Name="Polyline tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Eraser"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"
@@ -1585,6 +1633,60 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <!-- Measure (Acrobat Pro) -->
+                <Fluent:RibbonGroupBox Header="Measure"
+                                        AutomationProperties.Name="Measure group">
+                    <Fluent:ToggleButton Header="Distance"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=MeasureDistance, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="MeasureDistance"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Distance — drag to measure between two points"
+                                         AutomationProperties.Name="Distance tool">
+                        <Fluent:ToggleButton.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE1D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Perimeter" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=MeasurePerimeter, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="MeasurePerimeter"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Perimeter — click the points, double-click or Enter to finish"
+                                         AutomationProperties.Name="Perimeter tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Area" Size="Middle"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=MeasureArea, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="MeasureArea"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Area — click the corners, double-click or Enter to finish"
+                                         AutomationProperties.Name="Area tool">
+                        <Fluent:ToggleButton.Icon>
+                            <TextBlock Text="&#xE7C2;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                        </Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ComboBox Header="Units" Width="110" IsEditable="False"
+                                     SelectedItem="{Binding MeasureUnit, Mode=TwoWay}"
+                                     ToolTip="Units for measurement labels"
+                                     AutomationProperties.Name="Measurement units">
+                        <Fluent:ComboBox.ItemsSource>
+                            <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+                                <sys:String>in</sys:String>
+                                <sys:String>mm</sys:String>
+                                <sys:String>cm</sys:String>
+                                <sys:String>pt</sys:String>
+                            </x:Array>
+                        </Fluent:ComboBox.ItemsSource>
+                    </Fluent:ComboBox>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Sign & Date group -->

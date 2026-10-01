@@ -88,7 +88,8 @@ public partial class ToolboxPanel : UserControl
         ("Select",    new[] { ActiveTool.Select, ActiveTool.Hand, ActiveTool.Zoom, ActiveTool.TextFill, ActiveTool.CheckboxToggle }),
         ("Comment",   new[] { ActiveTool.StickyNote, ActiveTool.DrawCallout, ActiveTool.Stamp }),
         ("Highlight", new[] { ActiveTool.Highlight, ActiveTool.Underline, ActiveTool.Strikethrough }),
-        ("Draw",      new[] { ActiveTool.DrawFreehand, ActiveTool.DrawRectangle, ActiveTool.DrawEllipse, ActiveTool.DrawArrow, ActiveTool.Eraser }),
+        ("Draw",      new[] { ActiveTool.DrawFreehand, ActiveTool.DrawRectangle, ActiveTool.DrawEllipse, ActiveTool.DrawArrow,
+                              ActiveTool.DrawLine, ActiveTool.DrawCloud, ActiveTool.DrawPolygon, ActiveTool.DrawPolyline, ActiveTool.Eraser }),
         ("AddText",   new[] { ActiveTool.AddText, ActiveTool.VerticalText, ActiveTool.Checkmark, ActiveTool.XMark,
                               ActiveTool.Dot, ActiveTool.Circle, ActiveTool.Line, ActiveTool.DateStamp }),
     };
@@ -101,6 +102,8 @@ public partial class ToolboxPanel : UserControl
         [ActiveTool.Highlight] = "\uE7C1", [ActiveTool.Underline] = "\uE8DC", [ActiveTool.Strikethrough] = "\uEDE0",
         [ActiveTool.DrawFreehand] = "\uEDC6", [ActiveTool.DrawRectangle] = "\uE7C2", [ActiveTool.DrawEllipse] = "\uEA3A",
         [ActiveTool.DrawArrow] = "\uEBD4", [ActiveTool.Eraser] = "\uED60",
+        [ActiveTool.DrawLine] = "\uE738", [ActiveTool.DrawCloud] = "\uE753",
+        [ActiveTool.DrawPolygon] = "\uE7C2", [ActiveTool.DrawPolyline] = "\uE8A9",
         // Add text shows the mark itself inside its box
         [ActiveTool.AddText] = "A", [ActiveTool.VerticalText] = "A", [ActiveTool.Checkmark] = "✓", [ActiveTool.XMark] = "✕",
         [ActiveTool.Dot] = "●", [ActiveTool.Circle] = "○", [ActiveTool.Line] = "—", [ActiveTool.DateStamp] = "31",
@@ -218,6 +221,15 @@ public partial class ToolboxPanel : UserControl
         {
             vm.IsDesignMode = false;
             vm.ActiveTool = tool;
+        }
+    }
+
+    private void MeasureUnit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string unit } && VM is MainViewModel vm)
+        {
+            vm.MeasureUnit = unit;
+            vm.StatusText = $"Measurements in {unit}.";
         }
     }
 

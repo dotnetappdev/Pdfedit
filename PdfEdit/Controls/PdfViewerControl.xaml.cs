@@ -127,7 +127,10 @@ public partial class PdfViewerControl : UserControl
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
         MouseWheel += OnMouseWheel;
-        MouseLeftButtonDown += OnMouseLeftButtonDown;
+        // handledEventsToo: a click on the bare page must reach the tools even if something on the
+        // way up (the ScrollViewer) marked it handled. Clicks that a field, placed text or a toolbar
+        // handled itself are still left alone (see OnPageMouseLeftButtonDown).
+        AddHandler(MouseLeftButtonDownEvent, new MouseButtonEventHandler(OnPageMouseLeftButtonDown), handledEventsToo: true);
         // Drawing / shape tools must work over form fields and placed text too (they eat the click).
         PreviewMouseLeftButtonDown += OnDrawToolPreviewMouseDown;
         MouseLeftButtonUp += OnMouseLeftButtonUp;
@@ -225,7 +228,7 @@ public partial class PdfViewerControl : UserControl
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
-        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) SyncFormBars();
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); }
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
             if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
@@ -1495,6 +1498,9 @@ public partial class PdfViewerControl : UserControl
     {
         AnnotationCanvas.Children.Clear();
         ResetAnnotationBoxes();
+        // The canvas was cleared: drop any half-drawn polygon and the shape resize handle.
+        _polyPreview = null; _polyLabel = null; _polyPts.Clear();
+        _shapeResizeGrip = null;
 
         if (_vm?.Document == null) return;
         int pageNum = _vm.CurrentPageIndex + 1;
@@ -1971,6 +1977,26 @@ public partial class PdfViewerControl : UserControl
 
     // ── Mouse: annotation placement, pan ─────────────────────────────────────
 
+    private void OnPageMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.Handled)
+        {
+            // Only take it back when the click landed on the page itself (not on a field, a placed
+            // annotation or a toolbar, which handle their own clicks).
+            bool onBarePage = e.OriginalSource is DependencyObject src
+                && (ReferenceEquals(src, PageImage) || ReferenceEquals(src, PageGrid) || ReferenceEquals(src, PageBorder)
+                    || ReferenceEquals(src, AnnotationCanvas) || ReferenceEquals(src, FieldOverlayCanvas)
+                    || ReferenceEquals(src, HlAnnotCanvas) || ReferenceEquals(src, RdAnnotCanvas));
+            if (!onBarePage) return;
+            e.Handled = false;
+        }
+        // Drawing tools already took the click in OnDrawToolPreviewMouseDown.
+        if (_vm != null && IsDrawTool(_vm.ActiveTool) && !IsFieldLayoutMode) return;
+        // Keyboard shortcuts (Delete, Esc, Enter for polygons, arrows) need the viewer focused.
+        if (!IsKeyboardFocusWithin) Focus();
+        OnMouseLeftButtonDown(sender, e);
+    }
+
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (_vm == null) return;
@@ -2183,7 +2209,15 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout)
+        // Polygon / polyline / perimeter / area: click the points, double-click to finish.
+        if (IsPolyTool(tool))
+        {
+            if (HandlePolyClick(e)) e.Handled = true;
+            return;
+        }
+
+        if (tool is ActiveTool.DrawRectangle or ActiveTool.DrawEllipse or ActiveTool.DrawArrow or ActiveTool.DrawCallout
+                 or ActiveTool.DrawLine or ActiveTool.DrawCloud or ActiveTool.MeasureDistance)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
@@ -2198,7 +2232,7 @@ public partial class PdfViewerControl : UserControl
                 : new SolidColorBrush(ParseColor(fillHex));
 
             double sw = _vm?.CurrentStrokeWidth ?? 2.0;
-            if (tool == ActiveTool.DrawArrow)
+            if (tool is ActiveTool.DrawArrow or ActiveTool.DrawLine or ActiveTool.MeasureDistance)
             {
                 _arrowRubberBand = new System.Windows.Shapes.Line
                 {
@@ -2494,7 +2528,13 @@ public partial class PdfViewerControl : UserControl
                         {
                             var shape = new Models.ShapeAnnotation
                             {
-                                Kind        = Models.ShapeKind.Arrow,
+                                Kind        = _shapeTool switch
+                                {
+                                    ActiveTool.DrawLine        => Models.ShapeKind.Line,
+                                    ActiveTool.MeasureDistance => Models.ShapeKind.Distance,
+                                    _                          => Models.ShapeKind.Arrow,
+                                },
+                                MeasureUnit = _vm.MeasureUnit,
                                 X1          = _arrowRubberBand.X1 / Scale,
                                 Y1          = pageH - _arrowRubberBand.Y1 / Scale,
                                 X2          = _arrowRubberBand.X2 / Scale,
@@ -2504,7 +2544,9 @@ public partial class PdfViewerControl : UserControl
                             };
                             _vm.AddShapeAnnotation(shape);
                             PlaceShapeVisual(shape, pageH);
-                            _vm.StatusText = "Arrow annotation added. Right-click to delete.";
+                            _vm.StatusText = shape.Kind == Models.ShapeKind.Distance
+                                ? $"Distance: {MeasureLabel(shape)}"
+                                : $"{shape.Kind} added — drag with Select to move, right-click for properties.";
                         }
                         AnnotationCanvas.Children.Remove(_arrowRubberBand);
                         _arrowRubberBand = null;
@@ -2552,7 +2594,9 @@ public partial class PdfViewerControl : UserControl
                             {
                                 var shape = new Models.ShapeAnnotation
                                 {
-                                    Kind        = isEllipse ? Models.ShapeKind.Ellipse : Models.ShapeKind.Rectangle,
+                                    Kind        = isEllipse ? Models.ShapeKind.Ellipse
+                                                : _shapeTool == ActiveTool.DrawCloud ? Models.ShapeKind.Cloud
+                                                : Models.ShapeKind.Rectangle,
                                     X1          = left,
                                     Y1          = bottom,
                                     X2          = left + rectW / Scale,
@@ -2702,6 +2746,9 @@ public partial class PdfViewerControl : UserControl
             _formFieldRubberBand.Height = h;
         }
 
+        if (_polyPreview != null)
+            UpdatePolyPreview(e.GetPosition(AnnotationCanvas));
+
         if (_isDrawingShape && e.LeftButton == MouseButtonState.Pressed)
         {
             var pos = e.GetPosition(AnnotationCanvas);
@@ -2709,6 +2756,10 @@ public partial class PdfViewerControl : UserControl
             {
                 _arrowRubberBand.X2 = pos.X;
                 _arrowRubberBand.Y2 = pos.Y;
+                if (_shapeTool == ActiveTool.MeasureDistance && _vm != null)
+                    _vm.StatusText = "Distance: " + FormatLength(
+                        new Vector(_arrowRubberBand.X2 - _arrowRubberBand.X1, _arrowRubberBand.Y2 - _arrowRubberBand.Y1).Length / Scale,
+                        _vm.MeasureUnit);
             }
             else if (_shapeRubberBand != null)
             {
@@ -2793,6 +2844,8 @@ public partial class PdfViewerControl : UserControl
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
+        // Enter / Esc / Backspace while placing polygon or measurement points
+        if (HandlePolyKey(e)) { e.Handled = true; return; }
         // Don't steal shortcuts when a TextBox / field has focus
         bool textboxFocused = IsTextInputFocused();
 
@@ -2925,11 +2978,20 @@ public partial class PdfViewerControl : UserControl
             case Key.Right:
             case Key.Down:
                 if (_vm.ActiveTool == ActiveTool.Hand) { _vm.NextPageCommand.Execute(null); e.Handled = true; }
+                // The scroll viewer no longer takes focus, so scroll it from here.
+                else if (e.Key == Key.Down) { PdfScrollViewer.LineDown(); e.Handled = true; }
+                else { PdfScrollViewer.LineRight(); e.Handled = true; }
                 break;
             case Key.Left:
             case Key.Up:
                 if (_vm.ActiveTool == ActiveTool.Hand) { _vm.PreviousPageCommand.Execute(null); e.Handled = true; }
+                else if (e.Key == Key.Up) { PdfScrollViewer.LineUp(); e.Handled = true; }
+                else { PdfScrollViewer.LineLeft(); e.Handled = true; }
                 break;
+            case Key.PageDown: PdfScrollViewer.PageDown(); e.Handled = true; break;
+            case Key.PageUp:   PdfScrollViewer.PageUp();   e.Handled = true; break;
+            case Key.Home:     PdfScrollViewer.ScrollToTop();    e.Handled = true; break;
+            case Key.End:      PdfScrollViewer.ScrollToBottom(); e.Handled = true; break;
             // Zoom shortcuts
             case Key.OemPlus: case Key.Add:
                 _vm.ZoomInCommand.Execute(null); e.Handled = true; break;
@@ -3398,6 +3460,7 @@ public partial class PdfViewerControl : UserControl
 
     private void PlaceShapeVisual(Models.ShapeAnnotation shape, double pageH)
     {
+        if (TryPlaceExtendedShape(shape, pageH)) return;
         if (shape.Kind == Models.ShapeKind.Callout)
         {
             PlaceCalloutVisual(shape, pageH);
@@ -3429,11 +3492,9 @@ public partial class PdfViewerControl : UserControl
             };
             line.Tag = shape;
             line.ToolTip = "Arrow annotation (right-click to delete)";
-            var ctxLine = new ContextMenu();
-            var delLine = new MenuItem { Header = "Delete Arrow" };
-            delLine.Click += (_, _) => { AnnotationCanvas.Children.Remove(line); _vm?.RemoveShapeAnnotation(shape); };
-            ctxLine.Items.Add(delLine);
-            line.ContextMenu = ctxLine;
+            line.ToolTip = "Arrow — drag with Select to move, right-click for properties";
+            line.Opacity = shape.Opacity;
+            line.ContextMenu = BuildShapeMenu(shape, line);
             MakeDraggable(line, (dx, dy) => MoveShape(shape, dx, dy));
             visual = line;
         }
@@ -3450,11 +3511,10 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetTop(sh,  top);
             sh.Tag = shape;
             sh.ToolTip = $"{shape.Kind} annotation (right-click to delete)";
-            var ctx = new ContextMenu();
-            var del = new MenuItem { Header = $"Delete {shape.Kind}" };
-            del.Click += (_, _) => { AnnotationCanvas.Children.Remove(sh); _vm?.RemoveShapeAnnotation(shape); };
-            ctx.Items.Add(del);
-            sh.ContextMenu = ctx;
+            sh.ToolTip = $"{shape.Kind} — drag with Select to move, corner to resize, right-click for properties";
+            sh.Opacity = shape.Opacity;
+            sh.ContextMenu = BuildShapeMenu(shape, sh);
+            AttachShapeResize(shape, sh, pageH);
             MakeDraggable(sh, (dx, dy) => MoveShape(shape, dx, dy));
             visual = sh;
         }
@@ -3529,12 +3589,11 @@ public partial class PdfViewerControl : UserControl
         };
         cv.Children.Add(pointer);
 
-        var ctx = new ContextMenu();
-        var del = new MenuItem { Header = "Delete Callout" };
-        del.Click += (_, _) => { AnnotationCanvas.Children.Remove(cv); _vm?.RemoveShapeAnnotation(shape); };
-        ctx.Items.Add(del);
+        var ctx = BuildShapeMenu(shape, cv);
         cv.ContextMenu = ctx;
+        cv.Opacity = shape.Opacity;
         cv.MouseRightButtonDown += (s2, e2) => { ctx.IsOpen = true; e2.Handled = true; };
+        AttachShapeResize(shape, cv, pageH);
         cv.Background = Brushes.Transparent;   // grab anywhere in the callout's box
         MakeDraggable(cv, (dx, dy) => MoveShape(shape, dx, dy));
 

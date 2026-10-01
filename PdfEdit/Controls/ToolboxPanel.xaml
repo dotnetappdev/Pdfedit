@@ -332,6 +332,18 @@
                         <Button Style="{StaticResource PopupItem}" Tag="DrawArrow" Click="SubTool_Click" AutomationProperties.Name="Arrow">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Arrow" VerticalAlignment="Center"/></StackPanel>
                         </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawLine" Click="SubTool_Click" AutomationProperties.Name="Line">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE738;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Line" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawCloud" Click="SubTool_Click" AutomationProperties.Name="Cloud">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Cloud" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawPolygon" Click="SubTool_Click" AutomationProperties.Name="Polygon (click points, double-click to close)">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Polygon (click points, double-click to close)" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawPolyline" Click="SubTool_Click" AutomationProperties.Name="Polyline (click points, double-click to end)">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Polyline (click points, double-click to end)" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
                         <Button Style="{StaticResource PopupItem}" Tag="Eraser" Click="SubTool_Click" AutomationProperties.Name="Eraser">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Eraser" VerticalAlignment="Center"/></StackPanel>
                         </Button>
@@ -479,6 +491,17 @@
                     </Border.Effect>
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="520">
                         <StackPanel>
+                            <TextBlock Text="MEASURE" FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="6,6,0,2"/>
+                            <Button Style="{StaticResource PopupItem}" Tag="MeasureDistance" Click="MoreTool_Click" AutomationProperties.Name="Distance">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE1D9;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Distance" VerticalAlignment="Center"/></StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PopupItem}" Tag="MeasurePerimeter" Click="MoreTool_Click" AutomationProperties.Name="Perimeter">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Perimeter" VerticalAlignment="Center"/></StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PopupItem}" Tag="MeasureArea" Click="MoreTool_Click" AutomationProperties.Name="Area">
+                                <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Area" VerticalAlignment="Center"/></StackPanel>
+                            </Button>
+                            <WrapPanel Margin="8,0,8,4"><Button Tag="in" Click="MeasureUnit_Click" Content="in" Width="34" Height="24" Margin="2" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="Transparent" Foreground="{DynamicResource ForegroundBrush}" ToolTip="Measure in in"/><Button Tag="mm" Click="MeasureUnit_Click" Content="mm" Width="34" Height="24" Margin="2" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="Transparent" Foreground="{DynamicResource ForegroundBrush}" ToolTip="Measure in mm"/><Button Tag="cm" Click="MeasureUnit_Click" Content="cm" Width="34" Height="24" Margin="2" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="Transparent" Foreground="{DynamicResource ForegroundBrush}" ToolTip="Measure in cm"/><Button Tag="pt" Click="MeasureUnit_Click" Content="pt" Width="34" Height="24" Margin="2" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="Transparent" Foreground="{DynamicResource ForegroundBrush}" ToolTip="Measure in pt"/></WrapPanel>
                             <TextBlock Text="NAVIGATE" FontSize="10" Foreground="{DynamicResource DimForegroundBrush}" Margin="6,6,0,2"/>
                             <Button Style="{StaticResource PopupItem}" Tag="Hand" Click="MoreTool_Click" AutomationProperties.Name="Hand — pan  (H)">
                                 <StackPanel Orientation="Horizontal">

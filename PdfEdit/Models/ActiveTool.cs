@@ -38,5 +38,10 @@ public enum ActiveTool
     // Acrobat Prepare Form field types added alongside the originals above
     AddListBox,
     AddSignatureField,
-    AddDateField
+    AddDateField,
+    // Acrobat drawing tools: straight line, revision cloud, polygon and polyline (click the points,
+    // double-click or Enter to finish)
+    DrawLine, DrawCloud, DrawPolygon, DrawPolyline,
+    // Acrobat Pro "Measure" tools
+    MeasureDistance, MeasurePerimeter, MeasureArea
 }

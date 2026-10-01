@@ -173,7 +173,11 @@
         </Border>
 
         <!-- PDF ScrollViewer -->
+        <!-- Focusable="False": a focusable ScrollViewer focuses itself on every left click and
+             marks the click handled, so the page's tool handler (Add text, marks, sign, stamps,
+             sticky notes, boxes on flat forms …) never ran. -->
         <ScrollViewer x:Name="PdfScrollViewer" Grid.Row="1"
+                      Focusable="False"
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
                       Visibility="Collapsed"
