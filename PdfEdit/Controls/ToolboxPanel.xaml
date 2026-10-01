@@ -140,6 +140,31 @@
 
     </UserControl.Resources>
 
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+
+    <!-- ── Page tools (Acrobat shows these beside the rail: rotate, insert, delete, extract) ── -->
+    <Border x:Name="PageToolsPill" VerticalAlignment="Top" Margin="0,8,6,0"
+            Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1" CornerRadius="10" Padding="2,6">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="14" Opacity="0.35" ShadowDepth="2" Direction="270"/>
+        </Border.Effect>
+        <StackPanel>
+            <Button Style="{StaticResource FBtn}" Command="{Binding RotatePageCWCommand}" ToolTip="Rotate page clockwise" AutomationProperties.Name="Rotate page clockwise">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE7AD;"/>
+            </Button>
+            <Button Style="{StaticResource FBtn}" Command="{Binding InsertBlankPageCommand}" ToolTip="Insert a blank page after this one" AutomationProperties.Name="Insert a blank page after this one">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE8A5;"/>
+            </Button>
+            <Button Style="{StaticResource FBtn}" Command="{Binding DeleteCurrentPageCommand}" ToolTip="Delete this page" AutomationProperties.Name="Delete this page">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xE74D;"/>
+            </Button>
+            <Button Style="{StaticResource FBtn}" Command="{Binding ExtractCurrentPageCommand}" ToolTip="Extract this page as a new PDF" AutomationProperties.Name="Extract this page as a new PDF">
+                <TextBlock Style="{StaticResource Ico}" Text="&#xEDE1;"/>
+            </Button>
+        </StackPanel>
+    </Border>
+
     <!-- ── Floating pill container ─────────────────────────────────────────── -->
     <Border Background="{DynamicResource PanelBgBrush}"
             BorderBrush="{DynamicResource AppBorderBrush}"
@@ -165,74 +190,162 @@
             <Border Width="28" Height="4" CornerRadius="2" Margin="6,2,6,6" HorizontalAlignment="Center"
                     Background="{DynamicResource AppBorderBrush}"/>
 
-            <!-- Select -->
-            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Select"
-                         Checked="Tool_Checked"
-                         ToolTip="Select — click fields to fill, click placed text to edit  (V)"
-                         AutomationProperties.Name="Select tool">
-                <TextBlock Style="{StaticResource Ico}" Text="&#xE8B0;"/>
-            </RadioButton>
-
-            <!-- Add comment (sticky note) -->
-            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="StickyNote"
-                         Checked="Tool_Checked"
-                         ToolTip="Add comment — click to place a sticky note"
-                         AutomationProperties.Name="Add comment tool">
-                <TextBlock Style="{StaticResource Ico}" Text="&#xE90A;"/>
-            </RadioButton>
-
-            <!-- Highlight + color popup -->
-            <RadioButton x:Name="HighlightBtn"
-                         Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Highlight"
-                         Checked="HighlightTool_Checked"
-                         ToolTip="Highlight — drag to mark text  (I)"
-                         AutomationProperties.Name="Highlight tool">
-                <TextBlock Style="{StaticResource Ico}" Text="&#xE7C1;" FontSize="15"/>
-            </RadioButton>
-
-            <!-- Highlight color popup -->
-            <Popup x:Name="HighlightColorPopup"
-                   PlacementTarget="{Binding ElementName=HighlightBtn}"
-                   Placement="Left"
-                   AllowsTransparency="True"
-                   StaysOpen="False"
-                   PopupAnimation="Fade">
-                <Border Background="{DynamicResource PanelBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1" CornerRadius="10"
-                        Padding="8,8" MinWidth="160">
+            <!-- Select: click = tool, corner arrow = its options (Acrobat quick-tools rail) -->
+            <Grid>
+                <RadioButton x:Name="SelectBtn" Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Select"
+                             Checked="RailTool_Checked" ToolTip="Select — click fields or boxes to fill them, click placed text to edit  (V)"
+                             AutomationProperties.Name="Select tool">
+                    <TextBlock x:Name="SelectGlyph" Style="{StaticResource Ico}" Text="&#xE8B0;"/>
+                </RadioButton>
+                <Button Click="Corner_Click" Tag="SelectPopup" Width="12" Height="12" Padding="0" BorderThickness="0"
+                        Background="Transparent" Cursor="Hand" Focusable="False"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,3"
+                        ToolTip="More select tool options" AutomationProperties.Name="Select tool options">
+                    <TextBlock Text="◢" FontSize="8" Foreground="{DynamicResource ForegroundBrush}"/>
+                </Button>
+            </Grid>
+            <Popup x:Name="SelectPopup" PlacementTarget="{Binding ElementName=SelectBtn}" Placement="Left"
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
                         <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
                     </Border.Effect>
                     <StackPanel>
-                        <TextBlock Text="Highlight Color" FontSize="11"
-                                   Foreground="{DynamicResource DimForegroundBrush}"
-                                   Margin="0,0,0,6"/>
-                        <WrapPanel>
-                            <Button Tag="#80FFFF00" Click="HlColor_Click" Width="28" Height="28" Margin="2" ToolTip="Yellow" Background="#FFFF00" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"/>
-                            <Button Tag="#80FF69B4" Click="HlColor_Click" Width="28" Height="28" Margin="2" ToolTip="Pink"   Background="#FF69B4" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"/>
-                            <Button Tag="#8090EE90" Click="HlColor_Click" Width="28" Height="28" Margin="2" ToolTip="Green"  Background="#90EE90" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"/>
-                            <Button Tag="#8087CEEB" Click="HlColor_Click" Width="28" Height="28" Margin="2" ToolTip="Blue"   Background="#87CEEB" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"/>
-                            <Button Tag="#80FFA500" Click="HlColor_Click" Width="28" Height="28" Margin="2" ToolTip="Orange" Background="#FFA500" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"/>
-                        </WrapPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Select" Click="SubTool_Click" AutomationProperties.Name="Select">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Select" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Hand" Click="SubTool_Click" AutomationProperties.Name="Hand — pan the page  (H)">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C9;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Hand — pan the page  (H)" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Zoom" Click="SubTool_Click" AutomationProperties.Name="Marquee zoom  (Z)">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Marquee zoom  (Z)" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
             </Popup>
 
-            <!-- Draw (freehand) -->
-            <RadioButton Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawFreehand"
-                         Checked="Tool_Checked"
-                         ToolTip="Draw — freehand pen  (W)"
-                         AutomationProperties.Name="Freehand draw tool">
-                <TextBlock Style="{StaticResource Ico}" Text="&#xEDC6;"/>
-            </RadioButton>
-
-            <!-- Add text (Fill & Sign): click to place text; the corner arrow picks ✓ ✕ ● ○ — -->
+            <!-- Comment: click = tool, corner arrow = its options (Acrobat quick-tools rail) -->
             <Grid>
-                <RadioButton x:Name="AddTextBtn"
-                             Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="AddText"
-                             Checked="AddTextTool_Checked"
-                             ToolTip="Add text — click on the page to type  (T). Corner arrow: checkmark, cross, dot, circle, line"
+                <RadioButton x:Name="CommentBtn" Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="StickyNote"
+                             Checked="RailTool_Checked" ToolTip="Add comment — click to place a sticky note"
+                             AutomationProperties.Name="Comment tool">
+                    <TextBlock x:Name="CommentGlyph" Style="{StaticResource Ico}" Text="&#xE90A;"/>
+                </RadioButton>
+                <Button Click="Corner_Click" Tag="CommentPopup" Width="12" Height="12" Padding="0" BorderThickness="0"
+                        Background="Transparent" Cursor="Hand" Focusable="False"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,3"
+                        ToolTip="More comment tool options" AutomationProperties.Name="Comment tool options">
+                    <TextBlock Text="◢" FontSize="8" Foreground="{DynamicResource ForegroundBrush}"/>
+                </Button>
+            </Grid>
+            <Popup x:Name="CommentPopup" PlacementTarget="{Binding ElementName=CommentBtn}" Placement="Left"
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="StickyNote" Click="SubTool_Click" AutomationProperties.Name="Sticky note">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Sticky note" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawCallout" Click="SubTool_Click" AutomationProperties.Name="Text callout">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Text callout" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Stamp" Click="SubTool_Click" AutomationProperties.Name="Stamp">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Stamp" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Popup>
+
+            <!-- Highlight: click = tool, corner arrow = its options (Acrobat quick-tools rail) -->
+            <Grid>
+                <RadioButton x:Name="HighlightBtn" Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="Highlight"
+                             Checked="RailTool_Checked" ToolTip="Highlight text — drag over text  (I)"
+                             AutomationProperties.Name="Highlight tool">
+                    <TextBlock x:Name="HighlightGlyph" Style="{StaticResource Ico}" Text="&#xE7C1;" FontSize="15"/>
+                </RadioButton>
+                <Button Click="Corner_Click" Tag="HighlightPopup" Width="12" Height="12" Padding="0" BorderThickness="0"
+                        Background="Transparent" Cursor="Hand" Focusable="False"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,3"
+                        ToolTip="More highlight tool options" AutomationProperties.Name="Highlight tool options">
+                    <TextBlock Text="◢" FontSize="8" Foreground="{DynamicResource ForegroundBrush}"/>
+                </Button>
+            </Grid>
+            <Popup x:Name="HighlightPopup" PlacementTarget="{Binding ElementName=HighlightBtn}" Placement="Left"
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Highlight" Click="SubTool_Click" AutomationProperties.Name="Highlight text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C1;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Highlight text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Underline" Click="SubTool_Click" AutomationProperties.Name="Underline text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8DC;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Underline text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Strikethrough" Click="SubTool_Click" AutomationProperties.Name="Strikethrough text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEDE0;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Strikethrough text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <TextBlock Text="Highlight colour" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}" Margin="10,2,0,4"/>
+                        <WrapPanel Margin="8,0,8,4" MaxWidth="180"><Button Tag="#80FFFF00" Click="HlColor_Click" Width="22" Height="22" Margin="2" ToolTip="Yellow" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#FFFF00"/><Button Tag="#80FF69B4" Click="HlColor_Click" Width="22" Height="22" Margin="2" ToolTip="Pink" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#FF69B4"/><Button Tag="#8090EE90" Click="HlColor_Click" Width="22" Height="22" Margin="2" ToolTip="Green" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#90EE90"/><Button Tag="#8087CEEB" Click="HlColor_Click" Width="22" Height="22" Margin="2" ToolTip="Blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#87CEEB"/><Button Tag="#80FFA500" Click="HlColor_Click" Width="22" Height="22" Margin="2" ToolTip="Orange" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#FFA500"/></WrapPanel>
+                    </StackPanel>
+                </Border>
+            </Popup>
+
+            <!-- Draw: click = tool, corner arrow = its options (Acrobat quick-tools rail) -->
+            <Grid>
+                <RadioButton x:Name="DrawBtn" Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="DrawFreehand"
+                             Checked="RailTool_Checked" ToolTip="Draw — freehand pen  (W)"
+                             AutomationProperties.Name="Draw tool">
+                    <TextBlock x:Name="DrawGlyph" Style="{StaticResource Ico}" Text="&#xEDC6;"/>
+                </RadioButton>
+                <Button Click="Corner_Click" Tag="DrawPopup" Width="12" Height="12" Padding="0" BorderThickness="0"
+                        Background="Transparent" Cursor="Hand" Focusable="False"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,3"
+                        ToolTip="More draw tool options" AutomationProperties.Name="Draw tool options">
+                    <TextBlock Text="◢" FontSize="8" Foreground="{DynamicResource ForegroundBrush}"/>
+                </Button>
+            </Grid>
+            <Popup x:Name="DrawPopup" PlacementTarget="{Binding ElementName=DrawBtn}" Placement="Left"
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawFreehand" Click="SubTool_Click" AutomationProperties.Name="Draw freehand">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Draw freehand" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawRectangle" Click="SubTool_Click" AutomationProperties.Name="Rectangle">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Rectangle" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawEllipse" Click="SubTool_Click" AutomationProperties.Name="Ellipse">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEA3A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Ellipse" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DrawArrow" Click="SubTool_Click" AutomationProperties.Name="Arrow">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Arrow" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Eraser" Click="SubTool_Click" AutomationProperties.Name="Eraser">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Eraser" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <TextBlock Text="Colour" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}" Margin="10,2,0,4"/>
+                        <WrapPanel Margin="8,0,8,4" MaxWidth="180"><Button Tag="#000000" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Black" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#000000"/><Button Tag="#1A237E" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Dark blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1A237E"/><Button Tag="#0050C8" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#0050C8"/><Button Tag="#B71C1C" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Red" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#B71C1C"/><Button Tag="#1B5E20" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Green" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1B5E20"/><Button Tag="#757575" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Gray" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#757575"/></WrapPanel>
+                    </StackPanel>
+                </Border>
+            </Popup>
+
+            <!-- AddText: click = tool, corner arrow = its options (Acrobat quick-tools rail) -->
+            <Grid>
+                <RadioButton x:Name="AddTextBtn" Style="{StaticResource FToolBtn}" GroupName="FloatTools" Tag="AddText"
+                             Checked="RailTool_Checked" ToolTip="Add text — click a box or anywhere on the page to type  (T)"
                              AutomationProperties.Name="Add text tool">
                     <Border Width="22" Height="22" BorderThickness="1.5" CornerRadius="2" Padding="1">
                         <Border.BorderBrush>
@@ -243,68 +356,48 @@
                                    Foreground="{DynamicResource ForegroundBrush}"/>
                     </Border>
                 </RadioButton>
-                <Button Click="AnnotBtn_Click" Width="12" Height="12" Padding="0" BorderThickness="0"
+                <Button Click="Corner_Click" Tag="AddTextPopup" Width="12" Height="12" Padding="0" BorderThickness="0"
                         Background="Transparent" Cursor="Hand" Focusable="False"
                         HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,3"
-                        ToolTip="More marks: checkmark, cross, dot, circle, line"
-                        AutomationProperties.Name="More text marks">
+                        ToolTip="More add text tool options" AutomationProperties.Name="Add text tool options">
                     <TextBlock Text="◢" FontSize="8" Foreground="{DynamicResource ForegroundBrush}"/>
                 </Button>
             </Grid>
-
-            <!-- Annotation sub-type popup (image 2) -->
-            <Popup x:Name="AnnotPopup"
-                   PlacementTarget="{Binding ElementName=AddTextBtn}"
-                   Placement="Left"
-                   AllowsTransparency="True"
-                   StaysOpen="False"
-                   PopupAnimation="Fade">
-                <Border Background="{DynamicResource PanelBgBrush}"
-                        BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1" CornerRadius="10"
-                        Padding="6,8" MinWidth="180">
+            <Popup x:Name="AddTextPopup" PlacementTarget="{Binding ElementName=AddTextBtn}" Placement="Left"
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
                         <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
                     </Border.Effect>
                     <StackPanel>
-                        <Button x:Name="AnnotTypeText"   Style="{StaticResource PopupItem}" Tag="AddText"    Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <Border Width="22" Height="22" BorderBrush="{DynamicResource ForegroundBrush}" BorderThickness="1.5" CornerRadius="3" Margin="0,0,10,0">
-                                    <TextBlock Text="A" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
-                                </Border>
-                                <TextBlock Text="Type text" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="AddText" Click="SubTool_Click" AutomationProperties.Name="Add text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="A" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Add text" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AnnotTypeCross"  Style="{StaticResource PopupItem}" Tag="XMark"      Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="✕" FontSize="16" FontWeight="Bold" Width="22" TextAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBlock Text="Crossmark" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Checkmark" Click="SubTool_Click" AutomationProperties.Name="Checkmark">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="✓" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Checkmark" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AnnotTypeCheck"  Style="{StaticResource PopupItem}" Tag="Checkmark"  Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="✓" FontSize="16" FontWeight="Bold" Width="22" TextAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBlock Text="Checkmark" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="XMark" Click="SubTool_Click" AutomationProperties.Name="Cross mark">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="✕" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Cross mark" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AnnotTypeDot"    Style="{StaticResource PopupItem}" Tag="Dot"        Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="●" FontSize="13" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
-                                <TextBlock Text="Dot" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Dot" Click="SubTool_Click" AutomationProperties.Name="Dot">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="●" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Dot" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AnnotTypeCircle" Style="{StaticResource PopupItem}" Tag="Circle"     Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="○" FontSize="15" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
-                                <TextBlock Text="Circle around" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Circle" Click="SubTool_Click" AutomationProperties.Name="Circle">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="○" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Circle" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AnnotTypeLine"   Style="{StaticResource PopupItem}" Tag="Line"       Click="AnnotType_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="—" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/>
-                                <TextBlock Text="Cross out" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Tag="Line" Click="SubTool_Click" AutomationProperties.Name="Line">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="—" FontSize="15" FontWeight="Bold" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Line" VerticalAlignment="Center"/></StackPanel>
                         </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="DateStamp" Click="SubTool_Click" AutomationProperties.Name="Date">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Date" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="VerticalText" Click="SubTool_Click" AutomationProperties.Name="Vertical text">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Vertical text" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <TextBlock Text="Text colour" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}" Margin="10,2,0,4"/>
+                        <WrapPanel Margin="8,0,8,4" MaxWidth="180"><Button Tag="#000000" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Black" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#000000"/><Button Tag="#1A237E" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Dark blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1A237E"/><Button Tag="#0050C8" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#0050C8"/><Button Tag="#B71C1C" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Red" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#B71C1C"/><Button Tag="#1B5E20" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Green" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1B5E20"/><Button Tag="#757575" Click="InkColor_Click" Width="22" Height="22" Margin="2" ToolTip="Gray" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#757575"/></WrapPanel>
                     </StackPanel>
                 </Border>
             </Popup>
@@ -364,37 +457,6 @@
                                            Foreground="{DynamicResource ForegroundBrush}"/>
                             </StackPanel>
                         </Button>
-                    </StackPanel>
-                </Border>
-            </Popup>
-
-            <Separator Style="{StaticResource FDiv}"/>
-
-            <!-- Colour for text, marks and drawing -->
-            <Button x:Name="InkColorBtn" Style="{StaticResource FBtn}" Click="InkColorBtn_Click"
-                    ToolTip="Colour for text, marks and drawing"
-                    AutomationProperties.Name="Ink colour">
-                <Ellipse x:Name="InkColorDot" Width="16" Height="16" Fill="Black"
-                         Stroke="{DynamicResource AppBorderBrush}" StrokeThickness="1"/>
-            </Button>
-            <Popup x:Name="InkColorPopup"
-                   PlacementTarget="{Binding ElementName=InkColorBtn}"
-                   Placement="Left" AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
-                <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
-                        BorderThickness="1" CornerRadius="10" Padding="8" MinWidth="150">
-                    <Border.Effect>
-                        <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="3" Direction="270"/>
-                    </Border.Effect>
-                    <StackPanel>
-                        <TextBlock Text="Colour" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}" Margin="0,0,0,6"/>
-                        <WrapPanel MaxWidth="160">
-                                <Button Tag="#000000" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Black" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#000000"/>
-                                <Button Tag="#1A237E" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Dark blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1A237E"/>
-                                <Button Tag="#0050C8" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Blue" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#0050C8"/>
-                                <Button Tag="#B71C1C" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Red" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#B71C1C"/>
-                                <Button Tag="#1B5E20" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Green" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#1B5E20"/>
-                                <Button Tag="#757575" Click="InkColor_Click" Width="26" Height="26" Margin="2" ToolTip="Gray" Cursor="Hand" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="#757575"/>
-                        </WrapPanel>
                     </StackPanel>
                 </Border>
             </Popup>
@@ -721,4 +783,5 @@
             </WrapPanel><!-- end Design tools -->
         </Grid>
     </Border>
+    </StackPanel>
 </UserControl>
