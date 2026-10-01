@@ -130,6 +130,13 @@ public partial class SettingsWindow : Window
         LocalModelBox.Text = s.LocalAiModel;
         LocalKeyBox.Password = s.LocalAiApiKey;
 
+        // OCR
+        OcrAuto.IsChecked = s.OcrEngine is not ("Tesseract" or "Windows");
+        OcrTesseract.IsChecked = s.OcrEngine == "Tesseract";
+        OcrWindows.IsChecked = s.OcrEngine == "Windows";
+        BuildOcrLanguages(s.OcrLanguages);
+        RefreshOcrStatus();
+
         // Accessibility
         HighContrastFocusCb.IsChecked = s.HighContrastFocusIndicators;
     }
@@ -246,12 +253,87 @@ public partial class SettingsWindow : Window
         s.LocalAiEndpoint = LocalEndpointBox.Text.Trim();
         s.LocalAiModel = LocalModelBox.Text.Trim();
         s.LocalAiApiKey = LocalKeyBox.Password;
+        s.OcrEngine = OcrTesseract.IsChecked == true ? "Tesseract" : OcrWindows.IsChecked == true ? "Windows" : "Auto";
+        var ticked = TickedOcrLanguages().Where(OcrService.InstalledTesseractLanguages().Contains).ToList();
+        s.OcrLanguages = ticked.Count > 0 ? string.Join("+", ticked) : "eng";
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
         s.DateFormat = GetSelectedDateFormat();
 
         s.Save();
         DialogResult = true;
         Close();
+    }
+
+    // ── OCR ─────────────────────────────────────────────────────────────────
+
+    private void BuildOcrLanguages(string selected)
+    {
+        var chosen = selected.Split('+', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+        var installed = OcrService.InstalledTesseractLanguages().ToHashSet();
+        OcrLanguagePanel.Children.Clear();
+        foreach (var (code, name) in OcrService.CommonLanguages)
+        {
+            var cb = new CheckBox
+            {
+                Content = installed.Contains(code) ? name : $"{name} ↓",
+                Tag = code,
+                IsChecked = chosen.Contains(code),
+                Width = 170, Margin = new Thickness(0, 2, 0, 2),
+                ToolTip = installed.Contains(code) ? $"{code} — installed" : $"{code} — downloads when you click Download",
+            };
+            OcrLanguagePanel.Children.Add(cb);
+        }
+    }
+
+    private IEnumerable<string> TickedOcrLanguages() =>
+        OcrLanguagePanel.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Tag);
+
+    private void RefreshOcrStatus()
+    {
+        bool win = OcrService.WindowsOcrAvailable;
+        var langs = OcrService.InstalledTesseractLanguages();
+        OcrStatusText.Text = $"Tesseract languages installed: {(langs.Count > 0 ? string.Join(", ", langs) : "none")}. " +
+                             $"Windows OCR: {(win ? "available" : "no language installed")}.";
+        WinOcrStatusText.Text = win
+            ? "✓ Windows OCR is available for your language."
+            : "Windows has no OCR language installed. That's fine — Tesseract is used instead. Install it if you prefer Windows' engine.";
+        InstallWinOcrBtn.IsEnabled = !win;
+    }
+
+    private async void DownloadOcrLanguages_Click(object sender, RoutedEventArgs e)
+    {
+        var installed = OcrService.InstalledTesseractLanguages();
+        var missing = TickedOcrLanguages().Where(c => !installed.Contains(c)).ToList();
+        if (missing.Count == 0) { OcrStatusText.Text = "All ticked languages are already installed."; return; }
+        OcrDownloadProgress.Visibility = Visibility.Visible;
+        try
+        {
+            for (int i = 0; i < missing.Count; i++)
+            {
+                int index = i;
+                OcrStatusText.Text = $"Downloading {missing[i]} ({i + 1} of {missing.Count})…";
+                await OcrService.DownloadTesseractLanguageAsync(missing[i],
+                    new Progress<double>(p => OcrDownloadProgress.Value = (index + p) / missing.Count * 100));
+            }
+            string selected = string.Join("+", TickedOcrLanguages());
+            BuildOcrLanguages(selected);
+            RefreshOcrStatus();
+        }
+        catch (Exception ex)
+        {
+            OcrStatusText.Text = "Download failed: " + ex.Message;
+        }
+        finally { OcrDownloadProgress.Visibility = Visibility.Collapsed; }
+    }
+
+    private async void InstallWindowsOcr_Click(object sender, RoutedEventArgs e)
+    {
+        WinOcrStatusText.Text = "Installing Windows OCR… (approve the Windows prompt; this can take a minute)";
+        InstallWinOcrBtn.IsEnabled = false;
+        bool ok = await OcrService.InstallWindowsOcrLanguageAsync();
+        RefreshOcrStatus();
+        if (!ok && !OcrService.WindowsOcrAvailable)
+            WinOcrStatusText.Text = "Windows OCR wasn't installed (cancelled or not available for this language). Tesseract is still used, so OCR works.";
     }
 
     // ── Local AI ────────────────────────────────────────────────────────────

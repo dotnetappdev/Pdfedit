@@ -78,6 +78,11 @@ Name: "quicklaunch"; Description: "Pin to taskbar after install"; GroupDescripti
 ; The publish path is relative to the ISS file location (installer\), so ..\ points to repo root.
 ; CI passes /O for output dir; the publish folder is always at repo-root\publish\.
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; The bundled Tesseract OCR engine (x64\tesseract50.dll, x64\leptonica-1.82.0.dll) needs the
+; Microsoft Visual C++ 2015-2022 x64 runtime. Most PCs have it; to ship it, download
+; vc_redist.x64.exe next to this script and uncomment:
+; Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+; and in [Run]: Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ runtime..."
 ; Uncomment to bundle .NET installer when building with /DDOTNET_EMBEDDED=1:
 ; Source: "dotnet-runtime-10-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: not IsDotNetInstalled
 

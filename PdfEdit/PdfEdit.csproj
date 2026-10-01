@@ -30,6 +30,13 @@
     <PackageReference Include="Docnet.Core" Version="2.6.0" />
     <!-- TWAIN scanning (MIT) — talks to any TWAIN scanner driver via the TWAIN DSM -->
     <PackageReference Include="NTwain" Version="3.7.6" />
+    <!-- Tesseract OCR (Apache-2.0): OCR without a Windows OCR language pack -->
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- English OCR data (tessdata_fast, Apache-2.0) shipped with the app; more languages download on demand -->
+    <None Include="tessdata\*.traineddata" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

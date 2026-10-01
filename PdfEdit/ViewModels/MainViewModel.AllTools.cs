@@ -220,7 +220,7 @@ public partial class MainViewModel
             if (ocr)
             {
                 if (!OcrService.IsAvailable)
-                    ToastService.Instance.Warning("Windows has no OCR language installed — the scan was saved without searchable text.");
+                    ToastService.Instance.Warning("No OCR engine is available — the scan was saved without searchable text. See Settings → OCR.");
                 else
                 {
                     var byPage = new Dictionary<int, List<OcrWord>>();

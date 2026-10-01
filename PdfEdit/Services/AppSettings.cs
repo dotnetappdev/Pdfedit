@@ -49,6 +49,11 @@ public class AppSettings
     public string LocalAiModel { get; set; } = "llama3.2";
     public string LocalAiApiKey { get; set; } = string.Empty;   // most local servers need none
 
+    // OCR: "Auto" (Windows OCR if a language is installed, else Tesseract), "Windows" or "Tesseract";
+    // Tesseract languages as codes joined with '+', e.g. "eng" or "eng+deu"
+    public string OcrEngine { get; set; } = "Auto";
+    public string OcrLanguages { get; set; } = "eng";
+
     // Scan dialog: remembered between scans
     public string? LastScanner { get; set; }
     public int ScanDpi { get; set; } = 200;

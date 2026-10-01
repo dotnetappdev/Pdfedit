@@ -340,6 +340,41 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ── OCR Tab ───────────────────────────────────────────────── -->
+            <TabItem Header="OCR" AutomationProperties.Name="Text recognition settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHead}" Text="TEXT RECOGNITION (OCR)"/>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"
+                                   Text="Used by Scan, Recognise text and Make searchable. PdfEdit includes the Tesseract OCR engine with English, so OCR works on any PC — no Windows language pack needed."/>
+
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Engine:" Margin="0,0,0,4"/>
+                        <RadioButton x:Name="OcrAuto" Content="Automatic — Windows OCR when installed, otherwise Tesseract" GroupName="OcrEngine" Margin="0,2"/>
+                        <RadioButton x:Name="OcrTesseract" Content="Tesseract (bundled, many languages)" GroupName="OcrEngine" Margin="0,2"/>
+                        <RadioButton x:Name="OcrWindows" Content="Windows OCR" GroupName="OcrEngine" Margin="0,2"/>
+                        <TextBlock x:Name="OcrStatusText" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Foreground="{DynamicResource DimForegroundBrush}"/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="TESSERACT LANGUAGES" Margin="0,18,0,6"/>
+                        <TextBlock FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" Foreground="{DynamicResource DimForegroundBrush}"
+                                   Text="Tick the languages your documents use. Missing ones download once (about 1–10 MB each) and then work offline."/>
+                        <WrapPanel x:Name="OcrLanguagePanel" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Download ticked languages" Click="DownloadOcrLanguages_Click" Padding="10,3"
+                                    AutomationProperties.Name="Download ticked OCR languages"/>
+                            <ProgressBar x:Name="OcrDownloadProgress" Width="140" Height="8" Margin="10,0,0,0" Visibility="Collapsed"/>
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="WINDOWS OCR" Margin="0,18,0,6"/>
+                        <TextBlock x:Name="WinOcrStatusText" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                        <Button x:Name="InstallWinOcrBtn" Content="Install Windows OCR language…" Click="InstallWindowsOcr_Click" Padding="10,3"
+                                HorizontalAlignment="Left"
+                                ToolTip="Adds Windows' OCR for your language (Windows asks for administrator approval)"
+                                AutomationProperties.Name="Install Windows OCR language"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ── Accessibility Tab ─────────────────────────────────────── -->
             <TabItem Header="Accessibility"
                      AutomationProperties.Name="Accessibility settings">
