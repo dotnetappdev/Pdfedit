@@ -100,6 +100,9 @@ public static class PdfToDesignImportService
                 Required = f.IsRequired,
                 OptionsCsv = string.Join(", ", f.Options),
                 FontSizePt = f.FontSize,
+                ValueFontFamily = PdfFontMap.Resolve(f.FontName).Family,
+                ValueBold = PdfFontMap.Resolve(f.FontName).Bold,
+                ValueItalic = PdfFontMap.Resolve(f.FontName).Italic,
                 TextAlign = f.Alignment switch
                 {
                     FieldAlignment.Center => System.Windows.TextAlignment.Center,

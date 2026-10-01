@@ -919,7 +919,8 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         FieldName = f.FieldName, Label = f.Label, LabelPosition = f.LabelPosition,
         LabelOffset = f.LabelOffset, Required = f.Required, Wrap = f.Wrap, OptionsCsv = f.OptionsCsv,
         SourceFieldName = f.SourceFieldName, SourceWidgetIndex = f.SourceWidgetIndex, SourcePageNumber = f.SourcePageNumber,
-        ExportValue = f.ExportValue, Value = f.Value, FontSizePt = f.FontSizePt, TextAlign = f.TextAlign
+        ExportValue = f.ExportValue, Value = f.Value, FontSizePt = f.FontSizePt, TextAlign = f.TextAlign,
+        ValueFontFamily = f.ValueFontFamily, ValueBold = f.ValueBold, ValueItalic = f.ValueItalic
     };
 
     private static ShapeDesignElement CloneShape(ShapeDesignElement sh) => new(sh.ElementType)

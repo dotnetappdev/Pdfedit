@@ -175,6 +175,15 @@ public class FormFieldDesignElement : DesignElement
 
     public TextAlignment TextAlign { get => _textAlign; set { _textAlign = value; OnPropertyChanged(); } }
 
+    // Font the value is shown in (the PDF field's own font when imported; Helvetica ≈ Arial otherwise).
+    private string _valueFontFamily = "Arial";
+    private bool _valueBold, _valueItalic;
+    public string ValueFontFamily { get => _valueFontFamily; set { _valueFontFamily = value; OnPropertyChanged(); } }
+    public FontWeight ValueFontWeight => _valueBold ? FontWeights.Bold : FontWeights.Normal;
+    public FontStyle ValueFontStyle => _valueItalic ? FontStyles.Italic : FontStyles.Normal;
+    public bool ValueBold { get => _valueBold; set { _valueBold = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValueFontWeight)); } }
+    public bool ValueItalic { get => _valueItalic; set { _valueItalic = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValueFontStyle)); } }
+
     /// <summary>
     /// Font size the value is shown and typed in: the field's own size, otherwise auto like
     /// Acrobat (60% of the box height for one line, 12 pt for multi-line fields).

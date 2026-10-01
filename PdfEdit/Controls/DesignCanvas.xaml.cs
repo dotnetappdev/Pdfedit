@@ -925,6 +925,9 @@ public partial class DesignCanvas : UserControl
         }
 
         var editor = _fieldFillEditor;
+        editor.FontFamily = new FontFamily(field.ValueFontFamily);
+        editor.FontWeight = field.ValueFontWeight;
+        editor.FontStyle = field.ValueFontStyle;
         System.Windows.Automation.AutomationProperties.SetName(editor, $"Fill {field.FieldName}");
         Canvas.SetLeft(editor, field.X);
         Canvas.SetTop(editor, field.Y);

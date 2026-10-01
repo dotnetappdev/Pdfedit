@@ -34,6 +34,8 @@ public class FormFieldInfo
     // Text / choice field appearance (PDF /Q quadding and the /DA font size; 0 = auto-size).
     public FieldAlignment Alignment { get; set; } = FieldAlignment.Left;
     public double FontSize { get; set; }
+    // The PDF font from /DA (e.g. "Helvetica", "HelveticaLTStd-Bold"), shown with PdfFontMap.
+    public string? FontName { get; set; }
 
     // A rename made in the Properties panel. Name stays the PDF's current name (it is the key used
     // for values, bounds and deletions) until the document is saved; the rename is applied last.

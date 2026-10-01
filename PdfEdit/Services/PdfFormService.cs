@@ -92,6 +92,12 @@ public class PdfFormService
                         fieldInfo.FontSize = Math.Max(0, field.GetFontSize());
                     }
                     catch { /* malformed /DA — keep defaults */ }
+                    try
+                    {
+                        // The field's own font, so its value is shown in it (not the app's UI font).
+                        fieldInfo.FontName = field.GetFont()?.GetFontProgram()?.GetFontNames()?.GetFontName();
+                    }
+                    catch { /* malformed /DA — keep defaults */ }
                     try { ReadAcrobatFieldProperties(field, widget, fieldInfo); }
                     catch { /* optional appearance/options — keep defaults */ }
 

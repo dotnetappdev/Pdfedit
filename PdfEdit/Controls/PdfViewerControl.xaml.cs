@@ -949,6 +949,7 @@ public partial class PdfViewerControl : UserControl
                 Password = _vm!.FieldValues.TryGetValue(field.Name, out var pv) ? pv : field.Value
             };
             System.Windows.Automation.AutomationProperties.SetName(pb, $"Password field: {field.Name}");
+            ApplyFieldFont(pb, field);
             pb.PasswordChanged += (_, _) => _vm!.UpdateFieldValue(field.Name, pb.Password);
             pb.GotFocus  += (_, _) => pb.Background = FieldFocusBrush;
             pb.LostFocus += (_, _) => pb.Background = FieldFill(field);
@@ -982,6 +983,7 @@ public partial class PdfViewerControl : UserControl
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.DisplayName : field.Tooltip
         };
         System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.DisplayName}");
+        ApplyFieldFont(tb, field);
 
         // Vertical-text fields already use LayoutTransform for their -90° orientation, so the
         // Adobe-style toolbar's Rotate button (which also targets LayoutTransform) is skipped there.
@@ -1100,6 +1102,7 @@ public partial class PdfViewerControl : UserControl
             ToolTip = field.Name
         };
         System.Windows.Automation.AutomationProperties.SetName(cb, $"Dropdown: {field.Name}");
+        ApplyFieldFont(cb, field);
         foreach (var opt in field.Options) cb.Items.Add(opt);
         var cur = _vm!.FieldValues.TryGetValue(field.Name, out var cv) ? cv : field.Value;
         cb.SelectedItem = cur;
@@ -1117,6 +1120,19 @@ public partial class PdfViewerControl : UserControl
         try { var b = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)); b.Freeze(); return b; }
         catch { return null; }
     }
+    private static readonly HashSet<string> InstalledFonts =
+        new(Fonts.SystemFontFamilies.Select(f => f.Source), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Shows a field's value in the PDF's own font (from /DA), like Acrobat does.</summary>
+    private static void ApplyFieldFont(Control c, FormFieldInfo f)
+    {
+        var font = Services.PdfFontMap.Resolve(f.FontName);
+        string family = InstalledFonts.Contains(font.Family) ? font.Family : "Arial";
+        c.FontFamily = new FontFamily(family);
+        c.FontWeight = font.Bold ? FontWeights.Bold : FontWeights.Normal;
+        c.FontStyle = font.Italic ? FontStyles.Italic : FontStyles.Normal;
+    }
+
     private Brush FieldFill(FormFieldInfo f) => _vm?.HighlightFields != false ? FieldFillBrush : HexBrush(f.FillColor) ?? Brushes.White;
     private Brush FieldBorder(FormFieldInfo f) => _vm?.HighlightFields != false ? FieldBorderBrush : HexBrush(f.BorderColor) ?? Brushes.Transparent;
     private static Brush FieldText(FormFieldInfo f) => HexBrush(f.TextColor) ?? Brushes.Black;
@@ -1140,7 +1156,7 @@ public partial class PdfViewerControl : UserControl
         var lb = new ListBox
         {
             Width = w, Height = h,
-            FontSize = Math.Max(8, h * 0.4),
+            FontSize = field.FontSize > 0 ? field.FontSize * Scale : Math.Max(8, h * 0.4),
             ToolTip = field.Name,
         };
         foreach (var opt in field.Options) lb.Items.Add(opt);
@@ -1148,6 +1164,7 @@ public partial class PdfViewerControl : UserControl
         lb.SelectedItem = cur;
         lb.SelectionChanged += (_, _) => { if (lb.SelectedItem is string val) _vm.UpdateFieldValue(field.Name, val); };
         lb.GotFocus += (_, _) => _vm.SelectedField = field;
+        ApplyFieldFont(lb, field);
         return lb;
     }
 
