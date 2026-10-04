@@ -17,7 +17,16 @@ public partial class AiChatPanel : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        MarkdownView.PageRequested += page => _vm?.GoToCitedPage(page);
+        // Follow a streaming reply as it grows, unless the user has scrolled up to read.
+        ChatScroll.ScrollChanged += (_, e) =>
+        {
+            if (e.ExtentHeightChange > 0 && _stickToBottom) ChatScroll.ScrollToBottom();
+            else if (e.ExtentHeightChange == 0) _stickToBottom = ChatScroll.VerticalOffset >= ChatScroll.ScrollableHeight - 24;
+        };
     }
+
+    private bool _stickToBottom = true;
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
@@ -36,6 +45,7 @@ public partial class AiChatPanel : UserControl
     private void OnHistoryChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         EmptyState.Visibility = _vm?.AiChatHistory.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        _stickToBottom = true;
         Dispatcher.BeginInvoke(() => ChatScroll.ScrollToBottom());
     }
 
@@ -44,7 +54,8 @@ public partial class AiChatPanel : UserControl
         if (e.PropertyName == nameof(MainViewModel.IsAiRunning))
         {
             bool running = _vm?.IsAiRunning == true;
-            ThinkingIndicator.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+            // The reply bubble itself shows progress (a caret while it streams in).
+            ThinkingIndicator.Visibility = Visibility.Collapsed;
             CancelBtn.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
             SendBtn.Visibility   = running ? Visibility.Collapsed : Visibility.Visible;
             if (running)
@@ -302,5 +313,45 @@ public partial class AiChatPanel : UserControl
             Send_Click(sender, e);
             e.Handled = true;
         }
+    }
+
+    // ── Reply tools, proposed changes, follow-ups ───────────────────────────
+
+    private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;
+
+    private void CopyReply_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<AiChatMessage>(sender) is not { } msg) return;
+        try
+        {
+            Clipboard.SetText(msg.Content);
+            ToastService.Instance.Success("Reply copied.");
+        }
+        catch { /* clipboard busy */ }
+    }
+
+    private void ReplyAsNote_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<AiChatMessage>(sender) is { } msg) _vm?.AddReplyAsNote(msg);
+    }
+
+    private async void ApplyAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<AiActionItem>(sender) is { } item && _vm != null) await _vm.ApplyAiActionAsync(item);
+    }
+
+    private void UndoAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<AiActionItem>(sender) is { } item) _vm?.UndoAiAction(item);
+    }
+
+    private async void ApplyAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<AiChatMessage>(sender) is { } msg && _vm != null) await _vm.ApplyAllAiActionsAsync(msg);
+    }
+
+    private void FollowUp_Click(object sender, RoutedEventArgs e)
+    {
+        if (Item<string>(sender) is { } question) _vm?.AskFollowUp(question);
     }
 }

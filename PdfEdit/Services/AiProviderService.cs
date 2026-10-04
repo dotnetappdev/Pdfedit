@@ -177,14 +177,16 @@ public static class AiProviderService
         string apiKey,
         Action<string> onChunk,
         CancellationToken ct = default,
-        IEnumerable<string>? fieldNames = null)
+        IEnumerable<string>? fieldNames = null,
+        string? extraInstructions = null)
     {
         var prompt = BuildAnalysisPrompt(analysisType, documentText, fieldNames);
         var messages = new[] { new AiChatMessage { Role = "user", Content = prompt } };
 
-        const string systemPrompt =
+        string systemPrompt =
             "You are an expert document analyst. Format your responses clearly with headers and bullet points where appropriate. " +
             "Be concise, accurate, and focus on actionable insights.";
+        if (!string.IsNullOrEmpty(extraInstructions)) systemPrompt += "\n\n" + extraInstructions;
 
         await RouteAsync(provider, messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens: 4096);
     }
@@ -235,7 +237,7 @@ public static class AiProviderService
                 "- **Contact** (addresses, phone numbers, email addresses)\n" +
                 "- **Medical / biometric** (health information, biometric data)\n" +
                 "- **Other sensitive** (passwords, security questions, etc.)\n\n" +
-                "For each item, note approximately where it appears in the document.\n\n" +
+                "For each item, note the page it appears on, and propose a redact action for each item.\n\n" +
                 $"Document:\n{docText}",
 
             "translate" =>

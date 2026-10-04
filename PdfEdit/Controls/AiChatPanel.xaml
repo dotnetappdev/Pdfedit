@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:PdfEdit.Models"
+             xmlns:local="clr-namespace:PdfEdit.Controls"
              Background="{DynamicResource PanelBgBrush}"
              AutomationProperties.Name="AI chat assistant">
 
@@ -191,14 +192,61 @@
             </Setter>
         </Style>
 
+        <!-- One proposed change: what it does, Apply / Undo, and how it went -->
+        <DataTemplate x:Key="AiActionTemplate" DataType="{x:Type models:AiActionItem}">
+            <Border Background="{DynamicResource PanelBgBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1"
+                    CornerRadius="6" Padding="8,6" Margin="0,0,0,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{DynamicResource AccentBrush}"
+                               VerticalAlignment="Top" Margin="0,2,8,0"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{DynamicResource ForegroundBrush}"/>
+                        <TextBlock x:Name="StateLine" Text="{Binding StateText}" TextWrapping="Wrap" FontSize="11"
+                                   Margin="0,2,0,0" Foreground="#34A853" Visibility="Collapsed"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <Button Content="Apply" Style="{StaticResource PresetChip}" Padding="10,3"
+                                Click="ApplyAction_Click"
+                                Visibility="{Binding IsPending, Converter={StaticResource BoolToVisibilityConverter}}"
+                                ToolTip="Make this change"
+                                AutomationProperties.Name="Apply this change"/>
+                        <Button Content="Undo" Style="{StaticResource PresetChip}" Padding="10,3"
+                                Click="UndoAction_Click"
+                                Visibility="{Binding CanUndo, Converter={StaticResource BoolToVisibilityConverter}}"
+                                ToolTip="Put it back as it was"
+                                AutomationProperties.Name="Undo this change"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsPending}" Value="False">
+                    <Setter TargetName="StateLine" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:AiActionState.Failed}">
+                    <Setter TargetName="StateLine" Property="Foreground" Value="#E05A4F"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:AiActionState.Undone}">
+                    <Setter TargetName="StateLine" Property="Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
         <DataTemplate x:Key="ChatMessageTemplate" DataType="{x:Type models:AiChatMessage}">
-            <Grid Margin="4,3">
+            <Grid Margin="4,4">
                 <!-- User bubble -->
                 <Border x:Name="UserBubble"
-                        MaxWidth="280" HorizontalAlignment="Right"
+                        MaxWidth="420" HorizontalAlignment="Right"
                         Background="{DynamicResource AccentBrush}"
                         CornerRadius="14,14,4,14" Padding="12,8"
-                        Margin="36,0,0,0">
+                        Margin="48,0,0,0">
                     <StackPanel>
                         <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
                                    Foreground="White" FontSize="13" LineHeight="20"/>
@@ -206,27 +254,73 @@
                                    Foreground="#AAFFFFFF" HorizontalAlignment="Right" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
-                <!-- Assistant bubble -->
+                <!-- Assistant reply: formatted text, proposed changes, follow-up questions -->
                 <Border x:Name="AiBubble"
                         Visibility="Collapsed"
-                        MaxWidth="280" HorizontalAlignment="Left"
+                        HorizontalAlignment="Stretch"
                         Background="{DynamicResource InputBgBrush}"
                         BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1"
-                        CornerRadius="4,14,14,14" Padding="12,8"
-                        Margin="0,0,36,0">
+                        CornerRadius="4,12,12,12" Padding="12,8,12,10"
+                        Margin="0,0,8,0">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text="✦" FontSize="11" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,5,0"/>
-                            <TextBlock Text="AI" FontSize="10" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource DimForegroundBrush}"
-                                       VerticalAlignment="Center"/>
+                        <Grid Margin="0,0,0,6">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="✦" FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AccentBrush}" Margin="0,0,5,0"/>
+                                <TextBlock Text="Assistant" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource DimForegroundBrush}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding TimeDisplay, StringFormat=' · {0}'}" FontSize="10"
+                                           Foreground="{DynamicResource DimForegroundBrush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                        Visibility="{Binding ShowTools, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Button Style="{StaticResource IconBtn}" Width="24" Height="22"
+                                        Click="CopyReply_Click" ToolTip="Copy reply"
+                                        AutomationProperties.Name="Copy reply">
+                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                </Button>
+                                <Button Style="{StaticResource IconBtn}" Width="24" Height="22"
+                                        Click="ReplyAsNote_Click" ToolTip="Add to this page as a note"
+                                        AutomationProperties.Name="Add reply as a note">
+                                    <TextBlock Text="&#xE70B;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <local:MarkdownView Markdown="{Binding Content}"/>
+                        <TextBlock Text="▍" FontSize="13" Foreground="{DynamicResource AccentBrush}"
+                                   Visibility="{Binding IsStreaming, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                        <!-- Proposed changes -->
+                        <StackPanel x:Name="ActionsSection" Margin="0,8,0,0">
+                            <Grid Margin="0,0,0,4">
+                                <TextBlock Text="SUGGESTED CHANGES" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource DimForegroundBrush}" VerticalAlignment="Center"/>
+                                <Button x:Name="ApplyAllBtn" Content="Apply all" Style="{StaticResource PresetChip}"
+                                        Padding="8,2" HorizontalAlignment="Right"
+                                        Click="ApplyAll_Click" ToolTip="Apply every change that's still waiting"
+                                        AutomationProperties.Name="Apply all suggested changes"/>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding Actions}" ItemTemplate="{StaticResource AiActionTemplate}"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource ForegroundBrush}" FontSize="13" LineHeight="20"/>
-                        <TextBlock Text="{Binding TimeDisplay}" FontSize="9"
-                                   Foreground="{DynamicResource DimForegroundBrush}"
-                                   HorizontalAlignment="Left" Margin="0,4,0,0"/>
+
+                        <!-- Follow-up questions -->
+                        <ItemsControl x:Name="FollowUpList" ItemsSource="{Binding FollowUps}" Margin="0,8,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource PresetChip}" Click="FollowUp_Click"
+                                            HorizontalContentAlignment="Left"
+                                            ToolTip="Ask this" AutomationProperties.Name="{Binding}">
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" MaxWidth="320"/>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -234,6 +328,15 @@
                 <DataTrigger Binding="{Binding IsUser}" Value="False">
                     <Setter TargetName="UserBubble" Property="Visibility" Value="Collapsed"/>
                     <Setter TargetName="AiBubble" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Actions.Count}" Value="0">
+                    <Setter TargetName="ActionsSection" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding FollowUps.Count}" Value="0">
+                    <Setter TargetName="FollowUpList" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Actions.Count}" Value="1">
+                    <Setter TargetName="ApplyAllBtn" Property="Visibility" Value="Collapsed"/>
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>

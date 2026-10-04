@@ -3289,35 +3289,40 @@ public partial class MainViewModel : INotifyPropertyChanged
         {
             var history = AiChatHistory.Take(AiChatHistory.Count - 1).ToList();
 
-            // Build system prompt: profile context + document context
+            // Build system prompt: how to answer, profile context, document context
             var sysParts = new System.Text.StringBuilder();
-            sysParts.Append("You are a helpful assistant for PDF documents. ");
+            sysParts.Append(AiAssistantInstructions()).Append("\n\n");
             if (_selectedProfile != null)
                 sysParts.Append(Services.PersonalProfileStore.BuildSystemPrompt(_selectedProfile)).Append("\n\n");
             if (!string.IsNullOrEmpty(_documentText))
                 sysParts.Append("The user has the following PDF document open:\n\n").Append(_documentText);
-            var sysPrompt = sysParts.Length > 35 ? sysParts.ToString() : null;
+            var sysPrompt = sysParts.ToString();
 
+            reply.IsStreaming = true;
             await Services.AiProviderService.SendStreamingAsync(
                 history, _aiProvider, _aiModel, key,
-                chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
+                chunk => Application.Current.Dispatcher.Invoke(() => AppendReplyChunk(reply, chunk)),
                 _aiCts.Token,
                 systemPrompt: sysPrompt);
 
-            if (string.IsNullOrEmpty(reply.Content))
+            FinishReply(reply);
+            if (string.IsNullOrEmpty(reply.Content) && reply.Actions.Count == 0)
                 reply.Content = "(No response — check your API key and model selection.)";
         }
         catch (OperationCanceledException)
         {
-            reply.Content = "(Cancelled)";
+            FinishReply(reply);
+            reply.Content = reply.Content.Length > 0 ? reply.Content + "\n\n*(Stopped)*" : "(Cancelled)";
         }
         catch (Exception ex)
         {
+            reply.IsStreaming = false;
             reply.Content = $"Error: {ex.Message}";
             ToastService.Instance.Error("AI error — check your API key.");
         }
         finally
         {
+            reply.IsStreaming = false;
             IsAiRunning = false;
         }
     }
@@ -3375,18 +3380,22 @@ public partial class MainViewModel : INotifyPropertyChanged
         try
         {
             var fieldNames = AllFields.Select(f => f.Name);
+            reply.IsStreaming = true;
             await Services.AiProviderService.AnalyzeDocumentAsync(
                 _documentText, analysisType, _aiProvider, _aiModel, key,
-                chunk => Application.Current.Dispatcher.Invoke(() => reply.Content += chunk),
+                chunk => Application.Current.Dispatcher.Invoke(() => AppendReplyChunk(reply, chunk)),
                 _aiCts.Token,
-                fieldNames: fieldNames);
+                fieldNames: fieldNames,
+                extraInstructions: AiAssistantInstructions());
 
+            FinishReply(reply);
             if (string.IsNullOrEmpty(reply.Content))
                 reply.Content = "(No response — check your API key and model selection.)";
         }
         catch (OperationCanceledException)
         {
-            reply.Content = "(Cancelled)";
+            FinishReply(reply);
+            reply.Content = reply.Content.Length > 0 ? reply.Content + "\n\n*(Stopped)*" : "(Cancelled)";
         }
         catch (Exception ex)
         {
@@ -3395,6 +3404,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
         finally
         {
+            reply.IsStreaming = false;
             IsAiRunning = false;
         }
     }
