@@ -762,6 +762,25 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE785;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Remove Hidden&#x0a;Info"
+                                   Command="{Binding SanitizeCommand}"
+                                   ToolTip="Remove metadata, scripts, attachments and (optionally) comments — Acrobat's Sanitize"
+                                   AutomationProperties.Name="Remove hidden information">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Automate" AutomationProperties.Name="Automate group">
+                    <Fluent:Button Header="Batch&#x0a;Process"
+                                   Command="{Binding BatchCommand}"
+                                   ToolTip="Run steps (OCR, compress, watermark, flatten, numbering, password…) on many PDFs at once"
+                                   AutomationProperties.Name="Batch process files">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>

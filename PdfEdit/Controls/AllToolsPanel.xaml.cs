@@ -158,6 +158,12 @@ public partial class AllToolsPanel : UserControl
                     Tool("Sign yourself", "Signature"),
                     Run("Check required fields", vm.ValidateRequiredFieldsCommand),
                 } },
+            new() { Title = "Automate", Glyph = "\uE9F5", Accent = Color.FromRgb(0xFF, 0xB0, 0x3B),
+                Description = "Run steps on many PDFs at once",
+                Actions = new()
+                {
+                    Run("Batch process files…", vm.BatchCommand, "OCR, compress, watermark, flatten, number, protect… many files at once"),
+                } },
             new() { Title = "Scan & OCR", Glyph = "", Accent = Color.FromRgb(0x6F, 0xDC, 0x6F),
                 Description = "Make scanned pages searchable",
                 Actions = new()
@@ -173,6 +179,7 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Protect with password", vm.PasswordProtectCommand),
                     Run("Remove password", vm.RemovePasswordCommand),
+                    Page("Remove hidden information", vm.SanitizeCommand, "Metadata, scripts, attachments, comments"),
                     Run("Flatten form & save", vm.FlattenAndSaveCommand, "Make field values part of the page so they can't be edited"),
                 } },
             new() { Title = "Redact a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x7B, 0xAC),
