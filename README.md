@@ -26,6 +26,8 @@ PdfEdit fills in and signs forms, marks up documents, rearranges pages and build
 - **Scan & OCR**: scan from any Windows or TWAIN scanner and make the result searchable.
 - **Optional AI**: fill forms and summarise documents with your own Claude or OpenAI key, or a local model.
 
+![Filling in and signing a flat PDF form in Live View](docs/screenshots/fill-and-sign.gif)
+
 See the [documentation](docs/) for the full list and [screenshots](docs/screenshots.md) of every tool.
 
 ## Quick start

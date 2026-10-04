@@ -2,6 +2,10 @@
 
 [← Back to README](../README.md)
 
+Here's a flat form (no fields, just boxes printed on the page) being filled in, ticked, signed and saved in Live View:
+
+![Filling in and signing a flat PDF form in Live View](screenshots/fill-and-sign.gif)
+
 All of the tools below are on the **Fill & Sign** tab:
 
 ![The Fill & Sign ribbon tab](screenshots/ribbon-fill-sign.png)

@@ -24,6 +24,10 @@ These are rendered mock-ups of the interface rather than captures of the running
 
 ## Filling in forms
 
+Filling in, ticking and signing a flat form in Live View, start to finish:
+
+![Filling in and signing a flat PDF form in Live View](screenshots/fill-and-sign.gif)
+
 Text that doesn't fit its box: the **Fit** menu wraps it and grows the box instead of cutting it off.
 
 ![The text toolbar with the Fit menu open](screenshots/fill-text-fit.png)
