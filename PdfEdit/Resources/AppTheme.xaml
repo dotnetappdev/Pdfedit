@@ -379,6 +379,65 @@
         <Setter Property="Background" Value="#C42B1C"/>
     </Style>
 
+    <!-- ── Default Button ────────────────────────────────────────────────────── -->
+    <!-- Every Button without its own Style gets the app theme instead of the
+         white Windows (Aero) chrome: rounded, theme-coloured, no glow.        -->
+    <Style TargetType="Button">
+        <Setter Property="Background"      Value="{DynamicResource ButtonBgBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource ButtonBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="6,2"/>
+        <Setter Property="FontFamily"      Value="Segoe UI, Arial"/>
+        <Setter Property="FontSize"        Value="13"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"/>
+                        <!-- Hover/press tint drawn over the background, so colour-swatch
+                             buttons keep their colour; Foreground lightens in dark
+                             themes and darkens in light ones. -->
+                        <Border x:Name="Tint" CornerRadius="6" Background="{TemplateBinding Foreground}" Opacity="0"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True">
+                            <ContentPresenter.Resources>
+                                <!-- Shield the label from the app-wide TextBlock style so it
+                                     inherits the button's font (e.g. Segoe MDL2 Assets icons
+                                     instead of empty boxes), size and colour. -->
+                                <Style TargetType="TextBlock"/>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Tint" Property="Opacity" Value="0.08"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Tint" Property="Opacity" Value="0.16"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ── Search result item ─────────────────────────────────────────────────── -->
     <Style x:Key="SearchResultItem" TargetType="ListBoxItem">
         <Setter Property="Padding"     Value="10,5"/>

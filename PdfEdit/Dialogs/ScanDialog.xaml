@@ -37,7 +37,7 @@
             <StackPanel>
                 <TextBlock Text="Scanner" Style="{StaticResource Label}" Margin="0,0,0,3"/>
                 <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Width="30" Margin="4,0,0,0"
+                    <Button DockPanel.Dock="Right" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Width="30" Padding="0" Margin="4,0,0,0"
                             Click="Refresh_Click" ToolTip="Look for scanners again" AutomationProperties.Name="Refresh scanner list"/>
                     <ComboBox x:Name="DeviceBox" Height="28" AutomationProperties.Name="Scanner"
                               SelectionChanged="DeviceBox_SelectionChanged"
@@ -161,16 +161,16 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <TextBlock x:Name="PagesHead" Text="PAGES (0)" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,6"/>
-            <ListBox x:Name="PageList" Grid.Row="1" SelectionChanged="PageList_SelectionChanged"
+            <ListBox x:Name="PageList" Grid.Row="1" Style="{StaticResource DarkListBox}" SelectionChanged="PageList_SelectionChanged"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Scanned pages"/>
             <UniformGrid Grid.Row="2" Columns="5" Margin="0,6,0,0">
-                <Button Content="&#xE7AD;" FontFamily="Segoe MDL2 Assets" Click="RotateLeft_Click" ToolTip="Rotate left" Height="28" Margin="1" AutomationProperties.Name="Rotate page left"/>
-                <Button Content="&#xE7AD;" FontFamily="Segoe MDL2 Assets" Click="RotateRight_Click" ToolTip="Rotate right" Height="28" Margin="1" AutomationProperties.Name="Rotate page right" RenderTransformOrigin="0.5,0.5">
+                <Button Content="&#xE7AD;" FontFamily="Segoe MDL2 Assets" Click="RotateLeft_Click" ToolTip="Rotate left" Height="28" Padding="0" Margin="1" AutomationProperties.Name="Rotate page left"/>
+                <Button Content="&#xE7AD;" FontFamily="Segoe MDL2 Assets" Click="RotateRight_Click" ToolTip="Rotate right" Height="28" Padding="0" Margin="1" AutomationProperties.Name="Rotate page right" RenderTransformOrigin="0.5,0.5">
                     <Button.RenderTransform><ScaleTransform ScaleX="-1"/></Button.RenderTransform>
                 </Button>
-                <Button Content="&#xE74A;" FontFamily="Segoe MDL2 Assets" Click="MoveUp_Click" ToolTip="Move up" Height="28" Margin="1" AutomationProperties.Name="Move page up"/>
-                <Button Content="&#xE74B;" FontFamily="Segoe MDL2 Assets" Click="MoveDown_Click" ToolTip="Move down" Height="28" Margin="1" AutomationProperties.Name="Move page down"/>
-                <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="Delete_Click" ToolTip="Delete page" Height="28" Margin="1" AutomationProperties.Name="Delete page"/>
+                <Button Content="&#xE74A;" FontFamily="Segoe MDL2 Assets" Click="MoveUp_Click" ToolTip="Move up" Height="28" Padding="0" Margin="1" AutomationProperties.Name="Move page up"/>
+                <Button Content="&#xE74B;" FontFamily="Segoe MDL2 Assets" Click="MoveDown_Click" ToolTip="Move down" Height="28" Padding="0" Margin="1" AutomationProperties.Name="Move page down"/>
+                <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="Delete_Click" ToolTip="Delete page" Height="28" Padding="0" Margin="1" AutomationProperties.Name="Delete page"/>
             </UniformGrid>
         </Grid>
 
@@ -182,7 +182,7 @@
             <Button DockPanel.Dock="Right" x:Name="CancelBtn" Content="Cancel" Click="Cancel_Click" Padding="16,4" Margin="6,0,0,0" IsCancel="True"/>
             <Button DockPanel.Dock="Right" x:Name="DoneBtn" Content="Done" Click="Done_Click" Padding="16,4" Margin="6,0,0,0" IsEnabled="False"
                     ToolTip="Make the PDF from the scanned pages" AutomationProperties.Name="Done — make the PDF"/>
-            <Button DockPanel.Dock="Right" x:Name="ScanBtn" Content="Scan" Click="Scan_Click" Padding="16,4" Margin="6,0,0,0" IsDefault="True"
+            <Button DockPanel.Dock="Right" x:Name="ScanBtn" Content="Scan" Click="Scan_Click" Style="{StaticResource ModernButton}" Padding="16,4" Margin="6,0,0,0" IsDefault="True"
                     ToolTip="Scan and add the page(s)" AutomationProperties.Name="Scan"/>
             <Button DockPanel.Dock="Right" x:Name="PreviewBtn" Content="Preview" Click="Preview_Click" Padding="16,4"
                     ToolTip="Quick low-resolution scan to check placement (not added)" AutomationProperties.Name="Preview"/>

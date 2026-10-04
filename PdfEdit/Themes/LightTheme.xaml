@@ -43,6 +43,10 @@
     <SolidColorBrush x:Key="HoverBgBrush"          Color="{StaticResource HoverBgColor}"/>
     <SolidColorBrush x:Key="ActiveBgBrush"         Color="{StaticResource ActiveBgColor}"/>
 
+    <!-- Standard (secondary) buttons — dialogs, panels -->
+    <SolidColorBrush x:Key="ButtonBgBrush"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonBorderBrush"     Color="#C8C8C8"/>
+
     <!-- Font scale tokens -->
     <sys:Double x:Key="PanelFontSize">12</sys:Double>
     <sys:Double x:Key="RibbonFontSize">12</sys:Double>

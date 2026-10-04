@@ -47,6 +47,9 @@ public partial class App : Application
             ErrorDialog.Show("Failed to apply interface font sizes. Defaults will be used.", ex);
         }
 
+        // Dark caption / window buttons on every window that follows the theme.
+        TitleBarTheme.Register();
+
         MainWindow mainWindow;
         try
         {
@@ -143,6 +146,9 @@ public partial class App : Application
         // Keep the AvalonDock docking chrome in sync (main window may not exist yet
         // during the very first theme application at startup).
         (Current.MainWindow as MainWindow)?.ApplyDockTheme(themeName);
+
+        // Native title bars of windows already open.
+        TitleBarTheme.ApplyAll();
     }
 
     /// <summary>
