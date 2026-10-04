@@ -166,37 +166,77 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <!-- Name cell (left column): slightly inset background, right+bottom border -->
+    <!-- Property names are labels: they sit back so the editable values stand out. -->
     <Style x:Key="PropGridNameBorder" TargetType="Border">
-        <Setter Property="Background"      Value="{DynamicResource InputBgBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource PanelBgBrush}"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppBorderBrush}"/>
         <Setter Property="BorderThickness" Value="0,0,1,1"/>
         <Setter Property="Padding"         Value="5,0"/>
-        <Setter Property="Height"          Value="21"/>
+        <Setter Property="MinHeight"       Value="25"/>
     </Style>
     <Style x:Key="PropGridNameText" TargetType="TextBlock">
         <Setter Property="FontSize"         Value="11"/>
-        <Setter Property="Foreground"       Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="Foreground"       Value="{DynamicResource DimForegroundBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="TextTrimming"     Value="CharacterEllipsis"/>
     </Style>
-    <!-- Value cell (right column): lighter background, bottom border only -->
+    <!-- Value cell (right column): bottom border only; editable values draw their own input box -->
     <Style x:Key="PropGridValueBorder" TargetType="Border">
-        <Setter Property="Background"      Value="{DynamicResource SidebarBgBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource PanelBgBrush}"/>
         <Setter Property="BorderBrush"     Value="{DynamicResource AppBorderBrush}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        <Setter Property="Height"          Value="21"/>
+        <Setter Property="MinHeight"       Value="25"/>
     </Style>
     <!-- Flat inline text editor: no visible border, transparent background -->
+    <!-- Editable property value: drawn as an input box (field background, border, blue border on
+         hover / focus, I-beam) so it's obvious it can be typed into. Read-only values go flat. -->
     <Style x:Key="PropGridInlineTextBox" TargetType="TextBox">
-        <Setter Property="Background"        Value="Transparent"/>
-        <Setter Property="BorderThickness"   Value="0"/>
+        <Setter Property="Background"        Value="{DynamicResource InputBgBrush}"/>
+        <Setter Property="BorderBrush"       Value="{DynamicResource InputBorderBrush}"/>
+        <Setter Property="BorderThickness"   Value="1"/>
+        <Setter Property="Margin"            Value="3,2"/>
         <Setter Property="FontSize"          Value="11"/>
         <Setter Property="FontFamily"        Value="Segoe UI, Arial"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Padding"           Value="3,1"/>
-        <Setter Property="Foreground"        Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="Cursor"            Value="IBeam"/>
+        <Setter Property="Foreground"        Value="{DynamicResource InputForegroundBrush}"/>
         <Setter Property="CaretBrush"        Value="{DynamicResource ForegroundBrush}"/>
         <Setter Property="SelectionBrush"    Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Focusable="False" HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource DimForegroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsReadOnly" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource DimForegroundBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <!-- Flat color-swatch button: no chrome, hover tint only -->
     <Style x:Key="PropGridColorButton" TargetType="Button">
@@ -637,6 +677,16 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- Dropdown inside the Properties grid: compact, but with the same input box look. -->
+    <Style x:Key="PropGridComboBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="FontSize"    Value="11"/>
+        <Setter Property="MinHeight"   Value="0"/>
+        <Setter Property="Height"      Value="21"/>
+        <Setter Property="Margin"      Value="3,2"/>
+        <Setter Property="Padding"     Value="5,1,22,1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
     </Style>
 
     <Style TargetType="ComboBoxItem">

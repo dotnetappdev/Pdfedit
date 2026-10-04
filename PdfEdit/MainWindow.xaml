@@ -3269,21 +3269,21 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Format" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding DateFormatChoices}" SelectedValuePath="Format" DisplayMemberPath="Label" SelectedValue="{Binding SelectedAnnotationDateFormat}" FontSize="11" BorderThickness="0" ToolTip="How the date is written (d = day, M = month, y = year)" AutomationProperties.Name="Date format"/>
+                                                <ComboBox ItemsSource="{Binding DateFormatChoices}" SelectedValuePath="Format" DisplayMemberPath="Label" SelectedValue="{Binding SelectedAnnotationDateFormat}" Style="{StaticResource PropGridComboBox}" ToolTip="How the date is written (d = day, M = month, y = year)" AutomationProperties.Name="Date format"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Day" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding DayChoices}" SelectedItem="{Binding SelectedAnnotationDay}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Day"/>
+                                                <ComboBox ItemsSource="{Binding DayChoices}" SelectedItem="{Binding SelectedAnnotationDay}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Day"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Month" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding MonthChoices}" SelectedIndex="{Binding SelectedAnnotationMonthIndex}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Month"/>
+                                                <ComboBox ItemsSource="{Binding MonthChoices}" SelectedIndex="{Binding SelectedAnnotationMonthIndex}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Month"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
@@ -3299,7 +3299,7 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Font" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding CurrentFontFamily}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation font"/>
+                                                <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding CurrentFontFamily}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Annotation font"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
@@ -3343,14 +3343,14 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Alignment" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding TextAlignmentChoices}" SelectedItem="{Binding CurrentTextAlignment}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation text alignment"/>
+                                                <ComboBox ItemsSource="{Binding TextAlignmentChoices}" SelectedItem="{Binding CurrentTextAlignment}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Annotation text alignment"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Rotation" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding RotationAngles}" SelectedItem="{Binding SelectedAnnotationRotation}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Annotation rotation"/>
+                                                <ComboBox ItemsSource="{Binding RotationAngles}" SelectedItem="{Binding SelectedAnnotationRotation}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Annotation rotation"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
@@ -3522,7 +3522,7 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Alignment" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding FieldAlignments}" SelectedItem="{Binding SelectedFieldAlignment}" IsEnabled="{Binding SelectedFieldIsTextLike}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Field text alignment"/>
+                                                <ComboBox ItemsSource="{Binding FieldAlignments}" SelectedItem="{Binding SelectedFieldAlignment}" IsEnabled="{Binding SelectedFieldIsTextLike}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Field text alignment"/>
                                             </Border>
                                         </Grid>
                                         <Grid>
@@ -3724,7 +3724,7 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Align" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding DesignCanvas.TextAlignments}" SelectedItem="{Binding DesignCanvas.TextAlignment}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Text alignment"/>
+                                                <ComboBox ItemsSource="{Binding DesignCanvas.TextAlignments}" SelectedItem="{Binding DesignCanvas.TextAlignment}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Text alignment"/>
                                             </Border>
                                         </Grid>
                                         <!-- Wrap -->
@@ -3875,7 +3875,7 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="88"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Label pos" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <ComboBox ItemsSource="{Binding DesignCanvas.FieldLabelPositions}" SelectedItem="{Binding DesignCanvas.FieldLabelPosition}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Field label position"/>
+                                                <ComboBox ItemsSource="{Binding DesignCanvas.FieldLabelPositions}" SelectedItem="{Binding DesignCanvas.FieldLabelPosition}" Style="{StaticResource PropGridComboBox}" AutomationProperties.Name="Field label position"/>
                                             </Border>
                                         </Grid>
                                         <!-- Label gap -->
