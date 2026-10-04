@@ -287,7 +287,8 @@ jobs:
 
           # Patch version in manifest
           $manifest = Get-Content installer\Package.appxmanifest -Raw
-          $manifest = $manifest -replace 'Version="[\d.]+"', "Version=`"$env:VERSION4`""
+          # Only the package Identity's Version (not <?xml version>, MinVersion, MaxVersionTested).
+          $manifest = [regex]::Replace($manifest, '(?s)(<Identity\b[^>]*?\sVersion=")[\d.]+(")', "`${1}$env:VERSION4`${2}")
           Set-Content "$stage\AppxManifest.xml" $manifest
 
           # Generate tile assets
