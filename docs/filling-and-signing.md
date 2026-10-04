@@ -2,6 +2,10 @@
 
 [← Back to README](../README.md)
 
+All of the tools below are on the **Fill & Sign** tab:
+
+![The Fill & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
+
 ## Forms with fillable fields
 
 Open the PDF (Ctrl+O, or drag it onto the window) and click a field to type in it. Check boxes and radio buttons toggle when you click anywhere inside them. Date fields have a small calendar button.
@@ -29,15 +33,23 @@ Plenty of forms are just lines and boxes printed on the page. You can still fill
 
 Everything else, including font, bold and italic, alignment and exact position, is in the **Properties** panel.
 
+![The text toolbar with the Fit menu open](screenshots/fill-text-fit.png)
+
 ## Ticks, crosses and dates
 
 The **Marks** group places ✓, ✕, ●, ○ and — marks. They're drawn as shapes rather than font characters, so they look the same in every PDF reader. Resize them with the corner handle or the A / A buttons.
 
+![Ticks and crosses on a printed checklist](screenshots/fill-marks.png)
+
 **Date** stamps today's date. Select it afterwards and the Properties panel lets you pick another format (dd/MM/yyyy, MM/dd/yyyy, 4 October 2026 and so on) or change the day, month and year.
+
+![The date format list in the Properties panel](screenshots/fill-date-format.png)
 
 ## Signatures
 
 Click **Sign** to place your signature, or use **New Signature…** to draw, type or import one first. **New Initials…** does the same for initials. Saved signatures are kept for next time.
+
+![Placing a signature from the saved signatures list](screenshots/fill-signature.png)
 
 ## Saving
 

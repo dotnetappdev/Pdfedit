@@ -25,6 +25,8 @@ PdfEdit runs on 64-bit Windows 10 (version 2004 or later) and Windows 11.
 
 ## What you can do with it
 
+![The Fill & Sign ribbon](docs/screenshots/ribbon-fill-sign.png)
+
 - **Fill and sign.** Type into form fields, or click anywhere on a flat PDF to add text, ticks, crosses and dates. Then add your signature or initials.
 - **Prepare forms.** Add text fields, check boxes, radio buttons, dropdowns, signature and date fields. Move and resize them, and edit their properties.
 - **Comment and mark up.** Highlight, underline, strike through, add sticky notes, shapes and freehand drawing. Place stamps such as APPROVED or SIGN HERE, and add links.
@@ -45,7 +47,7 @@ Each topic has its own short page:
 - [Design canvas](docs/design-canvas.md)
 - [AI assistant](docs/ai-assistant.md)
 - [Keyboard shortcuts](docs/keyboard-shortcuts.md)
-- [Screenshots](docs/screenshots.md)
+- [Screenshots](docs/screenshots.md) (every ribbon tab and the form-filling tools)
 - [Building from source and releases](docs/building.md)
 - [How the code is organised](docs/architecture.md)
 

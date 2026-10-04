@@ -2,7 +2,49 @@
 
 [← Back to README](../README.md)
 
-These are rendered mock-ups of the interface rather than captures of the running app, so small details may differ.
+These are rendered mock-ups of the interface rather than captures of the running app, so small details may differ. The ribbon and form-filling images are drawn from the real ribbon layout and can be regenerated with `node docs/screenshots/src/render.mjs`.
+
+## The ribbon
+
+**Fill & Sign**: everything for filling in and signing a form in one place.
+
+![The Fill & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
+
+**Home**: files, navigation and page tools.
+
+![The Home ribbon tab](screenshots/ribbon-home.png)
+
+**Tools**: mark-up, drawing, measuring and stamps.
+
+![The Tools ribbon tab](screenshots/ribbon-tools.png)
+
+**Edit**: form data, adding form fields and lining them up.
+
+![The Edit ribbon tab](screenshots/ribbon-edit.png)
+
+## Filling in forms
+
+Text that doesn't fit its box: the **Fit** menu wraps it and grows the box instead of cutting it off.
+
+![The text toolbar with the Fit menu open](screenshots/fill-text-fit.png)
+
+Ticks and crosses in a flat form's checkboxes. Click inside a square and the mark fills it.
+
+![Ticks and crosses on a printed checklist](screenshots/fill-marks.png)
+
+Dates can be switched to another format, or have the day, month and year changed, from the Properties panel.
+
+![The date format list in the Properties panel](screenshots/fill-date-format.png)
+
+Stamps from Acrobat's standard set and more, including dynamic stamps that add your name and the time.
+
+![The stamp list open with stamps placed on the page](screenshots/fill-stamps.png)
+
+Signing: pick a saved signature or initials and click where they go.
+
+![Placing a signature from the saved signatures list](screenshots/fill-signature.png)
+
+## Around the app
 
 ![A tour of the app](screenshots/tour-v4.gif)
 

@@ -23,6 +23,8 @@ Choose a stamp from the list on the Tools or Fill & Sign tab, then click the pag
 - **Dynamic**: these add "By *your name* at *time, date*" under the title
 - **More**: Paid, Urgent, Copy, Original, Do Not Copy, Internal Use Only, Sample, Received, Revise and Resubmit and around 30 others
 
+![The stamp list open with stamps placed on the page](screenshots/fill-stamps.png)
+
 **Custom Stamp…** adds your own wording to the list, and **Remove Custom** takes it off again.
 
 A placed stamp can be moved, resized, rotated, recoloured or deleted like any other mark. When you save, it becomes a proper PDF stamp annotation.
