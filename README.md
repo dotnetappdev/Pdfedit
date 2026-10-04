@@ -4,7 +4,9 @@
 [![Latest release](https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release)](https://github.com/dotnetappdev/Pdfedit/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Free PDF editor for Windows: fill in and sign forms, mark up documents, and move pages around. See the [docs](docs/) for everything it does.
+A free PDF editor for Windows, built to rival Adobe Acrobat without the ads, subscriptions or paywalls. Everything is included and nothing is locked behind an upgrade.
+
+Fill in and sign forms (even flat ones with no fields), build your own forms, add comments, stamps and links, rearrange pages, watermark, scan with OCR and design documents from scratch. If you want it, there's optional AI form filling with your own key or a local model. It runs offline and doesn't need an account. See the [docs](docs/) for the details.
 
 ![PdfEdit filling in a form](docs/screenshots/demo-v4.gif)
 
