@@ -251,7 +251,8 @@ public partial class PdfViewerControl : UserControl
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
-        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); }
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); ClearTextSelection(); }
+        if (e.PropertyName is nameof(MainViewModel.CurrentPageIndex) or nameof(MainViewModel.Zoom)) { ClearTextSelection(); _chunkCache = null; }
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
             if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
@@ -728,6 +729,8 @@ public partial class PdfViewerControl : UserControl
 
     public async void RefreshPage()
     {
+        ClearTextSelection();
+        _chunkCache = null;   // the file may have changed
         if (_vm?.Document == null) return;
 
         FinalizeAnnotationBox();
@@ -2108,6 +2111,7 @@ public partial class PdfViewerControl : UserControl
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (_vm == null) return;
+        if (BeginTextSelect(e)) return;
 
         var tool = _vm.ActiveTool;
 
@@ -2441,6 +2445,7 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
+        if (EndTextSelect(e)) return;
         if (EndLayoutRubberBand(e.GetPosition(FieldOverlayCanvas)))
         {
             e.Handled = true;
@@ -2780,6 +2785,7 @@ public partial class PdfViewerControl : UserControl
 
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
+        if (UpdateTextSelect(e)) return;
         if (e.LeftButton == MouseButtonState.Pressed && UpdateLayoutRubberBand(e.GetPosition(FieldOverlayCanvas)))
             return;
 

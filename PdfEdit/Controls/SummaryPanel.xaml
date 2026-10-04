@@ -1,0 +1,41 @@
+<UserControl x:Class="PdfEdit.Controls.SummaryPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PdfEdit.Controls"
+             Background="{DynamicResource PanelBgBrush}"
+             AutomationProperties.Name="Document summary">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Border BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="10,8">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="✦" Foreground="{DynamicResource AccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Summary" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBlock Text="  · writing…" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource DimForegroundBrush}"
+                               Visibility="{Binding IsSummarising, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Padding="8,2" Margin="0,0,6,0" Click="Copy_Click" ToolTip="Copy the summary"
+                            Visibility="{Binding HasSummary, Converter={StaticResource BoolToVisibilityConverter}}"
+                            AutomationProperties.Name="Copy summary">Copy</Button>
+                    <Button Padding="10,2" Command="{Binding GenerateSummaryCommand}"
+                            ToolTip="Make (or remake) the outline with the AI" AutomationProperties.Name="Make summary">
+                        <TextBlock x:Name="GenerateLabel" Text="Make outline"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14,10">
+            <Grid>
+                <local:MarkdownView Markdown="{Binding SummaryText}"/>
+                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="4,20" TextAlignment="Center"
+                           Foreground="{DynamicResource DimForegroundBrush}"
+                           Text="An outline of the document: a short overview, each section with its key points, and links to the pages. Click Make outline."
+                           Visibility="{Binding HasSummary, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

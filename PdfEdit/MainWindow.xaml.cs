@@ -43,6 +43,7 @@ public partial class MainWindow : RibbonWindow
             System.Windows.Input.Key.T => ActiveTool.AddText,
             System.Windows.Input.Key.M => ActiveTool.Stamp,
             System.Windows.Input.Key.E => ActiveTool.EditFields,
+            System.Windows.Input.Key.S => ActiveTool.SelectText,
             _ => null,
         };
         if (tool is { } t && vm.HasDocument)
@@ -79,6 +80,11 @@ public partial class MainWindow : RibbonWindow
             vm.GoToPageRequested += FocusPageNumberBox;
             // Prepare Form toolbar → bring the Fields panel to the front.
             vm.CommentsPanelRequested += () => ShowDockPane("comments");
+            vm.SummaryPanelRequested += () => ShowDockPane("summary");
+            vm.PropertyChanged += (_, ev) =>
+            {
+                if (ev.PropertyName == nameof(MainViewModel.ShowAiPanel) && vm.ShowAiPanel) ShowDockPane("aichat");
+            };
             vm.PropertiesPanelRequested += () => ShowDockPane("properties");
             vm.FieldsPanelRequested += () =>
             {
@@ -525,5 +531,17 @@ public partial class MainWindow : RibbonWindow
             2 => DesignPageSize.A3,
             _ => DesignPageSize.A4
         };
+    }
+
+    // ── AI ribbon ─────────────────────────────────────────────────────────────
+
+    private void WritePreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM != null && (sender as FrameworkElement)?.Tag is string key) _ = VM.RunWritingPresetAsync(key);
+    }
+
+    private async void AskByVoice_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM != null) await VM.AskByVoiceAsync();
     }
 }

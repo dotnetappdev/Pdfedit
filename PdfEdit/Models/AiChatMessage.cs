@@ -14,6 +14,30 @@ public class AiChatMessage : INotifyPropertyChanged
     /// <summary>The reply exactly as the model sent it (including the actions block).</summary>
     public string Raw { get; set; } = string.Empty;
 
+    /// <summary>A picture sent with the message (PNG), e.g. an area of the page to ask about.</summary>
+    public byte[]? ImagePng { get; set; }
+
+    /// <summary>The picture for display in the chat.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? ImagePreview
+    {
+        get
+        {
+            if (ImagePng == null) return null;
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.StreamSource = new System.IO.MemoryStream(ImagePng);
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch { return null; }
+        }
+    }
+    public bool HasImage => ImagePng != null;
+
     public string Content
     {
         get => _content;

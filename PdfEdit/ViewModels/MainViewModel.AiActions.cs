@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
 using PdfEdit.Models;
 using PdfEdit.Services;
 
@@ -59,6 +61,16 @@ public partial class MainViewModel
                 [{"action":"fill_field","field":"FirstName","value":"Jane"}]
                 ```
                 """);
+        }
+
+        if (HasDocument)
+        {
+            sb.AppendLine("""
+                Two more actions control the app itself (use them when the user asks PdfEdit to do something, e.g. "compress this", "export to Word", "read it to me"):
+                {"action":"zoom","percent":150}   or {"action":"zoom","mode":"fit_width"} / "fit_page"
+                {"action":"command","name":"<command>"}
+                """);
+            sb.AppendLine("Commands: " + string.Join(", ", AiCommands.Keys) + ".");
         }
 
         sb.AppendLine("Finish every reply with one line of two or three short follow-up questions the user might ask next, in this exact form:");
@@ -157,6 +169,8 @@ public partial class MainViewModel
                     await FileAction(item, (i, o) => WatermarkService.Apply(i, o, opt, current), $"'{opt.Text}' watermark added");
                     break;
                 }
+                case "zoom": ZoomFromAi(item); break;
+                case "command": RunCommandFromAi(item); break;
                 case "add_bookmark":
                 {
                     int p = Page(item);
@@ -367,5 +381,84 @@ public partial class MainViewModel
                 throw new InvalidOperationException("That PDF is no longer open.");
             _ = ModifyCurrentFileAsync((_, o) => File.WriteAllBytes(o, before), $"Undo: {description}");
         });
+    }
+
+    // ── App commands the assistant can run ──────────────────────────────────
+
+    private Dictionary<string, (string Label, Func<ICommand> Command)>? _aiCommands;
+
+    /// <summary>Commands the assistant may run, by the name it uses.</summary>
+    public Dictionary<string, (string Label, Func<ICommand> Command)> AiCommands => _aiCommands ??= new()
+    {
+        ["save"] = ("Save", () => SaveCommand),
+        ["save_as"] = ("Save As", () => SaveAsCommand),
+        ["save_to_cloud"] = ("Save to cloud", () => SaveToCloudCommand),
+        ["print"] = ("Print", () => PrintCommand),
+        ["compress"] = ("Compress the PDF", () => CompressPdfCommand),
+        ["ocr"] = ("Recognise text (OCR)", () => OcrMakeSearchableCommand),
+        ["export_word"] = ("Export to Word", () => ExportWordCommand),
+        ["export_excel"] = ("Export to Excel", () => ExportExcelCommand),
+        ["export_text"] = ("Export text", () => ExportTextCommand),
+        ["export_images"] = ("Export pages as images", () => ExportPagesAsImagesCommand),
+        ["export_pdfa"] = ("Save as PDF/A", () => ExportPdfACommand),
+        ["merge"] = ("Merge PDFs into this one", () => MergePdfCommand),
+        ["split"] = ("Split the PDF", () => SplitPdfCommand),
+        ["insert_pdf"] = ("Insert pages from a PDF", () => InsertPdfCommand),
+        ["insert_blank_page"] = ("Insert a blank page", () => InsertBlankPageCommand),
+        ["duplicate_page"] = ("Duplicate this page", () => DuplicateCurrentPageCommand),
+        ["extract_page"] = ("Extract this page", () => ExtractCurrentPageCommand),
+        ["rotate_all"] = ("Rotate all pages right", () => RotateAllPagesCWCommand),
+        ["crop"] = ("Crop pages", () => CropPagesCommand),
+        ["page_numbers"] = ("Add page numbers", () => AddPageNumbersCommand),
+        ["header_footer"] = ("Add a header or footer", () => AddHeaderFooterCommand),
+        ["bates"] = ("Bates numbering", () => BatesNumberCommand),
+        ["watermark"] = ("Watermark", () => WatermarkCommand),
+        ["remove_watermark"] = ("Remove watermark", () => RemoveWatermarkCommand),
+        ["password"] = ("Protect with a password", () => PasswordProtectCommand),
+        ["sanitize"] = ("Remove hidden information", () => SanitizeCommand),
+        ["flatten"] = ("Flatten & save", () => FlattenAndSaveCommand),
+        ["apply_redactions"] = ("Apply redactions", () => ApplyRedactionsCommand),
+        ["accessibility_check"] = ("Accessibility check", () => AccessibilityCheckCommand),
+        ["detect_fields"] = ("Detect form fields", () => DetectFieldsCommand),
+        ["clear_fields"] = ("Clear all fields", () => ClearAllFieldsCommand),
+        ["check_required"] = ("Check required fields", () => ValidateRequiredFieldsCommand),
+        ["sign_certificate"] = ("Sign with a certificate", () => CertSignCommand),
+        ["verify_signatures"] = ("Check signatures", () => VerifySignaturesCommand),
+        ["compare"] = ("Compare with another PDF", () => VisualCompareCommand),
+        ["search_folder"] = ("Search a folder of PDFs", () => SearchFolderCommand),
+        ["read_aloud"] = ("Read this page aloud", () => ReadPageAloudCommand),
+        ["read_to_end"] = ("Read aloud to the end", () => ReadToEndAloudCommand),
+        ["stop_reading"] = ("Stop reading", () => StopReadingCommand),
+        ["summary_panel"] = ("Make a summary outline", () => GenerateSummaryCommand),
+        ["document_properties"] = ("Document properties", () => DocumentPropertiesCommand),
+        ["statistics"] = ("Document statistics", () => DocumentStatisticsCommand),
+        ["first_page"] = ("Go to the first page", () => FirstPageCommand),
+        ["last_page"] = ("Go to the last page", () => LastPageCommand),
+        ["next_page"] = ("Next page", () => NextPageCommand),
+        ["previous_page"] = ("Previous page", () => PreviousPageCommand),
+        ["thumbnails"] = ("Show or hide thumbnails", () => ToggleThumbnailsCommand),
+        ["settings"] = ("Open Settings", () => OpenSettingsCommand),
+    };
+
+    private void ZoomFromAi(AiActionItem item)
+    {
+        double before = Zoom;
+        string mode = item.Arg("mode").ToLowerInvariant();
+        if (mode is "fit_width" or "width") ZoomWidthCommand.Execute(null);
+        else if (mode is "fit_page" or "page" or "fit") ZoomFitCommand.Execute(null);
+        else if (double.TryParse(item.Arg("percent").TrimEnd('%'), NumberStyles.Float, CultureInfo.InvariantCulture, out double pct) && pct > 0)
+            Zoom = Math.Clamp(pct / 100.0, 0.1, 8.0);
+        else throw new InvalidOperationException("No zoom level was given.");
+        Applied(item, $"{Zoom * 100:0}%", () => Zoom = before);
+    }
+
+    private void RunCommandFromAi(AiActionItem item)
+    {
+        string name = item.Arg("name").Trim().ToLowerInvariant().Replace(' ', '_').Replace('-', '_');
+        if (!AiCommands.TryGetValue(name, out var entry)) throw new InvalidOperationException($"PdfEdit has no “{name}” command.");
+        var cmd = entry.Command();
+        if (!cmd.CanExecute(null)) throw new InvalidOperationException($"“{entry.Label}” isn't available right now.");
+        cmd.Execute(null);
+        Applied(item, "", null);
     }
 }

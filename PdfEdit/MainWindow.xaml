@@ -1803,6 +1803,14 @@
                                          CommandParameter="Zoom"
                                          ToolTip="Zoom tool — click to zoom in (Z)"
                                          AutomationProperties.Name="Zoom tool"/>
+                    <Fluent:ToggleButton Header="Select Text"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=SelectText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="SelectText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Select text or an area to copy, highlight or ask the AI about (S)"
+                                         AutomationProperties.Name="Select text tool"/>
                     <Fluent:ToggleButton Header="Highlight"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"
@@ -2546,6 +2554,39 @@
             <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
             <Fluent:RibbonTabItem x:Name="AiTab" Header="AI Assistant"
                                    AutomationProperties.Name="AI assistant tab">
+                <Fluent:RibbonGroupBox Header="Assist" AutomationProperties.Name="AI assist group">
+                    <Fluent:ToggleButton Header="Select&#x0a;Text" GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=SelectText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="SelectText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Drag over text or an area, then Explain, Summarise, Rewrite, Translate or Ask (S)"
+                                         AutomationProperties.Name="Select text and ask AI">
+                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="Outline" Command="{Binding GenerateSummaryCommand}"
+                                   ToolTip="A summary outline with key points and page links, in its own panel"
+                                   AutomationProperties.Name="Generative summary outline">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:DropDownButton Header="Write" ToolTip="Write something from this document"
+                                           IsEnabled="{Binding HasDocument}" AutomationProperties.Name="Write from document">
+                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
+                        <Fluent:MenuItem Header="Email about this document" Tag="email" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Study notes" Tag="notes" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Flashcards" Tag="flashcards" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Quiz" Tag="quiz" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="FAQ" Tag="faq" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Action items and deadlines" Tag="actions" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Plain-English version" Tag="plain" Click="WritePreset_Click"/>
+                        <Fluent:MenuItem Header="Social post" Tag="post" Click="WritePreset_Click"/>
+                    </Fluent:DropDownButton>
+                    <Fluent:Button Header="Ask by&#x0a;Voice" Click="AskByVoice_Click"
+                                   ToolTip="Click, then speak your question"
+                                   AutomationProperties.Name="Ask by voice">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE720;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <Fluent:RibbonGroupBox Header="Chat"
                                         AutomationProperties.Name="AI chat group">
                     <Fluent:Button Header="Open Chat"
@@ -4441,6 +4482,11 @@
                                     <controls:AiChatPanel x:Name="AiChatPane" DataContext="{Binding}"
                                                           FontSize="{DynamicResource ChatFontSize}"
                                                           AutomationProperties.Name="AI chat assistant"/>
+                                </avalonDock:LayoutAnchorable>
+                                <avalonDock:LayoutAnchorable Title="Summary" ContentId="summary" CanClose="False" CanHide="False">
+                                    <controls:SummaryPanel DataContext="{Binding}"
+                                                           FontSize="{DynamicResource ChatFontSize}"
+                                                           AutomationProperties.Name="Document summary"/>
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>

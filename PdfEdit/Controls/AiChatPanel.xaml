@@ -248,6 +248,9 @@
                         CornerRadius="14,14,4,14" Padding="12,8"
                         Margin="48,0,0,0">
                     <StackPanel>
+                        <Image Source="{Binding ImagePreview}" MaxHeight="160" MaxWidth="380" Stretch="Uniform"
+                               HorizontalAlignment="Left" Margin="0,0,0,6"
+                               Visibility="{Binding HasImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
                                    Foreground="White" FontSize="13" LineHeight="20"/>
                         <TextBlock Text="{Binding TimeDisplay}" FontSize="9"
@@ -766,6 +769,14 @@
                         Click="Preset_Click"
                         ToolTip="Describe how to fill the form fields"
                         AutomationProperties.Name="Fill form preset">📝 Fill Fields</Button>
+                <Button Style="{StaticResource PresetChip}" x:Name="WriteChip"
+                        Click="WriteChip_Click"
+                        ToolTip="Write something from this document: an email, study notes, flashcards, a quiz…"
+                        AutomationProperties.Name="Write from this document">✍ Write ▾</Button>
+                <Button Style="{StaticResource PresetChip}"
+                        Click="SummaryChip_Click"
+                        ToolTip="An outline of the document with key points and page links, in its own panel"
+                        AutomationProperties.Name="Summary outline">🧭 Outline</Button>
             </WrapPanel>
         </Border>
 
@@ -819,12 +830,20 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1" x:Name="MicBtn"
+                        Content="&#xE720;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                        Width="36" Height="36" Margin="6,0,0,0"
+                        Click="Mic_Click"
+                        ToolTip="Ask by voice: click, then speak your question"
+                        AutomationProperties.Name="Ask by voice"/>
 
                 <TextBox Grid.Column="0"
                          x:Name="InputBox"
                          Text="{Binding AiChatInput, UpdateSourceTrigger=PropertyChanged}"
-                         MaxHeight="80" MinHeight="36"
+                         MaxHeight="140" MinHeight="36"
                          TextWrapping="Wrap" AcceptsReturn="False"
                          VerticalScrollBarVisibility="Auto"
                          Padding="10,8"
@@ -836,7 +855,7 @@
                          KeyDown="InputBox_KeyDown"
                          AutomationProperties.Name="AI message input"/>
 
-                <Button Grid.Column="1"
+                <Button Grid.Column="2"
                         x:Name="SendBtn"
                         Content="&#xE724;"
                         FontFamily="Segoe MDL2 Assets"
@@ -848,7 +867,7 @@
                         AutomationProperties.Name="Send message"/>
 
                 <!-- Cancel button — shown only while AI is running -->
-                <Button Grid.Column="1"
+                <Button Grid.Column="2"
                         x:Name="CancelBtn"
                         Visibility="Collapsed"
                         Width="42" Height="36"

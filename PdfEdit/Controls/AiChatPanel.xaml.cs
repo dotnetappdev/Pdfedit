@@ -40,6 +40,11 @@ public partial class AiChatPanel : UserControl
         RefreshModelList();
         RefreshConnectionStatus();
         UpdateDocContextBadge();
+        _vm.AiInputFocusRequested += () => Dispatcher.BeginInvoke(() =>
+        {
+            InputBox.Focus();
+            InputBox.CaretIndex = InputBox.Text.Length;
+        });
     }
 
     private void OnHistoryChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -69,6 +74,13 @@ public partial class AiChatPanel : UserControl
         {
             RefreshModelList();
             RefreshPopupStatus();
+        }
+        else if (e.PropertyName == nameof(MainViewModel.IsListening))
+        {
+            bool on = _vm?.IsListening == true;
+            MicBtn.Background = on ? new SolidColorBrush(Color.FromRgb(0xCC, 0x44, 0x44)) : (Brush)FindResource("ButtonBgBrush");
+            MicBtn.Foreground = on ? Brushes.White : (Brush)FindResource("ForegroundBrush");
+            MicBtn.ToolTip = on ? "Listening… click to stop" : "Ask by voice: click, then speak your question";
         }
         else if (e.PropertyName == nameof(MainViewModel.DocumentContextReady))
         {
@@ -353,5 +365,30 @@ public partial class AiChatPanel : UserControl
     private void FollowUp_Click(object sender, RoutedEventArgs e)
     {
         if (Item<string>(sender) is { } question) _vm?.AskFollowUp(question);
+    }
+
+    // ── Voice, writing presets, outline ──────────────────────────────────────
+
+    private async void Mic_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm != null) await _vm.AskByVoiceAsync();
+    }
+
+    private void WriteChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm == null) return;
+        var menu = new ContextMenu { PlacementTarget = WriteChip, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        foreach (var (key, label, _) in MainViewModel.WritingPresets)
+        {
+            var item = new MenuItem { Header = label };
+            item.Click += (_, _) => _ = _vm.RunWritingPresetAsync(key);
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    private void SummaryChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm?.GenerateSummaryCommand.CanExecute(null) == true) _vm.GenerateSummaryCommand.Execute(null);
     }
 }

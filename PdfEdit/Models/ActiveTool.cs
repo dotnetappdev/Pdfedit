@@ -47,5 +47,7 @@ public enum ActiveTool
     // Acrobat comment tools: caret to insert text, strike + caret to replace text
     InsertText, ReplaceText,
     // Drag the box for a certificate (digital) signature
-    DigitalSignature
+    DigitalSignature,
+    // Drag over text (or any area) to copy it, highlight it or ask the AI about it
+    SelectText
 }

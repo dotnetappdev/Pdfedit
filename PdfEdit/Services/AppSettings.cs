@@ -73,6 +73,8 @@ public class AppSettings
     public string LocalAiEndpoint { get; set; } = "http://localhost:11434/v1";
     public string LocalAiModel { get; set; } = "llama3.2";
     public string LocalAiApiKey { get; set; } = string.Empty;   // most local servers need none
+    /// <summary>Language for AI translations; empty = Windows' display language.</summary>
+    public string AiTranslateLanguage { get; set; } = string.Empty;
 
     // OCR: "Auto" (Windows OCR if a language is installed, else Tesseract), "Windows" or "Tesseract";
     // Tesseract languages as codes joined with '+', e.g. "eng" or "eng+deu"

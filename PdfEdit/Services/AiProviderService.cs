@@ -275,7 +275,15 @@ public static class AiProviderService
     {
         var messages = history
             .Where(m => m.Role != "system")
-            .Select(m => new { role = m.Role, content = m.Content })
+            .Select(m => new
+            {
+                role = m.Role,
+                content = m.ImagePng == null ? (object)m.Content : new object[]
+                {
+                    new { type = "image", source = new { type = "base64", media_type = "image/png", data = Convert.ToBase64String(m.ImagePng) } },
+                    new { type = "text", text = m.Content },
+                },
+            })
             .ToArray();
 
         object requestObj = string.IsNullOrEmpty(systemPrompt)
@@ -330,7 +338,15 @@ public static class AiProviderService
         bool local = false)
     {
         var msgList = history
-            .Select(m => (object)new { role = m.Role, content = m.Content })
+            .Select(m => (object)new
+            {
+                role = m.Role,
+                content = m.ImagePng == null ? (object)m.Content : new object[]
+                {
+                    new { type = "text", text = m.Content },
+                    new { type = "image_url", image_url = new { url = "data:image/png;base64," + Convert.ToBase64String(m.ImagePng) } },
+                },
+            })
             .ToList();
         if (!string.IsNullOrEmpty(systemPrompt))
             msgList.Insert(0, (object)new { role = "system", content = systemPrompt });

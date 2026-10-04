@@ -1750,6 +1750,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         {
             _currentFilePath = path;
             TrackTab(path);
+            ShowCachedSummary();
             Document = _formService.LoadDocument(path);
 
             FieldValues.Clear();
@@ -2054,6 +2055,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         _currentFilePath = null;
         Document = null;
         _documentText = string.Empty;
+        ShowCachedSummary();
         OnPropertyChanged(nameof(DocumentContextReady));
         FieldValues.Clear();
         AllFields.Clear();
@@ -3279,7 +3281,13 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         var input = AiChatInput.Trim();
         if (string.IsNullOrEmpty(input)) return;
+        await SendChatMessageAsync(input, null, clearInput: true);
+    }
 
+    /// <summary>Sends a message (optionally with a picture) to the assistant and streams the reply.</summary>
+    public async Task SendChatMessageAsync(string input, byte[]? imagePng, bool clearInput = false)
+    {
+        if (_isAiRunning) return;
         var key = CurrentAiKey;
         if (!IsAiConfigured)
         {
@@ -3289,8 +3297,9 @@ public partial class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        AiChatHistory.Add(new AiChatMessage { Role = "user", Content = input });
-        AiChatInput = string.Empty;
+        AiChatHistory.Add(new AiChatMessage { Role = "user", Content = input, ImagePng = imagePng });
+        if (clearInput) AiChatInput = string.Empty;
+        ShowAiPanel = true;
 
         var reply = new AiChatMessage { Role = "assistant", Content = "" };
         AiChatHistory.Add(reply);
