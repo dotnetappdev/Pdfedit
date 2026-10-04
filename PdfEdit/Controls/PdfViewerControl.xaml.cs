@@ -228,7 +228,7 @@ public partial class PdfViewerControl : UserControl
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
-        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); }
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); }
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
             if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
@@ -739,6 +739,7 @@ public partial class PdfViewerControl : UserControl
             BuildStickyNoteOverlay(_vm.GetStickyNotesForCurrentPage());
             BuildShapeOverlay(_vm.GetShapeAnnotationsForCurrentPage());
             BuildTextEditOverlay();
+            BuildLinkOverlay(w, h);
         }
         catch (Exception ex)
         {
@@ -2506,38 +2507,12 @@ public partial class PdfViewerControl : UserControl
 
                 if (rectW > 6 && rectH > 6)
                 {
-                    var uriDlg = new Dialogs.LinkUriDialog { Owner = Window.GetWindow(this) };
-                    if (uriDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(uriDlg.Uri))
+                    int pageNum = _vm.CurrentPageIndex + 1;
+                    if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
                     {
-                        int pageNum = _vm.CurrentPageIndex + 1;
-                        if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
-                        {
-                            double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                            float left   = (float)(canvasX / Scale);
-                            float bottom = (float)(pageH - (canvasY / Scale) - (rectH / Scale));
-                            float width  = (float)(rectW / Scale);
-                            float height = (float)(rectH / Scale);
-                            string uri   = uriDlg.Uri;
-                            string srcPath = _vm.CurrentFilePath!;
-                            string tmpPath = srcPath + ".tmp";
-                            try
-                            {
-                                var svc = new PdfEdit.Services.PdfFormService();
-                                svc.AddLinkAnnotation(srcPath, tmpPath, pageNum, left, bottom, width, height, uri);
-                                System.IO.File.Copy(tmpPath, srcPath, overwrite: true);
-                                _vm.StatusText = $"Link added to page {pageNum}.";
-                                PdfEdit.Services.ToastService.Instance.Success("Hyperlink annotation added.");
-                                _ = _vm.ReloadCurrentFileAsync();
-                            }
-                            catch (Exception ex)
-                            {
-                                Dialogs.AppDialog.ShowError("Add link failed.", ex);
-                            }
-                            finally
-                            {
-                                if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
-                            }
-                        }
+                        double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
+                        _ = _vm.AddLinkInteractiveAsync(canvasX / Scale, pageH - (canvasY / Scale) - (rectH / Scale),
+                            rectW / Scale, rectH / Scale);
                     }
                 }
             }

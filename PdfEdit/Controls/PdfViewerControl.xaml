@@ -220,6 +220,10 @@
                         <Canvas x:Name="RdAnnotCanvas"
                                 IsHitTestVisible="True"/>
 
+                        <!-- Hyperlinks in the PDF (click to follow / edit, right-click for more) -->
+                        <Canvas x:Name="LinkCanvas"
+                                IsHitTestVisible="True"/>
+
                         <!-- AcroForm field overlay — live WPF controls -->
                         <Canvas x:Name="FieldOverlayCanvas"
                                 IsHitTestVisible="True"

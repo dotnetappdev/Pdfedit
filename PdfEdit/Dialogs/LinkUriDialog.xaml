@@ -1,32 +1,41 @@
 <Window x:Class="PdfEdit.Dialogs.LinkUriDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Add Hyperlink"
-        Width="380" SizeToContent="Height"
+        Title="Add Link"
+        Width="430" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{DynamicResource ContentBgBrush}"
+        ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}"
         Foreground="{DynamicResource ForegroundBrush}">
     <StackPanel Margin="16">
-        <TextBlock Text="Enter the URL this link should open:" FontSize="12" Margin="0,0,0,6"/>
-        <TextBox x:Name="UriBox" Height="28" FontSize="12"
-                 Text="https://"
-                 Background="{DynamicResource InputBgBrush}"
-                 Foreground="{DynamicResource ForegroundBrush}"
-                 Margin="0,0,0,12"/>
+        <TextBlock Text="Link action" FontWeight="SemiBold" Margin="0,0,0,6"/>
+        <RadioButton x:Name="KindWeb" Content="Open a web page" GroupName="Kind" IsChecked="True" Margin="0,2" Checked="Kind_Checked"/>
+        <RadioButton x:Name="KindEmail" Content="Send an email" GroupName="Kind" Margin="0,2" Checked="Kind_Checked"/>
+        <RadioButton x:Name="KindPhone" Content="Call a phone number" GroupName="Kind" Margin="0,2" Checked="Kind_Checked"/>
+        <RadioButton x:Name="KindPage" Content="Go to a page in this document" GroupName="Kind" Margin="0,2" Checked="Kind_Checked"/>
 
-        <TextBlock x:Name="ErrorText" Text="" Foreground="Red" FontSize="11"
-                   Margin="0,0,0,6" Visibility="Collapsed"/>
+        <TextBlock x:Name="ValueLabel" Text="Web address (URL)" Margin="0,12,0,4" Foreground="{DynamicResource DimForegroundBrush}"/>
+        <DockPanel>
+            <TextBlock x:Name="PageOf" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                       Foreground="{DynamicResource DimForegroundBrush}" Visibility="Collapsed"/>
+            <TextBox x:Name="ValueBox" Height="28" VerticalContentAlignment="Center" Padding="4,0"
+                     Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource InputForegroundBrush}"
+                     BorderBrush="{DynamicResource InputBorderBrush}"
+                     AutomationProperties.Name="Link target"/>
+        </DockPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
-            <Button Content="Cancel" Width="80" Height="28" Margin="0,0,8,0"
-                    Click="Cancel_Click" IsCancel="True"
-                    Background="{DynamicResource ButtonBgBrush}"
-                    Foreground="{DynamicResource ForegroundBrush}"/>
-            <Button Content="Add Link" Width="80" Height="28"
-                    Click="Apply_Click" IsDefault="True"
-                    Background="{DynamicResource AccentBrush}"
-                    Foreground="White"/>
-        </StackPanel>
+        <CheckBox x:Name="BorderBox" Content="Show a rectangle around the link" Margin="0,12,0,0"
+                  ToolTip="Acrobat calls this a visible rectangle; most links are invisible"/>
+
+        <TextBlock x:Name="ErrorText" Foreground="#E5534B" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
+
+        <DockPanel Margin="0,16,0,0" LastChildFill="False">
+            <Button x:Name="RemoveBtn" DockPanel.Dock="Left" Content="Remove link" Padding="12,4" Visibility="Collapsed"
+                    Click="Remove_Click" AutomationProperties.Name="Remove link"/>
+            <Button DockPanel.Dock="Right" Content="Cancel" Padding="16,4" Margin="8,0,0,0" IsCancel="True"/>
+            <Button x:Name="OkBtn" DockPanel.Dock="Right" Content="Add link" Padding="16,4" IsDefault="True"
+                    Style="{StaticResource ModernButton}" Click="Apply_Click"/>
+        </DockPanel>
     </StackPanel>
 </Window>

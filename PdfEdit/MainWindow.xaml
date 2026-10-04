@@ -1523,12 +1523,17 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="Link"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Link — drag a rectangle, then enter a URL to create a clickable hyperlink annotation"
+                                         ToolTip="Link — drag a rectangle to add a link (web page, email, phone or page). With this tool, click a link to edit or remove it."
                                          AutomationProperties.Name="Hyperlink annotation tool">
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
+                    <Fluent:Button Header="Remove Links"
+                                   Command="{Binding RemoveAllLinksCommand}"
+                                   Size="Middle"
+                                   ToolTip="Remove every hyperlink from this PDF (undoable). To remove one link, right-click it."
+                                   AutomationProperties.Name="Remove all links"/>
                     <Fluent:ToggleButton Header="Sticky Note"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=StickyNote, Mode=TwoWay}"
