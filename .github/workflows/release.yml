@@ -1,7 +1,13 @@
 name: Build & Release
 
 on:
+  # Every push to main (e.g. merging devmain) builds and publishes a release automatically:
+  # the version is the next patch after the latest v* tag (or the csproj <Version> if higher).
   push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'      # e.g. v1.2.3
       - 'v[0-9]+.[0-9]+.[0-9]+-*'    # e.g. v1.2.3-beta.1
@@ -34,6 +40,10 @@ on:
 permissions:
   contents: write   # needed to create releases and upload assets
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
@@ -51,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tags, to find the latest release
 
       - name: Resolve version
         id: ver
@@ -67,7 +79,21 @@ jobs:
             TAG="v${VERSION}"
             PRE="${{ github.event.inputs.prerelease }}"
           else
-            VERSION=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            # Automatic: next patch after the latest release tag, or the csproj version if newer.
+            CSPROJ=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -vE -- '-' | sed 's/^v//' | sort -V | tail -1)
+            if [[ -z "$LATEST" ]]; then
+              VERSION="$CSPROJ"
+            else
+              IFS=. read -r MA MI PA <<< "$LATEST"
+              NEXT="$MA.$MI.$((PA + 1))"
+              # csproj wins when someone bumped it past the last release (e.g. 1.1.0)
+              if [[ "$(printf '%s\n%s\n' "$NEXT" "$CSPROJ" | sort -V | tail -1)" == "$CSPROJ" && "$CSPROJ" != "$LATEST" ]]; then
+                VERSION="$CSPROJ"
+              else
+                VERSION="$NEXT"
+              fi
+            fi
             TAG="v${VERSION}"
             PRE=false
           fi
@@ -130,7 +156,6 @@ jobs:
           dotnet publish PdfEdit/PdfEdit.csproj `
             -c Release -r win-x64 `
             --self-contained false `
-            --no-restore `
             -o publish `
             /p:Version=$env:VERSION `
             /p:AssemblyVersion=$env:VERSION4 `
@@ -148,6 +173,30 @@ jobs:
           Write-Host "Publish OK. Contents:"
           Get-ChildItem publish | Select-Object Name, Length | Format-Table
 
+      # ── ZIP packages ──────────────────────────────────────────────────────
+      # PdfEdit-<v>-win-x64.zip            : needs the .NET 10 Desktop Runtime (small)
+      # PdfEdit-<v>-win-x64-portable.zip   : self-contained, runs on any 64-bit Windows 10/11
+      - name: Publish self-contained (portable)
+        run: |
+          dotnet publish PdfEdit/PdfEdit.csproj `
+            -c Release -r win-x64 `
+            --self-contained true `
+            -o publish_portable `
+            /p:Version=$env:VERSION `
+            /p:AssemblyVersion=$env:VERSION4 `
+            /p:FileVersion=$env:VERSION4 `
+            /p:PublishSingleFile=false `
+            /p:DebugType=none `
+            /p:DebugSymbols=false
+
+      - name: Build ZIP packages
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path publish\* -DestinationPath "dist\PdfEdit-$env:VERSION-win-x64.zip" -CompressionLevel Optimal -Force
+          Compress-Archive -Path publish_portable\* -DestinationPath "dist\PdfEdit-$env:VERSION-win-x64-portable.zip" -CompressionLevel Optimal -Force
+          Get-ChildItem dist\*.zip | ForEach-Object { Write-Host "$($_.Name)  $([Math]::Round($_.Length/1MB,1)) MB" }
+
       # ── Inno Setup EXE installer ─────────────────────────────────────────
       - name: Install Inno Setup 6
         if: ${{ github.event.inputs.build_exe != 'false' }}
@@ -160,8 +209,11 @@ jobs:
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "ISCC.exe" }
           New-Item -ItemType Directory -Force dist | Out-Null
+          # Self-contained: .NET is bundled, so the installer needs nothing else on the PC.
           & $iscc installer\PdfEditSetup.iss `
             /DMyAppVersion=$env:VERSION `
+            /DSELF_CONTAINED=1 `
+            "/DAppSource=..\publish_portable" `
             "/O$((Resolve-Path dist).Path)"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
           # Rename to include version
@@ -209,8 +261,8 @@ jobs:
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory $stage | Out-Null
 
-          # Copy published app
-          Copy-Item "publish\*" $stage -Recurse -Force
+          # Copy the self-contained app (an MSIX can't install the .NET runtime for us)
+          Copy-Item "publish_portable\*" $stage -Recurse -Force
 
           # Patch version in manifest
           $manifest = Get-Content installer\Package.appxmanifest -Raw
@@ -300,7 +352,7 @@ jobs:
           # Compare with previous tag; fall back to last 20 commits
           PREV_TAG=$(git tag --sort=-version:refname | grep -v "${{ needs.metadata.outputs.tag }}" | head -1)
           if [[ -n "$PREV_TAG" ]]; then
-            RANGE="${PREV_TAG}..${{ needs.metadata.outputs.tag }}"
+            RANGE="${PREV_TAG}..HEAD"   # the new tag is created by the release step below
           else
             RANGE="HEAD~20..HEAD"
           fi
@@ -315,6 +367,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name:   ${{ needs.metadata.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name:       PdfEdit ${{ env.VERSION }}
           prerelease: ${{ needs.metadata.outputs.prerelease }}
           draft:      false
@@ -332,9 +385,13 @@ jobs:
 
             #### Option A — EXE Installer *(recommended)*
             1. Download `PdfEditSetup-${{ env.VERSION }}.exe`
-            2. Run it — .NET 10 Desktop Runtime is downloaded automatically if missing
+            2. Run it — everything is included (.NET is bundled), nothing else to install
 
-            #### Option B — MSIX Package
+            #### Option B — ZIP (no install)
+            - `PdfEdit-${{ env.VERSION }}-win-x64-portable.zip` — unzip anywhere and run `PdfEdit.exe`; nothing else needed
+            - `PdfEdit-${{ env.VERSION }}-win-x64.zip` — smaller, needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+
+            #### Option C — MSIX Package
             1. Download `PdfEdit-${{ env.VERSION4 }}.msix`
             2. Trust the test certificate first (one-time):
                ```powershell
@@ -352,6 +409,8 @@ jobs:
             - [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) *(EXE installer handles this)*
 
           files: |
+            dist/PdfEdit-${{ env.VERSION }}-win-x64.zip
+            dist/PdfEdit-${{ env.VERSION }}-win-x64-portable.zip
             dist/PdfEditSetup-${{ env.VERSION }}.exe
             dist/PdfEdit-${{ env.VERSION4 }}.msix
             dist/PdfEdit-TestCert.cer

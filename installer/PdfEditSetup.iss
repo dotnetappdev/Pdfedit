@@ -1,31 +1,31 @@
 ; PdfEdit Inno Setup Script
-; Produces a self-contained EXE installer that:
-;   1. Detects .NET 10 Desktop Runtime (x64)
-;   2. Downloads & silently installs it when missing
-;   3. Installs PdfEdit to {autopf}\PdfEdit
-;   4. Creates Start Menu and optional Desktop shortcuts
+; Produces an EXE installer that installs PdfEdit to {autopf}\PdfEdit with Start Menu and optional
+; Desktop shortcuts.
 ;
-; Prerequisites:
-;   - Inno Setup 6.3+            (https://jrsoftware.org/isinfo.php)
-;   - Inno Download Plugin (IDP) (https://mitrichsoftware.wordpress.com/inno-setup-tools/inno-download-plugin/)
-;     OR build with the bundled bootstrapper option (see DOTNET_EMBEDDED define)
+; Two flavours:
+;   - Self-contained (what GitHub Actions releases):  .NET is bundled, nothing else to install.
+;       dotnet publish PdfEdit\PdfEdit.csproj -c Release -r win-x64 --self-contained true -o publish_portable
+;       iscc /DSELF_CONTAINED=1 /DAppSource=..\publish_portable installer\PdfEditSetup.iss
+;   - Framework-dependent (smaller): needs the .NET 10 Desktop Runtime; setup offers the download page.
+;       dotnet publish PdfEdit\PdfEdit.csproj -c Release -r win-x64 --self-contained false -o publish
+;       iscc installer\PdfEditSetup.iss
 ;
-; Build command (from repo root):
-;   iscc installer\PdfEditSetup.iss
-; Or with the CI script:
-;   pwsh installer\build-installer.ps1
+; Prerequisite: Inno Setup 6.3+ (https://jrsoftware.org/isinfo.php)
 
 #define MyAppName      "PdfEdit"
-#define MyAppVersion   "1.0.0"
+; Overridden by CI with /DMyAppVersion=x.y.z (a plain #define would win over the command line)
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
 #define MyAppPublisher "PdfEdit"
 #define MyAppURL       "https://github.com/dotnetappdev/pdfedit"
 #define MyAppExeName   "PdfEdit.exe"
 #define MyAppId        "{A3F2C8E1-4B7D-4E9A-8C3F-1D5E7A9B2C4E}"
 
-; Set DOTNET_EMBEDDED=1 when you bundle the .NET installer inside the package:
-;   iscc /DDOTNET_EMBEDDED=1 installer\PdfEditSetup.iss
-; Leave unset to download at install time (requires internet connection).
-; #define DOTNET_EMBEDDED 1
+; Folder with the published app, relative to this script (override with /DAppSource=...).
+#ifndef AppSource
+  #define AppSource "..\publish"
+#endif
 
 [Setup]
 AppId={{#MyAppId}
@@ -77,19 +77,12 @@ Name: "quicklaunch"; Description: "Pin to taskbar after install"; GroupDescripti
 ; Main application — build output from: dotnet publish -c Release -r win-x64 --self-contained false
 ; The publish path is relative to the ISS file location (installer\), so ..\ points to repo root.
 ; CI passes /O for output dir; the publish folder is always at repo-root\publish\.
-Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#AppSource}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; The bundled Tesseract OCR engine (x64\tesseract50.dll, x64\leptonica-1.82.0.dll) needs the
 ; Microsoft Visual C++ 2015-2022 x64 runtime. Most PCs have it; to ship it, download
 ; vc_redist.x64.exe next to this script and uncomment:
 ; Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 ; and in [Run]: Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ runtime..."
-; Uncomment to bundle .NET installer when building with /DDOTNET_EMBEDDED=1:
-; Source: "dotnet-runtime-10-win-x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: not IsDotNetInstalled
-
-#ifdef DOTNET_EMBEDDED
-; Bundled .NET Desktop Runtime installer (download separately and place here)
-Source: "dotnet-runtime-embedded.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
-#endif
 
 [Icons]
 Name: "{group}\{#MyAppName}";                  Filename: "{app}\{#MyAppExeName}"
@@ -116,122 +109,39 @@ Root: HKCU; Subkey: "SOFTWARE\Classes\PdfEdit.Document\shell\open\command"; Valu
     ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [Code]
+#ifndef SELF_CONTAINED
 const
-  // .NET 10 Desktop Runtime minimum version
-  DotNetMajor   = 10;
-  DotNetMinor   = 0;
-  DotNetPatch   = 0;
-  DotNetArch    = 'x64';
-  DotNetDownloadUrl =
-    'https://download.visualstudio.microsoft.com/download/pr/' +
-    'dotnet-runtime-10.0-win-x64.exe';  // update to actual URL per release
-  DotNetDownloadDesc = '.NET 10 Desktop Runtime (x64)';
+  DotNetMajor = 10;
+  DotNetDownloadUrl = 'https://dotnet.microsoft.com/download/dotnet/10.0';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
+// True when a .NET Desktop Runtime 10 or later (x64) is installed.
 function IsDotNetInstalled: Boolean;
 var
-  Key, SubKey: string;
   Names: TArrayOfString;
   i: Integer;
-  Major, Minor, Patch: Integer;
-  Parts: TStringList;
 begin
   Result := False;
-  Key := 'SOFTWARE\dotnet\Setup\InstalledVersions\' + DotNetArch + '\sharedfx\Microsoft.WindowsDesktop.App';
-  if not RegGetValueNames(HKEY_LOCAL_MACHINE, Key, Names) then
+  if not RegGetValueNames(HKEY_LOCAL_MACHINE,
+       'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App', Names) then
     Exit;
   for i := 0 to GetArrayLength(Names) - 1 do
-  begin
-    // Name format is "x.y.z"
-    Parts := TStringList.Create;
-    try
-      Parts.Delimiter := '.';
-      Parts.StrictDelimiter := True;
-      Parts.DelimitedText := Names[i];
-      if Parts.Count >= 3 then
-      begin
-        Major := StrToIntDef(Parts[0], 0);
-        Minor := StrToIntDef(Parts[1], 0);
-        Patch := StrToIntDef(Parts[2], 0);
-        if (Major > DotNetMajor) or
-           ((Major = DotNetMajor) and (Minor > DotNetMinor)) or
-           ((Major = DotNetMajor) and (Minor = DotNetMinor) and (Patch >= DotNetPatch)) then
-        begin
-          Result := True;
-          Break;
-        end;
-      end;
-    finally
-      Parts.Free;
+    if StrToIntDef(Copy(Names[i], 1, Pos('.', Names[i]) - 1), 0) >= DotNetMajor then
+    begin
+      Result := True;
+      Exit;
     end;
-  end;
-end;
-
-// ── IDP (download plugin) integration ─────────────────────────────────────
-// IDP functions are declared here so the script compiles without the plugin
-// present; the actual calls only happen at runtime when IDP is loaded.
-#ifndef DOTNET_EMBEDDED
-procedure IDPAddFile(Url, Filename: String); external 'idpAddFile@files:idp.dll stdcall delayload';
-procedure IDPDownloadAfter(Page: Integer); external 'idpDownloadAfter@files:idp.dll stdcall delayload';
-#endif
-
-procedure InitializeWizard;
-begin
-#ifndef DOTNET_EMBEDDED
-  if not IsDotNetInstalled then
-  begin
-    IDPAddFile(DotNetDownloadUrl, ExpandConstant('{tmp}\dotnet-runtime.exe'));
-    IDPDownloadAfter(wpReady);
-  end;
-#endif
-end;
-
-function InstallDotNet: Boolean;
-var
-  ResultCode: Integer;
-  InstallerPath: string;
-begin
-  Result := True;
-#ifdef DOTNET_EMBEDDED
-  InstallerPath := ExpandConstant('{tmp}\dotnet-runtime-embedded.exe');
-#else
-  InstallerPath := ExpandConstant('{tmp}\dotnet-runtime.exe');
-#endif
-  if not FileExists(InstallerPath) then Exit;
-
-  if not Exec(InstallerPath, '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
-  begin
-    MsgBox('Failed to launch the .NET installer. Please install .NET 10 Desktop Runtime manually from: https://dotnet.microsoft.com/download', mbError, MB_OK);
-    Result := False;
-    Exit;
-  end;
-  if (ResultCode <> 0) and (ResultCode <> 3010) then  // 3010 = reboot required
-  begin
-    MsgBox(Format('.NET installer exited with code %d. You may need to install .NET 10 manually.', [ResultCode]), mbError, MB_OK);
-    Result := False;
-  end;
-end;
-
-function PrepareToInstall(var NeedsRestart: Boolean): String;
-begin
-  Result := '';
-  if not IsDotNetInstalled then
-  begin
-    if not InstallDotNet then
-      Result := 'Could not install the required .NET 10 Desktop Runtime. Please install it manually and re-run this setup.';
-  end;
 end;
 
 function InitializeSetup: Boolean;
+var
+  ErrorCode: Integer;
 begin
   Result := True;
   if not IsDotNetInstalled then
-  begin
-    if MsgBox('.NET 10 Desktop Runtime was not found on this machine.' + #13#10 +
-              'The installer will download and install it automatically.' + #13#10#13#10 +
-              'An internet connection is required. Continue?',
-              mbConfirmation, MB_YESNO) = IDNO then
-      Result := False;
-  end;
+    if MsgBox('PdfEdit needs the .NET 10 Desktop Runtime (x64), which was not found.' + #13#10#13#10 +
+              'Open the download page now? Install "Desktop Runtime x64", then PdfEdit will start.' + #13#10 +
+              '(Tip: the self-contained installer or portable ZIP from the Releases page needs nothing extra.)',
+              mbConfirmation, MB_YESNO) = IDYES then
+      ShellExec('open', DotNetDownloadUrl, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
 end;
+#endif
