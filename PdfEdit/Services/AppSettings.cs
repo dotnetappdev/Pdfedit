@@ -13,6 +13,8 @@ public class AppSettings
 
     // ── Appearance ───────────────────────────────────────────────────────────
     public string Theme { get; set; } = "Dark";
+    /// <summary>Spell check typed text and text fields.</summary>
+    public bool SpellCheck { get; set; } = true;
     public double UiScale { get; set; } = 1.0;
 
     // Per-area interface font sizes (keyed by InterfaceFontArea.Key).

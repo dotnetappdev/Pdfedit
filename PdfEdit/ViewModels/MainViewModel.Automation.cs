@@ -10,6 +10,60 @@ namespace PdfEdit.ViewModels;
 public partial class MainViewModel
 {
     private ICommand? _batchCommand, _sanitizeCommand, _bulkFillCommand, _detectFieldsCommand;
+    private ICommand? _readPageCommand, _readToEndCommand, _stopReadingCommand, _searchFolderCommand, _visualCompareCommand;
+
+    // ── Search a folder ───────────────────────────────────────────────────────
+    public ICommand SearchFolderCommand => _searchFolderCommand ??= new RelayCommand(() =>
+    {
+        string? start = _currentFilePath != null ? System.IO.Path.GetDirectoryName(_currentFilePath) : null;
+        var dlg = new Dialogs.FolderSearchDialog(start, OpenAtPageAsync) { Owner = Application.Current.MainWindow };
+        dlg.Show(); // modeless: keep it open while looking through the results
+    });
+
+    /// <summary>Opens a PDF (if it isn't already open) and goes to a page.</summary>
+    public async Task OpenAtPageAsync(string path, int page)
+    {
+        if (!string.Equals(path, _currentFilePath, StringComparison.OrdinalIgnoreCase))
+        {
+            if (_currentFilePath != null) SaveDocumentState();
+            await LoadDocumentAsync(path);
+        }
+        CurrentPageIndex = page - 1;
+    }
+
+    // ── Visual compare ────────────────────────────────────────────────────────
+    public ICommand VisualCompareCommand => _visualCompareCommand ??= new RelayCommand(() =>
+        new Dialogs.VisualCompareDialog(_currentFilePath) { Owner = Application.Current.MainWindow }.Show());
+
+    // ── Read aloud ────────────────────────────────────────────────────────────
+    public ICommand ReadPageAloudCommand => _readPageCommand ??= new AsyncRelayCommand(() => ReadAloudAsync(toEnd: false), () => HasDocument);
+    public ICommand ReadToEndAloudCommand => _readToEndCommand ??= new AsyncRelayCommand(() => ReadAloudAsync(toEnd: true), () => HasDocument);
+    public ICommand StopReadingCommand => _stopReadingCommand ??= new RelayCommand(() => ReadAloudService.Instance.Stop(), () => ReadAloudService.Instance.IsReading);
+
+    private async Task ReadAloudAsync(bool toEnd)
+    {
+        if (_currentFilePath == null || _document == null) return;
+        string path = _currentFilePath;
+        int first = _currentPageIndex + 1, last = toEnd ? _document.PageCount : first;
+        var pages = await Task.Run(() => Enumerable.Range(first, last - first + 1)
+            .Select(p => (p, PdfTextExtractorService.GetPageText(path, p))).ToList());
+        if (pages.All(p => string.IsNullOrWhiteSpace(p.Item2)))
+        {
+            Dialogs.AppDialog.ShowInfo("There's no text to read on this page. If it's a scan, run Recognise text (OCR) first.", "Read aloud");
+            return;
+        }
+        try
+        {
+            StatusText = "Reading aloud… (View → Stop reading)";
+            await ReadAloudService.Instance.ReadAsync(pages, p => Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (toEnd) CurrentPageIndex = p - 1;
+                StatusText = $"Reading page {p} aloud…";
+            }));
+            StatusText = "Finished reading.";
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Read aloud isn't available — check that a Windows voice is installed (Settings → Time & language → Speech).", ex); }
+    }
 
     /// <summary>
     /// Acrobat Prepare Form's auto-detect: find the boxes, squares and blank lines of a flat form

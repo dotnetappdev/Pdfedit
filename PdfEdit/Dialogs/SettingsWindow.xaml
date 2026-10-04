@@ -244,6 +244,11 @@
                                   Foreground="{DynamicResource ForegroundBrush}"
                                   FontSize="13" Margin="0,4,0,0"
                                   AutomationProperties.Name="Force uppercase text by default"/>
+                        <CheckBox x:Name="SpellCheckCb"
+                                  Content="Check spelling as I type (text boxes, form fields, notes)"
+                                  Foreground="{DynamicResource ForegroundBrush}"
+                                  FontSize="13" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Check spelling as I type"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

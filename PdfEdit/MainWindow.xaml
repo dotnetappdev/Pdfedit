@@ -1641,6 +1641,32 @@
                 </Fluent:RibbonGroupBox>
 
                 <!-- Document Statistics group -->
+                <Fluent:RibbonGroupBox Header="Read Aloud" AutomationProperties.Name="Read aloud group">
+                    <Fluent:Button Header="Read Page" Size="Middle" Command="{Binding ReadPageAloudCommand}"
+                                   ToolTip="Read this page aloud with a Windows voice" AutomationProperties.Name="Read page aloud">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Read to End" Size="Middle" Command="{Binding ReadToEndAloudCommand}"
+                                   ToolTip="Read from this page to the end of the document" AutomationProperties.Name="Read to end aloud">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Stop Reading" Size="Middle" Command="{Binding StopReadingCommand}"
+                                   ToolTip="Stop reading aloud" AutomationProperties.Name="Stop reading">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Find &amp; Compare" AutomationProperties.Name="Find and compare group">
+                    <Fluent:Button Header="Search&#x0a;Folder" Command="{Binding SearchFolderCommand}"
+                                   ToolTip="Find text in every PDF in a folder" AutomationProperties.Name="Search PDFs in a folder">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEC50;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Visual&#x0a;Compare" Command="{Binding VisualCompareCommand}"
+                                   ToolTip="Compare two PDFs page by page — added, removed and changed content in colour" AutomationProperties.Name="Visual compare">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <Fluent:RibbonGroupBox Header="Document"
                                         AutomationProperties.Name="Document information group">
                     <Fluent:Button Header="Document&#x0a;Statistics"

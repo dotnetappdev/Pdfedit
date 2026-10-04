@@ -186,6 +186,18 @@ public partial class PdfViewerControl : UserControl
         }
     }
 
+    /// <summary>Red squiggles under misspelt words (Windows' dictionaries, the PC's language).</summary>
+    private static void EnableSpellCheck(TextBox tb)
+    {
+        if (!AppSettings.Current.SpellCheck) return;
+        try
+        {
+            tb.Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.IetfLanguageTag);
+            SpellCheck.SetIsEnabled(tb, true);
+        }
+        catch { /* no dictionary for this language */ }
+    }
+
     private bool _settingFieldDisplay;
 
     /// <summary>Changes a field's text without treating it as the user typing a new value.</summary>
@@ -1067,6 +1079,7 @@ public partial class PdfViewerControl : UserControl
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.DisplayName : field.Tooltip
         };
         System.Windows.Automation.AutomationProperties.SetName(tb, $"Form field: {field.DisplayName}");
+        if (!field.HasNumberFormat && !field.IsDateField) EnableSpellCheck(tb);
         ApplyFieldFont(tb, field);
 
         // Vertical-text fields already use LayoutTransform for their -90° orientation, so the
@@ -1669,6 +1682,7 @@ public partial class PdfViewerControl : UserControl
             ToolTip = ann.IsLocked ? "Locked annotation — right-click to unlock" : null,
         };
         System.Windows.Automation.AutomationProperties.SetName(tb, "Text annotation");
+        if (!isMark) EnableSpellCheck(tb);
 
         ApplyAnnotationFormatting(ann, tb);
 

@@ -112,7 +112,8 @@ public partial class AllToolsPanel : UserControl
                     Run("Combine files (PDFs & images)", vm.CombineFilesCommand),
                     Page("Merge PDFs into this one", vm.MergePdfCommand),
                     Page("Insert pages from a PDF", vm.InsertPdfCommand),
-                    Run("Compare two PDFs", vm.ComparePdfsCommand),
+                    Run("Compare two PDFs (text)", vm.ComparePdfsCommand),
+                    Run("Compare two PDFs (visual)", vm.VisualCompareCommand, "Colours what was added, removed and changed on each page"),
                 } },
             new() { Title = "Organize pages", Glyph = "", Accent = Color.FromRgb(0xB6, 0xE0, 0x4D),
                 Description = "Rotate, insert, move, delete, extract, split",
@@ -148,6 +149,9 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Summarise this document", vm.SummarizeDocumentCommand),
+                    Page("Read this page aloud", vm.ReadPageAloudCommand),
+                    Page("Read to the end aloud", vm.ReadToEndAloudCommand),
+                    Run("Stop reading", vm.StopReadingCommand),
                     Run("Document statistics", vm.DocumentStatisticsCommand),
                 } },
             new() { Title = "Request e-signatures", Glyph = "", Accent = Color.FromRgb(0xE0, 0x61, 0xF5),
@@ -166,6 +170,7 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Batch process files…", vm.BatchCommand, "OCR, compress, watermark, flatten, number, protect… many files at once"),
                     Page("Bulk fill from spreadsheet…", vm.BulkFillCommand, "One filled copy of this form per CSV / Excel row"),
+                    Run("Search PDFs in a folder…", vm.SearchFolderCommand, "Find text in every PDF in a folder and its subfolders"),
                 } },
             new() { Title = "Scan & OCR", Glyph = "", Accent = Color.FromRgb(0x6F, 0xDC, 0x6F),
                 Description = "Make scanned pages searchable",

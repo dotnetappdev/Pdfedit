@@ -24,7 +24,7 @@
     </Window.Resources>
     <StackPanel Margin="16">
         <TextBlock Text="Note Text" FontWeight="SemiBold" Margin="0,0,0,4"/>
-        <TextBox x:Name="NoteTextBox"
+        <TextBox x:Name="NoteTextBox" SpellCheck.IsEnabled="True"
                  Height="90"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"

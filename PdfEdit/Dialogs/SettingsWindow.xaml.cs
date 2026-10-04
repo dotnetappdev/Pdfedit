@@ -118,6 +118,7 @@ public partial class SettingsWindow : Window
         DefaultFontSizeTb.Text = s.DefaultFontSize.ToString("0");
         DefaultColorTb.Text = s.DefaultFontColor;
         ForceUpperCaseCb.IsChecked = s.ForceUpperCaseDefault;
+        SpellCheckCb.IsChecked = s.SpellCheck;
 
         // Date formats
         BuildDateFormatPanel(s.DateFormat);
@@ -247,6 +248,7 @@ public partial class SettingsWindow : Window
             s.DefaultFontSize = Math.Clamp(fs, 6, 144);
         s.DefaultFontColor = DefaultColorTb.Text;
         s.ForceUpperCaseDefault = ForceUpperCaseCb.IsChecked == true;
+        s.SpellCheck = SpellCheckCb.IsChecked == true;
 
         s.ClaudeApiKey = ApiKeyBox.Password;
         s.OpenAiApiKey = OpenAiKeyBox.Password;
