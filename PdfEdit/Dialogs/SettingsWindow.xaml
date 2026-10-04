@@ -249,6 +249,16 @@
                                   Foreground="{DynamicResource ForegroundBrush}"
                                   FontSize="13" Margin="0,8,0,0"
                                   AutomationProperties.Name="Check spelling as I type"/>
+                        <CheckBox x:Name="TipsAtStartupCb"
+                                  Content="Show Tip of the Day when PdfEdit starts"
+                                  Foreground="{DynamicResource ForegroundBrush}"
+                                  FontSize="13" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Show Tip of the Day at startup"/>
+                        <CheckBox x:Name="TourNextStartCb"
+                                  Content="Show the welcome tour next time PdfEdit starts"
+                                  Foreground="{DynamicResource ForegroundBrush}"
+                                  FontSize="13" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Show the welcome tour next time"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

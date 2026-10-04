@@ -20,6 +20,7 @@ public partial class MainWindow : RibbonWindow
         ApplyDockTheme(AppSettings.Current.Theme);
         Loaded += OnWindowLoaded;
         KeyDown += OnToolShortcutKeyDown;
+        ContentRendered += OnFirstRendered;
     }
 
     /// <summary>

@@ -53,6 +53,8 @@
              as KeyBindings they fired even while typing in a form field and swallowed the letter. -->
     </Fluent:RibbonWindow.InputBindings>
 
+    <!-- AdornerDecorator: a layer above everything for the guided tour -->
+    <AdornerDecorator>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- Ribbon -->
@@ -129,6 +131,14 @@
                                                 KeyTip="K"
                                                 Command="{Binding ShowShortcutsCommand}"
                                                 AutomationProperties.Name="Keyboard shortcuts reference"/>
+                    <Fluent:MenuItem Header="Tip of the Day…"
+                                                KeyTip="T"
+                                                Click="TipOfTheDay_Click"
+                                                AutomationProperties.Name="Tip of the Day"/>
+                    <Fluent:MenuItem Header="Take the Tour"
+                                                KeyTip="U"
+                                                Click="TakeTour_Click"
+                                                AutomationProperties.Name="Take the tour of PdfEdit"/>
                     <Fluent:MenuItem Header="About PdfEdit…"
                                                 KeyTip="B"
                                                 Command="{Binding ShowAboutCommand}"
@@ -233,7 +243,7 @@
             </Fluent:Ribbon.QuickAccessItems>
 
             <!-- ── HOME TAB ────────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Home"
+            <Fluent:RibbonTabItem x:Name="HomeTab" Header="Home"
                                    AutomationProperties.Name="Home tab">
 
                 <!-- File group -->
@@ -794,7 +804,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── FILL & SIGN TAB (Adobe-style) ─────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Fill &amp; Sign"
+            <Fluent:RibbonTabItem x:Name="FillSignTab" Header="Fill &amp; Sign"
                                    AutomationProperties.Name="Fill and Sign tab">
 
                 <Fluent:RibbonGroupBox Header="Select" AutomationProperties.Name="Select group">
@@ -1132,7 +1142,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── EDIT TAB ──────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Edit"
+            <Fluent:RibbonTabItem x:Name="EditTab" Header="Edit"
                                    AutomationProperties.Name="Edit tab">
 
                 <Fluent:RibbonGroupBox Header="Clipboard"
@@ -1444,7 +1454,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── VIEW TAB ──────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="View"
+            <Fluent:RibbonTabItem x:Name="ViewTab" Header="View"
                                    AutomationProperties.Name="View tab">
 
                 <Fluent:RibbonGroupBox Header="Zoom"
@@ -1667,6 +1677,21 @@
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
+                <Fluent:RibbonGroupBox Header="Help" AutomationProperties.Name="Help group">
+                    <Fluent:Button Header="Tip of the Day" Size="Middle" Click="TipOfTheDay_Click"
+                                   ToolTip="A useful tip about PdfEdit, one at a time" AutomationProperties.Name="Tip of the Day">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE82F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Take the Tour" Size="Middle" Click="TakeTour_Click"
+                                   ToolTip="A quick walk round the main parts of the window" AutomationProperties.Name="Take the tour">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Shortcuts" Size="Middle" Command="{Binding ShowShortcutsCommand}"
+                                   ToolTip="Every keyboard shortcut (F1)" AutomationProperties.Name="Keyboard shortcuts">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
                 <Fluent:RibbonGroupBox Header="Document"
                                         AutomationProperties.Name="Document information group">
                     <Fluent:Button Header="Document&#x0a;Statistics"
@@ -1683,7 +1708,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── TOOLS TAB ─────────────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="Tools"
+            <Fluent:RibbonTabItem x:Name="ToolsTab" Header="Tools"
                                    AutomationProperties.Name="Tools tab">
 
                 <Fluent:RibbonGroupBox Header="Active Tool"
@@ -2457,7 +2482,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
-            <Fluent:RibbonTabItem Header="AI Assistant"
+            <Fluent:RibbonTabItem x:Name="AiTab" Header="AI Assistant"
                                    AutomationProperties.Name="AI assistant tab">
                 <Fluent:RibbonGroupBox Header="Chat"
                                         AutomationProperties.Name="AI chat group">
@@ -3149,7 +3174,7 @@
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="250">
                             <avalonDock:LayoutAnchorablePane>
                                 <avalonDock:LayoutAnchorable Title="All tools" ContentId="alltools" CanClose="False" CanHide="False">
-                                    <controls:AllToolsPanel DataContext="{Binding}"
+                                    <controls:AllToolsPanel x:Name="AllToolsPane" DataContext="{Binding}"
                                                             FontSize="{DynamicResource PanelFontSize}"
                                                             AutomationProperties.Name="All tools"/>
                                 </avalonDock:LayoutAnchorable>
@@ -3160,7 +3185,7 @@
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="120">
                             <avalonDock:LayoutAnchorablePane>
                                 <avalonDock:LayoutAnchorable Title="Thumbnails" ContentId="thumbnails">
-                                    <controls:PageThumbnailsPanel
+                                    <controls:PageThumbnailsPanel x:Name="ThumbnailsPane"
                                         DataContext="{Binding}"
                                         FontSize="{DynamicResource PanelFontSize}"
                                         AutomationProperties.Name="Page thumbnails"/>
@@ -3296,7 +3321,7 @@
                             <avalonDock:LayoutAnchorablePane>
                                 <avalonDock:LayoutAnchorable Title="Properties" ContentId="properties"
                                                              CanHide="False" CanClose="False">
-                                    <TabControl AutomationProperties.Name="Properties panel">
+                                    <TabControl x:Name="PropertiesPane" AutomationProperties.Name="Properties panel">
 
                         <!-- Field Properties tab -->
                         <TabItem Header="Properties"
@@ -4286,7 +4311,7 @@
                                 </avalonDock:LayoutAnchorable>
                                 <avalonDock:LayoutAnchorable Title="AI Assistant" ContentId="aichat"
                                                              CanHide="False" CanClose="False">
-                                    <controls:AiChatPanel DataContext="{Binding}"
+                                    <controls:AiChatPanel x:Name="AiChatPane" DataContext="{Binding}"
                                                           FontSize="{DynamicResource ChatFontSize}"
                                                           AutomationProperties.Name="AI chat assistant"/>
                                 </avalonDock:LayoutAnchorable>
@@ -4495,4 +4520,5 @@
         </StatusBar>
 
     </Grid>
+    </AdornerDecorator>
 </Fluent:RibbonWindow>

@@ -119,6 +119,8 @@ public partial class SettingsWindow : Window
         DefaultColorTb.Text = s.DefaultFontColor;
         ForceUpperCaseCb.IsChecked = s.ForceUpperCaseDefault;
         SpellCheckCb.IsChecked = s.SpellCheck;
+        TipsAtStartupCb.IsChecked = s.ShowTipsAtStartup;
+        TourNextStartCb.IsChecked = !s.TourCompleted;
 
         // Date formats
         BuildDateFormatPanel(s.DateFormat);
@@ -249,6 +251,8 @@ public partial class SettingsWindow : Window
         s.DefaultFontColor = DefaultColorTb.Text;
         s.ForceUpperCaseDefault = ForceUpperCaseCb.IsChecked == true;
         s.SpellCheck = SpellCheckCb.IsChecked == true;
+        s.ShowTipsAtStartup = TipsAtStartupCb.IsChecked == true;
+        s.TourCompleted = TourNextStartCb.IsChecked != true;
 
         s.ClaudeApiKey = ApiKeyBox.Password;
         s.OpenAiApiKey = OpenAiKeyBox.Password;

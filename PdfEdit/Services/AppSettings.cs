@@ -21,6 +21,14 @@ public class AppSettings
     // Absent keys fall back to each area's default size.
     public Dictionary<string, double> InterfaceFontSizes { get; set; } = new();
 
+    // ── Welcome ──────────────────────────────────────────────────────────────
+    /// <summary>False until the first-launch tour has been finished or skipped.</summary>
+    public bool TourCompleted { get; set; }
+    /// <summary>Show the Tip of the Day dialog when PdfEdit starts.</summary>
+    public bool ShowTipsAtStartup { get; set; } = true;
+    /// <summary>The next tip to show (index into the tips list).</summary>
+    public int NextTipIndex { get; set; }
+
     // ── Window geometry ──────────────────────────────────────────────────────
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;
