@@ -186,6 +186,16 @@ public partial class PdfViewerControl : UserControl
         }
     }
 
+    private bool _settingFieldDisplay;
+
+    /// <summary>Changes a field's text without treating it as the user typing a new value.</summary>
+    private void SetFieldDisplay(TextBox tb, string text)
+    {
+        _settingFieldDisplay = true;
+        try { tb.Text = text; }
+        finally { _settingFieldDisplay = false; }
+    }
+
     /// <summary>A field value was edited elsewhere (e.g. the properties panel) — mirror it on the page.</summary>
     private void OnFieldValueChangedExternally(string name, string value)
     {
@@ -195,7 +205,8 @@ public partial class PdfViewerControl : UserControl
         {
             if (tb.Tag is FormFieldInfo f && f.Name == name)
             {
-                if (tb.Text != value) tb.Text = value;
+                string shown = f.HasNumberFormat && !tb.IsKeyboardFocused ? FieldFormatting.ToDisplay(value, f) : value;
+                if (tb.Text != shown) SetFieldDisplay(tb, shown);
                 updated = true;
             }
         }
@@ -1032,7 +1043,7 @@ public partial class PdfViewerControl : UserControl
         var tb = new TextBox
         {
             Width = dw, Height = dh,
-            Text = _vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value,
+            Text = FieldFormatting.ToDisplay(_vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value, field),
             // Acrobat-style fillable field: faint blue fill + subtle border so the
             // user can clearly see where the fields are and that they are editable.
             Background = FieldFill(field),
@@ -1067,16 +1078,22 @@ public partial class PdfViewerControl : UserControl
 
         tb.TextChanged += (_, _) =>
         {
-            _vm!.UpdateFieldValue(field.Name, tb.Text);
+            if (_settingFieldDisplay) return; // showing the formatted / raw text, not an edit
+            _vm!.UpdateFieldValue(field.Name, FieldFormatting.ToStored(tb.Text, field));
             if (_fieldAutoSize.TryGetValue(field.Name, out var autoSize) && autoSize)
                 ApplyFieldAutoSize(tb, field);
         };
         tb.GotFocus += (_, _) =>
         {
             tb.Background = FieldFocusBrush;
+            // Formatted number fields are edited as the plain number (£1,234.50 → 1234.5).
+            if (field.HasNumberFormat && _vm!.FieldValues.TryGetValue(field.Name, out var raw))
+                SetFieldDisplay(tb, raw);
         };
         tb.LostFocus += (_, _) =>
         {
+            if (field.HasNumberFormat && _vm!.FieldValues.TryGetValue(field.Name, out var raw))
+                SetFieldDisplay(tb, FieldFormatting.ToDisplay(raw, field));
             tb.Background = FieldFill(field);
             tb.BorderBrush = field.IsRequired && string.IsNullOrWhiteSpace(tb.Text)
                 ? FieldRequiredBorderBrush

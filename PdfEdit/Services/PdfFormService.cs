@@ -236,6 +236,9 @@ public class PdfFormService
                  ?? aa?.GetAsDictionary(PdfName.K)?.GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
         var m = AfDateRx.Match(js);
         if (m.Success) info.DateFormat = m.Groups[1].Value;
+        else FieldFormatting.ReadFormat(js, info);
+        string calc = aa?.GetAsDictionary(PdfName.C)?.GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
+        FieldFormatting.ReadCalc(calc, info);
     }
 
     private static void WriteAcrobatFieldProperties(PdfFormField field, Models.FormFieldInfo edit)
@@ -287,6 +290,49 @@ public class PdfFormService
                 if (js.Contains("AFDate_")) aa.Remove(key);
             }
         }
+
+        // Number / currency / percent / special formats (Acrobat's AF scripts).
+        aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
+        if (!edit.IsDateField && FieldFormatting.Scripts(edit) is { } sc)
+        {
+            field.SetAdditionalAction(PdfName.F, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript(sc.Format));
+            field.SetAdditionalAction(PdfName.K, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript(sc.Keystroke));
+        }
+        else if (aa != null && !edit.IsDateField)
+        {
+            foreach (var key in new[] { PdfName.F, PdfName.K })
+            {
+                string js = aa.GetAsDictionary(key)?.GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
+                if (FieldFormatting.IsOurFormatScript(js)) aa.Remove(key);
+            }
+        }
+
+        // Calculated value (sum / product / average / min / max of other fields).
+        aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
+        if (FieldFormatting.CalcScript(edit) is { } calc)
+            field.SetAdditionalAction(PdfName.C, iText.Kernel.Pdf.Action.PdfAction.CreateJavaScript(calc));
+        else if (aa?.GetAsDictionary(PdfName.C)?.GetAsString(PdfName.JS)?.ToUnicodeString() is { } cjs && cjs.Contains("AFSimple_Calculate"))
+            aa.Remove(PdfName.C);
+    }
+
+    /// <summary>Keeps the form's calculation order (/CO) in step with the fields that calculate.</summary>
+    private static void UpdateCalculationOrder(PdfAcroForm form, PdfFormField field, bool calculates)
+    {
+        var acro = form.GetPdfObject();
+        var co = acro.GetAsArray(PdfName.CO);
+        var obj = field.GetPdfObject();
+        if (calculates)
+        {
+            if (co == null) { co = new PdfArray(); acro.Put(PdfName.CO, co); }
+            bool present = false;
+            for (int i = 0; i < co.Size(); i++) if (co.Get(i, true) == obj) present = true;
+            if (!present) co.Add(obj.GetIndirectReference() ?? (PdfObject)obj);
+        }
+        else if (co != null)
+        {
+            for (int i = co.Size() - 1; i >= 0; i--) if (co.Get(i, true) == obj) co.Remove(i);
+        }
+        acro.SetModified();
     }
 
     private static void ApplyFieldProperties(PdfAcroForm form, Models.FormFieldInfo edit, List<string> errors)
@@ -311,6 +357,7 @@ public class PdfFormService
                 else field.SetFontSizeAutoScale();
             }
             WriteAcrobatFieldProperties(field, edit);
+            UpdateCalculationOrder(form, field, FieldFormatting.CalcScript(edit) != null);
             field.RegenerateField();
         }
         catch (Exception ex)
@@ -439,7 +486,15 @@ public class PdfFormService
                     }
                     else
                     {
-                        field.SetValue(value);
+                        // Formatted number fields keep the plain number as the value and show the
+                        // formatted text (e.g. 1234.5 → £1,234.50), like Acrobat.
+                        var fmt = new Models.FormFieldInfo();
+                        string fjs = field.GetPdfObject().GetAsDictionary(PdfName.AA)?.GetAsDictionary(PdfName.F)?
+                                          .GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
+                        FieldFormatting.ReadFormat(fjs, fmt);
+                        string display = fmt.HasNumberFormat ? FieldFormatting.ToDisplay(value, fmt) : value;
+                        if (display != value && field is PdfTextFormField) field.SetValue(value, display);
+                        else field.SetValue(value);
                     }
                 }
                 catch (Exception ex)

@@ -47,6 +47,13 @@ public class FieldPropertiesDialog : Window
     private readonly ComboBox _align = new() { Width = 120 };
     private readonly ComboBox _dateFormat = new() { IsEditable = true, Width = 160 };
     private readonly ListBox _items = new() { Height = 110, Width = 220 };
+    private readonly ComboBox _formatKind = new() { Width = 160 };
+    private readonly ComboBox _decimals = new() { Width = 70 };
+    private readonly TextBox _currency = new() { Width = 60 };
+    private readonly RadioButton _noCalc = new() { Content = "Value is not calculated", GroupName = "calc" };
+    private readonly RadioButton _calc = new() { Content = "Value is the", GroupName = "calc", VerticalAlignment = VerticalAlignment.Center };
+    private readonly ComboBox _calcOp = new() { Width = 130, Margin = new Thickness(6, 0, 6, 0) };
+    private readonly StackPanel _calcList = new();
     private readonly TextBox _newItem = new() { Width = 160 };
 
     public FieldPropertiesDialog(MainViewModel vm, FormFieldInfo field)
@@ -59,7 +66,7 @@ public class FieldPropertiesDialog : Window
         Result.WidgetIndex = field.WidgetIndex;
 
         Title = $"{TypeLabel(field)} Properties";
-        Width = 480; Height = 470;
+        Width = 500; Height = 480;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
@@ -70,6 +77,11 @@ public class FieldPropertiesDialog : Window
         tabs.Items.Add(new TabItem { Header = "General", Content = BuildGeneral() });
         tabs.Items.Add(new TabItem { Header = "Appearance", Content = BuildAppearance() });
         tabs.Items.Add(new TabItem { Header = "Options", Content = BuildOptions() });
+        if (IsText)
+        {
+            tabs.Items.Add(new TabItem { Header = "Format", Content = BuildFormat() });
+            tabs.Items.Add(new TabItem { Header = "Calculate", Content = BuildCalculate() });
+        }
 
         var ok = new Button { Content = "OK", Width = 80, IsDefault = true, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(0, 3, 0, 3) };
         var cancel = new Button { Content = "Cancel", Width = 80, IsCancel = true, Padding = new Thickness(0, 3, 0, 3) };
@@ -161,9 +173,6 @@ public class FieldPropertiesDialog : Window
             _limitOn.VerticalAlignment = VerticalAlignment.Center;
             p.Children.Add(limitRow);
             p.Children.Add(Spaced(_comb));
-            p.Children.Add(Header("Format"));
-            p.Children.Add(Spaced(_isDate));
-            p.Children.Add(Row("Date format", _dateFormat));
         }
         else if (IsChoice)
         {
@@ -222,6 +231,83 @@ public class FieldPropertiesDialog : Window
         return p;
     }
 
+    // Acrobat's Format tab: None / Number / Currency / Percent / Date / Zip / Phone / SSN.
+    private UIElement BuildFormat()
+    {
+        var p = Panel();
+        foreach (var k in new[] { "None", "Number", "Currency", "Percent", "Date", "Zip", "Zip+4", "Phone", "SSN" }) _formatKind.Items.Add(k);
+        foreach (var n in new[] { "0", "1", "2", "3", "4" }) _decimals.Items.Add(n);
+        _formatKind.SelectedItem = _field.IsDateField ? "Date" : _field.NumberFormat ?? "None";
+        _decimals.SelectedItem = Math.Clamp(_field.Decimals, 0, 4).ToString();
+        _currency.Text = _field.CurrencySymbol;
+
+        var decRow = Row("Decimal places", _decimals);
+        var curRow = Row("Currency symbol", _currency);
+        var dateRow = Row("Date format", _dateFormat);
+        var example = new TextBlock { Margin = new Thickness(0, 10, 0, 0), Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)) };
+        void Update()
+        {
+            string k = _formatKind.SelectedItem as string ?? "None";
+            decRow.Visibility = k is "Number" or "Currency" or "Percent" ? Visibility.Visible : Visibility.Collapsed;
+            curRow.Visibility = k == "Currency" ? Visibility.Visible : Visibility.Collapsed;
+            dateRow.Visibility = k == "Date" ? Visibility.Visible : Visibility.Collapsed;
+            int dec = int.TryParse(_decimals.SelectedItem as string, out var d) ? d : 2;
+            example.Text = k switch
+            {
+                "Number" or "Currency" or "Percent" => "Example: " + PdfEdit.Services.FieldFormatting.ToDisplay(k == "Percent" ? "0.1234" : "1234.5", k, dec, _currency.Text),
+                "Zip" => "Example: 12345", "Zip+4" => "Example: 12345-6789", "Phone" => "Example: (555) 123-4567", "SSN" => "Example: 123-45-6789",
+                "Date" => "Shows a calendar when filling.", _ => "The text is kept exactly as typed.",
+            };
+        }
+        _formatKind.SelectionChanged += (_, _) => Update();
+        _decimals.SelectionChanged += (_, _) => Update();
+        _currency.TextChanged += (_, _) => Update();
+
+        p.Children.Add(Row("Format category", _formatKind));
+        p.Children.Add(decRow);
+        p.Children.Add(curRow);
+        p.Children.Add(dateRow);
+        p.Children.Add(example);
+        p.Children.Add(new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 14, 0, 0), FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+            Text = "Formatted fields store the plain number and show it formatted. Acrobat and other readers use the same rules.",
+        });
+        Update();
+        return p;
+    }
+
+    // Acrobat's Calculate tab (simple calculations).
+    private UIElement BuildCalculate()
+    {
+        var p = Panel();
+        foreach (var (op, label) in PdfEdit.Services.FieldFormatting.CalcOps) _calcOp.Items.Add(new ComboBoxItem { Content = label, Tag = op });
+        _calcOp.SelectedIndex = Math.Max(0, Array.FindIndex(PdfEdit.Services.FieldFormatting.CalcOps, c => c.Op == _field.CalcOp));
+        bool calculates = !string.IsNullOrEmpty(_field.CalcOp);
+        _noCalc.IsChecked = !calculates;
+        _calc.IsChecked = calculates;
+
+        var others = _vm.AllFields.Where(f => f.FieldType == FieldType.Text && f.Name != _field.Name)
+                                  .Select(f => f.Name).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var n in others)
+            _calcList.Children.Add(new CheckBox { Content = n, Tag = n, IsChecked = _field.CalcFields.Contains(n), Margin = new Thickness(0, 2, 0, 2) });
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 6) };
+        row.Children.Add(_calc);
+        row.Children.Add(_calcOp);
+        row.Children.Add(new TextBlock { Text = "of these fields:", VerticalAlignment = VerticalAlignment.Center });
+        var scroll = new ScrollViewer { Height = 200, Content = _calcList, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                                        BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1), Padding = new Thickness(6) };
+        _calcList.IsEnabled = _calcOp.IsEnabled = calculates;
+        _calc.Checked += (_, _) => _calcList.IsEnabled = _calcOp.IsEnabled = true;
+        _noCalc.Checked += (_, _) => _calcList.IsEnabled = _calcOp.IsEnabled = false;
+
+        p.Children.Add(_noCalc);
+        p.Children.Add(row);
+        p.Children.Add(others.Count == 0 ? new TextBlock { Text = "There are no other text fields to calculate from.", Foreground = Brushes.Gray } : scroll);
+        return p;
+    }
+
     private void MoveItem(int delta)
     {
         int i = _items.SelectedIndex, j = i + delta;
@@ -259,7 +345,14 @@ public class FieldPropertiesDialog : Window
             Result.IsMultiline = _multiline.IsChecked == true;
             Result.MaxLength = _limitOn.IsChecked == true && int.TryParse(_limit.Text, out var n) && n > 0 ? n : 0;
             Result.IsComb = _comb.IsChecked == true && Result.MaxLength > 0;
-            Result.DateFormat = _isDate.IsChecked == true ? (string.IsNullOrWhiteSpace(_dateFormat.Text) ? DateFormats[0] : _dateFormat.Text.Trim()) : null;
+            string kind = _formatKind.SelectedItem as string ?? "None";
+            Result.DateFormat = kind == "Date" ? (string.IsNullOrWhiteSpace(_dateFormat.Text) ? DateFormats[0] : _dateFormat.Text.Trim()) : null;
+            Result.NumberFormat = kind is "None" or "Date" ? null : kind;
+            Result.Decimals = int.TryParse(_decimals.SelectedItem as string, out var dec) ? dec : 2;
+            Result.CurrencySymbol = string.IsNullOrWhiteSpace(_currency.Text) ? "£" : _currency.Text.Trim();
+            Result.CalcFields = _calcList.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList();
+            Result.CalcOp = _calc.IsChecked == true && Result.CalcFields.Count > 0 ? (_calcOp.SelectedItem as ComboBoxItem)?.Tag as string : null;
+            if (Result.CalcOp == null) Result.CalcFields.Clear();
         }
         else if (IsChoice)
         {

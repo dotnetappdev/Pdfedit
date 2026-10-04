@@ -51,6 +51,17 @@ public class FormFieldInfo
     public bool IsEditable { get; set; }            // combo boxes: allow typing a custom value
     public string? DateFormat { get; set; }         // e.g. "dd/mm/yyyy" → a date field (AFDate_FormatEx)
     public bool IsDateField => !string.IsNullOrEmpty(DateFormat);
+
+    // Acrobat Format tab: Number, Currency, Percent, Zip, Zip+4, Phone, SSN (null = none). The
+    // value is stored as a plain number; the formatted text is only what's shown.
+    public string? NumberFormat { get; set; }
+    public int Decimals { get; set; } = 2;
+    public string CurrencySymbol { get; set; } = "£";
+    public bool HasNumberFormat => !string.IsNullOrEmpty(NumberFormat);
+
+    // Acrobat Calculate tab: SUM / PRD / AVG / MIN / MAX of other fields (null = not calculated).
+    public string? CalcOp { get; set; }
+    public List<string> CalcFields { get; set; } = new();
 }
 
 /// <summary>Horizontal text alignment inside a form field (PDF /Q: 0 left, 1 centre, 2 right).</summary>

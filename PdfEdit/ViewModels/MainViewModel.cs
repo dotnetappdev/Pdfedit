@@ -1450,6 +1450,41 @@ public partial class MainViewModel : INotifyPropertyChanged
             field.Value = value;
         if (_selectedField?.Name == fieldName) OnPropertyChanged(nameof(SelectedFieldValue));
         StatusText = $"Field '{fieldName}' updated.";
+        RecalculateFields();
+    }
+
+    private bool _recalculating;
+
+    /// <summary>
+    /// Re-runs every calculated field (Acrobat's AFSimple_Calculate: sum, product, average, min,
+    /// max) after a value changes, repeating so totals of totals settle.
+    /// </summary>
+    public void RecalculateFields()
+    {
+        if (_recalculating) return;
+        var calcs = AllFields.Where(f => !string.IsNullOrEmpty(f.CalcOp) && f.CalcFields.Count > 0)
+                             .GroupBy(f => f.Name).Select(g => g.First()).ToList();
+        if (calcs.Count == 0) return;
+        _recalculating = true;
+        try
+        {
+            for (int pass = 0; pass < 5; pass++)
+            {
+                bool changed = false;
+                foreach (var c in calcs)
+                {
+                    double result = Services.FieldFormatting.Calculate(c.CalcOp!, c.CalcFields.Select(n => FieldValues.TryGetValue(n, out var v) ? v : null));
+                    string stored = Math.Round(result, 10).ToString("0.##########", System.Globalization.CultureInfo.InvariantCulture);
+                    if (FieldValues.TryGetValue(c.Name, out var old) && old == stored) continue;
+                    FieldValues[c.Name] = stored;
+                    foreach (var w in AllFields.Where(f => f.Name == c.Name)) w.Value = stored;
+                    FieldValueChangedExternally?.Invoke(c.Name, stored);
+                    changed = true;
+                }
+                if (!changed) break;
+            }
+        }
+        finally { _recalculating = false; }
     }
 
     public void ApplyValueToAllMatchingFields(string fieldName, string value)

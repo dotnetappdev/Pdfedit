@@ -59,6 +59,11 @@ public partial class MainViewModel
         to.IsComb = from.IsComb;
         to.IsEditable = from.IsEditable;
         to.DateFormat = from.DateFormat;
+        to.NumberFormat = from.NumberFormat;
+        to.Decimals = from.Decimals;
+        to.CurrencySymbol = from.CurrencySymbol;
+        to.CalcOp = from.CalcOp;
+        to.CalcFields = from.CalcFields.ToList();
         to.DefaultValue = from.DefaultValue;
         to.Options = from.Options.ToList();
     }
@@ -75,6 +80,7 @@ public partial class MainViewModel
             foreach (var (w, src) in set) CopyFieldProperties(src, w);
             ModifiedFieldNames.Add(field.Name);
             NotifySelectedFieldProperties();
+            RecalculateFields();
             PageChanged?.Invoke();
         }
         var after = widgets.Select(w => (w, edited)).ToList();
