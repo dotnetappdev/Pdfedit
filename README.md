@@ -4,25 +4,13 @@
 [![Latest release](https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release)](https://github.com/dotnetappdev/Pdfedit/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Free PDF editor for Windows: fill in and sign forms, mark up documents, and move pages around.
+Free PDF editor for Windows: fill in and sign forms, mark up documents, and move pages around. See the [docs](docs/) for everything it does.
 
 ![PdfEdit filling in a form](docs/screenshots/demo-v4.gif)
 
 ## Download
 
 Get it from [Releases](https://github.com/dotnetappdev/Pdfedit/releases/latest). The setup exe and the `-portable` zip include everything; the plain zip needs the .NET 10 Desktop Runtime. Windows 10 (2004+) or 11, 64-bit.
-
-## Features
-
-- Fill in forms, including flat PDFs with no fields
-- Signatures, initials, dates, ticks and stamps
-- Build forms: text, checkbox, radio, dropdown, date and signature fields
-- Highlights, notes, drawing, links
-- Rotate, reorder, merge, split, watermark, page numbers
-- Scanning with OCR
-- Optional AI form filling (Claude, OpenAI or a local model)
-
-More in the [docs](docs/) and [screenshots](docs/screenshots.md).
 
 ## Building
 
