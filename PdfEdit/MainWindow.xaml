@@ -1389,6 +1389,22 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Export to&#x0a;PowerPoint"
+                                   Command="{Binding ExportPowerPointCommand}"
+                                   ToolTip="One slide per page"
+                                   AutomationProperties.Name="Export to PowerPoint">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Extract&#x0a;Images"
+                                   Command="{Binding ExtractImagesCommand}"
+                                   ToolTip="Save every picture in the PDF to a folder"
+                                   AutomationProperties.Name="Extract images">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Form Field Creator group -->
@@ -1610,6 +1626,22 @@
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Rotate every page 90° counter-clockwise"
                                    AutomationProperties.Name="Rotate all pages counter-clockwise"/>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Reading" AutomationProperties.Name="Reading views group">
+                    <Fluent:Button Header="Slide&#x0a;Show" Command="{Binding SlideShowCommand}"
+                                   ToolTip="Full screen, one page at a time (arrows to move, Esc to leave)"
+                                   AutomationProperties.Name="Slide show">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE786;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:ToggleButton Header="Two Pages" Size="Middle" IsChecked="{Binding TwoPageView, Mode=TwoWay}"
+                                         ToolTip="Show the next page beside this one" AutomationProperties.Name="Two-page view">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Night Mode" Size="Middle" IsChecked="{Binding NightMode, Mode=TwoWay}"
+                                         ToolTip="Dark pages for reading at night (colours keep their hue)" AutomationProperties.Name="Night mode">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Display"

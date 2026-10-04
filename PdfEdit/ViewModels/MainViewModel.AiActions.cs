@@ -438,6 +438,11 @@ public partial class MainViewModel
         ["previous_page"] = ("Previous page", () => PreviousPageCommand),
         ["thumbnails"] = ("Show or hide thumbnails", () => ToggleThumbnailsCommand),
         ["settings"] = ("Open Settings", () => OpenSettingsCommand),
+        ["slide_show"] = ("Slide show", () => SlideShowCommand),
+        ["night_mode"] = ("Night mode on/off", () => ToggleNightModeCommand),
+        ["two_page_view"] = ("Two-page view on/off", () => ToggleTwoPageViewCommand),
+        ["extract_images"] = ("Extract images", () => ExtractImagesCommand),
+        ["export_powerpoint"] = ("Export to PowerPoint", () => ExportPowerPointCommand),
     };
 
     private void ZoomFromAi(AiActionItem item)

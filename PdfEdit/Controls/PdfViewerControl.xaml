@@ -185,9 +185,8 @@
                       AllowDrop="True"
                       Drop="OnDrop">
 
-            <Grid HorizontalAlignment="Center"
-                  VerticalAlignment="Top"
-                  Margin="24">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="24">
+            <Grid VerticalAlignment="Top">
 
                 <!-- Page shadow -->
                 <Border CornerRadius="2"
@@ -238,6 +237,16 @@
                 </Border>
 
             </Grid>
+
+            <!-- Two-page view: the facing page (click to go to it) -->
+            <Border x:Name="FacingPageBorder" Visibility="Collapsed" Margin="16,0,0,0" VerticalAlignment="Top"
+                    BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" Background="White"
+                    Cursor="Hand" ToolTip="Click to work on this page"
+                    MouseLeftButtonUp="FacingPage_Click"
+                    AutomationProperties.Name="Facing page">
+                <Image x:Name="FacingImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Border>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

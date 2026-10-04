@@ -742,7 +742,9 @@ public partial class PdfViewerControl : UserControl
         {
             double dpiScale = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             var bmp = await _vm.RenderService.RenderPageAsync(_vm.CurrentPageIndex, _vm.Zoom, dpiScale);
-            PageImage.Source = bmp;
+            PageImage.Source = _vm.NightMode ? NightFilter.Apply(bmp) : bmp;
+            PageBorder.Background = _vm.NightMode ? new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x1E)) : Brushes.White;
+            await ShowFacingPageAsync(dpiScale);
             HideRenderDiagnostic();
 
             // Overlays are positioned in DIPs (see Scale), so size them to the bitmap's

@@ -36,6 +36,10 @@ public class AppSettings
     /// <summary>Upload a cloud file back automatically when it's saved.</summary>
     public bool CloudAutoUpload { get; set; } = true;
 
+    // ── Reading views ────────────────────────────────────────────────────────
+    public bool NightMode { get; set; }
+    public bool TwoPageView { get; set; }
+
     // ── Welcome ──────────────────────────────────────────────────────────────
     /// <summary>False until the first-launch tour has been finished or skipped.</summary>
     public bool TourCompleted { get; set; }

@@ -74,6 +74,8 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Microsoft Word (.docx)", vm.ExportWordCommand, "Text of every page as a Word document"),
                     Run("Microsoft Excel (.xlsx)", vm.ExportExcelCommand, "Tables and columns rebuilt as rows and cells, numbers as numbers"),
+                    Run("Microsoft PowerPoint (.pptx)", vm.ExportPowerPointCommand, "One slide per page"),
+                    Run("All images", vm.ExtractImagesCommand, "Save every picture in the PDF to a folder"),
                     Run("Plain text (.txt)", vm.ExportTextCommand),
                     Run("Images — all pages (PNG)", vm.ExportPagesAsImagesCommand),
                     Run("Image — current page", vm.ExportPageAsImageCommand),
@@ -129,6 +131,9 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Show / hide page thumbnails", vm.ToggleThumbnailsCommand),
+                    Run("Slide show (full screen)", vm.SlideShowCommand),
+                    Run("Two-page view on / off", vm.ToggleTwoPageViewCommand),
+                    Run("Night mode on / off", vm.ToggleNightModeCommand),
                     Page("Rotate page right", vm.RotatePageCWCommand),
                     Page("Rotate page left", vm.RotatePageCCWCommand),
                     Page("Rotate all pages right", vm.RotateAllPagesCWCommand),
