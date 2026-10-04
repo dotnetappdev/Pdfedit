@@ -105,7 +105,8 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Blank PDF", vm.CreateBlankPdfCommand),
                     Run("From images", vm.CreatePdfFromImagesCommand, "One page per image"),
-                    Run("From Word, Excel or PowerPoint", vm.CreatePdfFromOfficeCommand, "Uses Microsoft Office or LibreOffice on this PC"),
+                    Run("From Word, Excel or PowerPoint", vm.CreatePdfFromOfficeCommand, "Word works on its own; Excel and PowerPoint use Office or LibreOffice"),
+                    Run("From a Google Docs link", vm.ImportGoogleLinkCommand, "Google Docs, Sheets, Slides, or a Word file on Drive"),
                     Run("Design a PDF (Design canvas)", vm.NewDesignCommand),
                     Run("Export design as PDF", vm.ExportDesignCommand),
                 } },

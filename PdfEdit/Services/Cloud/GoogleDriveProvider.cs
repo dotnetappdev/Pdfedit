@@ -18,6 +18,19 @@ public sealed class GoogleDriveProvider : CloudProvider
     private const string Api = "https://www.googleapis.com/drive/v3";
     private const string Upload = "https://www.googleapis.com/upload/drive/v3";
     private const string FolderMime = "application/vnd.google-apps.folder";
+    public const string GoogleDoc = "application/vnd.google-apps.document";
+    public const string GoogleSheet = "application/vnd.google-apps.spreadsheet";
+    public const string GoogleSlides = "application/vnd.google-apps.presentation";
+
+    /// <summary>The files the browser shows: PDFs, Google Docs / Sheets / Slides and Office files.</summary>
+    private static readonly string Openable = "(" + string.Join(" or ", new[]
+    {
+        "application/pdf", FolderMime, GoogleDoc, GoogleSheet, GoogleSlides,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint",
+        "application/rtf", "application/vnd.oasis.opendocument.text",
+    }.Select(m => $"mimeType='{m}'")) + ")";
     /// <summary>Pseudo-folder for files other people shared.</summary>
     public const string SharedWithMe = "shared-with-me";
 
@@ -61,11 +74,11 @@ public sealed class GoogleDriveProvider : CloudProvider
 
     public override Task<List<CloudItem>> ListAsync(string folderId, CancellationToken ct = default) =>
         QueryAsync(folderId == SharedWithMe
-            ? $"sharedWithMe and trashed=false and (mimeType='application/pdf' or mimeType='{FolderMime}')"
-            : $"'{Esc(folderId)}' in parents and trashed=false and (mimeType='application/pdf' or mimeType='{FolderMime}')", ct);
+            ? $"sharedWithMe and trashed=false and {Openable}"
+            : $"'{Esc(folderId)}' in parents and trashed=false and {Openable}", ct);
 
     public override Task<List<CloudItem>> SearchAsync(string text, CancellationToken ct = default) =>
-        QueryAsync($"name contains '{Esc(text)}' and trashed=false and mimeType='application/pdf'", ct);
+        QueryAsync($"name contains '{Esc(text)}' and trashed=false and mimeType!='{FolderMime}' and {Openable}", ct);
 
     private async Task<List<CloudItem>> QueryAsync(string q, CancellationToken ct)
     {
@@ -82,8 +95,9 @@ public sealed class GoogleDriveProvider : CloudProvider
             {
                 long size = f.TryGetProperty("size", out var s) && long.TryParse(s.GetString(), out var n) ? n : 0;
                 DateTime? mod = f.TryGetProperty("modifiedTime", out var m) && m.TryGetDateTime(out var dt) ? dt : null;
+                string mime = f.GetProperty("mimeType").GetString() ?? "";
                 items.Add(new CloudItem(f.GetProperty("id").GetString()!, f.GetProperty("name").GetString() ?? "",
-                    f.GetProperty("mimeType").GetString() == FolderMime, size, mod));
+                    mime == FolderMime, size, mod, mime));
             }
             page = doc.RootElement.TryGetProperty("nextPageToken", out var t) ? t.GetString() : null;
         } while (page != null && items.Count < 5000);
@@ -95,6 +109,30 @@ public sealed class GoogleDriveProvider : CloudProvider
         using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get,
             $"{Api}/files/{Uri.EscapeDataString(fileId)}?alt=media&supportsAllDrives=true"), ct, HttpCompletionOption.ResponseHeadersRead);
         await SaveToFileAsync(resp, destPath, ct);
+    }
+
+    public override async Task DownloadAsPdfAsync(CloudItem item, string destPath, CancellationToken ct = default)
+    {
+        if (item.MimeType.StartsWith("application/vnd.google-apps.")) await ExportPdfAsync(item.Id, destPath, ct);
+        else await base.DownloadAsPdfAsync(item, destPath, ct);
+    }
+
+    /// <summary>A Google Doc, Sheet or Slides file exported by Google as a PDF.</summary>
+    public async Task ExportPdfAsync(string fileId, string destPath, CancellationToken ct = default)
+    {
+        using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get,
+            $"{Api}/files/{Uri.EscapeDataString(fileId)}/export?mimeType=application/pdf"), ct, HttpCompletionOption.ResponseHeadersRead);
+        await SaveToFileAsync(resp, destPath, ct);
+    }
+
+    /// <summary>A file's name and type, by ID.</summary>
+    public async Task<CloudItem> GetItemAsync(string fileId, CancellationToken ct = default)
+    {
+        using var doc = await GetJsonAsync($"{Api}/files/{Uri.EscapeDataString(fileId)}?supportsAllDrives=true&fields=id,name,mimeType,size,modifiedTime", ct);
+        var f = doc.RootElement;
+        string mime = f.GetProperty("mimeType").GetString() ?? "";
+        long size = f.TryGetProperty("size", out var s) && long.TryParse(s.GetString(), out var n) ? n : 0;
+        return new CloudItem(fileId, f.GetProperty("name").GetString() ?? "Google file", mime == FolderMime, size, null, mime);
     }
 
     public override async Task<CloudItem> UploadNewAsync(string localPath, string folderId, string name, CancellationToken ct = default)

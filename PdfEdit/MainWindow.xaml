@@ -99,6 +99,16 @@
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Save as new file"/>
 
+                    <Fluent:MenuItem Header="Import Word or Office File…"
+                                                KeyTip="I"
+                                                Command="{Binding CreatePdfFromOfficeCommand}"
+                                                AutomationProperties.Name="Import a Word, Excel or PowerPoint file"/>
+
+                    <Fluent:MenuItem Header="Import from Google Docs…"
+                                                KeyTip="G"
+                                                Command="{Binding ImportGoogleLinkCommand}"
+                                                AutomationProperties.Name="Import from a Google Docs link"/>
+
                     <Fluent:MenuItem Header="Open from Cloud…"
                                                 KeyTip="D"
                                                 Command="{Binding OpenFromCloudCommand}"
@@ -298,6 +308,14 @@
                                    AutomationProperties.Name="Create PDF from Office files">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="From Google&#x0a;Docs"
+                                   Command="{Binding ImportGoogleLinkCommand}"
+                                   ToolTip="Paste a Google Docs, Sheets or Slides link to import it as a PDF"
+                                   AutomationProperties.Name="Import from Google Docs">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Open from&#x0a;Cloud"

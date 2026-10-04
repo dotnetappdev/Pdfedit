@@ -19,6 +19,12 @@ public static class OfficeConversionService
         "Office documents|*.doc;*.docx;*.docm;*.dot;*.dotx;*.rtf;*.odt;*.wpd;*.xls;*.xlsx;*.xlsm;*.xlsb;*.ods;*.csv;*.ppt;*.pptx;*.pptm;*.pps;*.ppsx;*.odp" +
         "|Word documents|*.doc;*.docx;*.docm;*.rtf;*.odt|Excel workbooks|*.xls;*.xlsx;*.xlsm;*.xlsb;*.ods;*.csv|PowerPoint presentations|*.ppt;*.pptx;*.pptm;*.pps;*.ppsx;*.odp|All files|*.*";
 
+    /// <summary>Files PdfEdit can convert itself, without Office or LibreOffice.</summary>
+    public static readonly string[] BuiltInExtensions = { ".docx", ".docm", ".dotx" };
+
+    public static bool CanConvert(string path) =>
+        AvailableConverter() != null || BuiltInExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
+
     public static bool IsOfficeFile(string path)
     {
         string ext = Path.GetExtension(path).ToLowerInvariant();
@@ -68,9 +74,15 @@ public static class OfficeConversionService
             ConvertWithLibreOffice(soffice, source, dest);
             return;
         }
+        // No Office: PdfEdit's own Word converter.
+        if (BuiltInExtensions.Contains(ext))
+        {
+            DocxToPdfService.Convert(source, dest);
+            return;
+        }
         if (officeError != null) throw new InvalidOperationException($"Microsoft Office couldn't convert the file: {officeError.Message}", officeError);
         throw new InvalidOperationException(
-            "Converting Office files needs Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.");
+            "PdfEdit converts Word (.docx) files itself; other Office files need Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.");
     }
 
     private static void RunSta(Action action)

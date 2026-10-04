@@ -42,9 +42,10 @@ public partial class MainViewModel
     /// <summary>Converts Office files to PDFs saved next to them, then opens the first.</summary>
     public async Task ConvertOfficeFilesAsync(IReadOnlyList<string> files)
     {
-        if (OfficeConversionService.AvailableConverter() == null)
+        var cannot = files.Where(f => !OfficeConversionService.CanConvert(f)).ToList();
+        if (cannot.Count == files.Count)
         {
-            Dialogs.AppDialog.ShowInfo("Converting Word, Excel and PowerPoint files needs Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.",
+            Dialogs.AppDialog.ShowInfo("PdfEdit converts Word (.docx) files itself. Excel, PowerPoint and older Word (.doc) files need Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.",
                 "Create PDF");
             return;
         }

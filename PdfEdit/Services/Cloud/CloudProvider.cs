@@ -8,9 +8,23 @@ using System.Text.Json;
 namespace PdfEdit.Services.Cloud;
 
 /// <summary>A file or folder in cloud storage.</summary>
-public sealed record CloudItem(string Id, string Name, bool IsFolder, long Size, DateTime? Modified)
+public sealed record CloudItem(string Id, string Name, bool IsFolder, long Size, DateTime? Modified, string MimeType = "")
 {
-    public string Glyph => IsFolder ? "" : "";
+    public bool IsPdf => !IsFolder && (MimeType == "application/pdf" || Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+    /// <summary>A Google Doc / Sheet / Slides file or an Office file: opened as a PDF copy.</summary>
+    public bool IsConvertible => !IsFolder && !IsPdf;
+    public string Kind => IsFolder ? "Folder" : IsPdf ? "PDF"
+        : MimeType == GoogleDriveProvider.GoogleDoc ? "Google Doc" : MimeType == GoogleDriveProvider.GoogleSheet ? "Google Sheet"
+        : MimeType == GoogleDriveProvider.GoogleSlides ? "Google Slides"
+        : System.IO.Path.GetExtension(Name).TrimStart('.').ToUpperInvariant() switch
+        {
+            "DOC" or "DOCX" or "DOCM" or "RTF" or "ODT" => "Word", "XLS" or "XLSX" or "ODS" or "CSV" => "Excel",
+            "PPT" or "PPTX" or "ODP" => "PowerPoint", var e => e,
+        };
+    public string Glyph => IsFolder ? "" : Kind switch
+    {
+        "PDF" => "", "Google Sheet" or "Excel" => "", "Google Slides" or "PowerPoint" => "", _ => "",
+    };
     public string SizeText => IsFolder ? "" : Size switch
     {
         < 1024 => $"{Size} B",
@@ -65,6 +79,22 @@ public abstract class CloudProvider
     public abstract Task<List<CloudItem>> ListAsync(string folderId, CancellationToken ct = default);
     public abstract Task<List<CloudItem>> SearchAsync(string text, CancellationToken ct = default);
     public abstract Task DownloadAsync(string fileId, string destPath, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets any listed file as a PDF: PDFs as they are, Google Docs / Sheets / Slides exported by
+    /// Google, Office files converted (by the service where it can, else on this PC).
+    /// </summary>
+    public virtual async Task DownloadAsPdfAsync(CloudItem item, string destPath, CancellationToken ct = default)
+    {
+        if (item.IsPdf) { await DownloadAsync(item.Id, destPath, ct); return; }
+        string tmp = Path.Combine(Path.GetTempPath(), "PdfEdit-" + Guid.NewGuid().ToString("N")[..8] + Path.GetExtension(item.Name));
+        try
+        {
+            await DownloadAsync(item.Id, tmp, ct);
+            await Task.Run(() => OfficeConversionService.Convert(tmp, destPath), ct);
+        }
+        finally { try { File.Delete(tmp); } catch { } }
+    }
     /// <summary>Uploads a new file into a folder; returns it.</summary>
     public abstract Task<CloudItem> UploadNewAsync(string localPath, string folderId, string name, CancellationToken ct = default);
     /// <summary>Replaces the contents of an existing file.</summary>

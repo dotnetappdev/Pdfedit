@@ -16,6 +16,40 @@ public partial class MainViewModel
     private bool _uploading;
 
     public ICommand OpenFromCloudCommand => _openFromCloudCommand ??= new AsyncRelayCommand(OpenFromCloudAsync);
+
+    private ICommand? _importGoogleLinkCommand;
+
+    /// <summary>Import a Google Docs / Sheets / Slides (or Drive) link as a PDF.</summary>
+    public ICommand ImportGoogleLinkCommand => _importGoogleLinkCommand ??= new AsyncRelayCommand(async () =>
+    {
+        string start = "";
+        try { if (Clipboard.ContainsText() && GoogleLinkImport.Parse(Clipboard.GetText()) != null) start = Clipboard.GetText().Trim(); } catch { }
+        var dlg = new Dialogs.InputDialog("Import from Google Docs",
+            "Paste the link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):", start)
+        { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
+        if (GoogleLinkImport.Parse(dlg.InputText) == null)
+        {
+            Dialogs.AppDialog.ShowInfo("That isn't a Google Docs, Sheets, Slides or Drive link. It should start with https://docs.google.com/ or https://drive.google.com/.", "Import from Google Docs");
+            return;
+        }
+        string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PdfEdit", "Imported");
+        try
+        {
+            StatusText = "Importing from Google…";
+            IsLoading = true;
+            string pdf = await GoogleLinkImport.ImportAsync(dlg.InputText.Trim(), folder);
+            if (_currentFilePath != null) SaveDocumentState();
+            await LoadDocumentAsync(pdf);
+            ToastService.Instance.Success($"Imported as {Path.GetFileName(pdf)} (in Documents\\PdfEdit\\Imported).");
+        }
+        catch (Exception ex)
+        {
+            IsLoading = false;
+            StatusText = "Import failed.";
+            Dialogs.AppDialog.ShowError("Couldn't import from Google.", ex);
+        }
+    });
     public ICommand SaveToCloudCommand => _saveToCloudCommand ??= new AsyncRelayCommand(SaveToCloudAsync, () => HasDocument && !_uploading);
 
     /// <summary>"Google Drive" if the open file came from there, else null.</summary>
@@ -35,12 +69,12 @@ public partial class MainViewModel
         if (dlg.OpenSettingsRequested) { OpenCloudSettings(); return; }
         if (!ok || dlg.Provider is not { } provider || dlg.SelectedFile is not { } file) return;
 
-        string local = CloudStorage.CachePath(provider, file.Id, file.Name);
+        string local = CloudStorage.CachePath(provider, file.Id, file.IsPdf ? file.Name : Path.GetFileNameWithoutExtension(file.Name));
         try
         {
-            StatusText = $"Downloading {file.Name} from {provider.DisplayName}…";
+            StatusText = file.IsPdf ? $"Downloading {file.Name} from {provider.DisplayName}…" : $"Getting {file.Name} from {provider.DisplayName} as a PDF…";
             IsLoading = true;
-            await provider.DownloadAsync(file.Id, local);
+            await provider.DownloadAsPdfAsync(file, local);
         }
         catch (Exception ex)
         {
@@ -49,11 +83,14 @@ public partial class MainViewModel
             Dialogs.AppDialog.ShowError($"Couldn't download {file.Name}.", ex);
             return;
         }
-        CloudStorage.Remember(local, provider, file.Id, file.Name);
+        // Only PDFs are saved back in place; a Google Doc or Word file becomes a new PDF.
+        if (file.IsPdf) CloudStorage.Remember(local, provider, file.Id, file.Name);
         if (_currentFilePath != null) SaveDocumentState();
         await LoadDocumentAsync(local);
         OnPropertyChanged(nameof(CurrentCloudName));
-        ToastService.Instance.Success($"Opened from {provider.DisplayName}. Save uploads your changes back.");
+        ToastService.Instance.Success(file.IsPdf
+            ? $"Opened from {provider.DisplayName}. Save uploads your changes back."
+            : $"Imported the {file.Kind} as a PDF. Use Save to Cloud to keep the PDF in {provider.DisplayName}.");
     }
 
     /// <summary>Writes the open document, with everything added so far, to <paramref name="dest"/>.</summary>

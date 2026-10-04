@@ -76,7 +76,7 @@ public sealed class OneDriveProvider : CloudProvider
             {
                 bool folder = f.TryGetProperty("folder", out _);
                 string name = f.GetProperty("name").GetString() ?? "";
-                bool pdf = name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                bool pdf = name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || OfficeConversionService.IsOfficeFile(name);
                 if (!(pdf || folder && pdfAndFolders)) continue;
                 long size = f.TryGetProperty("size", out var s) && s.TryGetInt64(out var n) ? n : 0;
                 DateTime? mod = f.TryGetProperty("lastModifiedDateTime", out var m) && m.TryGetDateTime(out var dt) ? dt : null;
@@ -91,6 +91,21 @@ public sealed class OneDriveProvider : CloudProvider
     {
         using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, $"{ItemPath(fileId)}/content"), ct, HttpCompletionOption.ResponseHeadersRead);
         await SaveToFileAsync(resp, destPath, ct);
+    }
+
+    /// <summary>OneDrive converts Word, Excel and PowerPoint files to PDF itself (?format=pdf).</summary>
+    public override async Task DownloadAsPdfAsync(CloudItem item, string destPath, CancellationToken ct = default)
+    {
+        if (item.IsPdf) { await DownloadAsync(item.Id, destPath, ct); return; }
+        try
+        {
+            using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, $"{ItemPath(item.Id)}/content?format=pdf"), ct, HttpCompletionOption.ResponseHeadersRead);
+            await SaveToFileAsync(resp, destPath, ct);
+        }
+        catch (InvalidOperationException)
+        {
+            await base.DownloadAsPdfAsync(item, destPath, ct);   // a type OneDrive can't convert: try on this PC
+        }
     }
 
     public override async Task<CloudItem> UploadNewAsync(string localPath, string folderId, string name, CancellationToken ct = default)

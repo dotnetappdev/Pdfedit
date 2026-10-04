@@ -447,6 +447,8 @@ public partial class MainViewModel
         ["ask_across_pdfs"] = ("Ask across several PDFs", () => AskAcrossPdfsCommand),
         ["mind_map"] = ("Mind map", () => MindMapCommand),
         ["clean_up_scans"] = ("Clean up scans", () => ScanCleanupCommand),
+        ["import_office"] = ("Import a Word / Office file", () => CreatePdfFromOfficeCommand),
+        ["import_google_docs"] = ("Import from a Google Docs link", () => ImportGoogleLinkCommand),
     };
 
     private void ZoomFromAi(AiActionItem item)

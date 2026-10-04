@@ -1413,7 +1413,12 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     // ── Public Methods ───────────────────────────────────────────────────────
 
-    public async Task OpenFileAsync(string path) => await LoadDocumentAsync(path);
+    /// <summary>Opens a PDF; Word, Excel and PowerPoint files are turned into a PDF first.</summary>
+    public async Task OpenFileAsync(string path)
+    {
+        if (OfficeConversionService.IsOfficeFile(path)) await ConvertOfficeFilesAsync(new[] { path });
+        else await LoadDocumentAsync(path);
+    }
 
     public async Task ReorderPagesAsync(IEnumerable<int> newOrder, int navigateToIndex = 0)
     {
@@ -1732,12 +1737,13 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Open PDF",
-            Filter = "PDF Files (*.pdf)|*.pdf|All Files (*.*)|*.*",
+            Title = "Open",
+            Filter = "PDF and Office documents|*.pdf;*.doc;*.docx;*.docm;*.rtf;*.odt;*.xls;*.xlsx;*.ods;*.csv;*.ppt;*.pptx;*.odp" +
+                     "|PDF Files (*.pdf)|*.pdf|Word documents|*.doc;*.docx;*.docm;*.rtf;*.odt|All Files (*.*)|*.*",
             DefaultExt = ".pdf"
         };
         if (dlg.ShowDialog() != true) return;
-        await LoadDocumentAsync(dlg.FileName);
+        await OpenFileAsync(dlg.FileName);
     }
 
     private async Task LoadDocumentAsync(string path)
