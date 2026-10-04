@@ -16,6 +16,7 @@ public sealed record CloudItem(string Id, string Name, bool IsFolder, long Size,
     public string Kind => IsFolder ? "Folder" : IsPdf ? "PDF"
         : MimeType == GoogleDriveProvider.GoogleDoc ? "Google Doc" : MimeType == GoogleDriveProvider.GoogleSheet ? "Google Sheet"
         : MimeType == GoogleDriveProvider.GoogleSlides ? "Google Slides"
+        : MimeType == GoogleDriveProvider.GoogleForm ? "Google Form"
         : System.IO.Path.GetExtension(Name).TrimStart('.').ToUpperInvariant() switch
         {
             "DOC" or "DOCX" or "DOCM" or "RTF" or "ODT" => "Word", "XLS" or "XLSX" or "ODS" or "CSV" => "Excel",
@@ -23,7 +24,7 @@ public sealed record CloudItem(string Id, string Name, bool IsFolder, long Size,
         };
     public string Glyph => IsFolder ? "" : Kind switch
     {
-        "PDF" => "", "Google Sheet" or "Excel" => "", "Google Slides" or "PowerPoint" => "", _ => "",
+        "PDF" => "", "Google Form" => "\uE9D5", "Google Sheet" or "Excel" => "", "Google Slides" or "PowerPoint" => "", _ => "",
     };
     public string SizeText => IsFolder ? "" : Size switch
     {

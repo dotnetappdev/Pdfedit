@@ -57,6 +57,14 @@ public static class OfficeConversionService
                        : PowerPointExtensions.Contains(ext) ? "PowerPoint.Application" : null;
         if (progId == null) throw new NotSupportedException($"PdfEdit can't convert {ext} files.");
 
+        // Word forms: PdfEdit's own converter turns content controls, form fields and ____ blanks into
+        // fillable PDF fields (Word's own PDF export makes them flat).
+        if (BuiltInExtensions.Contains(ext) && DocxToPdfService.HasFormFields(source))
+        {
+            try { DocxToPdfService.Convert(source, dest); return; }
+            catch { /* fall back to Office / LibreOffice below */ }
+        }
+
         Exception? officeError = null;
         if (Type.GetTypeFromProgID(progId) is { } type)
         {

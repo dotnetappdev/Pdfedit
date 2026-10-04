@@ -18,6 +18,7 @@ public static class GoogleLinkImport
     /// <summary>(kind, id) from a link, or null if it isn't a Google Docs / Drive link.</summary>
     public static (string Kind, string Id)? Parse(string link)
     {
+        if (GoogleForms.IsFormLink(link)) return ("form", "");
         var m = DocRx.Match(link);
         if (m.Success) return (m.Groups[1].Value.ToLowerInvariant(), m.Groups[2].Value);
         m = FileRx.Match(link);
@@ -27,7 +28,10 @@ public static class GoogleLinkImport
     /// <summary>Downloads the linked file as a PDF into <paramref name="folder"/>; returns its path.</summary>
     public static async Task<string> ImportAsync(string link, string folder, CancellationToken ct = default)
     {
-        var parsed = Parse(link) ?? throw new InvalidOperationException("That isn't a Google Docs, Sheets, Slides or Drive link.");
+        // A Google Form becomes a fillable PDF form.
+        if (GoogleForms.IsFormLink(link)) return await GoogleForms.ImportAsync(link, folder, ct);
+
+        var parsed = Parse(link) ?? throw new InvalidOperationException("That isn't a Google Docs, Sheets, Slides, Forms or Drive link.");
         Directory.CreateDirectory(folder);
 
         // Connected: the API works for private files too.

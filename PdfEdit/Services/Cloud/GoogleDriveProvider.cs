@@ -14,18 +14,20 @@ public sealed class GoogleDriveProvider : CloudProvider
 {
     public static readonly GoogleDriveProvider Instance = new();
 
-    private const string Scope = "https://www.googleapis.com/auth/drive";
+    // Drive for files; Forms (read-only) so Google Forms can be turned into fillable PDFs.
+    private const string Scope = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/forms.body.readonly";
     private const string Api = "https://www.googleapis.com/drive/v3";
     private const string Upload = "https://www.googleapis.com/upload/drive/v3";
     private const string FolderMime = "application/vnd.google-apps.folder";
     public const string GoogleDoc = "application/vnd.google-apps.document";
     public const string GoogleSheet = "application/vnd.google-apps.spreadsheet";
     public const string GoogleSlides = "application/vnd.google-apps.presentation";
+    public const string GoogleForm = "application/vnd.google-apps.form";
 
     /// <summary>The files the browser shows: PDFs, Google Docs / Sheets / Slides and Office files.</summary>
     private static readonly string Openable = "(" + string.Join(" or ", new[]
     {
-        "application/pdf", FolderMime, GoogleDoc, GoogleSheet, GoogleSlides,
+        "application/pdf", FolderMime, GoogleDoc, GoogleSheet, GoogleSlides, GoogleForm,
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint",
@@ -113,7 +115,16 @@ public sealed class GoogleDriveProvider : CloudProvider
 
     public override async Task DownloadAsPdfAsync(CloudItem item, string destPath, CancellationToken ct = default)
     {
-        if (item.MimeType.StartsWith("application/vnd.google-apps.")) await ExportPdfAsync(item.Id, destPath, ct);
+        if (item.MimeType == GoogleForm)
+        {
+            // A form becomes a fillable PDF form: questions and their fields.
+            FormSpec spec;
+            try { spec = await GoogleForms.FetchByIdAsync(item.Id, ct); }
+            catch (InvalidOperationException) { spec = await GoogleForms.FetchAsync($"https://docs.google.com/forms/d/{item.Id}/viewform", ct); }
+            if (string.IsNullOrWhiteSpace(spec.Title)) spec.Title = item.Name;
+            await Task.Run(() => FormPdfBuilder.Build(spec, destPath), ct);
+        }
+        else if (item.MimeType.StartsWith("application/vnd.google-apps.")) await ExportPdfAsync(item.Id, destPath, ct);
         else await base.DownloadAsPdfAsync(item, destPath, ct);
     }
 
@@ -123,6 +134,22 @@ public sealed class GoogleDriveProvider : CloudProvider
         using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get,
             $"{Api}/files/{Uri.EscapeDataString(fileId)}/export?mimeType=application/pdf"), ct, HttpCompletionOption.ResponseHeadersRead);
         await SaveToFileAsync(resp, destPath, ct);
+    }
+
+    /// <summary>A Google Form's questions (Forms API). Needs the Forms API enabled in the Google project.</summary>
+    public async Task<string> GetFormJsonAsync(string formId, CancellationToken ct = default)
+    {
+        try
+        {
+            using var resp = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get,
+                $"https://forms.googleapis.com/v1/forms/{Uri.EscapeDataString(formId)}"), ct);
+            return await resp.Content.ReadAsStringAsync(ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new InvalidOperationException("Google Forms couldn't be read through your Google app. In Google Cloud Console enable the " +
+                "Google Forms API for your project, then sign out and connect Google Drive again (Settings → Cloud). " + ex.Message, ex);
+        }
     }
 
     /// <summary>A file's name and type, by ID.</summary>

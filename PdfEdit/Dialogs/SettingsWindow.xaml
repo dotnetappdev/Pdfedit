@@ -377,7 +377,7 @@
                                        Foreground="{DynamicResource DimForegroundBrush}"/>
                         </StackPanel>
                         <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,10,0,0" LineHeight="17">
-                            <Run Text="How to get these: in console.cloud.google.com create a project, enable the Google Drive API, set up the OAuth consent screen (External; add yourself as a test user), then Credentials → Create credentials → OAuth client ID → Desktop app. Copy the client ID and secret here."/>
+                            <Run Text="How to get these: in console.cloud.google.com create a project, enable the Google Drive API (and the Google Forms API, to turn Google Forms into fillable PDFs), set up the OAuth consent screen (External; add yourself as a test user), then Credentials → Create credentials → OAuth client ID → Desktop app. Copy the client ID and secret here."/>
                         </TextBlock>
 
                         <TextBlock Style="{StaticResource SectionHead}" Text="ONEDRIVE (MICROSOFT)"/>

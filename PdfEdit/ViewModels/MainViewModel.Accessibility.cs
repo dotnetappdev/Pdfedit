@@ -72,6 +72,7 @@ public partial class MainViewModel
         if (made.Count == 0) return;
         if (_currentFilePath != null) SaveDocumentState();
         await LoadDocumentAsync(made[0]);
+        await OfferFormFieldsAsync();
         ToastService.Instance.Success(made.Count == 1
             ? $"Created {System.IO.Path.GetFileName(made[0])}."
             : $"Created {made.Count} PDFs next to the originals; opened the first.");
@@ -107,4 +108,23 @@ public partial class MainViewModel
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Export to Excel failed.", ex); }
     }, () => HasDocument);
+
+    /// <summary>
+    /// After importing a document: if it came out without fillable fields but looks like a form
+    /// (blank lines, ☐ boxes, "Name:" labels), offer to find the blanks and make them fillable.
+    /// </summary>
+    private async Task OfferFormFieldsAsync()
+    {
+        if (_currentFilePath == null || AllFields.Count > 0) return;
+        string text;
+        try { text = await Task.Run(() => PdfTextExtractorService.GetDocumentText(_currentFilePath, 20000)); }
+        catch { return; }
+        int blanks = System.Text.RegularExpressions.Regex.Matches(text, @"_{4,}|[\u2610\u2611\u2612]|\.{8,}").Count;
+        int labels = System.Text.RegularExpressions.Regex.Matches(text, @"(?m)^\s*[A-Z][\w /'()-]{1,30}:\s*$").Count;
+        if (blanks + labels < 3) return;
+        if (Dialogs.AppDialog.ShowConfirm("This document looks like a form. Find its blank lines and boxes and make them fillable fields?",
+                "Make it fillable", "Find fields", "Not now")
+            && DetectFieldsCommand.CanExecute(null))
+            DetectFieldsCommand.Execute(null);
+    }
 }

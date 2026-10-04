@@ -25,12 +25,12 @@ public partial class MainViewModel
         string start = "";
         try { if (Clipboard.ContainsText() && GoogleLinkImport.Parse(Clipboard.GetText()) != null) start = Clipboard.GetText().Trim(); } catch { }
         var dlg = new Dialogs.InputDialog("Import from Google Docs",
-            "Paste the link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):", start)
+            "Paste the link to a Google Doc, Sheet, Slides file or Form (or a Word file on Google Drive). Forms become fillable PDF forms:", start)
         { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
         if (GoogleLinkImport.Parse(dlg.InputText) == null)
         {
-            Dialogs.AppDialog.ShowInfo("That isn't a Google Docs, Sheets, Slides or Drive link. It should start with https://docs.google.com/ or https://drive.google.com/.", "Import from Google Docs");
+            Dialogs.AppDialog.ShowInfo("That isn't a Google Docs, Sheets, Slides, Forms or Drive link. It should start with https://docs.google.com/, https://forms.gle/ or https://drive.google.com/.", "Import from Google Docs");
             return;
         }
         string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PdfEdit", "Imported");
@@ -41,6 +41,7 @@ public partial class MainViewModel
             string pdf = await GoogleLinkImport.ImportAsync(dlg.InputText.Trim(), folder);
             if (_currentFilePath != null) SaveDocumentState();
             await LoadDocumentAsync(pdf);
+            await OfferFormFieldsAsync();
             ToastService.Instance.Success($"Imported as {Path.GetFileName(pdf)} (in Documents\\PdfEdit\\Imported).");
         }
         catch (Exception ex)
@@ -87,6 +88,7 @@ public partial class MainViewModel
         if (file.IsPdf) CloudStorage.Remember(local, provider, file.Id, file.Name);
         if (_currentFilePath != null) SaveDocumentState();
         await LoadDocumentAsync(local);
+        if (!file.IsPdf) await OfferFormFieldsAsync();
         OnPropertyChanged(nameof(CurrentCloudName));
         ToastService.Instance.Success(file.IsPdf
             ? $"Opened from {provider.DisplayName}. Save uploads your changes back."

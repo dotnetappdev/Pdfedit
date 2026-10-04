@@ -28,8 +28,40 @@ public static class DocxToPdfService
     private static readonly XNamespace A = "http://schemas.openxmlformats.org/drawingml/2006/main";
     private static readonly XNamespace WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
     private static readonly XNamespace Rel = "http://schemas.openxmlformats.org/package/2006/relationships";
+    private static readonly XNamespace W14 = "http://schemas.microsoft.com/office/word/2010/wordml";
+    private static readonly System.Text.RegularExpressions.Regex BlankRx = new(@"(_{4,}|[\u2610\u2611\u2612])");
 
-    public static void Convert(string docxPath, string pdfPath)
+    /// <summary>Does the document have form fields (content controls, legacy fields, or ____ blanks / ☐ boxes)?</summary>
+    public static bool HasFormFields(string docxPath)
+    {
+        try
+        {
+            using var zip = ZipFile.OpenRead(docxPath);
+            var e = zip.GetEntry("word/document.xml");
+            if (e == null) return false;
+            using var r = new StreamReader(e.Open());
+            string xml = r.ReadToEnd();
+            return xml.Contains("<w:ffData") || xml.Contains("w14:checkbox") || xml.Contains("<w:dropDownList") || xml.Contains("<w:comboBox")
+                || xml.Contains("<w:date") || xml.Contains("<w:text/>") || xml.Contains("<w:text ") || xml.Contains("____") || xml.Contains("\u2610");
+        }
+        catch { return false; }
+    }
+
+    /// <returns>How many fillable fields the document's form controls became.</returns>
+    public static int Convert(string docxPath, string pdfPath)
+    {
+        string layoutPath = pdfPath + ".layout";
+        List<NewField> fields;
+        try
+        {
+            fields = Layout(docxPath, layoutPath);
+            if (fields.Count == 0) { File.Move(layoutPath, pdfPath, overwrite: true); return 0; }
+            return DetectFieldsService.AddFields(layoutPath, pdfPath, fields);
+        }
+        finally { try { if (File.Exists(layoutPath)) File.Delete(layoutPath); } catch { } }
+    }
+
+    private static List<NewField> Layout(string docxPath, string pdfPath)
     {
         using var zip = ZipFile.OpenRead(docxPath);
         var ctx = new Context(zip);
@@ -42,9 +74,9 @@ public static class DocxToPdfService
         float pw = Twips(pgSz?.Attribute(W + "w"), 12240), ph = Twips(pgSz?.Attribute(W + "h"), 15840);
         if (pgSz?.Attribute(W + "orient")?.Value == "landscape" && pw < ph) (pw, ph) = (ph, pw);
 
-        using var pdf = new PdfDocument(new PdfWriter(pdfPath));
+        var pdf = new PdfDocument(new PdfWriter(pdfPath));
         pdf.GetDocumentInfo().SetTitle(ctx.Title ?? System.IO.Path.GetFileNameWithoutExtension(docxPath));
-        using var doc = new Document(pdf, new PageSize(pw, ph));
+        var doc = new Document(pdf, new PageSize(pw, ph));
         doc.SetMargins(Twips(pgMar?.Attribute(W + "top"), 1440), Twips(pgMar?.Attribute(W + "right"), 1440),
                        Twips(pgMar?.Attribute(W + "bottom"), 1440), Twips(pgMar?.Attribute(W + "left"), 1440));
         ctx.ContentWidth = pw - doc.GetLeftMargin() - doc.GetRightMargin();
@@ -53,12 +85,26 @@ public static class DocxToPdfService
         {
             if (el.Name == W + "p") AddParagraph(doc, ctx, el);
             else if (el.Name == W + "tbl") doc.Add(BuildTable(ctx, el, ctx.ContentWidth));
-            else if (el.Name == W + "sdt") foreach (var inner in el.Element(W + "sdtContent")?.Elements() ?? Enumerable.Empty<XElement>())
+            else if (el.Name == W + "sdt")
             {
-                if (inner.Name == W + "p") AddParagraph(doc, ctx, inner);
-                else if (inner.Name == W + "tbl") doc.Add(BuildTable(ctx, inner, ctx.ContentWidth));
+                // A block-level control (a dropdown or check box on its own line) becomes a field.
+                if (IsFieldControl(el))
+                {
+                    var p = new Paragraph().SetMargin(0).SetMarginBottom(6);
+                    var style = ctx.GetParaStyle(el.Descendants(W + "pPr").FirstOrDefault());
+                    ctx.ParaText.Clear();
+                    p.Add(ControlPlaceholder(ctx, el, style.Run, ctx.ContentWidth));
+                    doc.Add(p);
+                }
+                else foreach (var inner in el.Element(W + "sdtContent")?.Elements() ?? Enumerable.Empty<XElement>())
+                {
+                    if (inner.Name == W + "p") AddParagraph(doc, ctx, inner);
+                    else if (inner.Name == W + "tbl") doc.Add(BuildTable(ctx, inner, ctx.ContentWidth));
+                }
             }
         }
+        doc.Close();
+        return ctx.Fields;
     }
 
     private static float Twips(XAttribute? a, float fallbackTwips) =>
@@ -117,13 +163,33 @@ public static class DocxToPdfService
         if (style.FirstLine != 0 && numPr == null) para.SetFirstLineIndent(style.FirstLine);
 
         bool any = false;
+        bool inLegacyField = false;
+        ctx.ParaText.Clear();
         foreach (var child in children)
         {
-            if (child.Name == W + "r") any |= AddRun(ctx, para, child, style.Run, null, width - indent);
+            if (child.Name == W + "r")
+            {
+                // Legacy form fields: begin (with ffData) … separate … result … end.
+                var fld = child.Element(W + "fldChar");
+                string? fldType = fld?.Attribute(W + "fldCharType")?.Value;
+                if (fldType == "begin" && fld!.Element(W + "ffData") is { } ff)
+                {
+                    para.Add(LegacyPlaceholder(ctx, ff, ctx.GetRunStyle(child.Element(W + "rPr"), style.Run), width - indent));
+                    inLegacyField = any = true;
+                    continue;
+                }
+                if (inLegacyField) { if (fldType == "end") inLegacyField = false; continue; }
+                any |= AddRun(ctx, para, child, style.Run, null, width - indent);
+            }
             else if (child.Name == W + "hyperlink")
             {
                 string? url = child.Attribute(R + "id") is { } id ? ctx.Link(id.Value) : null;
                 foreach (var r in child.Elements(W + "r")) any |= AddRun(ctx, para, r, style.Run, url, width - indent);
+            }
+            else if (child.Name == W + "sdt" && IsFieldControl(child))
+            {
+                para.Add(ControlPlaceholder(ctx, child, style.Run, width - indent));
+                any = true;
             }
             else if (child.Name == W + "smartTag" || child.Name == W + "ins" || child.Name == W + "fldSimple" || child.Name == W + "sdt")
                 foreach (var r in child.Descendants(W + "r")) any |= AddRun(ctx, para, r, style.Run, null, width - indent);
@@ -139,7 +205,7 @@ public static class DocxToPdfService
         bool added = false;
         foreach (var e in r.Elements())
         {
-            if (e.Name == W + "t") { para.Add(MakeText(ctx, e.Value, rs, url)); added = true; }
+            if (e.Name == W + "t") { AddTextWithBlanks(ctx, para, e.Value, rs, url, width); added = true; }
             else if (e.Name == W + "tab") { para.Add(new Tab()); added = true; }
             else if (e.Name == W + "br" && e.Attribute(W + "type")?.Value != "page") { para.Add(new Text("\n")); added = true; }
             else if (e.Name == W + "noBreakHyphen") { para.Add(MakeText(ctx, "-", rs, url)); added = true; }
@@ -150,12 +216,130 @@ public static class DocxToPdfService
         return added;
     }
 
+    /// <summary>Text, with "______" blanks becoming text fields and ☐ boxes becoming check boxes.</summary>
+    private static void AddTextWithBlanks(Context ctx, Paragraph para, string text, RunStyle rs, string? url, float width)
+    {
+        var parts = BlankRx.Split(text);
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string part = parts[i];
+            if (part.Length == 0) continue;
+            if (part.StartsWith("____"))
+            {
+                float w = Math.Min(width, part.Length * rs.Size * 0.5f);
+                var spec = new NewField { Name = ctx.FieldName(ctx.Label(), "Text"), FontSize = 0 };
+                para.Add(FieldPlaceholder.Create(spec, w, rs.Size * 1.35f, PlaceholderLook.Underline, ctx.Fields));
+                ctx.ParaText.Clear();
+            }
+            else if (part.Length == 1 && part[0] is '\u2610' or '\u2611' or '\u2612')
+            {
+                // Named after the words that follow it ("☐ Yes"), else the words before it.
+                string after = i + 1 < parts.Length ? parts[i + 1].Trim() : "";
+                string label = after.Length > 0 ? (after.Length > 40 ? after[..40] : after) : ctx.Label();
+                var spec = new NewField { Name = ctx.FieldName(label, "Check Box"), IsCheckBox = true, Value = part[0] == '\u2610' ? null : "Yes" };
+                float size = rs.Size * 0.95f;
+                para.Add(FieldPlaceholder.Create(spec, size, size, PlaceholderLook.Box, ctx.Fields));
+            }
+            else para.Add(MakeText(ctx, part, rs, url));
+        }
+    }
+
+    private static bool IsFieldControl(XElement sdt)
+    {
+        var pr = sdt.Element(W + "sdtPr");
+        return pr != null && (pr.Element(W14 + "checkbox") != null || pr.Element(W + "dropDownList") != null || pr.Element(W + "comboBox") != null
+            || pr.Element(W + "date") != null || pr.Element(W + "text") != null);
+    }
+
+    /// <summary>A Word content control (check box, dropdown, date, plain text) as a field.</summary>
+    private static Image ControlPlaceholder(Context ctx, XElement sdt, RunStyle rs, float width)
+    {
+        var pr = sdt.Element(W + "sdtPr")!;
+        string? alias = pr.Element(W + "alias")?.Attribute(W + "val")?.Value ?? pr.Element(W + "tag")?.Attribute(W + "val")?.Value;
+        bool placeholderShown = pr.Element(W + "showingPlcHdr") != null;
+        string content = string.Concat(sdt.Element(W + "sdtContent")?.Descendants(W + "t").Select(t => t.Value) ?? Enumerable.Empty<string>()).Trim();
+        float size = Math.Max(8, rs.Size);
+        string label = !string.IsNullOrWhiteSpace(alias) ? alias! : ctx.Label();
+
+        if (pr.Element(W14 + "checkbox") is { } cb)
+        {
+            bool on = cb.Element(W14 + "checked")?.Attribute(W14 + "val")?.Value is "1" or "true";
+            var spec = new NewField { Name = ctx.FieldName(label, "Check Box"), IsCheckBox = true, Value = on ? "Yes" : null, Tooltip = alias };
+            return FieldPlaceholder.Create(spec, size * 0.95f, size * 0.95f, PlaceholderLook.Box, ctx.Fields);
+        }
+        var list = pr.Element(W + "dropDownList") ?? pr.Element(W + "comboBox");
+        if (list != null)
+        {
+            var options = list.Elements(W + "listItem")
+                .Select(li => li.Attribute(W + "displayText")?.Value ?? li.Attribute(W + "value")?.Value ?? "")
+                .Where(o => o.Length > 0 && !o.StartsWith("Choose an item", StringComparison.OrdinalIgnoreCase)).Distinct().ToList();
+            float w = Math.Clamp((options.DefaultIfEmpty("").Max(o => o.Length) + 4) * size * 0.55f, 90, width);
+            var spec = new NewField { Name = ctx.FieldName(label, "Dropdown"), Choices = options, Value = placeholderShown ? null : content, Tooltip = alias, FontSize = size };
+            return FieldPlaceholder.Create(spec, w, size * 1.5f, PlaceholderLook.Box, ctx.Fields);
+        }
+        if (pr.Element(W + "date") is { } date)
+        {
+            string fmt = WordDateToAcrobat(date.Element(W + "dateFormat")?.Attribute(W + "val")?.Value);
+            var spec = new NewField { Name = ctx.FieldName(label, "Date"), DateFormat = fmt, Value = placeholderShown ? null : content, Tooltip = alias ?? fmt, FontSize = size };
+            return FieldPlaceholder.Create(spec, Math.Min(width, 110), size * 1.45f, PlaceholderLook.Underline, ctx.Fields);
+        }
+        bool multi = pr.Element(W + "text")?.Attribute(W + "multiLine")?.Value is "1" or "true";
+        float tw = Math.Clamp(Math.Max(content.Length, 18) * size * 0.55f, 100, width);
+        var textSpec = new NewField { Name = ctx.FieldName(label, "Text"), Multiline = multi, Value = placeholderShown ? null : content, Tooltip = alias, FontSize = multi ? size : 0 };
+        return FieldPlaceholder.Create(textSpec, multi ? width : tw, size * (multi ? 4.5f : 1.45f), multi ? PlaceholderLook.Box : PlaceholderLook.Underline, ctx.Fields);
+    }
+
+    /// <summary>A legacy (Word 97–2003) form field: text input, check box or dropdown.</summary>
+    private static Image LegacyPlaceholder(Context ctx, XElement ff, RunStyle rs, float width)
+    {
+        string? name = ff.Element(W + "name")?.Attribute(W + "val")?.Value;
+        string? help = ff.Element(W + "statusText")?.Attribute(W + "val")?.Value ?? ff.Element(W + "helpText")?.Attribute(W + "val")?.Value;
+        string label = !string.IsNullOrWhiteSpace(name) && !name!.StartsWith("Text") && !name.StartsWith("Check") && !name.StartsWith("Dropdown") ? name : ctx.Label();
+        float size = Math.Max(8, rs.Size);
+
+        if (ff.Element(W + "checkBox") is { } cb)
+        {
+            var state = cb.Element(W + "checked") ?? cb.Element(W + "default");
+            bool on = state != null && state.Attribute(W + "val")?.Value is null or "1" or "true";
+            float box = cb.Element(W + "size")?.Attribute(W + "val") is { } sz && float.TryParse(sz.Value, out var half) ? half / 2 : size * 0.95f;
+            var spec = new NewField { Name = ctx.FieldName(label, "Check Box"), IsCheckBox = true, Value = on ? "Yes" : null, Tooltip = help };
+            return FieldPlaceholder.Create(spec, box, box, PlaceholderLook.Box, ctx.Fields);
+        }
+        if (ff.Element(W + "ddList") is { } dd)
+        {
+            var options = dd.Elements(W + "listEntry").Select(e => e.Attribute(W + "val")?.Value ?? "").Where(o => o.Length > 0).ToList();
+            int pick = int.TryParse((dd.Element(W + "result") ?? dd.Element(W + "default"))?.Attribute(W + "val")?.Value, out var idx) ? idx : 0;
+            float w = Math.Clamp((options.DefaultIfEmpty("").Max(o => o.Length) + 4) * size * 0.55f, 90, width);
+            var spec = new NewField { Name = ctx.FieldName(label, "Dropdown"), Choices = options, Value = pick < options.Count ? options[pick] : null, Tooltip = help, FontSize = size };
+            return FieldPlaceholder.Create(spec, w, size * 1.5f, PlaceholderLook.Box, ctx.Fields);
+        }
+        var input = ff.Element(W + "textInput");
+        string? def = input?.Element(W + "default")?.Attribute(W + "val")?.Value;
+        int max = int.TryParse(input?.Element(W + "maxLength")?.Attribute(W + "val")?.Value, out var m) ? m : 0;
+        bool isDate = input?.Element(W + "type")?.Attribute(W + "val")?.Value == "date";
+        float tw = Math.Clamp((max > 0 ? Math.Min(max, 40) : 22) * size * 0.55f, 60, width);
+        var t = new NewField
+        {
+            Name = ctx.FieldName(label, isDate ? "Date" : "Text"), Value = def, Tooltip = help, FontSize = 0,
+            DateFormat = isDate ? WordDateToAcrobat(input?.Element(W + "format")?.Attribute(W + "val")?.Value) : null,
+        };
+        return FieldPlaceholder.Create(t, tw, size * 1.45f, PlaceholderLook.Underline, ctx.Fields);
+    }
+
+    /// <summary>Word's "dd/MM/yyyy" → Acrobat's "dd/mm/yyyy".</summary>
+    private static string WordDateToAcrobat(string? f)
+    {
+        if (string.IsNullOrWhiteSpace(f)) return "dd/mm/yyyy";
+        return f.Replace("MMMM", "mmmm").Replace("MMM", "mmm").Replace("MM", "mm").Replace("M", "m").Replace("dddd", "dddd").Replace("YYYY", "yyyy");
+    }
+
     private static ILeafElement MakeText(Context ctx, string s, RunStyle rs, string? url)
     {
+        ctx.ParaText.Append(s);
         if (rs.Caps) s = s.ToUpperInvariant();
         var t = new Text(s).SetFont(ctx.Font(rs.FontName, rs.Bold, rs.Italic)).SetFontSize(rs.Size);
-        if (rs.Bold && !ctx.HasStyle(rs.FontName, true, false)) t.SimulateBold();
-        if (rs.Italic && !ctx.HasStyle(rs.FontName, false, true)) t.SimulateItalic();
+        if (rs.Bold && !ctx.HasStyle(rs.FontName, true, false)) t.SetProperty(Property.BOLD_SIMULATION, true);
+        if (rs.Italic && !ctx.HasStyle(rs.FontName, false, true)) t.SetProperty(Property.ITALIC_SIMULATION, true);
         if (rs.Color != null) t.SetFontColor(rs.Color);
         if (rs.Underline || url != null) t.SetUnderline();
         if (rs.Strike) t.SetLineThrough();
@@ -209,6 +393,8 @@ public static class DocxToPdfService
         foreach (var tr in tbl.Elements(W + "tr"))
         {
             int col = 0;
+            // A control in a table is usually named by the first cell of its row ("Name | [   ]").
+            ctx.RowLabel = string.Concat(tr.Elements(W + "tc").FirstOrDefault()?.Descendants(W + "t").Select(t => t.Value) ?? Enumerable.Empty<string>()).Trim();
             foreach (var tc in tr.Elements(W + "tc"))
             {
                 int span = Math.Min(Span(tc), cols - col);
@@ -224,6 +410,18 @@ public static class DocxToPdfService
                     {
                         if (el.Name == W + "p") { if (BuildParagraph(ctx, el.Element(W + "pPr"), el.Elements(), cellWidth) is { } bp) cell.Add(bp); }
                         else if (el.Name == W + "tbl") cell.Add(BuildTable(ctx, el, cellWidth));
+                        else if (el.Name == W + "sdt")
+                        {
+                            if (IsFieldControl(el))
+                            {
+                                var style = ctx.GetParaStyle(el.Descendants(W + "pPr").FirstOrDefault());
+                                ctx.ParaText.Clear();
+                                ctx.ParaText.Append(ctx.RowLabel);
+                                cell.Add(new Paragraph().SetMargin(0).Add(ControlPlaceholder(ctx, el, style.Run, cellWidth)));
+                            }
+                            else foreach (var p in el.Element(W + "sdtContent")?.Elements(W + "p") ?? Enumerable.Empty<XElement>())
+                                if (BuildParagraph(ctx, p.Element(W + "pPr"), p.Elements(), cellWidth) is { } bp2) cell.Add(bp2);
+                        }
                     }
                 table.AddCell(cell);
                 col += span;
@@ -272,6 +470,31 @@ public static class DocxToPdfService
         private readonly XElement? _defaultPPr;
 
         public XDocument Doc { get; }
+        /// <summary>The fields found so far (positions are filled in when they're placed on a page).</summary>
+        public List<NewField> Fields { get; } = new();
+        /// <summary>Text of the current paragraph so far: the label of the next field.</summary>
+        public System.Text.StringBuilder ParaText { get; } = new();
+        public string RowLabel { get; set; } = "";
+        private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>The words just before the field ("Surname:" → "Surname").</summary>
+        public string Label()
+        {
+            string t = ParaText.ToString();
+            int cut = Math.Max(t.LastIndexOf('\t'), t.LastIndexOf("  ", StringComparison.Ordinal));
+            if (cut >= 0) t = t[(cut + 1)..];
+            t = System.Text.RegularExpressions.Regex.Replace(t, @"\s+", " ").Trim().TrimEnd(':', '.', '-', '*', ' ').Trim();
+            if (t.Length > 40) t = t[^40..].Trim();
+            return t.Length > 0 ? t : RowLabel.Trim().TrimEnd(':').Trim();
+        }
+
+        public string FieldName(string label, string kind)
+        {
+            string baseName = string.IsNullOrWhiteSpace(label) ? kind : label.Replace(".", " ").Trim();
+            string n = baseName;
+            for (int i = 2; !_names.Add(n); i++) n = $"{baseName} {i}";
+            return n;
+        }
         public string? Title { get; }
         public float ContentWidth { get; set; }
 
@@ -420,7 +643,7 @@ public static class DocxToPdfService
             _counters[key] = _counters.TryGetValue(key, out var n) ? n + 1 : (int.TryParse(lvl?.Element(W + "start")?.Attribute(W + "val")?.Value, out var st) ? st : 1);
             foreach (var k in _counters.Keys.Where(k => k.Item1 == numId && k.Item2 > level).ToList()) _counters.Remove(k);
 
-            if (fmt == "bullet") return level % 3 switch { 0 => "•", 1 => "◦", _ => "▪" };
+            if (fmt == "bullet") return (level % 3) switch { 0 => "•", 1 => "◦", _ => "▪" };
             if (fmt == "none") return "";
             string result = text;
             for (int l = 0; l <= level; l++)
