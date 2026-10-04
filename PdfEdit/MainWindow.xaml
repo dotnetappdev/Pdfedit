@@ -761,6 +761,33 @@
             <Fluent:RibbonTabItem Header="Fill &amp; Sign"
                                    AutomationProperties.Name="Fill and Sign tab">
 
+                <Fluent:RibbonGroupBox Header="Select" AutomationProperties.Name="Select group">
+                    <Fluent:ToggleButton Header="Select" GroupName="ToolGroup" Size="Large"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Select, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Select"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Select — click fields or boxes to fill them, click placed text to edit (V)"
+                                         AutomationProperties.Name="Select">
+                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Hand" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Hand, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Hand"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Hand — drag to pan the page; click links to open them (H)"
+                                         AutomationProperties.Name="Hand">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7C9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Zoom" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Zoom, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Zoom"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Marquee zoom — drag a rectangle to zoom in (Z)"
+                                         AutomationProperties.Name="Zoom">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Add content -->
                 <Fluent:RibbonGroupBox Header="Add Content"
                                         AutomationProperties.Name="Add content group">
@@ -787,6 +814,30 @@
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Vertical Text" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=VerticalText, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="VerticalText"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Vertical text — click the page to type text running top to bottom"
+                                         AutomationProperties.Name="Vertical Text">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Fill Field" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TextFill, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="TextFill"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Fill text field — click a form field to type in it (F)"
+                                         AutomationProperties.Name="Fill Field">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Checkbox" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CheckboxToggle, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="CheckboxToggle"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Toggle checkbox / radio button — click a check box or radio button"
+                                         AutomationProperties.Name="Checkbox">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
@@ -845,6 +896,33 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
+                <Fluent:RibbonGroupBox Header="Text" AutomationProperties.Name="Text style group">
+                    <StackPanel Margin="2,2,2,0">
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox ItemsSource="{Binding AvailableFonts}" SelectedItem="{Binding CurrentFontFamily}" Width="120" Height="22" FontSize="11"
+                                      IsEnabled="{Binding HasDocument}" ToolTip="Font for new and selected text" AutomationProperties.Name="Font"/>
+                            <TextBox Text="{Binding CurrentFontSize, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Width="36" Height="22" Margin="4,0,0,0"
+                                     FontSize="11" VerticalContentAlignment="Center" IsEnabled="{Binding HasDocument}" ToolTip="Font size (points)" AutomationProperties.Name="Font size"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <Fluent:ToggleButton Size="Small" IsChecked="{Binding CurrentFontBold}" ToolTip="Bold" AutomationProperties.Name="Bold"><Fluent:ToggleButton.Icon><TextBlock Text="B" FontWeight="Bold" FontSize="13"/></Fluent:ToggleButton.Icon></Fluent:ToggleButton>
+                            <Fluent:ToggleButton Size="Small" IsChecked="{Binding CurrentFontItalic}" ToolTip="Italic" AutomationProperties.Name="Italic"><Fluent:ToggleButton.Icon><TextBlock Text="I" FontStyle="Italic" FontFamily="Georgia" FontSize="13"/></Fluent:ToggleButton.Icon></Fluent:ToggleButton>
+                            <Fluent:ToggleButton Size="Small" IsChecked="{Binding CurrentFontUnderline}" ToolTip="Underline" AutomationProperties.Name="Underline" Margin="0,0,6,0"><Fluent:ToggleButton.Icon><TextBlock Text="U" TextDecorations="Underline" FontSize="13"/></Fluent:ToggleButton.Icon></Fluent:ToggleButton>
+                            <Fluent:Button Size="Small" Command="{Binding DecreaseFontSizeCommand}" ToolTip="Smaller text" AutomationProperties.Name="Smaller text"><Fluent:Button.Icon><TextBlock Text="A" FontSize="10"/></Fluent:Button.Icon></Fluent:Button>
+                            <Fluent:Button Size="Small" Command="{Binding IncreaseFontSizeCommand}" ToolTip="Larger text" AutomationProperties.Name="Larger text"><Fluent:Button.Icon><TextBlock Text="A" FontSize="15"/></Fluent:Button.Icon></Fluent:Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#000000" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#000000" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Black" AutomationProperties.Name="Black text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#1A237E" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#1A237E" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Dark blue" AutomationProperties.Name="Dark blue text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#0050C8" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#0050C8" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Blue" AutomationProperties.Name="Blue text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#B71C1C" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#B71C1C" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Red" AutomationProperties.Name="Red text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#1B5E20" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#1B5E20" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Green" AutomationProperties.Name="Green text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#757575" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#757575" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="Grey" AutomationProperties.Name="Grey text"/>
+                            <Button Command="{Binding SetSelectionColorCommand}" CommandParameter="#FFFFFF" Width="16" Height="16" Margin="0,0,3,0" Padding="0" Background="#FFFFFF" BorderBrush="{DynamicResource AppBorderBrush}" ToolTip="White" AutomationProperties.Name="White text"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Fluent:RibbonGroupBox>
+
                 <!-- Sign -->
                 <Fluent:RibbonGroupBox Header="Sign"
                                         AutomationProperties.Name="Sign group">
@@ -859,6 +937,22 @@
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
+                    </Fluent:ToggleButton>
+                    <Fluent:Button Header="New Signature…" Size="Middle" Command="{Binding NewSignatureCommand}"
+                                   ToolTip="Draw, type or import a new signature, then click the page to place it" AutomationProperties.Name="New Signature…">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEE56;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="New Initials…" Size="Middle" Command="{Binding NewInitialsCommand}"
+                                   ToolTip="Create your initials, then click the page to place them" AutomationProperties.Name="New Initials…">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:ToggleButton Header="Stamp" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Stamp, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Stamp"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Stamp — click the page to place the chosen stamp (M)"
+                                         AutomationProperties.Name="Stamp">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
@@ -892,6 +986,68 @@
                         <Fluent:Button.Icon>
                             <Viewbox Width="16" Height="16"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Comment" AutomationProperties.Name="Comment group">
+                    <Fluent:ToggleButton Header="Sticky Note" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=StickyNote, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="StickyNote"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Sticky note — click the page to add a comment"
+                                         AutomationProperties.Name="Sticky Note">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Highlight" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Highlight"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Highlight text — drag over text (I)"
+                                         AutomationProperties.Name="Highlight">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Draw" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawFreehand, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="DrawFreehand"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Draw freehand — sign or annotate with the pen (W)"
+                                         AutomationProperties.Name="Draw">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Eraser" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Eraser"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Eraser — click a drawing to remove it"
+                                         AutomationProperties.Name="Eraser">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Link" GroupName="ToolGroup" Size="Middle"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Link, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}" CommandParameter="Link"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Link — drag a rectangle to add a link; click a link to edit or remove it"
+                                         AutomationProperties.Name="Link">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                </Fluent:RibbonGroupBox>
+
+                <Fluent:RibbonGroupBox Header="Finish" AutomationProperties.Name="Finish group">
+                    <Fluent:Button Header="Save" Size="Large" Command="{Binding SaveCommand}"
+                                   ToolTip="Save the filled and signed PDF (Ctrl+S)" AutomationProperties.Name="Save">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Flatten &amp; Save" Size="Middle" Command="{Binding FlattenAndSaveCommand}"
+                                   ToolTip="Make fields and annotations part of the page so they can't be changed, then save" AutomationProperties.Name="Flatten &amp; Save">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Print" Size="Middle" Command="{Binding PrintCommand}"
+                                   ToolTip="Print the document (Ctrl+P)" AutomationProperties.Name="Print">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Undo" Size="Middle" Command="{Binding UndoCommand}"
+                                   ToolTip="Undo (Ctrl+Z)" AutomationProperties.Name="Undo">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
