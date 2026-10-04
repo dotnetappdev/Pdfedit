@@ -191,8 +191,9 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// Scan from a TWAIN / WIA scanner (Scan dialog with preview and the standard controls), then
-    /// make a new PDF or add the pages to the open one — searchable when OCR is ticked.
+    /// Scan from any scanner Windows knows (or a TWAIN / WIA one) with preview, scan area and crop,
+    /// then make a new PDF or add the pages to the open one — searchable when OCR is ticked — or
+    /// save them as image files (PNG, JPEG, TIFF, BMP).
     /// </summary>
     private async Task ScanAsync()
     {
@@ -201,6 +202,24 @@ public partial class MainViewModel
         var pages = dlg.Pages.ToList();
         bool bw = dlg.BlackAndWhite, ocr = dlg.RecogniseText;
         var output = dlg.Output;
+
+        if (dlg.FileType != ScanFileType.Pdf)
+        {
+            // Image file types: save the pages as images, nothing is added to a PDF.
+            string ext = ScannerService.Extension(dlg.FileType);
+            string? path = AskSavePath("Save scanned image", ScannerService.FileFilter(dlg.FileType), $"Scan {DateTime.Now:yyyy-MM-dd HHmm}{ext}");
+            if (path == null) return;
+            try
+            {
+                var files = ScannerService.SaveImages(pages, path, dlg.FileType, dlg.ColorMode);
+                StatusText = files.Count == 1 ? $"Saved {System.IO.Path.GetFileName(files[0])}." : $"Saved {files.Count} image files.";
+                ToastService.Instance.Success(files.Count == 1 && pages.Count > 1
+                    ? $"Saved {pages.Count} scanned page(s) to {System.IO.Path.GetFileName(files[0])}."
+                    : $"Saved {files.Count} scanned image(s).");
+            }
+            catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not save the scanned images.", ex); }
+            return;
+        }
 
         string? dest = null;
         if (output == Dialogs.ScanOutput.NewPdf)

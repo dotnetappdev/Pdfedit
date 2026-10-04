@@ -477,7 +477,7 @@ A dockable **All tools** list on the left (before the page thumbnails). Click a 
 | **AI Assistant** | Open the assistant, fill the form with AI, smart fill from another document, analyse contract, extract key data |
 | **Generative summary** | Summarise the document, document statistics |
 | **Request e-signatures** | **Send for signature** — opens an email to the signer and shows the file to attach; sign yourself; check required fields |
-| **Scan & OCR** | **Recognise text** — OCRs scanned pages with the OCR engine built into Windows and saves a searchable copy (invisible text layer); recognise text on the current page and copy it |
+| **Scan & OCR** | **Scan** — lists every scanner Windows knows (USB and network/WSD/eSCL, the same list as the Windows Scan app) plus TWAIN scanners; offers the sources (flatbed / feeder / duplex), colour modes (colour, greyscale, black and white), resolutions and file types each scanner supports; page size, auto-crop, drag on the preview to scan part of the glass, crop scanned pages; save as PDF (optionally searchable) or PNG / JPEG / TIFF / BMP. **Recognise text** — OCRs scanned pages with the OCR engine built into Windows and saves a searchable copy (invisible text layer); recognise text on the current page and copy it |
 | **Protect a PDF** | Password protect, remove password, flatten form |
 | **Redact a PDF** | Mark areas, apply redactions, find personal information (AI) |
 | **Compress a PDF** | Compress |

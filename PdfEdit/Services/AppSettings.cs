@@ -61,6 +61,9 @@ public class AppSettings
     public int ScanSource { get; set; }           // 0 flatbed, 1 feeder, 2 duplex
     public bool ScanOcr { get; set; } = true;
     public bool ScanShowDriverUi { get; set; }
+    public int ScanFileType { get; set; }          // 0 PDF, 1 PNG, 2 JPEG, 3 TIFF, 4 BMP
+    public string ScanPaperSize { get; set; } = "Auto";
+    public bool ScanAutoCrop { get; set; }
     public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
 
     // ── Floating toolbox position ────────────────────────────────────────────

@@ -32,56 +32,48 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Settings (standard TWAIN controls) ─────────────────────────── -->
+        <!-- ── Settings (what the selected scanner supports, like Windows Scan) ── -->
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,12,0">
             <StackPanel>
-                <TextBlock Text="SCANNER" Style="{StaticResource Head}" Margin="0,0,0,2"/>
+                <TextBlock Text="Scanner" Style="{StaticResource Label}" Margin="0,0,0,3"/>
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Width="30" Margin="4,0,0,0"
                             Click="Refresh_Click" ToolTip="Look for scanners again" AutomationProperties.Name="Refresh scanner list"/>
                     <ComboBox x:Name="DeviceBox" Height="28" AutomationProperties.Name="Scanner"
-                              ToolTip="TWAIN and WIA scanners connected to this PC"/>
+                              SelectionChanged="DeviceBox_SelectionChanged"
+                              ToolTip="Scanners connected to this PC or on your network — the same list as the Windows Scan app"/>
                 </DockPanel>
                 <TextBlock x:Name="DeviceNote" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
                            Foreground="{DynamicResource DimForegroundBrush}"/>
-                <CheckBox x:Name="DriverUiBox" Content="Use the scanner's own settings dialog" Margin="0,8,0,0"
-                          ToolTip="Show the TWAIN / WIA driver's window instead of the settings below"
-                          AutomationProperties.Name="Use the scanner's own dialog"/>
 
-                <TextBlock Text="PAPER SOURCE" Style="{StaticResource Head}"/>
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="SrcFlatbed" Content="Flatbed" IsChecked="True" Margin="0,0,10,0" GroupName="Src"/>
-                    <RadioButton x:Name="SrcFeeder" Content="Feeder (ADF)" Margin="0,0,10,0" GroupName="Src"/>
-                    <RadioButton x:Name="SrcDuplex" Content="Duplex" GroupName="Src"
-                                 ToolTip="Both sides, from the document feeder"/>
-                </StackPanel>
+                <TextBlock Text="Source" Style="{StaticResource Label}"/>
+                <ComboBox x:Name="SourceBox" Height="28" AutomationProperties.Name="Paper source"
+                          ToolTip="Flatbed glass, or the document feeder (one or both sides)"/>
+
+                <TextBlock Text="File type" Style="{StaticResource Label}"/>
+                <ComboBox x:Name="FileTypeBox" Height="28" AutomationProperties.Name="File type"
+                          SelectionChanged="FileTypeBox_SelectionChanged"
+                          ToolTip="PDF, or the image types this scanner can save to"/>
 
                 <TextBlock Text="Colour mode" Style="{StaticResource Label}"/>
-                <ComboBox x:Name="ColorBox" Height="28" SelectedIndex="0" AutomationProperties.Name="Colour mode">
-                    <ComboBoxItem Content="Colour"/>
-                    <ComboBoxItem Content="Greyscale"/>
-                    <ComboBoxItem Content="Black &amp; white (text)"/>
-                </ComboBox>
+                <ComboBox x:Name="ColorBox" Height="28" AutomationProperties.Name="Colour mode"/>
 
-                <TextBlock Text="Resolution" Style="{StaticResource Label}"/>
-                <ComboBox x:Name="DpiBox" Height="28" SelectedIndex="3" AutomationProperties.Name="Resolution">
-                    <ComboBoxItem Content="75 dpi (draft)" Tag="75"/>
-                    <ComboBoxItem Content="100 dpi" Tag="100"/>
-                    <ComboBoxItem Content="150 dpi" Tag="150"/>
-                    <ComboBoxItem Content="200 dpi (documents)" Tag="200"/>
-                    <ComboBoxItem Content="300 dpi (best for OCR)" Tag="300"/>
-                    <ComboBoxItem Content="400 dpi" Tag="400"/>
-                    <ComboBoxItem Content="600 dpi (photos)" Tag="600"/>
-                </ComboBox>
+                <TextBlock Text="Resolution (DPI)" Style="{StaticResource Label}"/>
+                <ComboBox x:Name="DpiBox" Height="28" AutomationProperties.Name="Resolution"/>
 
                 <TextBlock Text="Page size" Style="{StaticResource Label}"/>
-                <ComboBox x:Name="SizeBox" Height="28" SelectedIndex="0" AutomationProperties.Name="Page size">
-                    <ComboBoxItem Content="Auto (scanner default)" Tag="Auto"/>
-                    <ComboBoxItem Content="A4" Tag="A4"/>
-                    <ComboBoxItem Content="A5" Tag="A5"/>
-                    <ComboBoxItem Content="Letter" Tag="Letter"/>
-                    <ComboBoxItem Content="Legal" Tag="Legal"/>
+                <ComboBox x:Name="SizeBox" Height="28" SelectedIndex="0" AutomationProperties.Name="Page size"
+                          SelectionChanged="SizeBox_SelectionChanged"
+                          ToolTip="Scan just this size from the top-left corner of the glass">
+                    <ComboBoxItem Content="Whole scan area" Tag="Auto"/>
+                    <ComboBoxItem Content="A4 (210 × 297 mm)" Tag="A4"/>
+                    <ComboBoxItem Content="A5 (148 × 210 mm)" Tag="A5"/>
+                    <ComboBoxItem Content="Letter (8.5 × 11 in)" Tag="Letter"/>
+                    <ComboBoxItem Content="Legal (8.5 × 14 in)" Tag="Legal"/>
                 </ComboBox>
+                <CheckBox x:Name="AutoCropBox" Content="Auto-crop to the document's edges" Margin="0,8,0,0" Visibility="Collapsed"
+                          ToolTip="The scanner finds the document on the glass and crops to it"
+                          AutomationProperties.Name="Auto-crop"/>
 
                 <TextBlock Text="Brightness" Style="{StaticResource Label}"/>
                 <DockPanel>
@@ -95,22 +87,30 @@
                     <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="10"
                             IsSnapToTickEnabled="True" AutomationProperties.Name="Contrast"/>
                 </DockPanel>
+                <CheckBox x:Name="DriverUiBox" Content="Use the scanner's own settings dialog" Margin="0,10,0,0"
+                          ToolTip="Show the scanner driver's window instead of the settings above"
+                          AutomationProperties.Name="Use the scanner's own dialog"/>
 
                 <TextBlock Text="AFTER SCANNING" Style="{StaticResource Head}"/>
-                <CheckBox x:Name="OcrBox" Content="Recognise text (OCR) — searchable PDF" IsChecked="True" Margin="0,4,0,0"
-                          ToolTip="Adds invisible, searchable text over the scanned pages (Windows OCR)"
-                          AutomationProperties.Name="Recognise text"/>
-                <RadioButton x:Name="OutNew" Content="Create a new PDF" IsChecked="True" Margin="0,8,0,0" GroupName="Out"/>
-                <RadioButton x:Name="OutAfter" Content="Add after the current page" Margin="0,4,0,0" GroupName="Out"/>
-                <RadioButton x:Name="OutEnd" Content="Add at the end of the open PDF" Margin="0,4,0,0" GroupName="Out"/>
+                <StackPanel x:Name="PdfOptions">
+                    <CheckBox x:Name="OcrBox" Content="Recognise text (OCR) — searchable PDF" IsChecked="True" Margin="0,4,0,0"
+                              ToolTip="Adds invisible, searchable text over the scanned pages"
+                              AutomationProperties.Name="Recognise text"/>
+                    <RadioButton x:Name="OutNew" Content="Save as a new PDF" IsChecked="True" Margin="0,8,0,0" GroupName="Out"/>
+                    <RadioButton x:Name="OutAfter" Content="Add after the current page" Margin="0,4,0,0" GroupName="Out"/>
+                    <RadioButton x:Name="OutEnd" Content="Add at the end of the open PDF" Margin="0,4,0,0" GroupName="Out"/>
+                </StackPanel>
+                <TextBlock x:Name="ImageOptionsNote" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0" Visibility="Collapsed"
+                           Foreground="{DynamicResource DimForegroundBrush}"/>
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ── Preview ─────────────────────────────────────────────────────── -->
+        <!-- ── Preview (drag to choose the scan area / crop) ─────────────── -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <DockPanel Margin="0,0,0,6">
                 <TextBlock x:Name="StatusText" DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="12"
@@ -120,9 +120,19 @@
             <Border Grid.Row="1" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1"
                     Background="{DynamicResource ContentBgBrush}" CornerRadius="4">
                 <Grid>
-                    <Image x:Name="PreviewImage" Stretch="Uniform" Margin="12" RenderOptions.BitmapScalingMode="HighQuality"
-                           AutomationProperties.Name="Scan preview"/>
-                    <StackPanel x:Name="EmptyHint" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Viewbox Stretch="Uniform" Margin="12">
+                        <Grid x:Name="PreviewSurface" Width="1" Height="1">
+                            <Image x:Name="PreviewImage" Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality"
+                                   AutomationProperties.Name="Scan preview"/>
+                            <Canvas x:Name="SelectionCanvas" Background="Transparent" Cursor="Cross" ClipToBounds="True"
+                                    MouseLeftButtonDown="Selection_MouseDown" MouseMove="Selection_MouseMove"
+                                    MouseLeftButtonUp="Selection_MouseUp">
+                                <Rectangle x:Name="SelectionRect" Stroke="{DynamicResource AccentBrush}" Fill="#220078D4"
+                                           Visibility="Collapsed" IsHitTestVisible="False"/>
+                            </Canvas>
+                        </Grid>
+                    </Viewbox>
+                    <StackPanel x:Name="EmptyHint" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
                         <TextBlock Text="&#xE8FE;" FontFamily="Segoe MDL2 Assets" FontSize="48" HorizontalAlignment="Center"
                                    Foreground="{DynamicResource DimForegroundBrush}"/>
                         <TextBlock Text="Place the document on the scanner, then Preview or Scan." Margin="0,10,0,0"
@@ -131,6 +141,16 @@
                     <ProgressBar x:Name="Busy" IsIndeterminate="True" Height="4" VerticalAlignment="Top" Visibility="Collapsed"/>
                 </Grid>
             </Border>
+            <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                <Button DockPanel.Dock="Right" x:Name="ClearAreaBtn" Content="Clear selection" Click="ClearArea_Click" Padding="10,3" Margin="6,0,0,0"
+                        IsEnabled="False" AutomationProperties.Name="Clear selection"/>
+                <Button DockPanel.Dock="Right" x:Name="CropBtn" Content="Crop page" Click="Crop_Click" Padding="10,3"
+                        IsEnabled="False" ToolTip="Crop the selected scanned page to the rectangle you dragged"
+                        AutomationProperties.Name="Crop page to selection"/>
+                <TextBlock x:Name="AreaText" VerticalAlignment="Center" FontSize="11" TextWrapping="Wrap"
+                           Foreground="{DynamicResource DimForegroundBrush}"
+                           Text="Scan area: whole page. Preview, then drag on the preview to scan just part of the glass."/>
+            </DockPanel>
         </Grid>
 
         <!-- ── Scanned pages ───────────────────────────────────────────────── -->
