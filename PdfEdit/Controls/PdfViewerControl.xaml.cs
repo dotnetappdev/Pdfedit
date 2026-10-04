@@ -238,6 +238,19 @@ public partial class PdfViewerControl : UserControl
 
         if (_focusedAnnotationTb == null || _focusedAnnotation == null || _vm == null) return;
 
+        // ✓ ✕ ● ○ — are drawn as the box's background with the glyph text hidden. Setting the
+        // text colour / size here made the font's own glyph show up as a second mark on top
+        // (e.g. when selecting or resizing a mark), so redraw marks from their model instead.
+        if (IsMarkGlyph(_focusedAnnotation.Text))
+        {
+            if (e.PropertyName is nameof(MainViewModel.CurrentFontSize) or nameof(MainViewModel.CurrentFontFamily)
+                or nameof(MainViewModel.CurrentFontBold) or nameof(MainViewModel.CurrentFontItalic)
+                or nameof(MainViewModel.CurrentFontUnderline) or nameof(MainViewModel.CurrentFontColor)
+                or nameof(MainViewModel.CurrentTextAlignment))
+                ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb);
+            return;
+        }
+
         switch (e.PropertyName)
         {
             case nameof(MainViewModel.CurrentFontSize):
@@ -305,11 +318,13 @@ public partial class PdfViewerControl : UserControl
         // Adobe Fill & Sign order: smaller · larger · delete · swap
         panel.Children.Add(MakeToolbarBtn("A", "Smaller", () =>
         {
+            if (ResizeFocusedMark(1 / 1.15)) return;
             if (_vm != null) _vm.CurrentFontSize = Math.Max(4, _vm.CurrentFontSize - 1);
         }, fontSize: 10));
 
         panel.Children.Add(MakeToolbarBtn("A", "Larger", () =>
         {
+            if (ResizeFocusedMark(1.15)) return;
             if (_vm != null) _vm.CurrentFontSize = Math.Min(144, _vm.CurrentFontSize + 1);
         }, fontSize: 16));
 
@@ -416,6 +431,41 @@ public partial class PdfViewerControl : UserControl
     private Border? _swapMarkBtn;
 
     private static bool IsMarkGlyph(string? text) => text != null && MarkGlyphs.Contains(text);
+
+    /// <summary>
+    /// A mark fills its box, so its font size changes nothing on screen: the toolbar's smaller /
+    /// larger buttons scale the box itself (about its centre, like Acrobat). False if not a mark.
+    /// </summary>
+    private bool ResizeFocusedMark(double factor)
+    {
+        var ann = _focusedAnnotation;
+        var tb = _focusedAnnotationTb;
+        if (ann == null || tb == null || _vm?.Document == null || !IsMarkGlyph(ann.Text) || ann.IsLocked) return false;
+
+        double oldW = ann.Width, oldH = ann.Height;
+        double newW = Math.Clamp(oldW * factor, 6, 400), newH = Math.Clamp(oldH * factor, 6, 400);
+        if (Math.Abs(newW - oldW) < 0.01 && Math.Abs(newH - oldH) < 0.01) return true;
+
+        void SetSize(double w, double h)
+        {
+            ann.Left -= (w - ann.Width) / 2;
+            ann.Bottom -= (h - ann.Height) / 2;
+            ann.Width = w;
+            ann.Height = h;
+            ann.AutoSize = false;
+            if (_annotationBoxes.ContainsKey(ann)) RefreshAnnotationVisual(ann);
+            if (ReferenceEquals(_focusedAnnotationTb, tb))
+            {
+                PositionResizeThumb(tb);
+                PositionAnnotationToolbar(Canvas.GetLeft(tb), Canvas.GetTop(tb), tb.Width);
+            }
+            _vm?.NotifyAnnotationEdited(ann);
+        }
+
+        SetSize(newW, newH);
+        _vm.PushUndo(undo: () => SetSize(oldW, oldH), redo: () => SetSize(newW, newH));
+        return true;
+    }
 
     private void SwapFocusedMark()
     {

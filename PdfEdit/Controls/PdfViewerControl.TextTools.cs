@@ -111,7 +111,10 @@ public partial class PdfViewerControl
     /// </summary>
     private void UpdateSpacingOverlay(FreeTextAnnotation ann, TextBox tb)
     {
-        bool want = ann.CharacterSpacing > 0.01 && !tb.IsKeyboardFocused && AnnotationCanvas.Children.Contains(tb);
+        // ✓ ✕ ● ○ — are drawings with their glyph text hidden: never letter-space them or give the
+        // text a colour, or the font's own glyph shows as a second mark on top (e.g. on resize).
+        bool isMark = IsMarkGlyph(ann.Text);
+        bool want = !isMark && ann.CharacterSpacing > 0.01 && !tb.IsKeyboardFocused && AnnotationCanvas.Children.Contains(tb);
         _spacingOverlays.TryGetValue(ann, out var overlay);
 
         if (!want)
@@ -121,7 +124,7 @@ public partial class PdfViewerControl
                 AnnotationCanvas.Children.Remove(overlay);
                 _spacingOverlays.Remove(ann);
             }
-            tb.Foreground = ParseBrush(ann.FontColor);
+            tb.Foreground = isMark ? Brushes.Transparent : ParseBrush(ann.FontColor);
             return;
         }
 
