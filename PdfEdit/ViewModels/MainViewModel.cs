@@ -2292,34 +2292,41 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         if (_currentFilePath == null || _document == null) return;
 
-        // Simple watermark dialog — collect text, opacity, angle, font size
-        var dlg = new Dialogs.WatermarkDialog { Owner = Application.Current.MainWindow };
+        // Preview on the current page, as it is shown.
+        System.Windows.Media.Imaging.BitmapSource? preview = null;
+        try { preview = await _renderService.RenderPageAsync(_currentPageIndex, 1.0, 1.0); } catch { }
+        var size = _document.PageSizes[Math.Clamp(_currentPageIndex, 0, _document.PageSizes.Count - 1)];
+        string path = _currentFilePath;
+        bool has = await Task.Run(() => Services.WatermarkService.HasWatermark(path));
+
+        var dlg = new Dialogs.WatermarkDialog(preview, size.Width, size.Height, has) { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true) return;
 
-        var opt = dlg.Options;
-        var dlgSave = new Microsoft.Win32.SaveFileDialog
-        {
-            Title = "Save Watermarked PDF",
-            Filter = "PDF files|*.pdf",
-            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + "_watermark.pdf",
-            InitialDirectory = System.IO.Path.GetDirectoryName(_currentFilePath)
-        };
-        if (dlgSave.ShowDialog() != true) return;
+        if (dlg.RemoveRequested) { await RemoveWatermarkAsync(); return; }
 
-        try
-        {
-            StatusText = "Applying watermark…";
-            string outPath = dlgSave.FileName;
-            await Task.Run(() => Services.WatermarkService.Apply(_currentFilePath, outPath, opt));
-            StatusText = $"Watermarked PDF saved: {System.IO.Path.GetFileName(outPath)}";
-            ToastService.Instance.Success("Watermark applied.");
-        }
-        catch (Exception ex)
-        {
-            Dialogs.AppDialog.ShowError("Could not apply watermark.", ex);
-            StatusText = "Watermark failed.";
-        }
+        var opt = dlg.Options;
+        int current = _currentPageIndex + 1;
+        string what = string.IsNullOrEmpty(opt.ImagePath) ? $"'{opt.Text}'" : "Image";
+        if (await ModifyCurrentFileAsync((i, o) => Services.WatermarkService.Apply(i, o, opt, current),
+                $"{what} watermark added ({(opt.Behind ? "background" : "on top")})"))
+            ToastService.Instance.Success("Watermark added. Ctrl+Z to undo, or Watermark → Remove.");
     }
+
+    private async Task RemoveWatermarkAsync()
+    {
+        if (_currentFilePath == null) return;
+        string path = _currentFilePath;
+        if (!await Task.Run(() => Services.WatermarkService.HasWatermark(path)))
+        {
+            ToastService.Instance.Info("This PDF has no watermark added by PdfEdit.");
+            return;
+        }
+        if (await ModifyCurrentFileAsync((i, o) => Services.WatermarkService.Remove(i, o), "Watermark removed"))
+            ToastService.Instance.Success("Watermark removed.");
+    }
+
+    private ICommand? _removeWatermarkCommand;
+    public ICommand RemoveWatermarkCommand => _removeWatermarkCommand ??= new AsyncRelayCommand(RemoveWatermarkAsync, () => HasDocument);
 
     private async Task DocumentPropertiesAsync()
     {

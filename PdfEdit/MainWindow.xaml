@@ -637,11 +637,20 @@
                                    Command="{Binding WatermarkCommand}"
                                    KeyTip="WM"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Add a diagonal text watermark (e.g. DRAFT, CONFIDENTIAL) to all pages"
+                                   ToolTip="Watermark &amp; background — text (e.g. a diagonal DRAFT) or an image, behind the text and fields or on top, on all or some pages, with a live preview"
                                    AutomationProperties.Name="Add watermark to PDF">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Remove Watermark"
+                                   Command="{Binding RemoveWatermarkCommand}"
+                                   Size="Middle"
+                                   ToolTip="Remove watermarks added by PdfEdit (undoable)"
+                                   AutomationProperties.Name="Remove watermark">
+                        <Fluent:Button.Icon>
+                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                        </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Page Numbers"
                                    Command="{Binding AddPageNumbersCommand}"
