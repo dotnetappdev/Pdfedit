@@ -3,8 +3,10 @@ name: Build & Release
 on:
   # Every push to main (e.g. merging devmain) builds and publishes a release automatically:
   # the version is the next patch after the latest v* tag (or the csproj <Version> if higher).
+  # devmain (where development happens): a release is published whenever the csproj <Version>
+  # has not been released yet — bump <Version> in PdfEdit/PdfEdit.csproj to ship the next one.
   push:
-    branches: [main]
+    branches: [main, devmain]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -58,6 +60,7 @@ jobs:
       version4:    ${{ steps.ver.outputs.version4 }}
       tag:         ${{ steps.ver.outputs.tag }}
       prerelease:  ${{ steps.ver.outputs.prerelease }}
+      release:     ${{ steps.ver.outputs.release }}
 
     steps:
       - uses: actions/checkout@v4
@@ -78,8 +81,17 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             TAG="v${VERSION}"
             PRE="${{ github.event.inputs.prerelease }}"
+          elif [[ "$GITHUB_REF" == refs/heads/devmain ]]; then
+            # devmain: release the csproj version once (skip if that tag already exists).
+            VERSION=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            TAG="v${VERSION}"
+            PRE=false
+            if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              echo "$TAG is already released — bump <Version> in PdfEdit/PdfEdit.csproj to publish a new release."
+            fi
           else
-            # Automatic: next patch after the latest release tag, or the csproj version if newer.
+            # main: next patch after the latest release tag, or the csproj version if newer.
             CSPROJ=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
             LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -vE -- '-' | sed 's/^v//' | sort -V | tail -1)
             if [[ -z "$LATEST" ]]; then
@@ -114,6 +126,7 @@ jobs:
     name: Build & Release
     runs-on: windows-latest
     needs: metadata
+    if: needs.metadata.outputs.release != 'false'
 
     env:
       VERSION:   ${{ needs.metadata.outputs.version }}
