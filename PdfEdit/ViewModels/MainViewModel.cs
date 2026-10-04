@@ -90,21 +90,6 @@ public partial class MainViewModel : INotifyPropertyChanged
         "Tahoma", "Calibri", "Segoe UI", "Helvetica Neue", "Palatino Linotype"
     };
 
-    private static readonly string[] _builtInStamps =
-    {
-        "APPROVED", "CONFIDENTIAL", "DRAFT", "FINAL", "FOR REVIEW",
-        "NOT APPROVED", "RECEIVED", "REJECTED", "REVISED", "VOID"
-    };
-
-    public System.Collections.ObjectModel.ObservableCollection<string> AvailableStamps { get; } = new();
-
-    private string _selectedStamp = "APPROVED";
-    public string SelectedStamp
-    {
-        get => _selectedStamp;
-        set { _selectedStamp = value; OnPropertyChanged(); }
-    }
-
     // ── Bindable Properties ──────────────────────────────────────────────────
 
     public PdfDocumentInfo? Document
@@ -4357,27 +4342,6 @@ public partial class MainViewModel : INotifyPropertyChanged
             AiModels.Add(m);
         if (AiModels.Count > 0 && !AiModels.Contains(_aiModel))
             _aiModel = AiModels[0];
-    }
-
-    private void SyncStamps()
-    {
-        AvailableStamps.Clear();
-        foreach (var s in _builtInStamps)
-            AvailableStamps.Add(s);
-        foreach (var s in AppSettings.Current.CustomStamps)
-            AvailableStamps.Add(s);
-    }
-
-    private void AddCustomStamp()
-    {
-        var dlg = new Dialogs.InputDialog("Custom Stamp", "Enter the text for the custom stamp:", "");
-        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
-        string text = dlg.InputText.Trim().ToUpperInvariant();
-        if (AvailableStamps.Contains(text)) { SelectedStamp = text; return; }
-        AppSettings.Current.CustomStamps.Add(text);
-        AppSettings.Current.Save();
-        AvailableStamps.Add(text);
-        SelectedStamp = text;
     }
 
     private async Task ShowDocumentStatisticsAsync()

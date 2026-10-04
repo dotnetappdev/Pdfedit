@@ -241,7 +241,7 @@ public partial class PdfViewerControl : UserControl
         // ✓ ✕ ● ○ — are drawn as the box's background with the glyph text hidden. Setting the
         // text colour / size here made the font's own glyph show up as a second mark on top
         // (e.g. when selecting or resizing a mark), so redraw marks from their model instead.
-        if (IsMarkGlyph(_focusedAnnotation.Text))
+        if (IsDrawn(_focusedAnnotation))
         {
             if (e.PropertyName is nameof(MainViewModel.CurrentFontSize) or nameof(MainViewModel.CurrentFontFamily)
                 or nameof(MainViewModel.CurrentFontBold) or nameof(MainViewModel.CurrentFontItalic)
@@ -450,7 +450,7 @@ public partial class PdfViewerControl : UserControl
     {
         var ann = _focusedAnnotation;
         var tb = _focusedAnnotationTb;
-        if (ann == null || tb == null || _vm?.Document == null || !IsMarkGlyph(ann.Text) || ann.IsLocked) return false;
+        if (ann == null || tb == null || _vm?.Document == null || !IsDrawn(ann) || ann.IsLocked) return false;
 
         double oldW = ann.Width, oldH = ann.Height;
         double newW = Math.Clamp(oldW * factor, 6, 400), newH = Math.Clamp(oldH * factor, 6, 400);
@@ -554,7 +554,7 @@ public partial class PdfViewerControl : UserControl
         if (_swapMarkBtn != null)
             _swapMarkBtn.Visibility = IsMarkGlyph(_focusedAnnotation?.Text) ? Visibility.Visible : Visibility.Collapsed;
         if (_fitTextBtn != null)
-            _fitTextBtn.Visibility = IsMarkGlyph(_focusedAnnotation?.Text) ? Visibility.Collapsed : Visibility.Visible;
+            _fitTextBtn.Visibility = IsDrawn(_focusedAnnotation) ? Visibility.Collapsed : Visibility.Visible;
         _annotToolbar.Visibility = Visibility.Visible;
 
         ShowResizeThumb(tb);
@@ -600,7 +600,7 @@ public partial class PdfViewerControl : UserControl
             if (_focusedAnnotation == null) return;
             // Resizing by hand switches off Acrobat-style auto-size; the text now wraps in the box.
             _focusedAnnotation.AutoSize = false;
-            if (_focusedAnnotationTb != null && !IsMarkGlyph(_focusedAnnotation.Text))
+            if (_focusedAnnotationTb != null && !IsDrawn(_focusedAnnotation))
                 _focusedAnnotationTb.TextWrapping = TextWrapping.Wrap;
             _resizeStartAnnW = _focusedAnnotation.Width;
             _resizeStartAnnH = _focusedAnnotation.Height;
@@ -646,6 +646,8 @@ public partial class PdfViewerControl : UserControl
             if (_focusedAnnotation == null) return;
             // Made the box too small for its text: grow it back to fit (unless "Fixed box size").
             if (_focusedAnnotationTb != null) FitAnnotationBox(_focusedAnnotation, _focusedAnnotationTb);
+            // A stamp's drawing is laid out for its box: redraw it at the new proportions.
+            if (_focusedAnnotation.IsStamp && _focusedAnnotationTb != null) ApplyAnnotationFormatting(_focusedAnnotation, _focusedAnnotationTb);
             _vm?.NotifyAnnotationEdited(_focusedAnnotation);
             // Reposition toolbar (width may have changed)
             if (_focusedAnnotationTb != null)
@@ -1628,7 +1630,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        bool isMark = IsMarkGlyph(ann.Text);
+        bool isMark = IsDrawn(ann);
         // Adobe Fill & Sign style: text sits directly on the page (no fill, no box);
         // a thin outline only appears while the item is selected.
         var tb = new TextBox
@@ -1777,7 +1779,14 @@ public partial class PdfViewerControl : UserControl
 
         // ✓ ✕ ● ○ — are drawn as shapes like Acrobat (not font glyphs): the box keeps the glyph
         // as its text (for select / drag / swap), hidden, and shows the drawing as its background.
-        if (MarkShapes.FromGlyph(ann.Text) is { } kind)
+        if (ann.IsStamp)
+        {
+            tb.Background = StampBrush(ann);
+            tb.Foreground = Brushes.Transparent;
+            tb.CaretBrush = Brushes.Transparent;
+            tb.SelectionOpacity = 0;
+        }
+        else if (MarkShapes.FromGlyph(ann.Text) is { } kind)
         {
             tb.Background = MarkBrush(kind, ParseColor(ann.FontColor));
             tb.Foreground = Brushes.Transparent;
@@ -3136,90 +3145,6 @@ public partial class PdfViewerControl : UserControl
             redo: () => { _vm.FreeTextAnnotations.Add(capturedAnn);    RefreshPage(); });
 
         _vm.StatusText = $"Mark '{stampText}' placed — use the toolbar to resize, swap or delete.";
-    }
-
-    // ── Rubber stamp (APPROVED / CONFIDENTIAL / etc.) ─────────────────────────
-
-    private void PlaceRubberStampAnnotation(Point posOnCanvas)
-    {
-        if (_vm?.Document == null) return;
-
-        string label = _vm.SelectedStamp;
-        int pageNum  = _vm.CurrentPageIndex + 1;
-        if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
-        double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
-
-        string colorHex = label switch
-        {
-            "APPROVED"     => "#1B5E20",
-            "CONFIDENTIAL" => "#B71C1C",
-            "DRAFT"        => "#1565C0",
-            "FINAL"        => "#1B5E20",
-            "VOID"         => "#B71C1C",
-            "REJECTED"     => "#B71C1C",
-            "NOT APPROVED" => "#B71C1C",
-            _              => "#7B1FA2",
-        };
-        Color c = ParseColor(colorHex);
-
-        double dispW = 130 * Scale;
-        double dispH = 34 * Scale;
-
-        double pdfX = posOnCanvas.X / Scale;
-        double pdfY = pageHeightPts - (posOnCanvas.Y / Scale) - (dispH / Scale);
-
-        var ann = new FreeTextAnnotation
-        {
-            PageNumber  = pageNum,
-            Left        = pdfX,
-            Bottom      = pdfY,
-            Width       = dispW / Scale,
-            Height      = dispH / Scale,
-            Text        = label,
-            FontSize    = 18,
-            FontFamily  = "Arial",
-            IsBold      = true,
-            FontColor   = colorHex,
-            TextAlignment = System.Windows.TextAlignment.Center,
-            RotationAngle = -15,
-        };
-        _vm.FreeTextAnnotations.Add(ann);
-
-        // Visual rubber stamp border
-        var tb = new TextBox
-        {
-            Width = dispW, Height = dispH,
-            Text = label,
-            FontSize = Math.Max(8, 18 * Scale),
-            FontWeight = FontWeights.Bold,
-            FontFamily = new FontFamily("Arial"),
-            Foreground = new SolidColorBrush(c),
-            Background = Brushes.Transparent,
-            BorderBrush = new SolidColorBrush(Color.FromArgb(180, c.R, c.G, c.B)),
-            BorderThickness = new Thickness(2),
-            IsReadOnly = true,
-            TextAlignment = System.Windows.TextAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            ToolTip = $"Rubber stamp: {label} — right-click to delete",
-        };
-        tb.LayoutTransform = new RotateTransform(-15);
-
-        var cm = new ContextMenu();
-        var delItem = new MenuItem { Header = $"Delete Stamp \"{label}\"" };
-        delItem.Click += (_, _) =>
-        {
-            _vm.RemoveFreeTextAnnotation(ann);
-            AnnotationCanvas.Children.Remove(tb);
-        };
-        cm.Items.Add(delItem);
-        tb.ContextMenu = cm;
-
-        Canvas.SetLeft(tb, posOnCanvas.X);
-        Canvas.SetTop(tb, posOnCanvas.Y);
-        AnnotationCanvas.Children.Add(tb);
-
-        _vm.StatusText = $"'{label}' stamp placed. Right-click to delete.";
-        ToastService.Instance.Success($"'{label}' stamp placed.");
     }
 
     // ── Free-text TextBox placement ───────────────────────────────────────────

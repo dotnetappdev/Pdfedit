@@ -52,6 +52,11 @@ public class FreeTextAnnotation
     // Text that is a date (Date stamp, or typed as one): the date and the .NET pattern it is shown
     // in, so the Properties panel can switch format / change day, month, year (null otherwise).
     public DateTime? DateValue { get; set; }
+
+    // Rubber stamp (APPROVED, SIGN HERE …): drawn as a bordered stamp — Text is the title, the
+    // subtitle is the "By … at …" line of a dynamic stamp. Saved to the PDF as a /Stamp annotation.
+    public bool IsStamp { get; set; }
+    public string? StampSubtitle { get; set; }
     public string? DateFormat { get; set; }
 
     // Author, date, note, replies and review status (Comments panel)

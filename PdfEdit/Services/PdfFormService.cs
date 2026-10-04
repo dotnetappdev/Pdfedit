@@ -519,6 +519,22 @@ public class PdfFormService
                 (float)ann.Width,
                 (float)ann.Height);
 
+            // Rubber stamp: a real /Stamp annotation with the drawn stamp as its appearance.
+            if (ann.IsStamp)
+            {
+                var stamp = new PdfStampAnnotation(rect);
+                var def = Models.StampCatalog.BuiltIn.FirstOrDefault(d => d.Title == ann.Text && d.PdfName != null);
+                string name = def?.PdfName ?? new string(ann.Text.Where(char.IsLetterOrDigit).ToArray());
+                stamp.SetStampName(new PdfName(string.IsNullOrEmpty(name) ? "Stamp" : name));
+                stamp.SetContents(string.IsNullOrWhiteSpace(ann.StampSubtitle) ? ann.Text : $"{ann.Text}\n{ann.StampSubtitle}");
+                if (ParseHexColor(ann.FontColor, out float sr, out float sg, out float sb))
+                    stamp.SetColor(new DeviceRgb(sr, sg, sb));
+                stamp.SetNormalAppearance(BuildStampAppearance(doc, ann).GetPdfObject());
+                stamp.SetFlags(PdfAnnotation.PRINT);
+                AddTracked(page, stamp, ann.Comment);
+                continue;
+            }
+
             var pdfAnn = new PdfFreeTextAnnotation(rect, new PdfString(ann.Text));
             pdfAnn.SetContents(ann.Text);
 
@@ -1262,6 +1278,60 @@ public class PdfFormService
         bs.Put(PdfName.W, new PdfNumber(lineWidth));
         bs.Put(PdfName.S, PdfName.S); // Solid
         return bs;
+    }
+
+    /// <summary>Form XObject drawing a rubber stamp: rounded double border, title, optional subtitle.</summary>
+    private static PdfFormXObject BuildStampAppearance(PdfDocument doc, FreeTextAnnotation ann)
+    {
+        float w = (float)ann.Width, h = (float)ann.Height;
+        var xobj = new PdfFormXObject(new Rectangle(0, 0, w, h));
+        var canvas = new PdfCanvas(xobj, doc);
+        if (!ParseHexColor(ann.FontColor, out float r, out float g, out float b)) (r, g, b) = (0.42f, 0.11f, 0.6f);
+        var color = new DeviceRgb(r, g, b);
+
+        float outer = Math.Max(1.2f, Math.Min(w, h) * 0.07f);
+        float rad = Math.Min(w, h) * 0.18f;
+        float inset = outer * 2.1f;
+
+        // Faint tint inside, like Acrobat's stamps.
+        canvas.SaveState()
+              .SetExtGState(new iText.Kernel.Pdf.Extgstate.PdfExtGState().SetFillOpacity(0.09f))
+              .SetFillColor(color)
+              .RoundRectangle(outer / 2, outer / 2, w - outer, h - outer, rad).Fill()
+              .RestoreState();
+        canvas.SaveState().SetStrokeColor(color).SetLineWidth(outer)
+              .RoundRectangle(outer / 2, outer / 2, w - outer, h - outer, rad).Stroke();
+        if (w > inset * 4 && h > inset * 4)
+            canvas.SetLineWidth(Math.Max(0.6f, outer * 0.4f))
+                  .RoundRectangle(inset, inset, w - inset * 2, h - inset * 2, rad * 0.7f).Stroke();
+        canvas.RestoreState();
+
+        var bold = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+        var italic = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_OBLIQUE);
+        bool hasSub = !string.IsNullOrWhiteSpace(ann.StampSubtitle);
+        float innerW = w - inset * 2 - outer * 2;
+
+        float FitSize(iText.Kernel.Font.PdfFont f, string text, float maxH)
+        {
+            float size = Math.Max(1, maxH / 1.15f);
+            float tw = f.GetWidth(text, size);
+            return tw > innerW && innerW > 1 ? Math.Max(1, size * innerW / tw) : size;
+        }
+
+        string title = ann.Text;
+        float ts = FitSize(bold, title, hasSub ? h * 0.42f : h * 0.55f);
+        // Baseline: centred (no subtitle) or in the upper part (with one).
+        float ty = hasSub ? h * 0.52f : (h - ts * 0.72f) / 2;
+        canvas.BeginText().SetFontAndSize(bold, ts).SetFillColor(color)
+              .MoveText((w - bold.GetWidth(title, ts)) / 2, ty).ShowText(title).EndText();
+        if (hasSub)
+        {
+            string sub = ann.StampSubtitle!;
+            float ss = FitSize(italic, sub, h * 0.2f);
+            canvas.BeginText().SetFontAndSize(italic, ss).SetFillColor(color)
+                  .MoveText((w - italic.GetWidth(sub, ss)) / 2, h * 0.2f).ShowText(sub).EndText();
+        }
+        return xobj;
     }
 
     /// <summary>Form XObject drawing a Fill &amp; Sign mark (see <see cref="MarkShapes"/>) in its box.</summary>

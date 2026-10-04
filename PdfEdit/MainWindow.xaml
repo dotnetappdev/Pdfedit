@@ -954,6 +954,38 @@
                                          AutomationProperties.Name="Stamp">
                         <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                    <ComboBox ItemsSource="{Binding StampsView}"
+                              SelectedItem="{Binding SelectedStampDefinition, Mode=TwoWay}"
+                              IsEnabled="{Binding HasDocument}"
+                              Width="150" Height="22" FontSize="11" MaxDropDownHeight="420"
+                              VerticalAlignment="Center" Margin="0,2,0,0"
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              ToolTip="Choose a stamp — Standard Business, Sign Here, Dynamic (adds your name and the time), More, Custom"
+                              AutomationProperties.Name="Stamp selector">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="10" Height="10" CornerRadius="2" Margin="0,0,6,0" VerticalAlignment="Center"
+                                            Background="{Binding Color}"/>
+                                    <TextBlock Text="{Binding Title}" FontSize="11"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                        <ComboBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="10" Margin="4,6,0,2"
+                                                   Foreground="{DynamicResource DimForegroundBrush}"/>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ComboBox.GroupStyle>
+                    </ComboBox>
+                    <Fluent:Button Header="Custom Stamp…" Size="Middle" Command="{Binding AddCustomStampCommand}"
+                                   ToolTip="Create a stamp with your own text" AutomationProperties.Name="Create custom stamp">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Fields -->
@@ -1924,18 +1956,44 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Rubber Stamp — click page to place stamp (M)"
                                          AutomationProperties.Name="Stamp tool"/>
-                    <ComboBox ItemsSource="{Binding AvailableStamps}"
-                              SelectedItem="{Binding SelectedStamp, Mode=TwoWay}"
+                    <ComboBox ItemsSource="{Binding StampsView}"
+                              SelectedItem="{Binding SelectedStampDefinition, Mode=TwoWay}"
                               IsEnabled="{Binding HasDocument}"
-                              Width="110" Height="22" FontSize="11"
+                              Width="150" Height="22" FontSize="11" MaxDropDownHeight="420"
                               VerticalAlignment="Center" Margin="0,2,0,0"
-                              ToolTip="Choose stamp text"
-                              AutomationProperties.Name="Stamp text selector"/>
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              ToolTip="Choose a stamp — Standard Business, Sign Here, Dynamic (adds your name and the time), More, Custom"
+                              AutomationProperties.Name="Stamp selector">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="10" Height="10" CornerRadius="2" Margin="0,0,6,0" VerticalAlignment="Center"
+                                            Background="{Binding Color}"/>
+                                    <TextBlock Text="{Binding Title}" FontSize="11"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                        <ComboBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="10" Margin="4,6,0,2"
+                                                   Foreground="{DynamicResource DimForegroundBrush}"/>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ComboBox.GroupStyle>
+                    </ComboBox>
                     <Fluent:Button Header="Custom&#x0a;Stamp"
                                    Command="{Binding AddCustomStampCommand}"
                                    Size="Middle"
                                    ToolTip="Create a custom stamp with your own text"
                                    AutomationProperties.Name="Add custom stamp text"/>
+                    <Fluent:Button Header="Remove&#x0a;Custom"
+                                   Command="{Binding RemoveCustomStampCommand}"
+                                   Size="Middle"
+                                   ToolTip="Remove the selected custom stamp from the list"
+                                   AutomationProperties.Name="Remove custom stamp"/>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Marks group -->

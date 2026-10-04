@@ -72,7 +72,7 @@ public partial class PdfViewerControl
     /// <summary>Applies the annotation's fit mode: auto-size, or wrap and grow the height.</summary>
     private void FitAnnotationBox(FreeTextAnnotation ann, TextBox tb)
     {
-        if (IsMarkGlyph(ann.Text)) return;
+        if (IsDrawn(ann)) return;
         if (ann.AutoSize) AutoFitAnnotation(ann, tb);
         else if (ann.GrowToFit) GrowAnnotationToText(ann, tb);
     }
@@ -194,7 +194,7 @@ public partial class PdfViewerControl
     {
         // ✓ ✕ ● ○ — are drawings with their glyph text hidden: never letter-space them or give the
         // text a colour, or the font's own glyph shows as a second mark on top (e.g. on resize).
-        bool isMark = IsMarkGlyph(ann.Text);
+        bool isMark = IsDrawn(ann);
         bool want = !isMark && ann.CharacterSpacing > 0.01 && !tb.IsKeyboardFocused && AnnotationCanvas.Children.Contains(tb);
         _spacingOverlays.TryGetValue(ann, out var overlay);
 
@@ -328,10 +328,10 @@ public partial class PdfViewerControl
         Canvas.SetLeft(tb, ann.Left * Scale);
         Canvas.SetTop(tb, (pageH - ann.Bottom - ann.Height) * Scale);
         tb.LayoutTransform = ann.RotationAngle == 0 ? Transform.Identity : new RotateTransform(ann.RotationAngle);
-        tb.TextWrapping = IsMarkGlyph(ann.Text) || ann.AutoSize ? TextWrapping.NoWrap : TextWrapping.Wrap;
-        tb.IsReadOnly = ann.IsLocked || IsMarkGlyph(ann.Text);
+        tb.TextWrapping = IsDrawn(ann) || ann.AutoSize ? TextWrapping.NoWrap : TextWrapping.Wrap;
+        tb.IsReadOnly = ann.IsLocked || IsDrawn(ann);
 
-        if (!IsMarkGlyph(ann.Text)) FitAnnotationBox(ann, tb);
+        if (!IsDrawn(ann)) FitAnnotationBox(ann, tb);
         UpdateSpacingOverlay(ann, tb);
         if (_focusedAnnotationTb == tb) ShowAnnotationToolbar(tb);
     }
