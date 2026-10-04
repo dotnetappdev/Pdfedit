@@ -1,0 +1,13 @@
+# Docs
+
+- [Filling and signing](filling-and-signing.md)
+- [Preparing forms](forms.md)
+- [Comments, stamps and links](comments-and-markup.md)
+- [Pages, watermarks and security](pages-and-security.md)
+- [Scanning and OCR](scan-and-ocr.md)
+- [Design canvas](design-canvas.md)
+- [AI assistant](ai-assistant.md)
+- [Keyboard shortcuts](keyboard-shortcuts.md)
+- [Screenshots](screenshots.md)
+- [Building and releases](building.md)
+- [Code layout](architecture.md)
