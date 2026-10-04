@@ -1,7 +1,9 @@
 # PdfEdit
 
-[![CI](https://github.com/dotnetappdev/Pdfedit/actions/workflows/ci.yml/badge.svg)](https://github.com/dotnetappdev/Pdfedit/actions/workflows/ci.yml)
-[![Latest release](https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag)](https://github.com/dotnetappdev/Pdfedit/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/dotnetappdev/Pdfedit/ci.yml?branch=devmain&label=CI)](https://github.com/dotnetappdev/Pdfedit/actions/workflows/ci.yml?query=branch%3Adevmain)
+[![Latest release](https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release)](https://github.com/dotnetappdev/Pdfedit/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)](#download)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 PdfEdit is a free PDF editor for Windows. Open a PDF to fill in forms, sign them, add comments or rearrange pages. You can also design a new document from scratch. It's a native WPF app with an Office-style ribbon and dark, light and high-contrast themes, and it doesn't need an account or an internet connection.
