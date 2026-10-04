@@ -26,7 +26,9 @@
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
-        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
+        <KeyBinding Key="Tab" Modifiers="Control" Command="{Binding NextTabCommand}"/>
+        <KeyBinding Key="Tab" Modifiers="Control+Shift" Command="{Binding PreviousTabCommand}"/>
         <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintCommand}"/>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}"/>
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}"/>
@@ -115,7 +117,7 @@
 
                     <Fluent:MenuItem Header="Close"
                                                 KeyTip="C"
-                                                Command="{Binding CloseCommand}"
+                                                Command="{Binding CloseTabCommand}"
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Close document"/>
 
@@ -1342,6 +1344,22 @@
                                    AutomationProperties.Name="Export PDF text to TXT file">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export to&#x0a;Word"
+                                   Command="{Binding ExportWordCommand}"
+                                   ToolTip="Save the text of every page as a Word document"
+                                   AutomationProperties.Name="Export to Word">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Export to&#x0a;Excel"
+                                   Command="{Binding ExportExcelCommand}"
+                                   ToolTip="Rebuild the tables and columns as an Excel workbook, with numbers as numbers"
+                                   AutomationProperties.Name="Export to Excel">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -3175,7 +3193,72 @@
         <!-- ════════════════════════════════════════════════════════════════
              MAIN CONTENT AREA
              ════════════════════════════════════════════════════════════════ -->
-        <Grid Grid.Row="1">
+        <DockPanel Grid.Row="1" LastChildFill="True">
+
+        <!-- ── Document tabs ──────────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top" x:Name="TabStrip"
+                Background="{DynamicResource PanelBgBrush}"
+                BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1"
+                Visibility="{Binding HasTabs, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding OpenTabs}" AutomationProperties.Name="Open documents">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:OpenDocumentTab}">
+                            <Border x:Name="TabBorder" Padding="10,5,4,5" MinWidth="120" MaxWidth="240"
+                                    BorderThickness="0,2,1,0" BorderBrush="Transparent"
+                                    Background="Transparent" Cursor="Hand"
+                                    ToolTip="{Binding Path}"
+                                    MouseLeftButtonUp="DocTab_Click" MouseUp="DocTab_MouseUp"
+                                    AutomationProperties.Name="{Binding Title}">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Close" Click="DocTabClose_Click"/>
+                                        <MenuItem Header="Close other tabs" Click="DocTabCloseOthers_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="Copy path" Click="DocTabCopyPath_Click"/>
+                                        <MenuItem Header="Show in folder" Click="DocTabShowInFolder_Click"/>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="&#xEA90;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               Foreground="#E05A4F" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Grid.Column="1" x:Name="TabTitle" Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" FontSize="12"
+                                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                                    <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                                            Width="20" Height="20" Margin="6,0,0,0" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Foreground="{DynamicResource DimForegroundBrush}"
+                                            Click="DocTabClose_Click" ToolTip="Close (Ctrl+W)"
+                                            AutomationProperties.Name="Close tab"/>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ContentBgBrush}"/>
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter TargetName="TabTitle" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                                    <Setter TargetName="TabTitle" Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                                <Trigger SourceName="TabBorder" Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TabTitle" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                                </Trigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <Grid>
 
             <!-- Scaled inner layout (toolbox + viewer + properties) -->
             <avalonDock:DockingManager x:Name="DockManager"
@@ -4455,6 +4538,7 @@
                                  AutomationProperties.LiveSetting="Polite"/>
 
         </Grid>
+        </DockPanel>
         <!-- End Grid.Row=1 -->
 
         <!-- ════════════════════════════════════════════════════════════════

@@ -7,7 +7,7 @@ namespace PdfEdit.ViewModels;
 /// <summary>Accessibility Checker and Create PDF from Office files.</summary>
 public partial class MainViewModel
 {
-    private ICommand? _accessibilityCommand, _createFromOfficeCommand;
+    private ICommand? _accessibilityCommand, _createFromOfficeCommand, _exportExcelCommand;
 
     // ── Accessibility ─────────────────────────────────────────────────────────
     public ICommand AccessibilityCheckCommand => _accessibilityCommand ??= new RelayCommand(() =>
@@ -75,4 +75,35 @@ public partial class MainViewModel
             ? $"Created {System.IO.Path.GetFileName(made[0])}."
             : $"Created {made.Count} PDFs next to the originals; opened the first.");
     }
+
+    // ── Export tables to Excel ────────────────────────────────────────────────
+    public ICommand ExportExcelCommand => _exportExcelCommand ??= new AsyncRelayCommand(async () =>
+    {
+        if (_currentFilePath == null) return;
+        var save = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export to Excel",
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = System.IO.Path.GetFileNameWithoutExtension(_currentFilePath) + ".xlsx",
+            AddExtension = true,
+        };
+        if (save.ShowDialog() != true) return;
+        bool perPage = PageCount == 1 || Dialogs.AppDialog.ShowConfirm(
+            "Put each page on its own sheet, or everything on one sheet?", "Export to Excel", "Sheet per page", "One sheet");
+        string src = _currentFilePath, dest = save.FileName;
+        try
+        {
+            StatusText = "Exporting to Excel…";
+            int rows = await Task.Run(() => ExcelExportService.Export(src, dest, oneSheet: !perPage));
+            StatusText = $"Exported {rows} row(s) to {System.IO.Path.GetFileName(dest)}.";
+            if (rows == 0)
+            {
+                Dialogs.AppDialog.ShowInfo("No text was found to export. If this is a scan, run text recognition first (All tools → Scan & OCR).", "Export to Excel");
+                return;
+            }
+            if (Dialogs.AppDialog.ShowConfirm($"Exported {rows} rows. Open the workbook now?", "Export to Excel", "Open", "Close"))
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dest) { UseShellExecute = true });
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("Export to Excel failed.", ex); }
+    }, () => HasDocument);
 }

@@ -73,6 +73,7 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Microsoft Word (.docx)", vm.ExportWordCommand, "Text of every page as a Word document"),
+                    Run("Microsoft Excel (.xlsx)", vm.ExportExcelCommand, "Tables and columns rebuilt as rows and cells, numbers as numbers"),
                     Run("Plain text (.txt)", vm.ExportTextCommand),
                     Run("Images — all pages (PNG)", vm.ExportPagesAsImagesCommand),
                     Run("Image — current page", vm.ExportPageAsImageCommand),

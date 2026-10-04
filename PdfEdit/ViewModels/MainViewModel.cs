@@ -1748,6 +1748,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         try
         {
             _currentFilePath = path;
+            TrackTab(path);
             Document = _formService.LoadDocument(path);
 
             FieldValues.Clear();
@@ -1884,6 +1885,11 @@ public partial class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             Dialogs.AppDialog.ShowError("Failed to open PDF", ex);
+            if (OpenTabs.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase)) is { } bad)
+            {
+                OpenTabs.Remove(bad);
+                OnPropertyChanged(nameof(HasTabs));
+            }
             StatusText = "Error loading document.";
             ToastService.Instance.Error("Failed to open PDF.");
         }
@@ -1958,6 +1964,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 shapeAnnotations: ShapeAnnotations, fieldBounds: ModifiedFieldBounds,
                 fieldEdits: GetFieldEditsForSave(), textEdits: TextEditMarks);
             _currentFilePath = dlg.FileName;
+            RenameActiveTab(dlg.FileName);
             CommitFieldEditsAfterSave();
             StatusText = $"Saved as: {System.IO.Path.GetFileName(dlg.FileName)}";
             if (errors.Count > 0)
@@ -2037,6 +2044,11 @@ public partial class MainViewModel : INotifyPropertyChanged
     private void CloseDocument()
     {
         SaveDocumentState();
+        if (!_switchingTab && OpenTabs.FirstOrDefault(t => t.IsActive) is { } closing)
+        {
+            OpenTabs.Remove(closing);
+            OnPropertyChanged(nameof(HasTabs));
+        }
         _currentFilePath = null;
         Document = null;
         _documentText = string.Empty;
