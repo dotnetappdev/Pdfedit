@@ -283,6 +283,15 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
+                    <Fluent:Button Header="Clean Up&#x0a;Scans"
+                                   Command="{Binding ScanCleanupCommand}"
+                                   ToolTip="Remove blank pages, straighten crooked scans, split two-page spreads"
+                                   AutomationProperties.Name="Clean up scans">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7C5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+
                     <Fluent:Button Header="From&#x0a;Office"
                                    Command="{Binding CreatePdfFromOfficeCommand}"
                                    ToolTip="Create PDFs from Word, Excel or PowerPoint files (uses Microsoft Office or LibreOffice)"
@@ -2616,6 +2625,23 @@
                                    ToolTip="Click, then speak your question"
                                    AutomationProperties.Name="Ask by voice">
                         <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE720;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Documents" AutomationProperties.Name="AI document tools group">
+                    <Fluent:Button Header="Translate&#x0a;PDF" Command="{Binding TranslatePdfCommand}"
+                                   ToolTip="A translated copy that keeps the layout"
+                                   AutomationProperties.Name="Translate PDF">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Ask Across&#x0a;PDFs" Command="{Binding AskAcrossPdfsCommand}"
+                                   ToolTip="Ask one question about several PDFs or a whole folder; answers cite file and page"
+                                   AutomationProperties.Name="Ask across PDFs">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Mind&#x0a;Map" Command="{Binding MindMapCommand}"
+                                   ToolTip="The document as a mind map; click a topic to go to its page"
+                                   AutomationProperties.Name="Mind map">
+                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

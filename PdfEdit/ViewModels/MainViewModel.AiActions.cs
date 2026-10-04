@@ -443,6 +443,10 @@ public partial class MainViewModel
         ["two_page_view"] = ("Two-page view on/off", () => ToggleTwoPageViewCommand),
         ["extract_images"] = ("Extract images", () => ExtractImagesCommand),
         ["export_powerpoint"] = ("Export to PowerPoint", () => ExportPowerPointCommand),
+        ["translate_pdf"] = ("Translate the whole PDF", () => TranslatePdfCommand),
+        ["ask_across_pdfs"] = ("Ask across several PDFs", () => AskAcrossPdfsCommand),
+        ["mind_map"] = ("Mind map", () => MindMapCommand),
+        ["clean_up_scans"] = ("Clean up scans", () => ScanCleanupCommand),
     };
 
     private void ZoomFromAi(AiActionItem item)

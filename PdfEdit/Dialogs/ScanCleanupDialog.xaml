@@ -1,0 +1,32 @@
+<Window x:Class="PdfEdit.Dialogs.ScanCleanupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Clean up scans"
+        Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource ForegroundBrush}">
+    <StackPanel Margin="18">
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,12" Foreground="{DynamicResource DimForegroundBrush}"
+                   Text="Looks at every page for blank pages, pages scanned at an angle, and two pages scanned side by side."/>
+        <ProgressBar x:Name="Progress" Height="6"/>
+        <TextBlock x:Name="StatusLine" Margin="0,6,0,10" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}"/>
+
+        <CheckBox x:Name="BlankBox" IsEnabled="False" Margin="0,4">
+            <TextBlock x:Name="BlankText" TextWrapping="Wrap" Text="Remove blank pages"/>
+        </CheckBox>
+        <CheckBox x:Name="SkewBox" IsEnabled="False" Margin="0,4">
+            <TextBlock x:Name="SkewText" TextWrapping="Wrap" Text="Straighten crooked pages"/>
+        </CheckBox>
+        <CheckBox x:Name="SplitBox" IsEnabled="False" Margin="0,4">
+            <TextBlock x:Name="SplitText" TextWrapping="Wrap" Text="Split two-page spreads into single pages"/>
+        </CheckBox>
+
+        <TextBlock Margin="0,10,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"
+                   Text="Ctrl+Z undoes the clean-up."/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="ApplyBtn" Content="Clean up" Padding="16,4" Margin="0,0,8,0" IsDefault="True" IsEnabled="False"
+                    Style="{StaticResource ModernButton}" Click="Apply_Click"/>
+            <Button Content="Cancel" Padding="16,4" IsCancel="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,68 @@
+<Window x:Class="PdfEdit.Dialogs.AskAcrossDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:PdfEdit.Controls"
+        Title="Ask across PDFs"
+        Width="900" Height="640" MinWidth="640" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource ForegroundBrush}">
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Files -->
+        <Grid Margin="0,0,12,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Documents" FontWeight="SemiBold" Margin="0,0,0,6"/>
+            <ListBox x:Name="FileList" Grid.Row="1" DisplayMemberPath="Name" SelectionMode="Extended"
+                     Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ForegroundBrush}"
+                     BorderBrush="{DynamicResource AppBorderBrush}" AutomationProperties.Name="Documents to ask about"/>
+            <WrapPanel Grid.Row="2" Margin="0,8,0,0">
+                <Button Content="Add files…" Padding="10,3" Margin="0,0,6,6" Click="AddFiles_Click"/>
+                <Button Content="Add folder…" Padding="10,3" Margin="0,0,6,6" Click="AddFolder_Click"/>
+                <Button Content="Remove" Padding="10,3" Margin="0,0,6,6" Click="Remove_Click"/>
+            </WrapPanel>
+            <TextBlock x:Name="FileInfo" Grid.Row="3" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"/>
+        </Grid>
+
+        <!-- Question and answer -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="QuestionBox" Padding="8,6" FontSize="13" KeyDown="Question_KeyDown"
+                         AutomationProperties.Name="Your question"/>
+                <Button x:Name="AskBtn" Grid.Column="1" Content="Ask" Padding="18,4" Margin="8,0,0,0"
+                        Style="{StaticResource ModernButton}" Click="Ask_Click"/>
+            </Grid>
+            <Border Grid.Row="1" Margin="0,10,0,0" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}"
+                    Background="{DynamicResource InputBgBrush}">
+                <ScrollViewer x:Name="AnswerScroll" VerticalScrollBarVisibility="Auto" Padding="14,10">
+                    <StackPanel>
+                        <TextBlock x:Name="Hint" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource DimForegroundBrush}"
+                                   Text="Add PDFs (or a whole folder), then ask a question: “What notice period does each contract give?”, “Which invoices are over £1,000?”, “How do these reports differ?”. Answers cite the file and page; click a source to open it there."/>
+                        <controls:MarkdownView x:Name="Answer" PageLinks="False"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                <TextBlock x:Name="StatusLine" FontSize="11" Foreground="{DynamicResource DimForegroundBrush}"/>
+                <WrapPanel x:Name="Sources" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

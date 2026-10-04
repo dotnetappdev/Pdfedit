@@ -24,6 +24,9 @@ public class MarkdownView : StackPanel
         set => SetValue(MarkdownProperty, value);
     }
 
+    /// <summary>Turn "p. 4" into links to the open document's pages (off where answers cite other files).</summary>
+    public bool PageLinks { get; set; } = true;
+
     /// <summary>Raised when a page reference is clicked (1-based page).</summary>
     public static event Action<int>? PageRequested;
 
@@ -286,7 +289,7 @@ public class MarkdownView : StackPanel
                 }
                 else yield return new Run(label);
             }
-            else if (m.Groups["page"].Success && int.TryParse(m.Groups["n"].Value, out int page) && page > 0)
+            else if (PageLinks && m.Groups["page"].Success && int.TryParse(m.Groups["n"].Value, out int page) && page > 0)
             {
                 var link = new Hyperlink(new Run(v)) { ToolTip = $"Go to page {page}", TextDecorations = null, FontWeight = FontWeights.SemiBold };
                 link.SetResourceReference(TextElement.ForegroundProperty, "AccentBrush");

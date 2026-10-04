@@ -153,6 +153,10 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Open AI Assistant", vm.ToggleAiPanelCommand),
+                    Page("Translate the PDF (keep layout)", vm.TranslatePdfCommand, "A translated copy, paragraph by paragraph in place"),
+                    Run("Ask across several PDFs", vm.AskAcrossPdfsCommand, "Answers cite the file and page"),
+                    Page("Mind map of this document", vm.MindMapCommand),
+                    Page("Summary outline", vm.GenerateSummaryCommand),
                     Page("Fill the form with AI", vm.RunAiFillCommand),
                     Page("Smart fill from another document", vm.SmartFillFromDocCommand),
                     Run("Analyse contract", vm.AnalyzeContractCommand),
@@ -192,6 +196,7 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Scan from scanner (TWAIN / WIA)…", vm.ScanCommand, "Preview, scan from flatbed or feeder, make a searchable PDF"),
                     Run("Recognise text (make searchable)", vm.OcrMakeSearchableCommand, "OCR every scanned page and save a searchable copy"),
+                    Page("Clean up scans", vm.ScanCleanupCommand, "Remove blank pages, straighten crooked pages, split two-page spreads"),
                     Run("Recognise text on this page (copy)", vm.OcrCurrentPageCommand),
                     Run("Create PDF from scans / images", vm.CreatePdfFromImagesCommand),
                 } },

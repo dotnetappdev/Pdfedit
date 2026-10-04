@@ -124,6 +124,16 @@ public static class AiProviderService
         await RouteAsync(provider, history, model, apiKey, onChunk, ct, systemPrompt);
     }
 
+    /// <summary>One request, whole reply returned (for background jobs such as translation).</summary>
+    public static async Task<string> CompleteAsync(string prompt, string provider, string model, string apiKey,
+        CancellationToken ct = default, string? systemPrompt = null, int maxTokens = 8192)
+    {
+        var sb = new StringBuilder();
+        await RouteAsync(provider, new[] { new AiChatMessage { Role = "user", Content = prompt } }, model, apiKey,
+            chunk => { lock (sb) sb.Append(chunk); }, ct, systemPrompt, maxTokens);
+        return sb.ToString();
+    }
+
     // ── Form fill — now routes to the right provider ─────────────────────────
 
     public static async Task<Dictionary<string, string>> FillFormFieldsAsync(

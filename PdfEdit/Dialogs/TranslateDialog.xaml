@@ -1,0 +1,26 @@
+<Window x:Class="PdfEdit.Dialogs.TranslateDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Translate PDF"
+        Width="440" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource ForegroundBrush}">
+    <StackPanel Margin="18">
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,12" Foreground="{DynamicResource DimForegroundBrush}"
+                   Text="Makes a translated copy that keeps the layout: each paragraph is rewritten in place in the new language. The original isn't changed."/>
+        <TextBlock Text="Translate into" Margin="0,0,0,4"/>
+        <ComboBox x:Name="LanguageBox" IsEditable="True" Height="28" AutomationProperties.Name="Target language"/>
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+            <RadioButton x:Name="AllPages" Content="Whole document" IsChecked="True" Margin="0,0,16,0"/>
+            <RadioButton x:Name="ThisPage" Content="This page only"/>
+        </StackPanel>
+        <ProgressBar x:Name="Progress" Height="6" Margin="0,16,0,0" Visibility="Collapsed"/>
+        <TextBlock x:Name="StatusLine" Margin="0,6,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"/>
+        <TextBlock Margin="0,8,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"
+                   Text="Scanned pages need text recognition first. Right-to-left scripts (Arabic, Hebrew) come out without joined letters."/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="GoBtn" Content="Translate" Padding="16,4" Margin="0,0,8,0" IsDefault="True" Style="{StaticResource ModernButton}" Click="Go_Click"/>
+            <Button x:Name="CancelBtn" Content="Cancel" Padding="16,4" Click="Cancel_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
