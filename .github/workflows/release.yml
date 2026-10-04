@@ -213,7 +213,15 @@ jobs:
       # ── Inno Setup EXE installer ─────────────────────────────────────────
       - name: Install Inno Setup 6
         if: ${{ github.event.inputs.build_exe != 'false' }}
-        run: choco install innosetup --version 6.4.3 -y --no-progress
+        shell: pwsh
+        run: |
+          # GitHub's Windows runners already ship Inno Setup 6; install only if it's missing.
+          if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+            Write-Host "Inno Setup already installed"
+          } else {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup install failed" }
+          }
 
       - name: Build EXE installer
         if: ${{ github.event.inputs.build_exe != 'false' }}
