@@ -376,11 +376,13 @@ jobs:
         shell: bash
         run: |
           # Compare with previous tag; fall back to last 20 commits
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v "${{ needs.metadata.outputs.tag }}" | head -1)
+          # (|| true: no earlier tags makes grep exit 1, which -o pipefail would treat as a failure)
+          PREV_TAG=$(git tag --sort=-version:refname | { grep -vx "${{ needs.metadata.outputs.tag }}" || true; } | head -1)
           if [[ -n "$PREV_TAG" ]]; then
             RANGE="${PREV_TAG}..HEAD"   # the new tag is created by the release step below
           else
             RANGE="HEAD~20..HEAD"
+            git rev-parse -q --verify HEAD~20 >/dev/null || RANGE="HEAD"
           fi
           LOG=$(git log "$RANGE" --pretty="format:- %s (%h)" --no-merges 2>/dev/null | head -50 || true)
           if [[ -z "$LOG" ]]; then LOG="- Initial release"; fi
