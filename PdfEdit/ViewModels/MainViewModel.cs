@@ -245,6 +245,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                                   nameof(SelectedAnnotationWidth), nameof(SelectedAnnotationHeight), nameof(SelectedAnnotationLocked),
                                   nameof(SelectedAnnotationAutoSize) })
             OnPropertyChanged(n);
+        NotifySelectedDateProperties();
     }
 
     /// <summary>Called by the live view after it changes the selected annotation (drag, resize, typing).</summary>

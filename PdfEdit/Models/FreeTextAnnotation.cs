@@ -45,6 +45,11 @@ public class FreeTextAnnotation
     // wrapped layout, and it turns off once the box is resized by hand.
     public bool AutoSize { get; set; }
 
+    // Text that is a date (Date stamp, or typed as one): the date and the .NET pattern it is shown
+    // in, so the Properties panel can switch format / change day, month, year (null otherwise).
+    public DateTime? DateValue { get; set; }
+    public string? DateFormat { get; set; }
+
     // Author, date, note, replies and review status (Comments panel)
     public CommentInfo Comment { get; set; } = new();
 }

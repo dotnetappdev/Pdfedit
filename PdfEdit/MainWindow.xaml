@@ -3033,6 +3033,40 @@
                                                 <TextBox Text="{Binding SelectedAnnotationText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="80" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Annotation text"/>
                                             </Border>
                                         </Grid>
+                                        <!-- Date text (Date stamp, or text that reads as a date): pick a format like Windows'
+                                             date settings and set day / month / year; the page text is rewritten to match. -->
+                                        <StackPanel Visibility="{Binding IsSelectedAnnotationDate, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Date" Style="{StaticResource PropGridCategoryText}"/></Border>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Format" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding DateFormatChoices}" SelectedValuePath="Format" DisplayMemberPath="Label" SelectedValue="{Binding SelectedAnnotationDateFormat}" FontSize="11" BorderThickness="0" ToolTip="How the date is written (d = day, M = month, y = year)" AutomationProperties.Name="Date format"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Day" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding DayChoices}" SelectedItem="{Binding SelectedAnnotationDay}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Day"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Month" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <ComboBox ItemsSource="{Binding MonthChoices}" SelectedIndex="{Binding SelectedAnnotationMonthIndex}" FontSize="11" BorderThickness="0" AutomationProperties.Name="Month"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Year" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <TextBox Text="{Binding SelectedAnnotationYear, UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Year, e.g. 2026" AutomationProperties.Name="Year"/>
+                                            </Border>
+                                        </Grid>
+                                        <Button Content="Today" Command="{Binding SetSelectedDateTodayCommand}" HorizontalAlignment="Left" Margin="2,4,2,2" Padding="10,2" FontSize="11" ToolTip="Set the date to today" AutomationProperties.Name="Set date to today"/>
+                                        </StackPanel>
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Font" Style="{StaticResource PropGridNameText}"/></Border>
