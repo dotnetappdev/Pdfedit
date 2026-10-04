@@ -781,6 +781,14 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Bulk&#x0a;Fill"
+                                   Command="{Binding BulkFillCommand}"
+                                   ToolTip="Fill this form once per row of a CSV or Excel file — one PDF each"
+                                   AutomationProperties.Name="Bulk fill from spreadsheet">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
             </Fluent:RibbonTabItem>

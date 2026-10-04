@@ -7,7 +7,19 @@ namespace PdfEdit.ViewModels;
 /// <summary>Automation and document-wide tools: batch processing, sanitising.</summary>
 public partial class MainViewModel
 {
-    private ICommand? _batchCommand, _sanitizeCommand;
+    private ICommand? _batchCommand, _sanitizeCommand, _bulkFillCommand;
+
+    /// <summary>Bulk fill: one filled copy of this form per spreadsheet row.</summary>
+    public ICommand BulkFillCommand => _bulkFillCommand ??= new RelayCommand(() =>
+    {
+        if (_currentFilePath == null) return;
+        if (AllFields.Count == 0)
+        {
+            Dialogs.AppDialog.ShowInfo("This PDF has no fillable fields. Add fields with Prepare Form (or Detect Fields) and save first.", "Bulk fill");
+            return;
+        }
+        new Dialogs.BulkFillDialog(_currentFilePath) { Owner = Application.Current.MainWindow }.ShowDialog();
+    }, () => HasDocument);
 
     /// <summary>Batch processing (Acrobat's Action Wizard) over many PDFs.</summary>
     public ICommand BatchCommand => _batchCommand ??= new RelayCommand(() =>

@@ -163,6 +163,7 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Batch process files…", vm.BatchCommand, "OCR, compress, watermark, flatten, number, protect… many files at once"),
+                    Page("Bulk fill from spreadsheet…", vm.BulkFillCommand, "One filled copy of this form per CSV / Excel row"),
                 } },
             new() { Title = "Scan & OCR", Glyph = "", Accent = Color.FromRgb(0x6F, 0xDC, 0x6F),
                 Description = "Make scanned pages searchable",
