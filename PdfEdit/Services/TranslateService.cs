@@ -173,6 +173,6 @@ public static class TranslateService
             }
             catch { }
         }
-        return PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+        return PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
     }
 }
