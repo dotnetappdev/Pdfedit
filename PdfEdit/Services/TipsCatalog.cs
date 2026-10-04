@@ -100,6 +100,8 @@ public static class TipsCatalog
             "Edit → Export to Excel rebuilds the tables on each page as rows and columns, with amounts and percentages stored as numbers, ready to total up."),
         new("Several PDFs at once",
             "Every PDF you open gets a tab above the page. Ctrl+Tab moves between them, Ctrl+W closes one, and a middle-click closes a tab. Unsaved work in each tab is kept while you switch."),
+        new("Google Drive and OneDrive",
+            "Home → Open from Cloud opens PDFs straight from Google Drive or OneDrive, and Save puts your changes back. Set it up once in Settings → Cloud with your own app details."),
         new("Find the right tool fast",
             "The All tools panel on the left lists everything PdfEdit can do, grouped like Acrobat's. Start typing in its search box to filter."),
         new("Take the tour again",

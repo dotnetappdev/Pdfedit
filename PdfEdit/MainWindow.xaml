@@ -99,6 +99,17 @@
                                                 IsEnabled="{Binding HasDocument}"
                                                 AutomationProperties.Name="Save as new file"/>
 
+                    <Fluent:MenuItem Header="Open from Cloud…"
+                                                KeyTip="D"
+                                                Command="{Binding OpenFromCloudCommand}"
+                                                AutomationProperties.Name="Open from Google Drive or OneDrive"/>
+
+                    <Fluent:MenuItem Header="Save to Cloud…"
+                                                KeyTip="W"
+                                                Command="{Binding SaveToCloudCommand}"
+                                                IsEnabled="{Binding HasDocument}"
+                                                AutomationProperties.Name="Save to Google Drive or OneDrive"/>
+
                     <Fluent:MenuItem Header="Flatten &amp; Save…"
                                                 KeyTip="L"
                                                 Command="{Binding FlattenAndSaveCommand}"
@@ -278,6 +289,22 @@
                                    AutomationProperties.Name="Create PDF from Office files">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Open from&#x0a;Cloud"
+                                   Command="{Binding OpenFromCloudCommand}"
+                                   ToolTip="Open a PDF from Google Drive or OneDrive; Save uploads your changes back"
+                                   AutomationProperties.Name="Open from cloud storage">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Save to&#x0a;Cloud"
+                                   Command="{Binding SaveToCloudCommand}"
+                                   ToolTip="Save this PDF to Google Drive or OneDrive (or upload your changes to a cloud file)"
+                                   AutomationProperties.Name="Save to cloud storage">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 

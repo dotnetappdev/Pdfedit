@@ -107,6 +107,13 @@ public partial class AllToolsPanel : UserControl
                     Run("Design a PDF (Design canvas)", vm.NewDesignCommand),
                     Run("Export design as PDF", vm.ExportDesignCommand),
                 } },
+            new() { Title = "Cloud storage", Glyph = "\uE753", Accent = Color.FromRgb(0x4D, 0xA3, 0xFF),
+                Description = "Google Drive and OneDrive",
+                Actions = new()
+                {
+                    Run("Open from Google Drive or OneDrive", vm.OpenFromCloudCommand, "Save uploads your changes back"),
+                    Page("Save to Google Drive or OneDrive", vm.SaveToCloudCommand),
+                } },
             new() { Title = "Combine files", Glyph = "", Accent = Color.FromRgb(0x8C, 0x7C, 0xFF),
                 Description = "Merge PDFs and images into one PDF",
                 Actions = new()

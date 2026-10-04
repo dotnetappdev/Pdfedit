@@ -42,7 +42,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0"
+        <TabControl Grid.Row="0" x:Name="SettingsTabs"
                     Background="{DynamicResource PanelBgBrush}"
                     BorderBrush="{DynamicResource AppBorderBrush}">
 
@@ -356,6 +356,58 @@
             </TabItem>
 
             <!-- ── OCR Tab ───────────────────────────────────────────────── -->
+            <TabItem Header="Cloud" x:Name="CloudTab" AutomationProperties.Name="Cloud storage settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                    <StackPanel>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Text="Open and save PDFs in Google Drive or OneDrive using your own app details, so there's no middleman and no shared quota. You sign in once in your browser; the sign-in is stored encrypted for your Windows account."/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="GOOGLE DRIVE"/>
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Client ID:" Margin="0,0,0,4"/>
+                        <TextBox x:Name="GoogleClientIdBox" Style="{StaticResource SettingTextBox}"
+                                 AutomationProperties.Name="Google OAuth client ID"/>
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Client secret:" Margin="0,8,0,4"/>
+                        <PasswordBox x:Name="GoogleSecretBox"
+                                     Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource InputForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" Padding="6,4" FontSize="13" Height="30"
+                                     AutomationProperties.Name="Google OAuth client secret"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="GoogleConnectBtn" Padding="14,4" Click="GoogleConnect_Click"/>
+                            <TextBlock x:Name="GoogleStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
+                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,10,0,0" LineHeight="17">
+                            <Run Text="How to get these: in console.cloud.google.com create a project, enable the Google Drive API, set up the OAuth consent screen (External; add yourself as a test user), then Credentials → Create credentials → OAuth client ID → Desktop app. Copy the client ID and secret here."/>
+                        </TextBlock>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="ONEDRIVE (MICROSOFT)"/>
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Application (client) ID:" Margin="0,0,0,4"/>
+                        <TextBox x:Name="OneDriveClientIdBox" Style="{StaticResource SettingTextBox}"
+                                 AutomationProperties.Name="Microsoft application client ID"/>
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="Accounts (tenant):" Margin="0,8,0,4"/>
+                        <ComboBox x:Name="OneDriveTenantBox" IsEditable="True" Height="30" FontSize="13"
+                                  ToolTip="common: personal and work accounts · consumers: personal only · organizations: work or school only · or your tenant ID"
+                                  AutomationProperties.Name="Microsoft tenant">
+                            <ComboBoxItem Content="common"/>
+                            <ComboBoxItem Content="consumers"/>
+                            <ComboBoxItem Content="organizations"/>
+                        </ComboBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="OneDriveConnectBtn" Padding="14,4" Click="OneDriveConnect_Click"/>
+                            <TextBlock x:Name="OneDriveStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
+                                       Foreground="{DynamicResource DimForegroundBrush}"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,10,0,0" LineHeight="17"
+                                   Text="How to get this: in entra.microsoft.com go to App registrations → New registration. Choose who can sign in (any account type for personal OneDrive), and under Redirect URI pick 'Public client/native (mobile &amp; desktop)' with http://localhost. Then in Authentication turn on 'Allow public client flows'. Copy the Application (client) ID here. No secret is needed."/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="SAVING"/>
+                        <CheckBox x:Name="CloudAutoUploadCb" Content="When I save a file opened from the cloud, upload it back straight away"
+                                  Foreground="{DynamicResource ForegroundBrush}" FontSize="13"
+                                  AutomationProperties.Name="Upload cloud files back when saving"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <TabItem Header="OCR" AutomationProperties.Name="Text recognition settings">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                     <StackPanel>

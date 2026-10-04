@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using PdfEdit.Models;
 using PdfEdit.Services;
+using PdfEdit.Services.Cloud;
 
 namespace PdfEdit.ViewModels;
 
@@ -1925,10 +1926,11 @@ public partial class MainViewModel : INotifyPropertyChanged
                     + string.Join("\n", errors.Take(10)),
                     title: "Saved with warnings");
             }
-            else
+            else if (CloudStorage.LinkFor(_currentFilePath) == null)
             {
                 ToastService.Instance.Success("Saved successfully.");
             }
+            await UploadIfCloudAsync();
         }
         catch (Exception ex)
         {

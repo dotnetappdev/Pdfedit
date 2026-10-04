@@ -119,6 +119,12 @@ public partial class SettingsWindow : Window
         DefaultColorTb.Text = s.DefaultFontColor;
         ForceUpperCaseCb.IsChecked = s.ForceUpperCaseDefault;
         SpellCheckCb.IsChecked = s.SpellCheck;
+        GoogleClientIdBox.Text = s.GoogleClientId;
+        GoogleSecretBox.Password = s.GoogleClientSecret;
+        OneDriveClientIdBox.Text = s.OneDriveClientId;
+        OneDriveTenantBox.Text = string.IsNullOrWhiteSpace(s.OneDriveTenant) ? "common" : s.OneDriveTenant;
+        CloudAutoUploadCb.IsChecked = s.CloudAutoUpload;
+        UpdateCloudStatus();
         TipsAtStartupCb.IsChecked = s.ShowTipsAtStartup;
         TourNextStartCb.IsChecked = !s.TourCompleted;
 
@@ -251,6 +257,8 @@ public partial class SettingsWindow : Window
         s.DefaultFontColor = DefaultColorTb.Text;
         s.ForceUpperCaseDefault = ForceUpperCaseCb.IsChecked == true;
         s.SpellCheck = SpellCheckCb.IsChecked == true;
+        StoreCloudCredentials();
+        s.CloudAutoUpload = CloudAutoUploadCb.IsChecked == true;
         s.ShowTipsAtStartup = TipsAtStartupCb.IsChecked == true;
         s.TourCompleted = TourNextStartCb.IsChecked != true;
 
@@ -404,5 +412,64 @@ public partial class SettingsWindow : Window
 
         DialogResult = false;
         Close();
+    }
+
+    // ── Cloud tab ─────────────────────────────────────────────────────────────
+
+    /// <summary>Opens Settings on a given tab (e.g. "Cloud").</summary>
+    public void ShowTab(string name)
+    {
+        if (name == "Cloud") SettingsTabs.SelectedItem = CloudTab;
+    }
+
+    private void StoreCloudCredentials()
+    {
+        var s = AppSettings.Current;
+        string gId = GoogleClientIdBox.Text.Trim(), gSecret = GoogleSecretBox.Password.Trim();
+        string mId = OneDriveClientIdBox.Text.Trim(), tenant = string.IsNullOrWhiteSpace(OneDriveTenantBox.Text) ? "common" : OneDriveTenantBox.Text.Trim();
+        // Different app details: the old sign-in no longer applies.
+        if (gId != s.GoogleClientId || gSecret != s.GoogleClientSecret) PdfEdit.Services.Cloud.GoogleDriveProvider.Instance.Disconnect();
+        if (mId != s.OneDriveClientId || tenant != s.OneDriveTenant) PdfEdit.Services.Cloud.OneDriveProvider.Instance.Disconnect();
+        s.GoogleClientId = gId;
+        s.GoogleClientSecret = gSecret;
+        s.OneDriveClientId = mId;
+        s.OneDriveTenant = tenant;
+    }
+
+    private void UpdateCloudStatus()
+    {
+        var g = PdfEdit.Services.Cloud.GoogleDriveProvider.Instance;
+        var m = PdfEdit.Services.Cloud.OneDriveProvider.Instance;
+        GoogleConnectBtn.Content = g.IsConnected ? "Sign out" : "Connect";
+        GoogleStatus.Text = g.IsConnected ? $"Connected as {g.AccountName}" : "Not connected";
+        OneDriveConnectBtn.Content = m.IsConnected ? "Sign out" : "Connect";
+        OneDriveStatus.Text = m.IsConnected ? $"Connected as {m.AccountName}" : "Not connected";
+    }
+
+    private async void GoogleConnect_Click(object sender, RoutedEventArgs e) =>
+        await ConnectCloudAsync(PdfEdit.Services.Cloud.GoogleDriveProvider.Instance, GoogleConnectBtn, GoogleStatus);
+
+    private async void OneDriveConnect_Click(object sender, RoutedEventArgs e) =>
+        await ConnectCloudAsync(PdfEdit.Services.Cloud.OneDriveProvider.Instance, OneDriveConnectBtn, OneDriveStatus);
+
+    private async Task ConnectCloudAsync(PdfEdit.Services.Cloud.CloudProvider p, System.Windows.Controls.Button btn, System.Windows.Controls.TextBlock status)
+    {
+        if (p.IsConnected) { p.Disconnect(); UpdateCloudStatus(); return; }
+        StoreCloudCredentials();
+        AppSettings.Current.Save();
+        if (!p.IsConfigured)
+        {
+            status.Text = p is PdfEdit.Services.Cloud.GoogleDriveProvider ? "Enter the client ID and secret first." : "Enter the application ID first.";
+            return;
+        }
+        btn.IsEnabled = false;
+        status.Text = "Finish signing in in your browser…";
+        try
+        {
+            await p.ConnectAsync();
+            UpdateCloudStatus();
+        }
+        catch (Exception ex) { status.Text = "Couldn't sign in: " + ex.Message; }
+        finally { btn.IsEnabled = true; Activate(); }
     }
 }

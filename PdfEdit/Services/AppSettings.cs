@@ -21,6 +21,21 @@ public class AppSettings
     // Absent keys fall back to each area's default size.
     public Dictionary<string, double> InterfaceFontSizes { get; set; } = new();
 
+    // ── Cloud storage (your own OAuth app credentials) ─────────────────────
+    public string GoogleClientId { get; set; } = string.Empty;
+    public string GoogleClientSecret { get; set; } = string.Empty;
+    public string OneDriveClientId { get; set; } = string.Empty;
+    /// <summary>"common" (any Microsoft account), "consumers", "organizations" or a tenant ID.</summary>
+    public string OneDriveTenant { get; set; } = "common";
+    /// <summary>Sign-in tokens per provider, encrypted for this Windows user (DPAPI).</summary>
+    public Dictionary<string, string> CloudTokens { get; set; } = new();
+    /// <summary>Signed-in account name per provider, for display.</summary>
+    public Dictionary<string, string> CloudAccounts { get; set; } = new();
+    /// <summary>Local copies of cloud files → where they came from, so Save uploads them back.</summary>
+    public Dictionary<string, CloudLink> CloudLinks { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Upload a cloud file back automatically when it's saved.</summary>
+    public bool CloudAutoUpload { get; set; } = true;
+
     // ── Welcome ──────────────────────────────────────────────────────────────
     /// <summary>False until the first-launch tour has been finished or skipped.</summary>
     public bool TourCompleted { get; set; }
@@ -137,4 +152,12 @@ public class AppSettings
         }
         catch { }
     }
+}
+
+/// <summary>A local copy of a file in cloud storage.</summary>
+public class CloudLink
+{
+    public string Provider { get; set; } = "";
+    public string FileId { get; set; } = "";
+    public string Name { get; set; } = "";
 }
