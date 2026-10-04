@@ -270,6 +270,15 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
+                    <Fluent:Button Header="From&#x0a;Office"
+                                   Command="{Binding CreatePdfFromOfficeCommand}"
+                                   ToolTip="Create PDFs from Word, Excel or PowerPoint files (uses Microsoft Office or LibreOffice)"
+                                   AutomationProperties.Name="Create PDF from Office files">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+
                     <Fluent:Button Header="Save"
                                    Command="{Binding SaveCommand}"
                                    KeyTip="S"
@@ -1701,6 +1710,14 @@
                                    AutomationProperties.Name="Show document statistics">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Accessibility&#x0a;Check"
+                                   Command="{Binding AccessibilityCheckCommand}"
+                                   ToolTip="Check the PDF works with screen readers and keyboards, and fix the common problems"
+                                   AutomationProperties.Name="Accessibility checker">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE776;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>

@@ -174,6 +174,8 @@ public partial class MainWindow : RibbonWindow
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
             var pdf = System.Array.Find(files, f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
             if (pdf != null) _ = OpenFileAsync(pdf);
+            else if (VM != null && files.Where(OfficeConversionService.IsOfficeFile).ToList() is { Count: > 0 } office)
+                _ = VM.ConvertOfficeFilesAsync(office);   // Word / Excel / PowerPoint dropped: make PDFs
         }
     }
 

@@ -97,11 +97,12 @@ public partial class AllToolsPanel : UserControl
                     Run("Document properties", vm.DocumentPropertiesCommand),
                 } },
             new() { Title = "Create a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x5A, 0x4F),
-                Description = "Blank, from images or from a design",
+                Description = "Blank, from Office files, images or a design",
                 Actions = new()
                 {
                     Run("Blank PDF", vm.CreateBlankPdfCommand),
                     Run("From images", vm.CreatePdfFromImagesCommand, "One page per image"),
+                    Run("From Word, Excel or PowerPoint", vm.CreatePdfFromOfficeCommand, "Uses Microsoft Office or LibreOffice on this PC"),
                     Run("Design a PDF (Design canvas)", vm.NewDesignCommand),
                     Run("Export design as PDF", vm.ExportDesignCommand),
                 } },
@@ -188,6 +189,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Protect with password", vm.PasswordProtectCommand),
                     Run("Remove password", vm.RemovePasswordCommand),
                     Page("Remove hidden information", vm.SanitizeCommand, "Metadata, scripts, attachments, comments"),
+                    Page("Check accessibility", vm.AccessibilityCheckCommand, "Screen reader and keyboard checks, with fixes"),
                     Run("Flatten form & save", vm.FlattenAndSaveCommand, "Make field values part of the page so they can't be edited"),
                 } },
             new() { Title = "Redact a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x7B, 0xAC),

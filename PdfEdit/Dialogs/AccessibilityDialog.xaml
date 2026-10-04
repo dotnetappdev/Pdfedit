@@ -1,0 +1,64 @@
+<Window x:Class="PdfEdit.Dialogs.AccessibilityDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Accessibility Checker"
+        Width="640" Height="680" MinWidth="480" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}" Foreground="{DynamicResource ForegroundBrush}">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock x:Name="Summary" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,4,0,10" FontSize="12" Foreground="{DynamicResource DimForegroundBrush}"
+                       Text="Checks the things a screen reader and keyboard users depend on. Some can only be checked by a person; they're listed too."/>
+        </StackPanel>
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="{DynamicResource AppBorderBrush}" Background="{DynamicResource InputBgBrush}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="Results" Margin="12,8"/>
+            </ScrollViewer>
+        </Border>
+
+        <Border x:Name="FixPanel" Grid.Row="2" Margin="0,12,0,0" Padding="12,10" BorderThickness="1"
+                BorderBrush="{DynamicResource AppBorderBrush}" CornerRadius="4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.ColumnSpan="2" Text="Fix automatically" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Grid.Row="1" Text="Title" VerticalAlignment="Center" Margin="0,0,10,6"/>
+                <TextBox x:Name="TitleBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,6" Padding="4,3"
+                         AutomationProperties.Name="Document title"/>
+                <TextBlock Grid.Row="2" Text="Language" VerticalAlignment="Center" Margin="0,0,10,6"/>
+                <ComboBox x:Name="LangBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,6" IsEditable="True"
+                          AutomationProperties.Name="Document language"/>
+                <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                    <CheckBox x:Name="DisplayTitleBox" Content="Show title in title bar" IsChecked="True" Margin="0,0,16,4"/>
+                    <CheckBox x:Name="TabOrderBox" Content="Tab order follows structure" IsChecked="True" Margin="0,0,16,4"/>
+                    <CheckBox x:Name="TooltipsBox" Content="Describe fields (from their labels)" IsChecked="True" Margin="0,0,16,4"/>
+                    <CheckBox x:Name="LinksBox" Content="Describe links" IsChecked="True" Margin="0,0,16,4"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button x:Name="FixBtn" Content="Fix &amp; Recheck" Padding="16,4" Margin="0,0,8,0" IsDefault="True"
+                    Style="{StaticResource ModernButton}" Click="Fix_Click"/>
+            <Button Content="Recheck" Padding="16,4" Margin="0,0,8,0" Click="Recheck_Click"/>
+            <Button Content="Close" Padding="16,4" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
