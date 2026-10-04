@@ -220,7 +220,7 @@ public partial class PdfViewerControl : UserControl
             RefreshPage();
             // Flat form: tell the user how to fill it (the boxes are only drawn on the page).
             if (_vm is { AllFields.Count: 0 })
-                ToastService.Instance.Info("This PDF has no fillable fields — click inside any box to type in it, like Acrobat Fill & Sign.");
+                ToastService.Instance.Info("This PDF has no fillable fields — click inside any box to type in it, or use Edit → Detect Fields to make it fillable.");
         }));
     }
 

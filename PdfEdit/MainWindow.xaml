@@ -1320,6 +1320,14 @@
                 <!-- Form Field Creator group -->
                 <Fluent:RibbonGroupBox Header="Add Form Field"
                                         AutomationProperties.Name="Add new form fields to PDF">
+                    <Fluent:Button Header="Detect&#x0a;Fields"
+                                   Command="{Binding DetectFieldsCommand}"
+                                   ToolTip="Find the boxes, squares and blank lines of a flat form and make them fillable fields, named from their labels"
+                                   AutomationProperties.Name="Detect form fields">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:ToggleButton Header="Edit Fields"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=EditFields, Mode=TwoWay}"

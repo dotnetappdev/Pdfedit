@@ -198,6 +198,7 @@ public partial class AllToolsPanel : UserControl
                 Description = "Add, move and edit form fields",
                 Actions = new()
                 {
+                    Page("Detect fields automatically", vm.DetectFieldsCommand, "Turn a flat form's boxes, squares and blank lines into fillable fields"),
                     Tool("Edit fields (move / resize / align)", "EditFields"),
                     Tool("Add text field", "AddTextField"),
                     Tool("Add checkbox", "AddCheckbox"),
