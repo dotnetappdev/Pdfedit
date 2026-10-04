@@ -247,6 +247,7 @@ jobs:
       # ── MSIX package ────────────────────────────────────────────────────
       - name: Find makeappx.exe
         if: ${{ github.event.inputs.build_msix != 'false' }}
+        continue-on-error: true
         id: makeappx
         shell: pwsh
         run: |
@@ -260,6 +261,7 @@ jobs:
 
       - name: Find signtool.exe
         if: ${{ github.event.inputs.build_msix != 'false' }}
+        continue-on-error: true
         id: signtool
         shell: pwsh
         run: |
@@ -272,6 +274,8 @@ jobs:
 
       - name: Build MSIX package
         if: ${{ github.event.inputs.build_msix != 'false' }}
+        # An MSIX problem must not stop the EXE / ZIP release from being published.
+        continue-on-error: true
         shell: pwsh
         env:
           MAKEAPPX: ${{ steps.makeappx.outputs.path }}
