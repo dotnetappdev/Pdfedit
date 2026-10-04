@@ -256,6 +256,8 @@ public partial class PdfViewerControl : UserControl
             case nameof(MainViewModel.CurrentFontSize):
                 _focusedAnnotationTb.FontSize = _vm.CurrentFontSize * Scale;
                 _focusedAnnotation.FontSize = _vm.CurrentFontSize;
+                // Bigger text must not be cut off by its box (auto-size / wrap-and-grow).
+                FitAnnotationBox(_focusedAnnotation, _focusedAnnotationTb);
                 break;
             case nameof(MainViewModel.CurrentFontFamily):
                 _focusedAnnotationTb.FontFamily = new FontFamily(_vm.CurrentFontFamily);
@@ -335,6 +337,13 @@ public partial class PdfViewerControl : UserControl
         panel.Children.Add(MakeToolbarBtn("\uE7AD", "Rotate 90°", RotateFocusedAnnotation,
             fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
         panel.Children.Add(MakeToolbarBtn("VA", "Character spacing", ToggleSpacingPopup, fontSize: 11));
+
+        // How the box follows the text: auto-size, wrap and grow, or fixed (text only, not marks)
+        Border? fitBtn = null;
+        fitBtn = MakeToolbarBtn("\uE740", "Fit box to text — auto-size, wrap or fixed", () => ShowFitMenu(fitBtn!),
+            fontSize: 13, fontFamily: "Segoe MDL2 Assets");
+        _fitTextBtn = fitBtn;
+        panel.Children.Add(fitBtn);
 
         // Swap: cycles a placed mark through ✓ ✕ ○ — ● (only shown for marks)
         _swapMarkBtn = MakeToolbarBtn("", "Swap mark", SwapFocusedMark,
@@ -429,6 +438,7 @@ public partial class PdfViewerControl : UserControl
 
     private static readonly string[] MarkGlyphs = { "✓", "✕", "○", "—", "●" };
     private Border? _swapMarkBtn;
+    private Border? _fitTextBtn;
 
     private static bool IsMarkGlyph(string? text) => text != null && MarkGlyphs.Contains(text);
 
@@ -543,6 +553,8 @@ public partial class PdfViewerControl : UserControl
         PositionAnnotationToolbar(left, top, tb.Width);
         if (_swapMarkBtn != null)
             _swapMarkBtn.Visibility = IsMarkGlyph(_focusedAnnotation?.Text) ? Visibility.Visible : Visibility.Collapsed;
+        if (_fitTextBtn != null)
+            _fitTextBtn.Visibility = IsMarkGlyph(_focusedAnnotation?.Text) ? Visibility.Collapsed : Visibility.Visible;
         _annotToolbar.Visibility = Visibility.Visible;
 
         ShowResizeThumb(tb);
@@ -632,6 +644,8 @@ public partial class PdfViewerControl : UserControl
         thumb.DragCompleted += (_, _) =>
         {
             if (_focusedAnnotation == null) return;
+            // Made the box too small for its text: grow it back to fit (unless "Fixed box size").
+            if (_focusedAnnotationTb != null) FitAnnotationBox(_focusedAnnotation, _focusedAnnotationTb);
             _vm?.NotifyAnnotationEdited(_focusedAnnotation);
             // Reposition toolbar (width may have changed)
             if (_focusedAnnotationTb != null)

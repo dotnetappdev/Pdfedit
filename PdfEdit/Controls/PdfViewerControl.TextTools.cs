@@ -50,7 +50,7 @@ public partial class PdfViewerControl
 
         tb.TextChanged += (_, _) =>
         {
-            if (ann.AutoSize && !isMark) AutoFitAnnotation(ann, tb);
+            if (!isMark) FitAnnotationBox(ann, tb);
             UpdateSpacingOverlay(ann, tb);
             _vm?.NotifyAnnotationEdited(ann);
         };
@@ -68,6 +68,87 @@ public partial class PdfViewerControl
     }
 
     // ── Auto-size (Acrobat grows the box as you type) ─────────────────────────
+
+    /// <summary>Applies the annotation's fit mode: auto-size, or wrap and grow the height.</summary>
+    private void FitAnnotationBox(FreeTextAnnotation ann, TextBox tb)
+    {
+        if (IsMarkGlyph(ann.Text)) return;
+        if (ann.AutoSize) AutoFitAnnotation(ann, tb);
+        else if (ann.GrowToFit) GrowAnnotationToText(ann, tb);
+    }
+
+    /// <summary>
+    /// Wrapped text taller than its box: grow the box downwards (top edge fixed) so nothing is
+    /// cut off. Never shrinks — a box sized by hand keeps at least its size.
+    /// </summary>
+    private void GrowAnnotationToText(FreeTextAnnotation ann, TextBox tb)
+    {
+        if (_vm?.Document == null || double.IsNaN(tb.Width) || tb.Width <= 0) return;
+        string text = string.IsNullOrEmpty(tb.Text) ? "M" : tb.Text;
+        var typeface = new Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch);
+        double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var ft = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+            typeface, tb.FontSize, Brushes.Black, dpi)
+        {
+            // TextBox chrome: border + the text view's own margin.
+            MaxTextWidth = Math.Max(1, tb.Width - tb.BorderThickness.Left - tb.BorderThickness.Right - tb.Padding.Left - tb.Padding.Right - 6),
+        };
+        double lineHeight = tb.FontSize * tb.FontFamily.LineSpacing;
+        double needed = Math.Max(ft.Height, lineHeight) + tb.BorderThickness.Top + tb.BorderThickness.Bottom + 4;
+        if (needed <= tb.Height + 0.5) return;
+
+        bool quarter = IsQuarterTurn(ann.RotationAngle);
+        double oldHeightPt = ann.Height;
+        tb.Height = needed;
+        if (quarter) ann.Width = needed / Scale;
+        else
+        {
+            ann.Height = needed / Scale;
+            ann.Bottom -= ann.Height - oldHeightPt;
+        }
+        if (_focusedAnnotationTb == tb)
+        {
+            PositionResizeThumb(tb);
+            ShowAnnotationToolbar(tb);
+        }
+    }
+
+    /// <summary>The toolbar's "Fit" menu: how the box follows the text.</summary>
+    private void ShowFitMenu(FrameworkElement anchor)
+    {
+        var ann = _focusedAnnotation;
+        var tb = _focusedAnnotationTb;
+        if (ann == null || tb == null) return;
+
+        void Set(bool autoSize, bool grow)
+        {
+            ann.AutoSize = autoSize;
+            ann.GrowToFit = grow;
+            tb.TextWrapping = autoSize ? TextWrapping.NoWrap : TextWrapping.Wrap;
+            FitAnnotationBox(ann, tb);
+            _vm?.NotifyAnnotationEdited(ann);
+            tb.Focus();
+        }
+
+        var cm = new ContextMenu { PlacementTarget = anchor, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        var auto = new MenuItem { Header = "Auto-size box to text", IsCheckable = true, IsChecked = ann.AutoSize,
+                                  ToolTip = "The box grows and shrinks to fit the text on one line per paragraph" };
+        auto.Click += (_, _) => Set(true, ann.GrowToFit);
+        var wrap = new MenuItem { Header = "Wrap text, grow box to fit", IsCheckable = true, IsChecked = !ann.AutoSize && ann.GrowToFit,
+                                  ToolTip = "Keep the width; wrap the text and make the box taller so nothing is cut off" };
+        wrap.Click += (_, _) => Set(false, true);
+        var fixedBox = new MenuItem { Header = "Fixed box size", IsCheckable = true, IsChecked = !ann.AutoSize && !ann.GrowToFit,
+                                      ToolTip = "Keep the box exactly as sized — text that does not fit is cut off" };
+        fixedBox.Click += (_, _) => Set(false, false);
+        var now = new MenuItem { Header = "Fit box to text now" };
+        now.Click += (_, _) => { AutoFitAnnotation(ann, tb); _vm?.NotifyAnnotationEdited(ann); tb.Focus(); };
+        cm.Items.Add(auto);
+        cm.Items.Add(wrap);
+        cm.Items.Add(fixedBox);
+        cm.Items.Add(new Separator());
+        cm.Items.Add(now);
+        cm.IsOpen = true;
+    }
 
     private void AutoFitAnnotation(FreeTextAnnotation ann, TextBox tb)
     {
@@ -250,7 +331,7 @@ public partial class PdfViewerControl
         tb.TextWrapping = IsMarkGlyph(ann.Text) || ann.AutoSize ? TextWrapping.NoWrap : TextWrapping.Wrap;
         tb.IsReadOnly = ann.IsLocked || IsMarkGlyph(ann.Text);
 
-        if (ann.AutoSize && !IsMarkGlyph(ann.Text)) AutoFitAnnotation(ann, tb);
+        if (!IsMarkGlyph(ann.Text)) FitAnnotationBox(ann, tb);
         UpdateSpacingOverlay(ann, tb);
         if (_focusedAnnotationTb == tb) ShowAnnotationToolbar(tb);
     }

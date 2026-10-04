@@ -3144,6 +3144,13 @@
                                                 <CheckBox IsChecked="{Binding SelectedAnnotationAutoSize}" VerticalAlignment="Center" Margin="3,0" ToolTip="Grow / shrink the box to fit the text" AutomationProperties.Name="Auto-size"/>
                                             </Border>
                                         </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Wrap &amp; grow" Style="{StaticResource PropGridNameText}"/></Border>
+                                            <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
+                                                <CheckBox IsChecked="{Binding SelectedAnnotationGrowToFit}" VerticalAlignment="Center" Margin="3,0" ToolTip="When not auto-sized: wrap the text and make the box taller so text is never cut off" AutomationProperties.Name="Wrap and grow"/>
+                                            </Border>
+                                        </Grid>
                                         <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Layout (pt)" Style="{StaticResource PropGridCategoryText}"/></Border>
                                         <Grid>
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

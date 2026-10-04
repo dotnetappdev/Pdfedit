@@ -243,7 +243,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         foreach (var n in new[] { nameof(HasSelectedAnnotation), nameof(SelectedAnnotationText), nameof(SelectedAnnotationRotation),
                                   nameof(SelectedAnnotationCharSpacing), nameof(SelectedAnnotationX), nameof(SelectedAnnotationY),
                                   nameof(SelectedAnnotationWidth), nameof(SelectedAnnotationHeight), nameof(SelectedAnnotationLocked),
-                                  nameof(SelectedAnnotationAutoSize) })
+                                  nameof(SelectedAnnotationAutoSize), nameof(SelectedAnnotationGrowToFit) })
             OnPropertyChanged(n);
         NotifySelectedDateProperties();
     }
@@ -312,6 +312,12 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         get => _selectedAnnotation?.Height ?? 0;
         set => EditSelectedAnnotation(a => { a.Height = Math.Max(4, value); a.AutoSize = false; });
+    }
+
+    public bool SelectedAnnotationGrowToFit
+    {
+        get => _selectedAnnotation?.GrowToFit ?? true;
+        set => EditSelectedAnnotation(a => a.GrowToFit = value);
     }
 
     public bool SelectedAnnotationAutoSize

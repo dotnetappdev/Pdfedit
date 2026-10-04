@@ -45,6 +45,10 @@ public class FreeTextAnnotation
     // wrapped layout, and it turns off once the box is resized by hand.
     public bool AutoSize { get; set; }
 
+    // When the box is not auto-sized: wrap the text at the box width and grow the box downwards so
+    // text that is bigger than the box is never cut off (toolbar "Fit" menu → "Wrap text, grow box").
+    public bool GrowToFit { get; set; } = true;
+
     // Text that is a date (Date stamp, or typed as one): the date and the .NET pattern it is shown
     // in, so the Properties panel can switch format / change day, month, year (null otherwise).
     public DateTime? DateValue { get; set; }
