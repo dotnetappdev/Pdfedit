@@ -19,7 +19,7 @@ public sealed class NewField
     public double Height { get; set; }
     public bool Include { get; set; } = true;
 
-    // Richer fields (from imported Word forms and Google Forms)
+    // Richer fields (from imported Word forms)
     /// <summary>Choices for a dropdown (combo box).</summary>
     public List<string>? Choices { get; set; }
     /// <summary>Option button: the group it belongs to, and this button's value.</summary>

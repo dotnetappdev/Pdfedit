@@ -114,7 +114,7 @@ public partial class AllToolsPanel : UserControl
                 Description = "Google Drive and OneDrive",
                 Actions = new()
                 {
-                    Run("Open from Google Drive or OneDrive", vm.OpenFromCloudCommand, "Save uploads your changes back"),
+                    Run("Import from Google Drive or OneDrive", vm.OpenFromCloudCommand, "PDFs, Word files and Google Docs, brought in as PDFs"),
                     Page("Save to Google Drive or OneDrive", vm.SaveToCloudCommand),
                 } },
             new() { Title = "Combine files", Glyph = "", Accent = Color.FromRgb(0x8C, 0x7C, 0xFF),

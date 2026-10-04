@@ -30,8 +30,8 @@ public partial class CloudBrowserDialog : Window
     {
         InitializeComponent();
         _save = save;
-        Title = save ? "Save to cloud storage" : "Open from cloud storage";
-        OkBtn.Content = save ? "Save here" : "Open";
+        Title = save ? "Save to cloud storage" : "Import from cloud storage";
+        OkBtn.Content = save ? "Save here" : "Import";
         SavePanel.Visibility = save ? Visibility.Visible : Visibility.Collapsed;
         NewFolderBtn.Visibility = save ? Visibility.Visible : Visibility.Collapsed;
         NameBox.Text = suggestedName ?? "document.pdf";

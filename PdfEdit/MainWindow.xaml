@@ -109,10 +109,10 @@
                                                 Command="{Binding ImportGoogleLinkCommand}"
                                                 AutomationProperties.Name="Import from a Google Docs link"/>
 
-                    <Fluent:MenuItem Header="Open from Cloud…"
+                    <Fluent:MenuItem Header="Import from Cloud…"
                                                 KeyTip="D"
                                                 Command="{Binding OpenFromCloudCommand}"
-                                                AutomationProperties.Name="Open from Google Drive or OneDrive"/>
+                                                AutomationProperties.Name="Import from Google Drive or OneDrive"/>
 
                     <Fluent:MenuItem Header="Save to Cloud…"
                                                 KeyTip="W"
@@ -318,10 +318,10 @@
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Open from&#x0a;Cloud"
+                    <Fluent:Button Header="Import from&#x0a;Cloud"
                                    Command="{Binding OpenFromCloudCommand}"
-                                   ToolTip="Open a PDF from Google Drive or OneDrive; Save uploads your changes back"
-                                   AutomationProperties.Name="Open from cloud storage">
+                                   ToolTip="Import a PDF, Word file or Google Doc from Google Drive or OneDrive (documents come in as PDFs)"
+                                   AutomationProperties.Name="Import from cloud storage">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="32" Height="32"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
