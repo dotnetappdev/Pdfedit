@@ -156,6 +156,8 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Send for signature (email)", vm.RequestSignaturesCommand, "Opens an email to the signer and shows the file to attach"),
                     Tool("Sign yourself", "Signature"),
+                    Page("Sign with a certificate (Digital ID)…", vm.CertSignCommand, "A digital signature that proves who signed and that nothing changed"),
+                    Run("Check signatures", vm.VerifySignaturesCommand),
                     Run("Check required fields", vm.ValidateRequiredFieldsCommand),
                 } },
             new() { Title = "Automate", Glyph = "\uE9F5", Accent = Color.FromRgb(0xFF, 0xB0, 0x3B),

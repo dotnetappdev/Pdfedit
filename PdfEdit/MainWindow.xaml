@@ -982,6 +982,16 @@
                                    ToolTip="Create your initials, then click the page to place them" AutomationProperties.Name="New Initials…">
                         <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Certificate…" Size="Middle" Command="{Binding CertSignCommand}"
+                                   ToolTip="Sign with a certificate (Digital ID) — proves who signed and that nothing changed afterwards"
+                                   AutomationProperties.Name="Sign with a certificate">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEB95;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Signatures" Size="Middle" Command="{Binding VerifySignaturesCommand}"
+                                   ToolTip="Check the digital signatures in this PDF"
+                                   AutomationProperties.Name="Check signatures">
+                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
                     <Fluent:ToggleButton Header="Stamp" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Stamp, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}" CommandParameter="Stamp"

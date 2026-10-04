@@ -2255,7 +2255,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool == ActiveTool.Link)
+        if (tool is ActiveTool.Link or ActiveTool.DigitalSignature)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
             if (!IsOnPage(posOnPage)) return;
@@ -2551,8 +2551,11 @@ public partial class PdfViewerControl : UserControl
                     if (pageNum >= 1 && pageNum <= _vm.Document.PageSizes.Count)
                     {
                         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
-                        _ = _vm.AddLinkInteractiveAsync(canvasX / Scale, pageH - (canvasY / Scale) - (rectH / Scale),
-                            rectW / Scale, rectH / Scale);
+                        double l = canvasX / Scale, b = pageH - (canvasY / Scale) - (rectH / Scale);
+                        if (_vm.ActiveTool == ActiveTool.DigitalSignature)
+                            _ = _vm.CompleteCertificateSignAsync(pageNum, l, b, rectW / Scale, rectH / Scale);
+                        else
+                            _ = _vm.AddLinkInteractiveAsync(l, b, rectW / Scale, rectH / Scale);
                     }
                 }
             }

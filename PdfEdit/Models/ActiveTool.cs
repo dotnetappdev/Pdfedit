@@ -45,5 +45,7 @@ public enum ActiveTool
     // Acrobat Pro "Measure" tools
     MeasureDistance, MeasurePerimeter, MeasureArea,
     // Acrobat comment tools: caret to insert text, strike + caret to replace text
-    InsertText, ReplaceText
+    InsertText, ReplaceText,
+    // Drag the box for a certificate (digital) signature
+    DigitalSignature
 }
