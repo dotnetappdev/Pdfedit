@@ -14,7 +14,7 @@ API keys are stored in `%AppData%\PdfEdit\settings.json` on your machine and are
 ## What it can do
 
 - **Chat** answers questions about the open document, citing pages you can click to jump to. Replies can be copied or added to the page as a note.
-- **Select Text** (press S): drag over a passage and choose Explain, Summarise, Rewrite, Translate or Ask. Drag over a chart, table or scan and choose **Ask about this area** to send a picture of it.
+- **Select Text** (press Shift+S): drag over a passage and choose Explain, Summarise, Rewrite, Translate or Ask. Drag over a chart, table or scan and choose **Ask about this area** to send a picture of it.
 - **Changes on request**: ask it to fill fields, highlight or redact text, add notes or stamps, rotate or delete pages, or run PdfEdit commands ("compress this", "export to Word"). Each change appears as a card you Apply or Undo.
 - **Outline** writes a summary with section key points and page links in its own panel.
 - **Write** turns the document into an email, study notes, flashcards, a quiz, an FAQ, a list of actions and deadlines, or a plain-English version.

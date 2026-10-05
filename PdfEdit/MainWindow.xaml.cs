@@ -19,38 +19,8 @@ public partial class MainWindow : RibbonWindow
         InitializeComponent();
         ApplyDockTheme(AppSettings.Current.Theme);
         Loaded += OnWindowLoaded;
-        KeyDown += OnToolShortcutKeyDown;
+        KeyDown += OnPlainShortcutKeyDown;
         ContentRendered += OnFirstRendered;
-    }
-
-    /// <summary>
-    /// Single-letter tool shortcuts for the live view. Only fires when nothing that accepts typing
-    /// has keyboard focus, so letters typed into form fields, annotations, design text and ribbon
-    /// boxes always reach them.
-    /// </summary>
-    private void OnToolShortcutKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Handled || System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.None) return;
-        if (DataContext is not MainViewModel vm || vm.IsDesignMode) return;
-        if (Controls.PdfViewerControl.IsTextInputFocused()) return;
-
-        ActiveTool? tool = e.Key switch
-        {
-            System.Windows.Input.Key.D => ActiveTool.DateStamp,
-            System.Windows.Input.Key.K => ActiveTool.Checkmark,
-            System.Windows.Input.Key.H => ActiveTool.Hand,
-            System.Windows.Input.Key.V => ActiveTool.Select,
-            System.Windows.Input.Key.T => ActiveTool.AddText,
-            System.Windows.Input.Key.M => ActiveTool.Stamp,
-            System.Windows.Input.Key.E => ActiveTool.EditFields,
-            System.Windows.Input.Key.S => ActiveTool.SelectText,
-            _ => null,
-        };
-        if (tool is { } t && vm.HasDocument)
-        {
-            vm.ActiveTool = t;
-            e.Handled = true;
-        }
     }
 
     /// <summary>Matches the AvalonDock docking chrome to the current app theme.</summary>
@@ -104,6 +74,9 @@ public partial class MainWindow : RibbonWindow
         Height = s.WindowHeight;
         if (s.WindowMaximized)
             WindowState = WindowState.Maximized;
+
+        ApplyShortcuts();
+        ShortcutService.Changed += ApplyShortcuts;
 
         // Sync tab selection ↔ IsDesignMode in both directions
         if (VM != null)

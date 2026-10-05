@@ -1294,6 +1294,12 @@ public partial class MainViewModel : INotifyPropertyChanged
         {
             var dlg = new Dialogs.ShortcutsDialog { Owner = Application.Current.MainWindow };
             dlg.ShowDialog();
+            if (dlg.ChangeRequested)
+            {
+                var settings = new Dialogs.SettingsWindow { Owner = Application.Current.MainWindow };
+                settings.ShowTab("Keyboard");
+                settings.ShowDialog();
+            }
         });
         SendAiChatCommand = new AsyncRelayCommand(SendAiChatAsync, () => !_isAiRunning);
         ClearAiChatCommand = new RelayCommand(() =>

@@ -21,39 +21,8 @@
         <vm:MainViewModel/>
     </Fluent:RibbonWindow.DataContext>
 
-    <!-- ── Keyboard shortcuts ──────────────────────────────────────────────── -->
-    <Fluent:RibbonWindow.InputBindings>
-        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
-        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
-        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
-        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseTabCommand}"/>
-        <KeyBinding Key="Tab" Modifiers="Control" Command="{Binding NextTabCommand}"/>
-        <KeyBinding Key="Tab" Modifiers="Control+Shift" Command="{Binding PreviousTabCommand}"/>
-        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintCommand}"/>
-        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}"/>
-        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}"/>
-        <KeyBinding Key="Right" Modifiers="Control" Command="{Binding NextPageCommand}"/>
-        <KeyBinding Key="Left" Modifiers="Control" Command="{Binding PreviousPageCommand}"/>
-        <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ZoomInCommand}"/>
-        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ZoomOutCommand}"/>
-        <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ZoomFitCommand}"/>
-        <KeyBinding Key="D1" Modifiers="Control" Command="{Binding ZoomActualCommand}"/>
-        <KeyBinding Key="W" Modifiers="Control+Shift" Command="{Binding ZoomWidthCommand}"/>
-        <KeyBinding Key="OemCloseBrackets" Modifiers="Control" Command="{Binding RotatePageCWCommand}"/>
-        <KeyBinding Key="OemOpenBrackets" Modifiers="Control" Command="{Binding RotatePageCCWCommand}"/>
-        <KeyBinding Key="F" Modifiers="Control" Command="{Binding ToggleSearchCommand}"/>
-        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding ToggleSearchCommand}"/>
-        <KeyBinding Key="G" Modifiers="Control" Command="{Binding GoToPageCommand}"/>
-        <KeyBinding Key="OemPlus" Modifiers="Control+Shift" Command="{Binding IncreaseUiScaleCommand}"/>
-        <KeyBinding Key="OemMinus" Modifiers="Control+Shift" Command="{Binding DecreaseUiScaleCommand}"/>
-        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoAnnotationCommand}"/>
-        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoAnnotationCommand}"/>
-        <KeyBinding Key="E" Modifiers="Control+Shift" Command="{Binding ExportXfdfCommand}"/>
-        <KeyBinding Key="I" Modifiers="Control+Shift" Command="{Binding ImportXfdfCommand}"/>
-        <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
-        <!-- Single-letter tool shortcuts (D K H V T M E) are handled in MainWindow.OnToolShortcutKeyDown:
-             as KeyBindings they fired even while typing in a form field and swallowed the letter. -->
-    </Fluent:RibbonWindow.InputBindings>
+    <!-- Keyboard shortcuts are built from Services/ShortcutService (customisable in Settings → Keyboard):
+         see MainWindow.Shortcuts.cs. -->
 
     <!-- AdornerDecorator: a layer above everything for the guided tour -->
     <AdornerDecorator>
@@ -1868,7 +1837,7 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="SelectText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Select text or an area to copy, highlight or ask the AI about (S)"
+                                         ToolTip="Select text or an area to copy, highlight or ask the AI about (Shift+S)"
                                          AutomationProperties.Name="Select text tool"/>
                     <Fluent:ToggleButton Header="Highlight"
                                          GroupName="ToolGroup"
@@ -2618,7 +2587,7 @@
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=SelectText, Mode=TwoWay}"
                                          Command="{Binding SetToolCommand}" CommandParameter="SelectText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Drag over text or an area, then Explain, Summarise, Rewrite, Translate or Ask (S)"
+                                         ToolTip="Drag over text or an area, then Explain, Summarise, Rewrite, Translate or Ask (Shift+S)"
                                          AutomationProperties.Name="Select text and ask AI">
                         <Fluent:ToggleButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>

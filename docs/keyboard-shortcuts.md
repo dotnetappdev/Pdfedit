@@ -2,7 +2,9 @@
 
 [← Back to README](../README.md)
 
-Press F1 in the app to see this list. Single-letter shortcuts are ignored while you're typing in a field or text box.
+Press F1 in the app to see the shortcuts in use. Single-letter shortcuts are ignored while you're typing in a field or text box.
+
+**Change any of them** in Settings → Keyboard: pick a command, click in the box, press the keys and click Assign (or Add to keep the old keys too). Remove, Default and Reset all undo your changes. Your shortcuts are saved in `settings.json`.
 
 ## Files and pages
 
@@ -33,10 +35,10 @@ Press F1 in the app to see this list. Single-letter shortcuts are ignored while 
 | Tool | Key | Tool | Key |
 |------|-----|------|-----|
 | Select | V | Hand | H |
-| Add text | T | Signature | S |
+| Add text | T (or A) | Signature | S |
 | Date | D | Stamp | M |
 | Checkmark | K | Edit fields | E |
 | Rectangle / Ellipse / Line | R / E / L | Arrow / Pen / Image | A / P / I |
-| Table | B | Select text (Live view) | S |
-
-In the Design canvas, S is the signature tool.
+| Table | B | Select text (Live view) | Shift+S |
+| Cross / Fill text field | X / F | Highlight / Draw / Sticky note | I / W / N |
+| Slide show | F5 | | |

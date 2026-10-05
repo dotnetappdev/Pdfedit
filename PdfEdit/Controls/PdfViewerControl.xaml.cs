@@ -3092,14 +3092,8 @@ public partial class PdfViewerControl : UserControl
         // Tool shortcuts
         switch (e.Key)
         {
-            case Key.H: _vm.ActiveTool = ActiveTool.Hand;     e.Handled = true; break;
-            case Key.Z: _vm.ActiveTool = ActiveTool.Zoom;     e.Handled = true; break;
-            case Key.A: _vm.ActiveTool = ActiveTool.AddText;  e.Handled = true; break;
-            case Key.D: _vm.ActiveTool = ActiveTool.DateStamp; e.Handled = true; break;
-            case Key.C: _vm.ActiveTool = ActiveTool.Checkmark; e.Handled = true; break;
-            case Key.X: _vm.ActiveTool = ActiveTool.XMark;    e.Handled = true; break;
-            case Key.S: _vm.ActiveTool = ActiveTool.Signature; e.Handled = true; break;
-            case Key.F: _vm.ActiveTool = ActiveTool.TextFill;  e.Handled = true; break;
+            // Single-letter tool keys come from the shortcut list (MainWindow.Shortcuts.cs),
+            // so they can be changed in Settings → Keyboard.
             // Page navigation via arrow keys when hand tool active
             case Key.Right:
             case Key.Down:

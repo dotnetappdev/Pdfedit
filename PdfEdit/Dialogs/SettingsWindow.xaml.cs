@@ -273,7 +273,9 @@ public partial class SettingsWindow : Window
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
         s.DateFormat = GetSelectedDateFormat();
 
+        ShortcutsEditor.Commit();
         s.Save();
+        ShortcutService.RaiseChanged();
         DialogResult = true;
         Close();
     }
@@ -420,6 +422,7 @@ public partial class SettingsWindow : Window
     public void ShowTab(string name)
     {
         if (name == "Cloud") SettingsTabs.SelectedItem = CloudTab;
+        if (name == "Keyboard") SettingsTabs.SelectedItem = KeyboardTab;
     }
 
     private void StoreCloudCredentials()

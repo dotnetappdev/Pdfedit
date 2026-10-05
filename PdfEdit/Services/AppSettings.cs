@@ -36,6 +36,10 @@ public class AppSettings
     /// <summary>Upload a cloud file back automatically when it's saved.</summary>
     public bool CloudAutoUpload { get; set; } = true;
 
+    // ── Keyboard ─────────────────────────────────────────────────────────────
+    /// <summary>Shortcuts the user changed: action id → keys ("Ctrl+Shift+K", several joined by ", ", or "" for none).</summary>
+    public Dictionary<string, string> Shortcuts { get; set; } = new();
+
     // ── Reading views ────────────────────────────────────────────────────────
     public bool NightMode { get; set; }
     public bool TwoPageView { get; set; }

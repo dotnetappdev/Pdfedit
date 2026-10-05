@@ -1,6 +1,7 @@
 <Window x:Class="PdfEdit.Dialogs.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:PdfEdit.Controls"
         Title="Settings — PdfEdit"
         Width="540" Height="480"
         WindowStartupLocation="CenterOwner"
@@ -356,6 +357,10 @@
             </TabItem>
 
             <!-- ── OCR Tab ───────────────────────────────────────────────── -->
+            <TabItem Header="Keyboard" x:Name="KeyboardTab" AutomationProperties.Name="Keyboard shortcut settings">
+                <controls:ShortcutEditor x:Name="ShortcutsEditor"/>
+            </TabItem>
+
             <TabItem Header="Cloud" x:Name="CloudTab" AutomationProperties.Name="Cloud storage settings">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                     <StackPanel>
