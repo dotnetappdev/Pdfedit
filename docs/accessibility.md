@@ -4,6 +4,8 @@
 
 The size, screen reader and narration options are in **Settings → Accessibility**.
 
+<img src="screenshots/settings-accessibility.png" width="480" alt="Settings, Accessibility tab">
+
 ## Size
 
 Every size setting is in one place, at the top of **Settings → Accessibility**:

@@ -11,6 +11,7 @@ node docs/screenshots/src/render.mjs fill-stamps.png # just one
 - `ribbons.mjs` lists each ribbon tab's groups and buttons. Keep it in step with `PdfEdit/MainWindow.xaml` when the ribbon changes.
 - `ui.mjs` holds the dark-theme colours (from `Themes/DarkTheme.xaml`) and the window, ribbon and panel pieces.
 - `icons.mjs` has the line icons.
+- `settings.mjs` has the themes gallery (`themes.png`) and the Settings → Accessibility tab.
 - `scenes.mjs` has the page artwork, window layout and the screenshot scenes.
 - `render.mjs` writes the PNGs.
 - `gif.mjs` writes `fill-and-sign.gif` (needs `ffmpeg`): `node docs/screenshots/src/gif.mjs`

@@ -4,6 +4,7 @@ import path from 'path';
 import { chromium } from './browser.mjs';
 import { CSS } from './ui.mjs';
 import { FILL_SIGN, HOME, TOOLS, EDIT } from './ribbons.mjs';
+import { sceneThemes, sceneAccessibility } from './settings.mjs';
 import { OUT, ribbonStrip, sceneTextFit, sceneMarks, sceneDate, sceneStamps, sceneSign } from './scenes.mjs';
 
 // ── Render ──────────────────────────────────────────────────────────────────
@@ -17,6 +18,8 @@ const shots = [
   ['fill-date-format.png', sceneDate()],
   ['fill-stamps.png', sceneStamps()],
   ['fill-signature.png', sceneSign()],
+  ['themes.png', sceneThemes()],
+  ['settings-accessibility.png', sceneAccessibility()],
 ];
 const only = process.argv.slice(2);
 const browser = await chromium.launch();

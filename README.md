@@ -32,6 +32,17 @@ PdfEdit fills in and signs forms, marks up documents, rearranges pages and build
 
 ![Filling in and signing a flat PDF form in Live View](docs/screenshots/fill-and-sign.gif)
 
+<table>
+  <tr>
+    <td width="66%"><img src="docs/screenshots/themes.png" alt="PdfEdit in each of its twelve themes"></td>
+    <td width="34%"><img src="docs/screenshots/settings-accessibility.png" alt="Settings, Accessibility tab: sizes, screen reader and narration"></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/themes.md">Themes</a>: follows Windows, or pick your own</td>
+    <td align="center"><a href="docs/accessibility.md">Accessibility</a>: sizes, screen reader and narration</td>
+  </tr>
+</table>
+
 See the [documentation](docs/) for the full list and [screenshots](docs/screenshots.md) of every tool.
 
 ## Quick start

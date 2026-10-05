@@ -72,6 +72,12 @@ Signing: pick a saved signature or initials and click where they go.
 |---|---|
 | ![The All tools panel](screenshots/all-tools.png) | ![The high contrast theme](screenshots/high-contrast-theme.png) |
 
+![PdfEdit in each of its themes](screenshots/themes.png)
+
+| Settings → Accessibility |
+|---|
+| <img src="screenshots/settings-accessibility.png" width="480" alt="Sizes, screen reader and narration settings"> |
+
 Sample PDFs (a two-page invoice, a landscape report, a certificate and a mixed-orientation document) are in the `Samples` folder:
 
 ![Browsing the sample PDFs](screenshots/samples-v1.gif)
