@@ -55,11 +55,13 @@ public partial class MainViewModel
         try
         {
             StatusText = "Reading aloud… (View → Stop reading)";
+            NarrationService.Stop();
+            var settings = AppSettings.Current;
             await ReadAloudService.Instance.ReadAsync(pages, p => Application.Current.Dispatcher.Invoke(() =>
             {
                 if (toEnd) CurrentPageIndex = p - 1;
                 StatusText = $"Reading page {p} aloud…";
-            }));
+            }), settings.NarrationVoice, settings.NarrationRate, settings.NarrationVolume);
             StatusText = "Finished reading.";
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Read aloud isn't available — check that a Windows voice is installed (Settings → Time & language → Speech).", ex); }

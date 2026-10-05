@@ -49,8 +49,20 @@ public partial class App : Application
             ErrorDialog.Show("Failed to apply interface font sizes. Defaults will be used.", ex);
         }
 
+        try
+        {
+            // Icon size and the menu text size for the ribbon's own icons and menus.
+            InterfaceStyleService.Initialize();
+        }
+        catch (Exception ex)
+        {
+            ErrorDialog.Show("Failed to apply the icon size. The default size will be used.", ex);
+        }
+
         // Dark caption / window buttons on every window that follows the theme.
         TitleBarTheme.Register();
+        // Settings → Accessibility: speak focused controls and tooltips when that's turned on.
+        NarrationService.Register();
 
         MainWindow mainWindow;
         try

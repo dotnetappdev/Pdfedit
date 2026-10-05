@@ -78,6 +78,7 @@ public partial class MainWindow : RibbonWindow
 
         ApplyShortcuts();
         ShortcutService.Changed += ApplyShortcuts;
+        InitAccessibility();
 
         // Sync tab selection ↔ IsDesignMode in both directions
         if (VM != null)

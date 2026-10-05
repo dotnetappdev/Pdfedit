@@ -252,7 +252,7 @@
                                    AutomationProperties.Name="Open PDF"
                                    AutomationProperties.HelpText="Opens a file picker to select a PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
@@ -262,7 +262,7 @@
                                    ToolTip="Scan from a TWAIN / WIA scanner with preview — make a new PDF or add pages (OCR optional)"
                                    AutomationProperties.Name="Scan from scanner">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FE;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8FE;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
@@ -271,7 +271,7 @@
                                    ToolTip="Remove blank pages, straighten crooked scans, split two-page spreads"
                                    AutomationProperties.Name="Clean up scans">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7C5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7C5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
@@ -280,7 +280,7 @@
                                    ToolTip="Create PDFs from Word, Excel or PowerPoint files (uses Microsoft Office or LibreOffice)"
                                    AutomationProperties.Name="Create PDF from Office files">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="From Google&#x0a;Docs"
@@ -288,7 +288,7 @@
                                    ToolTip="Paste a Google Docs, Sheets or Slides link to import it as a PDF"
                                    AutomationProperties.Name="Import from Google Docs">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import from&#x0a;Cloud"
@@ -296,7 +296,7 @@
                                    ToolTip="Import a PDF, Word file or Google Doc from Google Drive or OneDrive (documents come in as PDFs)"
                                    AutomationProperties.Name="Import from cloud storage">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Save to&#x0a;Cloud"
@@ -304,7 +304,7 @@
                                    ToolTip="Save this PDF to Google Drive or OneDrive (or upload your changes to a cloud file)"
                                    AutomationProperties.Name="Save to cloud storage">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
@@ -315,7 +315,7 @@
                                    IsEnabled="{Binding HasDocument}"
                                    AutomationProperties.Name="Save PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
 
@@ -327,7 +327,7 @@
                                    ToolTip="Save as a new file (Ctrl+Shift+S)"
                                    AutomationProperties.Name="Save as new file">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
 
@@ -339,7 +339,7 @@
                                    ToolTip="Print document (Ctrl+P)"
                                    AutomationProperties.Name="Print document">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
 
@@ -351,7 +351,7 @@
                                    ToolTip="Close the current document (Ctrl+W)"
                                    AutomationProperties.Name="Close document">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
 
@@ -362,7 +362,7 @@
                                    ToolTip="Open settings and preferences"
                                    AutomationProperties.Name="Open settings">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -378,7 +378,7 @@
                                    ToolTip="Paste from clipboard (Ctrl+V)"
                                    AutomationProperties.Name="Paste from clipboard">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32">
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}">
                                 <Canvas Width="20" Height="20">
                                     <!-- Clipboard board -->
                                     <Path Stroke="{DynamicResource ForegroundBrush}" StrokeThickness="1.3" Fill="Transparent"
@@ -405,7 +405,7 @@
                                    ToolTip="Cut to clipboard (Ctrl+X)"
                                    AutomationProperties.Name="Cut to clipboard">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16">
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}">
                                 <Canvas Width="20" Height="20">
                                     <!-- Handle rings -->
                                     <Path Fill="{DynamicResource ForegroundBrush}"
@@ -427,7 +427,7 @@
                                    ToolTip="Copy to clipboard (Ctrl+C)"
                                    AutomationProperties.Name="Copy to clipboard">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16">
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}">
                                 <Canvas Width="20" Height="20">
                                     <!-- Back page -->
                                     <Path Stroke="{DynamicResource ForegroundBrush}" StrokeThickness="1.4"
@@ -456,7 +456,7 @@
                                    ToolTip="Go to first page"
                                    AutomationProperties.Name="Go to first page">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE892;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE892;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Previous"
@@ -467,7 +467,7 @@
                                    ToolTip="Previous page (Ctrl+Left)"
                                    AutomationProperties.Name="Previous page">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Next"
@@ -478,7 +478,7 @@
                                    ToolTip="Next page (Ctrl+Right)"
                                    AutomationProperties.Name="Next page">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Last"
@@ -489,7 +489,7 @@
                                    ToolTip="Go to last page"
                                    AutomationProperties.Name="Go to last page">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE893;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE893;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
 
@@ -514,7 +514,7 @@
                                    AutomationProperties.Name="Open global search"
                                    AutomationProperties.HelpText="Search all form fields and annotations">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -530,7 +530,7 @@
                                    ToolTip="Delete the current page from the document"
                                    AutomationProperties.Name="Delete current page">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Insert Before"
@@ -541,7 +541,7 @@
                                    ToolTip="Insert a blank page before the current page"
                                    AutomationProperties.Name="Insert blank page before">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Duplicate Page"
@@ -551,7 +551,7 @@
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Duplicate the current page and insert it right after">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Insert After"
@@ -562,7 +562,7 @@
                                    ToolTip="Insert a blank page after the current page"
                                    AutomationProperties.Name="Insert blank page after">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Move Up"
@@ -573,7 +573,7 @@
                                    ToolTip="Move this page one position earlier in the document"
                                    AutomationProperties.Name="Move page up">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Move Down"
@@ -584,7 +584,7 @@
                                    ToolTip="Move this page one position later in the document"
                                    AutomationProperties.Name="Move page down">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Extract Page"
@@ -595,7 +595,7 @@
                                    ToolTip="Save the current page as a separate PDF"
                                    AutomationProperties.Name="Extract current page to PDF">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export as Image"
@@ -606,7 +606,7 @@
                                    ToolTip="Export current page as PNG or JPEG image"
                                    AutomationProperties.Name="Export page as image">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Split PDF"
@@ -616,7 +616,7 @@
                                    ToolTip="Split every page into a separate PDF file"
                                    AutomationProperties.Name="Split PDF into separate pages">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Merge PDFs"
@@ -626,7 +626,7 @@
                                    ToolTip="Combine this PDF with other PDFs, appending them at the end"
                                    AutomationProperties.Name="Merge PDFs">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Insert PDF"
@@ -636,7 +636,7 @@
                                    ToolTip="Insert another PDF at the beginning, before/after the current page, or at the end"
                                    AutomationProperties.Name="Insert PDF at position">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Delete Range"
@@ -647,7 +647,7 @@
                                    ToolTip="Delete a range of pages from the document (first–last)"
                                    AutomationProperties.Name="Delete page range">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Extract Range"
@@ -658,7 +658,7 @@
                                    ToolTip="Extract a range of pages to a new PDF file"
                                    AutomationProperties.Name="Extract page range">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Compare PDFs"
@@ -668,7 +668,7 @@
                                    ToolTip="Compare this PDF with another file and show text differences page by page"
                                    AutomationProperties.Name="Compare PDFs">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Thumbnails"
@@ -678,7 +678,7 @@
                                    ToolTip="Show/hide page thumbnails panel"
                                    AutomationProperties.Name="Toggle page thumbnails">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Watermark"
@@ -688,7 +688,7 @@
                                    ToolTip="Watermark &amp; background — text (e.g. a diagonal DRAFT) or an image, behind the text and fields or on top, on all or some pages, with a live preview"
                                    AutomationProperties.Name="Add watermark to PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Remove Watermark"
@@ -697,7 +697,7 @@
                                    ToolTip="Remove watermarks added by PdfEdit (undoable)"
                                    AutomationProperties.Name="Remove watermark">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Page Numbers"
@@ -707,7 +707,7 @@
                                    ToolTip="Add 'Page N of M' footer to all pages and save as a new file"
                                    AutomationProperties.Name="Add page numbers footer">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE80C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Compress"
@@ -717,7 +717,7 @@
                                    ToolTip="Re-save with maximum compression to reduce file size"
                                    AutomationProperties.Name="Compress PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export&#x0a;as Images"
@@ -727,7 +727,7 @@
                                    ToolTip="Export every page as a PNG image file into a chosen folder"
                                    AutomationProperties.Name="Export pages as PNG images">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -742,7 +742,7 @@
                                    ToolTip="Edit document metadata: title, author, subject, keywords"
                                    AutomationProperties.Name="Document properties">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Duplicate&#x0a;Page"
@@ -752,7 +752,7 @@
                                    ToolTip="Duplicate the current page and insert the copy immediately after it"
                                    AutomationProperties.Name="Duplicate current page">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Header /&#x0a;Footer"
@@ -762,7 +762,7 @@
                                    ToolTip="Add custom header and/or footer text to every page"
                                    AutomationProperties.Name="Add header and footer">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Bates&#x0a;Numbers"
@@ -772,7 +772,7 @@
                                    ToolTip="Add sequential Bates numbers (with prefix/suffix) to every page for legal document identification"
                                    AutomationProperties.Name="Add Bates numbers">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8D0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Crop&#x0a;Pages"
@@ -782,7 +782,7 @@
                                    ToolTip="Trim page margins by setting crop box margins (in points) on all pages"
                                    AutomationProperties.Name="Crop pages">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -797,7 +797,7 @@
                                    ToolTip="Encrypt the PDF with an open password and set permissions (printing, copying)"
                                    AutomationProperties.Name="Password protect PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Remove&#x0a;Password"
@@ -807,7 +807,7 @@
                                    ToolTip="Remove encryption from a PDF (requires the PDF to already be open/unlocked)"
                                    AutomationProperties.Name="Remove PDF password">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE785;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE785;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Remove Hidden&#x0a;Info"
@@ -815,7 +815,7 @@
                                    ToolTip="Remove metadata, scripts, attachments and (optionally) comments — Acrobat's Sanitize"
                                    AutomationProperties.Name="Remove hidden information">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -826,7 +826,7 @@
                                    ToolTip="Run steps (OCR, compress, watermark, flatten, numbering, password…) on many PDFs at once"
                                    AutomationProperties.Name="Batch process files">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Bulk&#x0a;Fill"
@@ -834,7 +834,7 @@
                                    ToolTip="Fill this form once per row of a CSV or Excel file — one PDF each"
                                    AutomationProperties.Name="Bulk fill from spreadsheet">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -852,7 +852,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Select — click fields or boxes to fill them, click placed text to edit (V)"
                                          AutomationProperties.Name="Select">
-                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
+                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Hand" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Hand, Mode=TwoWay}"
@@ -860,7 +860,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Hand — drag to pan the page; click links to open them (H)"
                                          AutomationProperties.Name="Hand">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7C9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7C9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Zoom" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Zoom, Mode=TwoWay}"
@@ -868,7 +868,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Marquee zoom — drag a rectangle to zoom in (Z)"
                                          AutomationProperties.Name="Zoom">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE71E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
@@ -896,7 +896,7 @@
                                          ToolTip="Date — click the page to stamp today's date (D)"
                                          AutomationProperties.Name="Add date">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Vertical Text" GroupName="ToolGroup" Size="Middle"
@@ -905,7 +905,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Vertical text — click the page to type text running top to bottom"
                                          AutomationProperties.Name="Vertical Text">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Fill Field" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TextFill, Mode=TwoWay}"
@@ -913,7 +913,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Fill text field — click a form field to type in it (F)"
                                          AutomationProperties.Name="Fill Field">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Checkbox" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CheckboxToggle, Mode=TwoWay}"
@@ -921,7 +921,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Toggle checkbox / radio button — click a check box or radio button"
                                          AutomationProperties.Name="Checkbox">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
@@ -1019,26 +1019,26 @@
                                          ToolTip="Sign — click a signature field or the page to place your signature (S)"
                                          AutomationProperties.Name="Sign document">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="New Signature…" Size="Middle" Command="{Binding NewSignatureCommand}"
                                    ToolTip="Draw, type or import a new signature, then click the page to place it" AutomationProperties.Name="New Signature…">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEE56;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEE56;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="New Initials…" Size="Middle" Command="{Binding NewInitialsCommand}"
                                    ToolTip="Create your initials, then click the page to place them" AutomationProperties.Name="New Initials…">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Certificate…" Size="Middle" Command="{Binding CertSignCommand}"
                                    ToolTip="Sign with a certificate (Digital ID) — proves who signed and that nothing changed afterwards"
                                    AutomationProperties.Name="Sign with a certificate">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEB95;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEB95;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Signatures" Size="Middle" Command="{Binding VerifySignaturesCommand}"
                                    ToolTip="Check the digital signatures in this PDF"
                                    AutomationProperties.Name="Check signatures">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:ToggleButton Header="Stamp" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Stamp, Mode=TwoWay}"
@@ -1046,7 +1046,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Stamp — click the page to place the chosen stamp (M)"
                                          AutomationProperties.Name="Stamp">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <ComboBox ItemsSource="{Binding StampsView}"
                               SelectedItem="{Binding SelectedStampDefinition, Mode=TwoWay}"
@@ -1078,7 +1078,7 @@
                     </ComboBox>
                     <Fluent:Button Header="Custom Stamp…" Size="Middle" Command="{Binding AddCustomStampCommand}"
                                    ToolTip="Create a stamp with your own text" AutomationProperties.Name="Create custom stamp">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -1091,7 +1091,7 @@
                                          ToolTip="Show a coloured highlight over all fillable form fields (Adobe 'Highlight Existing Fields')"
                                          AutomationProperties.Name="Highlight existing fields">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="Clear All"
@@ -1101,7 +1101,7 @@
                                    ToolTip="Clear the values of all form fields"
                                    AutomationProperties.Name="Clear all fields">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Delete Field"
@@ -1110,7 +1110,7 @@
                                    ToolTip="Delete the selected form field (or right-click a field on the page)"
                                    AutomationProperties.Name="Delete selected field">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1122,7 +1122,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Sticky note — click the page to add a comment"
                                          AutomationProperties.Name="Sticky Note">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Highlight" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"
@@ -1130,7 +1130,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Highlight text — drag over text (I)"
                                          AutomationProperties.Name="Highlight">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Draw" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=DrawFreehand, Mode=TwoWay}"
@@ -1138,7 +1138,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Draw freehand — sign or annotate with the pen (W)"
                                          AutomationProperties.Name="Draw">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Eraser" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Eraser, Mode=TwoWay}"
@@ -1146,7 +1146,7 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Eraser — click a drawing to remove it"
                                          AutomationProperties.Name="Eraser">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Link" GroupName="ToolGroup" Size="Middle"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Link, Mode=TwoWay}"
@@ -1154,26 +1154,26 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Link — drag a rectangle to add a link; click a link to edit or remove it"
                                          AutomationProperties.Name="Link">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Finish" AutomationProperties.Name="Finish group">
                     <Fluent:Button Header="Save" Size="Large" Command="{Binding SaveCommand}"
                                    ToolTip="Save the filled and signed PDF (Ctrl+S)" AutomationProperties.Name="Save">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Flatten &amp; Save" Size="Middle" Command="{Binding FlattenAndSaveCommand}"
                                    ToolTip="Make fields and annotations part of the page so they can't be changed, then save" AutomationProperties.Name="Flatten &amp; Save">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Print" Size="Middle" Command="{Binding PrintCommand}"
                                    ToolTip="Print the document (Ctrl+P)" AutomationProperties.Name="Print">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Undo" Size="Middle" Command="{Binding UndoCommand}"
                                    ToolTip="Undo (Ctrl+Z)" AutomationProperties.Name="Undo">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -1191,7 +1191,7 @@
                                    ToolTip="Cut (Ctrl+X)"
                                    AutomationProperties.Name="Cut selection">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Copy"
@@ -1200,7 +1200,7 @@
                                    ToolTip="Copy (Ctrl+C)"
                                    AutomationProperties.Name="Copy selection">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Paste"
@@ -1209,7 +1209,7 @@
                                    ToolTip="Paste (Ctrl+V)"
                                    AutomationProperties.Name="Paste from clipboard">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1223,7 +1223,7 @@
                                    ToolTip="Undo last annotation action (Ctrl+Z)"
                                    AutomationProperties.Name="Undo last annotation">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Redo"
@@ -1233,7 +1233,7 @@
                                    ToolTip="Redo last undone action (Ctrl+Y)"
                                    AutomationProperties.Name="Redo last annotation">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Undo Ann."
@@ -1242,7 +1242,7 @@
                                    ToolTip="Undo annotation (Ctrl+Z)"
                                    AutomationProperties.Name="Undo annotation">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Redo Ann."
@@ -1251,7 +1251,7 @@
                                    ToolTip="Redo annotation (Ctrl+Y)"
                                    AutomationProperties.Name="Redo annotation">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1264,7 +1264,7 @@
                                    ToolTip="Delete selected annotation (Del)"
                                    AutomationProperties.Name="Delete selected annotation">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Find &amp;&#x0a;Highlight"
@@ -1273,7 +1273,7 @@
                                    ToolTip="Search for text in the PDF and add yellow highlight annotations on every match"
                                    AutomationProperties.Name="Find text and highlight all occurrences">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Clear All Fields"
@@ -1294,7 +1294,7 @@
                                    ToolTip="Import field values from TSV file"
                                    AutomationProperties.Name="Import form data from TSV">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import&#x0a;from JSON"
@@ -1304,7 +1304,7 @@
                                    ToolTip="Fill form fields from a JSON file with {fieldName: value} pairs"
                                    AutomationProperties.Name="Import form data from JSON">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export Data"
@@ -1315,7 +1315,7 @@
                                    ToolTip="Export field values to TSV file"
                                    AutomationProperties.Name="Export form data to TSV">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEDE1;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEDE1;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Flatten &amp; Save"
@@ -1325,7 +1325,7 @@
                                    ToolTip="Save PDF with fields baked in (non-editable)"
                                    AutomationProperties.Name="Flatten and save PDF">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1340,7 +1340,7 @@
                                    ToolTip="Find and replace text within form field values"
                                    AutomationProperties.Name="Find and replace in form fields">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Validate&#x0a;Required"
@@ -1350,7 +1350,7 @@
                                    ToolTip="Check that all required fields are filled in"
                                    AutomationProperties.Name="Validate required fields">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Archive (PDF/A)"
@@ -1360,7 +1360,7 @@
                                    ToolTip="Save as PDF 1.4 with archival metadata (PDF/A-like)"
                                    AutomationProperties.Name="Save as PDF/A archival format">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export Text"
@@ -1370,7 +1370,7 @@
                                    ToolTip="Extract all text from the PDF and save to a .txt file"
                                    AutomationProperties.Name="Export PDF text to TXT file">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export to&#x0a;Word"
@@ -1378,7 +1378,7 @@
                                    ToolTip="Save the text of every page as a Word document"
                                    AutomationProperties.Name="Export to Word">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export to&#x0a;Excel"
@@ -1386,7 +1386,7 @@
                                    ToolTip="Rebuild the tables and columns as an Excel workbook, with numbers as numbers"
                                    AutomationProperties.Name="Export to Excel">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export to&#x0a;PowerPoint"
@@ -1394,7 +1394,7 @@
                                    ToolTip="One slide per page"
                                    AutomationProperties.Name="Export to PowerPoint">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Extract&#x0a;Images"
@@ -1402,7 +1402,7 @@
                                    ToolTip="Save every picture in the PDF to a folder"
                                    AutomationProperties.Name="Extract images">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1415,7 +1415,7 @@
                                    ToolTip="Find the boxes, squares and blank lines of a flat form and make them fillable fields, named from their labels"
                                    AutomationProperties.Name="Detect form fields">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE773;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:ToggleButton Header="Edit Fields"
@@ -1427,7 +1427,7 @@
                                          ToolTip="Edit Fields (E) — click a form field to select it, drag to move, drag the handles to resize, arrow keys to nudge, Del to delete"
                                          AutomationProperties.Name="Edit form field layout">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Text Field"
@@ -1439,7 +1439,7 @@
                                          ToolTip="Add Text Field — drag a rectangle on the page to add a new editable text form field"
                                          AutomationProperties.Name="Add text form field">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xF003;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xF003;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Checkbox"
@@ -1451,7 +1451,7 @@
                                          ToolTip="Add Checkbox — drag a square on the page to add a new checkbox form field"
                                          AutomationProperties.Name="Add checkbox form field">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE73A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Combo Box"
@@ -1463,7 +1463,7 @@
                                          ToolTip="Add Combo Box — drag a rectangle on the page to add a new dropdown field"
                                          AutomationProperties.Name="Add combo box form field">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Radio Button"
@@ -1475,7 +1475,7 @@
                                          ToolTip="Add Radio Button — drag to add a radio button field (same group name = same group)"
                                          AutomationProperties.Name="Add radio button form field">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE915;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE915;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
@@ -1537,7 +1537,7 @@
                                    ToolTip="Zoom in (Ctrl++)"
                                    AutomationProperties.Name="Zoom in">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"
@@ -1548,7 +1548,7 @@
                                    ToolTip="Zoom out (Ctrl+-)"
                                    AutomationProperties.Name="Zoom out">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Fit Page"
@@ -1559,7 +1559,7 @@
                                    ToolTip="Fit whole page in window (Ctrl+0)"
                                    AutomationProperties.Name="Fit page to window">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Fit Width"
@@ -1570,7 +1570,7 @@
                                    ToolTip="Fit page width to window (Ctrl+Shift+W)"
                                    AutomationProperties.Name="Fit page width">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A0;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A0;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="100%"
@@ -1632,22 +1632,22 @@
                     <Fluent:Button Header="Slide&#x0a;Show" Command="{Binding SlideShowCommand}"
                                    ToolTip="Full screen, one page at a time (arrows to move, Esc to leave)"
                                    AutomationProperties.Name="Slide show">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE786;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE786;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:ToggleButton Header="Two Pages" Size="Middle" IsChecked="{Binding TwoPageView, Mode=TwoWay}"
                                          ToolTip="Show the next page beside this one" AutomationProperties.Name="Two-page view">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Night Mode" Size="Middle" IsChecked="{Binding NightMode, Mode=TwoWay}"
                                          ToolTip="Dark pages for reading at night (colours keep their hue)" AutomationProperties.Name="Night mode">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Theme" AutomationProperties.Name="Theme group">
                     <Fluent:DropDownButton x:Name="ThemeMenu" Header="Theme" ToolTip="Light, dark, high contrast, Office, Dracula, Nord… or follow Windows"
                                            DropDownOpened="ThemeMenu_Opened" AutomationProperties.Name="Choose a theme">
-                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
+                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
                         <Fluent:MenuItem x:Name="ThemeAccentItem" Header="Use my Windows accent colour" Click="ThemeAccent_Click" IsCheckable="True"/>
                     </Fluent:DropDownButton>
                 </Fluent:RibbonGroupBox>
@@ -1692,7 +1692,7 @@
                                    ToolTip="Add a bookmark for the current page"
                                    AutomationProperties.Name="Add bookmark to current page">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1706,7 +1706,7 @@
                                    ToolTip="Attach a file to this PDF document"
                                    AutomationProperties.Name="Attach file to PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1720,7 +1720,7 @@
                                    ToolTip="Export all annotations to an XFDF file — compatible with Adobe Acrobat and Foxit PDF"
                                    AutomationProperties.Name="Export annotations as XFDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import&#x0a;XFDF"
@@ -1729,7 +1729,7 @@
                                    ToolTip="Import annotations from an XFDF file exported by another PDF viewer"
                                    AutomationProperties.Name="Import annotations from XFDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Ann. Summary"
@@ -1739,7 +1739,7 @@
                                    ToolTip="Export a CSV summary of all annotations for review workflows"
                                    AutomationProperties.Name="Export annotation summary as CSV">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1748,41 +1748,41 @@
                 <Fluent:RibbonGroupBox Header="Read Aloud" AutomationProperties.Name="Read aloud group">
                     <Fluent:Button Header="Read Page" Size="Middle" Command="{Binding ReadPageAloudCommand}"
                                    ToolTip="Read this page aloud with a Windows voice" AutomationProperties.Name="Read page aloud">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Read to End" Size="Middle" Command="{Binding ReadToEndAloudCommand}"
                                    ToolTip="Read from this page to the end of the document" AutomationProperties.Name="Read to end aloud">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Stop Reading" Size="Middle" Command="{Binding StopReadingCommand}"
                                    ToolTip="Stop reading aloud" AutomationProperties.Name="Stop reading">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Find &amp; Compare" AutomationProperties.Name="Find and compare group">
                     <Fluent:Button Header="Search&#x0a;Folder" Command="{Binding SearchFolderCommand}"
                                    ToolTip="Find text in every PDF in a folder" AutomationProperties.Name="Search PDFs in a folder">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEC50;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEC50;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Visual&#x0a;Compare" Command="{Binding VisualCompareCommand}"
                                    ToolTip="Compare two PDFs page by page — added, removed and changed content in colour" AutomationProperties.Name="Visual compare">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Help" AutomationProperties.Name="Help group">
                     <Fluent:Button Header="Tip of the Day" Size="Middle" Click="TipOfTheDay_Click"
                                    ToolTip="A useful tip about PdfEdit, one at a time" AutomationProperties.Name="Tip of the Day">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE82F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE82F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Take the Tour" Size="Middle" Click="TakeTour_Click"
                                    ToolTip="A quick walk round the main parts of the window" AutomationProperties.Name="Take the tour">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Shortcuts" Size="Middle" Command="{Binding ShowShortcutsCommand}"
                                    ToolTip="Every keyboard shortcut (F1)" AutomationProperties.Name="Keyboard shortcuts">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -1794,7 +1794,7 @@
                                    ToolTip="Show page count, word count, annotation count, and file size"
                                    AutomationProperties.Name="Show document statistics">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Accessibility&#x0a;Check"
@@ -1802,7 +1802,7 @@
                                    ToolTip="Check the PDF works with screen readers and keyboards, and fix the common problems"
                                    AutomationProperties.Name="Accessibility checker">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE776;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE776;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -1895,7 +1895,7 @@
                                    ToolTip="Permanently burn all redaction boxes into the PDF (irreversible)"
                                    AutomationProperties.Name="Apply redactions">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32">
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}">
                                 <StackPanel>
                                     <Rectangle Width="24" Height="16" Fill="#CC1A1A"/>
                                     <TextBlock Text="APPLY" FontSize="7" Foreground="White" HorizontalAlignment="Center" Margin="0,-14,0,0"/>
@@ -1917,7 +1917,7 @@
                                          ToolTip="Freehand Draw — drag to draw ink strokes on the page"
                                          AutomationProperties.Name="Freehand draw tool">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED63;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xED63;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Link"
@@ -1929,7 +1929,7 @@
                                          ToolTip="Link — drag a rectangle to add a link (web page, email, phone or page). With this tool, click a link to edit or remove it."
                                          AutomationProperties.Name="Hyperlink annotation tool">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="Remove Links"
@@ -1946,7 +1946,7 @@
                                          ToolTip="Sticky Note — click page to place a comment annotation"
                                          AutomationProperties.Name="Sticky note tool">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Insert Text" Size="Middle"
@@ -1989,7 +1989,7 @@
                                          ToolTip="Rectangle — drag to draw a rectangle annotation"
                                          AutomationProperties.Name="Draw rectangle annotation">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Ellipse"
@@ -2001,7 +2001,7 @@
                                          ToolTip="Ellipse — drag to draw an ellipse annotation"
                                          AutomationProperties.Name="Draw ellipse annotation">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEA3A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEA3A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Arrow"
@@ -2013,7 +2013,7 @@
                                          ToolTip="Arrow — drag to draw an arrow annotation"
                                          AutomationProperties.Name="Draw arrow annotation">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEBD4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Callout"
@@ -2025,7 +2025,7 @@
                                          ToolTip="Callout — drag a box, then type text for a callout annotation"
                                          AutomationProperties.Name="Draw callout annotation">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Line" Size="Middle"
@@ -2085,7 +2085,7 @@
                                          ToolTip="Eraser — click or drag over annotations to erase them"
                                          AutomationProperties.Name="Eraser tool">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xED60;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
@@ -2102,7 +2102,7 @@
                                          ToolTip="Distance — drag to measure between two points"
                                          AutomationProperties.Name="Distance tool">
                         <Fluent:ToggleButton.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE1D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE1D9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Perimeter" Size="Middle"
@@ -2464,7 +2464,7 @@
                                                   CommandParameter="Left"
                                                   IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Left}"
                                                   AutomationProperties.Name="Align text left">
-                                <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
+                                <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
                             </Fluent:ToggleButton>
                             <!-- Center -->
                             <Fluent:ToggleButton Size="Small" Width="28" Margin="2,0"
@@ -2473,7 +2473,7 @@
                                                   CommandParameter="Center"
                                                   IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Center}"
                                                   AutomationProperties.Name="Center text">
-                                <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
+                                <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
                             </Fluent:ToggleButton>
                             <!-- Right -->
                             <Fluent:ToggleButton Size="Small" Width="28" Margin="2,0"
@@ -2482,7 +2482,7 @@
                                                   CommandParameter="Right"
                                                   IsChecked="{Binding CurrentTextAlignment, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Right}"
                                                   AutomationProperties.Name="Align text right">
-                                <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
+                                <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="12"/></Viewbox>
                             </Fluent:ToggleButton>
                             <!-- Force Uppercase -->
                             <Fluent:ToggleButton Header="AA" Size="Small" Width="32" Margin="6,0,0,0"
@@ -2541,7 +2541,7 @@
                                    ToolTip="Clear the values of all form fields"
                                    AutomationProperties.Name="Clear all form fields">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Delete Field"
@@ -2551,7 +2551,7 @@
                                    AutomationProperties.Name="Delete selected field"
                                    AutomationProperties.HelpText="Removes the currently selected form field from the document">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#D24040"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#D24040"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import Data"
@@ -2578,7 +2578,7 @@
                                    ToolTip="Save PDF with form fields editable"
                                    AutomationProperties.Name="Save filled PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Flatten &amp; Save"
@@ -2601,16 +2601,16 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Drag over text or an area, then Explain, Summarise, Rewrite, Translate or Ask (Shift+S)"
                                          AutomationProperties.Name="Select text and ask AI">
-                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
+                        <Fluent:ToggleButton.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:ToggleButton.LargeIcon>
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="Outline" Command="{Binding GenerateSummaryCommand}"
                                    ToolTip="A summary outline with key points and page links, in its own panel"
                                    AutomationProperties.Name="Generative summary outline">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:DropDownButton Header="Write" ToolTip="Write something from this document"
                                            IsEnabled="{Binding HasDocument}" AutomationProperties.Name="Write from document">
-                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
+                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
                         <Fluent:MenuItem Header="Email about this document" Tag="email" Click="WritePreset_Click"/>
                         <Fluent:MenuItem Header="Study notes" Tag="notes" Click="WritePreset_Click"/>
                         <Fluent:MenuItem Header="Flashcards" Tag="flashcards" Click="WritePreset_Click"/>
@@ -2623,24 +2623,24 @@
                     <Fluent:Button Header="Ask by&#x0a;Voice" Click="AskByVoice_Click"
                                    ToolTip="Click, then speak your question"
                                    AutomationProperties.Name="Ask by voice">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE720;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE720;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Documents" AutomationProperties.Name="AI document tools group">
                     <Fluent:Button Header="Translate&#x0a;PDF" Command="{Binding TranslatePdfCommand}"
                                    ToolTip="A translated copy that keeps the layout"
                                    AutomationProperties.Name="Translate PDF">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8C1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Ask Across&#x0a;PDFs" Command="{Binding AskAcrossPdfsCommand}"
                                    ToolTip="Ask one question about several PDFs or a whole folder; answers cite file and page"
                                    AutomationProperties.Name="Ask across PDFs">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Mind&#x0a;Map" Command="{Binding MindMapCommand}"
                                    ToolTip="The document as a mind map; click a topic to go to its page"
                                    AutomationProperties.Name="Mind map">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -2651,7 +2651,7 @@
                                    ToolTip="Show AI Chat panel"
                                    AutomationProperties.Name="Open AI chat panel">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE99A;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Clear Chat"
@@ -2673,7 +2673,7 @@
                                    ToolTip="AI reads the document text and fills all form fields intelligently"
                                    AutomationProperties.Name="Smart fill from document">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Summarize"
@@ -2717,7 +2717,7 @@
                                    ToolTip="Store your name, address, NI number and more for auto-fill"
                                    AutomationProperties.Name="Manage personal profiles">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Quick Fill"
@@ -2726,7 +2726,7 @@
                                    ToolTip="Fill matching form fields from the selected profile instantly"
                                    AutomationProperties.Name="Quick fill from profile">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:ComboBox Header="Profile"
@@ -2743,7 +2743,7 @@
                                    ToolTip="Add your Claude or OpenAI API key in Settings → AI"
                                    AutomationProperties.Name="Configure AI API keys">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -2761,7 +2761,7 @@
                                    ToolTip="Switch back to PDF viewer"
                                    AutomationProperties.Name="Switch to PDF view">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xEA5E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEA5E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Design View"
@@ -2769,7 +2769,7 @@
                                    ToolTip="Switch to Design Canvas"
                                    AutomationProperties.Name="Switch to design canvas">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -2782,7 +2782,7 @@
                                    ToolTip="Open a blank design canvas to build a PDF from scratch"
                                    AutomationProperties.Name="New design canvas">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Export PDF"
@@ -2791,7 +2791,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Export design to PDF">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE78C;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Open as PDF"
@@ -2801,7 +2801,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Open design in PDF viewer">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Import PDF Page"
@@ -2810,14 +2810,14 @@
                                    ToolTip="Replace the canvas with an editable reconstruction of the current PDF page (text, images, and form fields as movable elements). Positions and fonts are approximate — this re-derives content from the page, it doesn't extract the original source objects."
                                    AutomationProperties.Name="Import current PDF page into design">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Undo" Click="DesignUndo_Click" Size="Middle" ToolTip="Undo (Ctrl+Z)" AutomationProperties.Name="Undo">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Redo" Click="DesignRedo_Click" Size="Middle" ToolTip="Redo (Ctrl+Y)" AutomationProperties.Name="Redo">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -2830,7 +2830,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Save design">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Load Design"
@@ -2838,7 +2838,7 @@
                                    ToolTip="Open a previously saved .pdfdesign file"
                                    AutomationProperties.Name="Load design">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -2852,7 +2852,7 @@
                                    ToolTip="Load a professional invoice template"
                                    AutomationProperties.Name="Invoice template">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Letter"
@@ -2860,42 +2860,42 @@
                                    ToolTip="Load a formal letter template"
                                    Size="Middle"
                                    AutomationProperties.Name="Letter template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8F3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Form"
                                    Tag="Form" Click="DesignTemplate_Click"
                                    ToolTip="Load a generic form template"
                                    Size="Middle"
                                    AutomationProperties.Name="Form template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Cert."
                                    Tag="Certificate" Click="DesignTemplate_Click"
                                    ToolTip="Load a certificate template"
                                    Size="Middle"
                                    AutomationProperties.Name="Certificate template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Business Card"
                                    Tag="BusinessCard" Click="DesignTemplate_Click"
                                    ToolTip="Load a business card template (85×54 mm)"
                                    Size="Middle"
                                    AutomationProperties.Name="Business card template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8AA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8AA;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Resume"
                                    Tag="Resume" Click="DesignTemplate_Click"
                                    ToolTip="Load a professional resume/CV template"
                                    Size="Middle"
                                    AutomationProperties.Name="Resume template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Flyer"
                                    Tag="Flyer" Click="DesignTemplate_Click"
                                    ToolTip="Load a promotional flyer template"
                                    Size="Middle"
                                    AutomationProperties.Name="Flyer template">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -2908,7 +2908,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Select tool">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Text Box"
@@ -2917,7 +2917,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Text tool">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Rectangle"
@@ -2926,7 +2926,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Rectangle tool">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE7C4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7C4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Ellipse"
@@ -2935,7 +2935,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Ellipse tool">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xF138;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xF138;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Table"
@@ -2944,7 +2944,7 @@
                                    IsEnabled="{Binding IsDesignMode}"
                                    AutomationProperties.Name="Table tool">
                         <Fluent:Button.LargeIcon>
-                            <Viewbox Width="32" Height="32"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="Line"
@@ -2954,7 +2954,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Line tool">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xF4BC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xF4BC;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Arrow"
@@ -2964,7 +2964,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Arrow tool">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Pen"
@@ -2974,7 +2974,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Pen / freehand tool">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Image"
@@ -2984,7 +2984,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Insert image">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Check ✓"
@@ -2994,7 +2994,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Insert checkmark">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="✓" FontSize="14" Foreground="#007A45"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="✓" FontSize="14" Foreground="#007A45"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="X Mark ✗"
@@ -3004,7 +3004,7 @@
                                    Size="Middle"
                                    AutomationProperties.Name="Insert X mark">
                         <Fluent:Button.Icon>
-                            <Viewbox Width="16" Height="16"><TextBlock Text="✗" FontSize="14" Foreground="#C0392B"/></Viewbox>
+                            <Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="✗" FontSize="14" Foreground="#C0392B"/></Viewbox>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -3033,21 +3033,21 @@
                                          Size="Middle" ToolTip="Wrap text within the element's width (applies to Text, Text Field and Memo)"
                                          AutomationProperties.Name="Wrap text"/>
                     <Fluent:Button Header="Left"    Size="Middle" Tag="Left"    Click="TextAlign_Click" AutomationProperties.Name="Align left">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Center"  Size="Middle" Tag="Center"  Click="TextAlign_Click" AutomationProperties.Name="Center text">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Right"   Size="Middle" Tag="Right"   Click="TextAlign_Click" AutomationProperties.Name="Align right">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Text Color" Size="Middle" Tag="TextColor" Click="DesignColor_Click"
                                    ToolTip="Set text color" AutomationProperties.Name="Text color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8D3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Highlight" Size="Middle" Tag="TextBgColor" Click="DesignColor_Click"
                                    ToolTip="Set text highlight / background color" AutomationProperties.Name="Text highlight color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -3074,18 +3074,18 @@
                                     AutomationProperties.Name="Element opacity"/>
                     <Fluent:Button Header="Fill Color"   Size="Middle" Tag="FillColor"   Click="DesignColor_Click"
                                    ToolTip="Set shape fill color" AutomationProperties.Name="Fill color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE771;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE771;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Stroke Color" Size="Middle" Tag="StrokeColor" Click="DesignColor_Click"
                                    ToolTip="Set shape stroke (border) color" AutomationProperties.Name="Stroke color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:ToggleButton Header="Lock"
                                          IsChecked="{Binding DesignCanvas.ElementLocked}"
                                          Size="Middle"
                                          ToolTip="Lock selected element to prevent accidental movement"
                                          AutomationProperties.Name="Lock element">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
@@ -3149,7 +3149,7 @@
                                     AutomationProperties.Name="Pen thickness"/>
                     <Fluent:Button Header="Pen Color" Size="Middle" Click="DesignPenColor_Click"
                                    ToolTip="Set freehand pen color" AutomationProperties.Name="Pen color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEDC6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -3158,22 +3158,22 @@
                                         IsEnabled="{Binding IsDesignMode}"
                                         AutomationProperties.Name="Alignment group">
                     <Fluent:Button Header="Lefts"       Size="Middle" Tag="AlignLeft"    Click="DesignAlign_Click" ToolTip="Align lefts — to the last-clicked element, or to the page edge when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Centres"     Size="Middle" Tag="AlignCenterH" Click="DesignAlign_Click" ToolTip="Align centres — to the last-clicked element, or centre on the page when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Rights"      Size="Middle" Tag="AlignRight"   Click="DesignAlign_Click" ToolTip="Align rights — to the last-clicked element, or to the page edge when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Tops"        Size="Middle" Tag="AlignTop"     Click="DesignAlign_Click" ToolTip="Align tops — to the last-clicked element, or to the page edge when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Middles"     Size="Middle" Tag="AlignCenterV" Click="DesignAlign_Click" ToolTip="Align middles — to the last-clicked element, or centre on the page when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8E4;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Bottoms"     Size="Middle" Tag="AlignBottom"  Click="DesignAlign_Click" ToolTip="Align bottoms — to the last-clicked element, or to the page edge when one element is selected">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                                     <Fluent:Button Header="Space Across" Size="Middle" Tag="DistributeHorizontally" Click="DesignAlign_Click" ToolTip="Distribute horizontally — equal gaps (select 3+ elements)">
                         <Fluent:Button.Icon><TextBlock Text="⋯" FontSize="13" Foreground="{DynamicResource ForegroundBrush}"/></Fluent:Button.Icon>
@@ -3201,27 +3201,27 @@
                                         AutomationProperties.Name="Arrange group">
                     <Fluent:Button Header="Bring Forward" Click="BringForward_Click" Size="Middle"
                                    ToolTip="Move element one layer up" AutomationProperties.Name="Bring forward">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Send Backward" Click="SendBackward_Click" Size="Middle"
                                    ToolTip="Move element one layer down" AutomationProperties.Name="Send backward">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="To Front" Click="BringToFront_Click" Size="Middle"
                                    ToolTip="Bring element to front" AutomationProperties.Name="Bring to front">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="To Back" Click="SendToBack_Click" Size="Middle"
                                    ToolTip="Send element to back" AutomationProperties.Name="Send to back">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Duplicate" Click="DesignDuplicate_Click" Size="Middle"
                                    ToolTip="Duplicate selected element (Ctrl+D)" AutomationProperties.Name="Duplicate element">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Delete" Click="DeleteDesignElement_Click" Size="Middle"
                                    ToolTip="Delete selected element (Del)" AutomationProperties.Name="Delete element">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -3244,28 +3244,28 @@
                                          Size="Middle"
                                          ToolTip="Toggle grid overlay (20px)"
                                          AutomationProperties.Name="Toggle grid">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE80A;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:ToggleButton Header="Snap"
                                          IsChecked="{Binding DesignCanvas.SnapToGrid}"
                                          Size="Middle"
                                          ToolTip="Snap elements to grid while dragging"
                                          AutomationProperties.Name="Snap to grid">
-                        <Fluent:ToggleButton.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE7EF;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE7EF;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="Bg Color" Click="DesignBgColor_Click" Size="Middle"
                                    ToolTip="Set the page background color"
                                    AutomationProperties.Name="Page background color">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Zoom In"   Click="DesignZoomIn_Click"  Size="Middle" AutomationProperties.Name="Design zoom in">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Zoom Out"  Click="DesignZoomOut_Click" Size="Middle" AutomationProperties.Name="Design zoom out">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE71F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Fit"       Click="DesignZoomFit_Click" Size="Middle" ToolTip="Fit canvas to window" AutomationProperties.Name="Design zoom fit">
-                        <Fluent:Button.Icon><Viewbox Width="16" Height="16"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE9A6;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -3302,12 +3302,12 @@
                     <Fluent:Button Header="PNG" Size="Large" Click="DesignExportPng_Click"
                                    ToolTip="Export design canvas as PNG image"
                                    AutomationProperties.Name="Export design as PNG">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:Button Header="JPEG" Size="Large" Click="DesignExportJpeg_Click"
                                    ToolTip="Export design canvas as JPEG image"
                                    AutomationProperties.Name="Export design as JPEG">
-                        <Fluent:Button.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="28"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
@@ -4689,8 +4689,9 @@
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
             <StatusBarItem Grid.Column="0">
-                <TextBlock Text="{Binding StatusText}"
-                           AutomationProperties.Name="Status message"/>
+                <TextBlock x:Name="StatusMessageText" Text="{Binding StatusText}"
+                           AutomationProperties.Name="Status message"
+                           AutomationProperties.LiveSetting="Polite"/>
             </StatusBarItem>
             <!-- Clickable page counter: shows "Page X of Y", click to type a page number -->
             <StatusBarItem Grid.Column="1" Margin="8,0">

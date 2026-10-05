@@ -22,7 +22,7 @@ public sealed class ReadAloudService
         SpeechSynthesizer.AllVoices.Select(v => v.DisplayName).ToList();
 
     /// <summary>Reads the given pages' text in order (calls <paramref name="onPage"/> before each).</summary>
-    public async Task ReadAsync(IReadOnlyList<(int Page, string Text)> pages, Action<int>? onPage, string? voice = null, double rate = 1.0)
+    public async Task ReadAsync(IReadOnlyList<(int Page, string Text)> pages, Action<int>? onPage, string? voice = null, double rate = 1.0, double volume = 1.0)
     {
         Stop();
         var cts = _cts = new CancellationTokenSource();
@@ -33,6 +33,7 @@ public sealed class ReadAloudService
             var v = SpeechSynthesizer.AllVoices.FirstOrDefault(x => x.DisplayName == voice);
             if (v != null) synth.Voice = v;
             synth.Options.SpeakingRate = Math.Clamp(rate, 0.5, 3.0);
+            synth.Options.AudioVolume = Math.Clamp(volume, 0.0, 1.0);
             foreach (var (page, text) in pages)
             {
                 if (cts.IsCancellationRequested) break;

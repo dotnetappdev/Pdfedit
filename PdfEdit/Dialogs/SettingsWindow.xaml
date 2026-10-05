@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:PdfEdit.Controls"
         Title="Settings — PdfEdit"
-        Width="540" Height="480"
+        Width="580" Height="560"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource PanelBgBrush}"
@@ -112,7 +112,7 @@
             </TabItem>
 
             <!-- ── Fonts Tab (Visual Studio style) ───────────────────────── -->
-            <TabItem Header="Fonts"
+            <TabItem Header="Fonts" x:Name="FontsTab"
                      AutomationProperties.Name="Interface font settings">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
@@ -442,46 +442,108 @@
             </TabItem>
 
             <!-- ── Accessibility Tab ─────────────────────────────────────── -->
-            <TabItem Header="Accessibility"
+            <TabItem Header="Accessibility" x:Name="AccessibilityTab"
                      AutomationProperties.Name="Accessibility settings">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHead}" Text="FOCUS &amp; KEYBOARD"/>
-                        <CheckBox x:Name="HighContrastFocusCb"
+                        <TextBlock Style="{StaticResource SectionHead}" Text="SIZE" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Style="{StaticResource SettingLabel}" Text="Icon size:" Width="110"/>
+                            <ComboBox x:Name="IconSizeBox" Width="180" Height="30"
+                                      SelectionChanged="IconSizeBox_SelectionChanged"
+                                      AutomationProperties.Name="Icon size"
+                                      AutomationProperties.HelpText="Size of the ribbon and toolbar icons"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Style="{StaticResource SettingLabel}" Text="Menu text size:" Width="110"/>
+                            <ComboBox x:Name="MenuFontBox" Width="80" Height="30" IsEditable="True"
+                                      SelectionChanged="MenuFontBox_SelectionChanged"
+                                      LostFocus="MenuFontBox_LostFocus"
+                                      AutomationProperties.Name="Menu text size"
+                                      AutomationProperties.HelpText="Font size of right-click menus and the ribbon's drop-down menus"/>
+                        </StackPanel>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4">
+                            <Run Text="Text size for the ribbon, panels, status bar and dialogs is on the"/>
+                            <Hyperlink Click="OpenFontsTab_Click" AutomationProperties.Name="Open the Fonts tab">Fonts</Hyperlink>
+                            <Run Text="tab. Ctrl+Plus and Ctrl+Minus make the whole window bigger or smaller."/>
+                        </TextBlock>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="SCREEN READER"/>
+                        <TextBlock x:Name="ScreenReaderStatus" Foreground="{DynamicResource DimForegroundBrush}"
+                                   FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <CheckBox x:Name="AnnounceToScreenReaderCb" Margin="0,2"
+                                  Content="Tell my screen reader about status messages, page and tool changes"
+                                  AutomationProperties.Name="Send announcements to the screen reader"/>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Margin="0,8,0,2" Text="Announce:"/>
+                        <WrapPanel Margin="12,0,0,4">
+                            <CheckBox x:Name="AnnounceStatusCb" Content="Status messages" Margin="0,2,16,2"
+                                      AutomationProperties.Name="Announce status messages"/>
+                            <CheckBox x:Name="AnnouncePagesCb" Content="Page changes" Margin="0,2,16,2"
+                                      AutomationProperties.Name="Announce page changes"/>
+                            <CheckBox x:Name="AnnounceToolsCb" Content="Tool changes" Margin="0,2,16,2"
+                                      AutomationProperties.Name="Announce tool changes"/>
+                        </WrapPanel>
+                        <CheckBox x:Name="HighContrastFocusCb" Margin="0,4,0,2"
                                   Content="Show high-contrast focus indicators"
-                                  Foreground="{DynamicResource ForegroundBrush}"
-                                  FontSize="13" Margin="0,4,0,8"
                                   AutomationProperties.Name="High contrast focus indicators"/>
 
-                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="13"
-                                   FontWeight="SemiBold" Margin="0,12,0,6">Keyboard shortcuts</TextBlock>
-                        <Grid>
+                        <TextBlock Style="{StaticResource SectionHead}" Text="NARRATION"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"
+                                   Text="PdfEdit can read things out in a Windows voice, without a screen reader. The voice and speed are also used by View → Read Page."/>
+                        <CheckBox x:Name="NarrateAnnouncementsCb" Margin="0,2"
+                                  Content="Speak the announcements ticked above"
+                                  AutomationProperties.Name="Speak announcements aloud"/>
+                        <CheckBox x:Name="NarrateFocusCb" Margin="0,2"
+                                  Content="Speak buttons, boxes and menu items as I move to them with the keyboard"
+                                  AutomationProperties.Name="Speak the focused control"/>
+                        <CheckBox x:Name="NarrateTooltipsCb" Margin="0,2"
+                                  Content="Speak tooltips when I hover over a button"
+                                  AutomationProperties.Name="Speak tooltips"/>
+                        <CheckBox x:Name="NarrateQuietCb" Margin="0,2,0,8"
+                                  Content="Stay quiet while a screen reader is running"
+                                  AutomationProperties.Name="Stay quiet while a screen reader is running"/>
+                        <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Row="0" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+O" Margin="0,2"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Open file" Margin="0,2"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+S" Margin="0,2"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Save" Margin="0,2"/>
-                            <TextBlock Grid.Row="2" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+P" Margin="0,2"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Print" Margin="0,2"/>
-                            <TextBlock Grid.Row="3" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+Shift+F" Margin="0,2"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Global search" Margin="0,2"/>
-                            <TextBlock Grid.Row="4" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+Shift+=" Margin="0,2"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Increase UI scale" Margin="0,2"/>
-                            <TextBlock Grid.Row="5" Grid.Column="0" Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" Text="Ctrl+Shift+-" Margin="0,2"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" Foreground="{DynamicResource ForegroundBrush}" FontSize="12" Text="Decrease UI scale" Margin="0,2"/>
+                            <TextBlock Style="{StaticResource SettingLabel}" Text="Voice:"/>
+                            <ComboBox x:Name="VoiceBox" Grid.Column="1" Height="30" Margin="0,2"
+                                      AutomationProperties.Name="Narration voice"/>
+                            <Button Grid.Column="2" Content="Test" Padding="12,4" Margin="8,2,0,2"
+                                    Click="TestVoice_Click"
+                                    Background="{DynamicResource InputBgBrush}"
+                                    Foreground="{DynamicResource ForegroundBrush}"
+                                    BorderBrush="{DynamicResource InputBorderBrush}"
+                                    AutomationProperties.Name="Test the voice"/>
+                            <TextBlock Grid.Row="1" Style="{StaticResource SettingLabel}" Text="Speed:"/>
+                            <Slider x:Name="VoiceRateSlider" Grid.Row="1" Grid.Column="1" Minimum="0.5" Maximum="2.5"
+                                    TickFrequency="0.25" IsSnapToTickEnabled="True" Margin="0,6"
+                                    ValueChanged="VoiceRateSlider_ValueChanged"
+                                    AutomationProperties.Name="Speaking speed"/>
+                            <TextBlock x:Name="VoiceRateLabel" Grid.Row="1" Grid.Column="2" Margin="8,0,0,0"
+                                       VerticalAlignment="Center" FontSize="12"/>
+                            <TextBlock Grid.Row="2" Style="{StaticResource SettingLabel}" Text="Volume:"/>
+                            <Slider x:Name="VoiceVolumeSlider" Grid.Row="2" Grid.Column="1" Minimum="0.1" Maximum="1"
+                                    TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,6"
+                                    ValueChanged="VoiceVolumeSlider_ValueChanged"
+                                    AutomationProperties.Name="Speaking volume"/>
+                            <TextBlock x:Name="VoiceVolumeLabel" Grid.Row="2" Grid.Column="2" Margin="8,0,0,0"
+                                       VerticalAlignment="Center" FontSize="12"/>
                         </Grid>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="KEYBOARD"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" TextWrapping="Wrap">
+                            <Run Text="Everything in PdfEdit can be reached from the keyboard: Alt shows the ribbon's key tips, F1 lists the shortcuts, and you can change them on the"/>
+                            <Hyperlink Click="OpenKeyboardTab_Click" AutomationProperties.Name="Open the Keyboard tab">Keyboard</Hyperlink>
+                            <Run Text="tab."/>
+                        </TextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

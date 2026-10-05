@@ -121,6 +121,26 @@ public class AppSettings
 
     // ── Accessibility ────────────────────────────────────────────────────────
     public bool HighContrastFocusIndicators { get; set; }
+    /// <summary>Ribbon and toolbar icon size: "Small", "Normal", "Large" or "ExtraLarge".</summary>
+    public string IconSize { get; set; } = "Normal";
+
+    // What PdfEdit announces…
+    public bool AnnounceStatus { get; set; } = true;
+    public bool AnnouncePageChanges { get; set; } = true;
+    public bool AnnounceToolChanges { get; set; } = true;
+    // …and how: to a screen reader (Narrator, NVDA, JAWS) and/or with PdfEdit's own voice.
+    public bool AnnounceToScreenReader { get; set; } = true;
+    public bool NarrateAnnouncements { get; set; }
+    /// <summary>Speak the name of a button, box or menu item when it gets keyboard focus.</summary>
+    public bool NarrateFocus { get; set; }
+    /// <summary>Speak tooltips when they appear.</summary>
+    public bool NarrateTooltips { get; set; }
+    /// <summary>Keep PdfEdit's voice quiet while a screen reader is running, so nothing is said twice.</summary>
+    public bool NarrateOnlyWithoutScreenReader { get; set; } = true;
+    /// <summary>Windows voice for narration and Read Aloud; empty = the Windows default voice.</summary>
+    public string NarrationVoice { get; set; } = string.Empty;
+    public double NarrationRate { get; set; } = 1.0;
+    public double NarrationVolume { get; set; } = 1.0;
 
     // ── Recent files (max 12, newest first) ──────────────────────────────────
     public List<string> RecentFiles { get; set; } = new();

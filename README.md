@@ -27,6 +27,7 @@ PdfEdit fills in and signs forms, marks up documents, rearranges pages and build
 - **Cloud**: import from and save to Google Drive or OneDrive with your own app details.
 - **Automation**: batch-process a folder, fill a form from every row of a spreadsheet, search a folder of PDFs.
 - **Themes**: follows your Windows light, dark or contrast theme, or pick Office, Dracula, Nord, One Dark, Monokai, Solarized or GitHub Light.
+- **Accessibility**: adjustable text and icon sizes, screen reader announcements, and a built-in voice that reads out what you're doing.
 - **Optional AI**: ask about the document or any passage, get an outline or a translated copy, and let it fill fields or run commands. Use your own Claude or OpenAI key, or a free local model.
 
 ![Filling in and signing a flat PDF form in Live View](docs/screenshots/fill-and-sign.gif)
@@ -52,6 +53,7 @@ dotnet run --project PdfEdit
 - [Import, export and cloud](docs/import-export-and-cloud.md)
 - [Automation and tools](docs/automation.md)
 - [Themes](docs/themes.md)
+- [Accessibility](docs/accessibility.md)
 - [Keyboard shortcuts](docs/keyboard-shortcuts.md)
 
 ## Support and contributing

@@ -525,6 +525,7 @@
         <Setter Property="Foreground"    Value="{DynamicResource ForegroundBrush}"/>
         <Setter Property="BorderBrush"   Value="{DynamicResource AppBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontSize" Value="{DynamicResource MenuFontSize}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
@@ -542,10 +543,16 @@
 
     <!-- ── MenuItem ──────────────────────────────────────────────────────────── -->
     <Style TargetType="MenuItem">
+        <Style.Resources>
+            <!-- The global TextBlock style fixes the size at 13; menu text follows the Menus font size. -->
+            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="FontSize" Value="{DynamicResource MenuFontSize}"/>
+            </Style>
+        </Style.Resources>
         <Setter Property="Background"  Value="Transparent"/>
         <Setter Property="Foreground"  Value="{DynamicResource ForegroundBrush}"/>
         <Setter Property="FontFamily"  Value="Segoe UI, Arial"/>
-        <Setter Property="FontSize"    Value="12"/>
+        <Setter Property="FontSize"    Value="{DynamicResource MenuFontSize}"/>
         <Setter Property="Padding"     Value="8,5"/>
         <Setter Property="Template">
             <Setter.Value>

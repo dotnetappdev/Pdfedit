@@ -147,6 +147,7 @@ public partial class SettingsWindow : Window
 
         // Accessibility
         HighContrastFocusCb.IsChecked = s.HighContrastFocusIndicators;
+        LoadAccessibility(s);
     }
 
     private void BuildDateFormatPanel(string currentFormat)
@@ -301,6 +302,7 @@ public partial class SettingsWindow : Window
         var ticked = TickedOcrLanguages().Where(OcrService.InstalledTesseractLanguages().Contains).ToList();
         s.OcrLanguages = ticked.Count > 0 ? string.Join("+", ticked) : "eng";
         s.HighContrastFocusIndicators = HighContrastFocusCb.IsChecked == true;
+        SaveAccessibility(s);
         s.DateFormat = GetSelectedDateFormat();
 
         ShortcutsEditor.Commit();
@@ -442,6 +444,9 @@ public partial class SettingsWindow : Window
         AppSettings.Current.InterfaceFontSizes = new Dictionary<string, double>(_fontSnapshot);
         FontService.ApplyAll();
 
+        // …and the icon size.
+        InterfaceStyleService.ApplyIconSize(AppSettings.Current.IconSize);
+
         DialogResult = false;
         Close();
     }
@@ -451,6 +456,8 @@ public partial class SettingsWindow : Window
     /// <summary>Opens Settings on a given tab (e.g. "Cloud").</summary>
     public void ShowTab(string name)
     {
+        if (name == "Accessibility") SettingsTabs.SelectedItem = AccessibilityTab;
+        if (name == "Fonts") SettingsTabs.SelectedItem = FontsTab;
         if (name == "Cloud") SettingsTabs.SelectedItem = CloudTab;
         if (name == "Keyboard") SettingsTabs.SelectedItem = KeyboardTab;
     }
@@ -505,4 +512,105 @@ public partial class SettingsWindow : Window
         catch (Exception ex) { status.Text = "Couldn't sign in: " + ex.Message; }
         finally { btn.IsEnabled = true; Activate(); }
     }
+
+    // ── Accessibility tab ─────────────────────────────────────────────────────
+
+    private bool _accessibilityLoaded;
+
+    private void LoadAccessibility(AppSettings s)
+    {
+        foreach (var size in InterfaceStyleService.IconSizes)
+            IconSizeBox.Items.Add(new ComboBoxItem { Content = size.Label, Tag = size.Key });
+        IconSizeBox.SelectedItem = IconSizeBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.IconSize)
+                                   ?? IconSizeBox.Items[1];
+
+        for (double size = InterfaceFonts.MinSize; size <= 24; size++) MenuFontBox.Items.Add(size.ToString("0"));
+        if (InterfaceFonts.Find("Menus") is { } menus) MenuFontBox.Text = FontService.GetSize(menus).ToString("0");
+
+        ScreenReaderStatus.Text = ScreenReader.IsRunning
+            ? "A screen reader is running. PdfEdit's buttons, boxes and panels all have names it can read."
+            : "No screen reader is running. Windows has one built in: press Windows + Ctrl + Enter to start Narrator.";
+        AnnounceToScreenReaderCb.IsChecked = s.AnnounceToScreenReader;
+        AnnounceStatusCb.IsChecked = s.AnnounceStatus;
+        AnnouncePagesCb.IsChecked = s.AnnouncePageChanges;
+        AnnounceToolsCb.IsChecked = s.AnnounceToolChanges;
+
+        NarrateAnnouncementsCb.IsChecked = s.NarrateAnnouncements;
+        NarrateFocusCb.IsChecked = s.NarrateFocus;
+        NarrateTooltipsCb.IsChecked = s.NarrateTooltips;
+        NarrateQuietCb.IsChecked = s.NarrateOnlyWithoutScreenReader;
+
+        VoiceBox.Items.Add(new ComboBoxItem { Content = "Windows default voice", Tag = "" });
+        foreach (var voice in NarrationService.Voices())
+            VoiceBox.Items.Add(new ComboBoxItem { Content = voice, Tag = voice });
+        VoiceBox.SelectedItem = VoiceBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.NarrationVoice)
+                                ?? VoiceBox.Items[0];
+        VoiceRateSlider.Value = Math.Clamp(s.NarrationRate, 0.5, 2.5);
+        VoiceVolumeSlider.Value = Math.Clamp(s.NarrationVolume, 0.1, 1.0);
+        VoiceRateLabel.Text = $"{VoiceRateSlider.Value:0.##}×";
+        VoiceVolumeLabel.Text = $"{VoiceVolumeSlider.Value:P0}";
+        _accessibilityLoaded = true;
+    }
+
+    private void SaveAccessibility(AppSettings s)
+    {
+        s.IconSize = (IconSizeBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "Normal";
+        s.AnnounceToScreenReader = AnnounceToScreenReaderCb.IsChecked == true;
+        s.AnnounceStatus = AnnounceStatusCb.IsChecked == true;
+        s.AnnouncePageChanges = AnnouncePagesCb.IsChecked == true;
+        s.AnnounceToolChanges = AnnounceToolsCb.IsChecked == true;
+        s.NarrateAnnouncements = NarrateAnnouncementsCb.IsChecked == true;
+        s.NarrateFocus = NarrateFocusCb.IsChecked == true;
+        s.NarrateTooltips = NarrateTooltipsCb.IsChecked == true;
+        s.NarrateOnlyWithoutScreenReader = NarrateQuietCb.IsChecked == true;
+        s.NarrationVoice = (VoiceBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        s.NarrationRate = VoiceRateSlider.Value;
+        s.NarrationVolume = VoiceVolumeSlider.Value;
+    }
+
+    // Icon size previews live; Cancel puts the saved size back.
+    private void IconSizeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_accessibilityLoaded && IconSizeBox.SelectedItem is ComboBoxItem { Tag: string key })
+            InterfaceStyleService.ApplyIconSize(key);
+    }
+
+    private void MenuFontBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (MenuFontBox.SelectedItem is string text) ApplyMenuFontSize(text);
+    }
+
+    private void MenuFontBox_LostFocus(object sender, RoutedEventArgs e) => ApplyMenuFontSize(MenuFontBox.Text);
+
+    private void ApplyMenuFontSize(string text)
+    {
+        if (!_accessibilityLoaded || !double.TryParse(text, out var size) || InterfaceFonts.Find("Menus") is not { } menus) return;
+        FontService.SetSize(menus, size);
+        if (FontAreaList.SelectedItem == menus) FontAreaList_SelectionChanged(FontAreaList, null!);
+    }
+
+    private void VoiceRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (VoiceRateLabel != null) VoiceRateLabel.Text = $"{e.NewValue:0.##}×";
+    }
+
+    private void VoiceVolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (VoiceVolumeLabel != null) VoiceVolumeLabel.Text = $"{e.NewValue:P0}";
+    }
+
+    /// <summary>Speaks a sample with the voice, speed and volume as set (not yet saved).</summary>
+    private void TestVoice_Click(object sender, RoutedEventArgs e)
+    {
+        var s = AppSettings.Current;
+        var saved = (s.NarrationVoice, s.NarrationRate, s.NarrationVolume);
+        s.NarrationVoice = (VoiceBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        s.NarrationRate = VoiceRateSlider.Value;
+        s.NarrationVolume = VoiceVolumeSlider.Value;
+        try { NarrationService.Speak("This is how PdfEdit will sound when it reads to you.", evenIfQuiet: true); }
+        finally { (s.NarrationVoice, s.NarrationRate, s.NarrationVolume) = saved; }
+    }
+
+    private void OpenFontsTab_Click(object sender, RoutedEventArgs e) => SettingsTabs.SelectedItem = FontsTab;
+    private void OpenKeyboardTab_Click(object sender, RoutedEventArgs e) => SettingsTabs.SelectedItem = KeyboardTab;
 }

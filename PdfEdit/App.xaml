@@ -44,6 +44,12 @@
             <sys:Double x:Key="ChatFontSize">13</sys:Double>
             <sys:Double x:Key="StatusBarFontSize">12</sys:Double>
             <sys:Double x:Key="DialogFontSize">13</sys:Double>
+            <sys:Double x:Key="MenuFontSize">13</sys:Double>
+
+            <!-- Icon sizes (Settings → Accessibility → Icon size; set by InterfaceStyleService). -->
+            <sys:Double x:Key="SmallIconSize">16</sys:Double>
+            <sys:Double x:Key="MediumIconSize">24</sys:Double>
+            <sys:Double x:Key="LargeIconSize">32</sys:Double>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
