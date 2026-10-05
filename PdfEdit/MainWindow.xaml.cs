@@ -524,7 +524,7 @@ public partial class MainWindow : RibbonWindow
     private void ThemeMenu_Opened(object? sender, EventArgs e)
     {
         // Rebuild the list each time: every theme, the current one ticked, then the accent option.
-        string current = AppSettings.Current.Theme;
+        string current = AppSettings.Current.EffectiveTheme;
         ThemeMenu.Items.Clear();
         foreach (var (id, name) in ThemeCatalog.Choices)
         {
@@ -534,7 +534,7 @@ public partial class MainWindow : RibbonWindow
                 swatch.Children.Add(new System.Windows.Controls.Border { Width = 8, Height = 14, Background = new System.Windows.Media.SolidColorBrush(c) });
             var item = new Fluent.MenuItem
             {
-                Header = name, Tag = id, IsCheckable = true, Icon = swatch,
+                Header = App.ThemeLabel(id, name), Tag = id, IsCheckable = true, Icon = swatch,
                 IsChecked = string.Equals(id, current, StringComparison.OrdinalIgnoreCase)
                             || (id == "System" && !ThemeCatalog.Choices.Any(c => string.Equals(c.Id, current, StringComparison.OrdinalIgnoreCase))),
             };

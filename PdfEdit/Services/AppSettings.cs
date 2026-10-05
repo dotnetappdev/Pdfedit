@@ -14,6 +14,13 @@ public class AppSettings
     // ── Appearance ───────────────────────────────────────────────────────────
     /// <summary>"System" (follow Windows), "Light", "Dark" or "HighContrast".</summary>
     public string Theme { get; set; } = "System";
+    /// <summary>
+    /// True once the user picks a theme themselves. Until then PdfEdit follows Windows (light,
+    /// dark or a contrast theme), whatever an older version saved as its default.
+    /// </summary>
+    public bool ThemeChosenByUser { get; set; }
+    /// <summary>The theme actually used: the user's choice, or "System" (follow Windows).</summary>
+    [JsonIgnore] public string EffectiveTheme => ThemeChosenByUser ? Theme : "System";
     /// <summary>Use the Windows accent colour for highlights, buttons and the ribbon.</summary>
     public bool UseWindowsAccent { get; set; }
     /// <summary>Spell check typed text and text fields.</summary>

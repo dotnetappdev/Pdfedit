@@ -32,7 +32,8 @@ public partial class App : Application
 
         try
         {
-            ApplyTheme(AppSettings.Current?.Theme ?? "Dark");
+            // Follows the Windows theme unless the user has picked one.
+            ApplyTheme(AppSettings.Current?.EffectiveTheme ?? "System");
         }
         catch (Exception ex)
         {
@@ -112,18 +113,24 @@ public partial class App : Application
         _ => true,
     };
 
+    /// <summary>The user picked a theme ("System" = go back to following Windows).</summary>
     public static void SwitchTheme(string themeName)
     {
         AppSettings.Current.Theme = themeName;
+        AppSettings.Current.ThemeChosenByUser = themeName != "System";
         AppSettings.Current.Save();
         ApplyTheme(themeName);
     }
 
     /// <summary>Re-applies the saved theme (after the Windows theme, contrast or accent changes).</summary>
-    public static void RefreshTheme() => ApplyTheme(AppSettings.Current.Theme);
+    public static void RefreshTheme() => ApplyTheme(AppSettings.Current.EffectiveTheme);
 
     private static bool _watchingWindows;
     private static ResourceDictionary? _overrides;
+
+    /// <summary>A theme's menu name; "Use Windows setting" says what Windows is set to now.</summary>
+    public static string ThemeLabel(string id, string name) =>
+        id == "System" ? $"{name} ({Resolve("System") switch { "Light" => "light", "HighContrast" => "contrast theme", _ => "dark" }})" : name;
 
     /// <summary>"System" → whatever Windows is set to: a contrast theme, else light or dark apps.</summary>
     public static string Resolve(string setting) => setting switch
@@ -141,7 +148,7 @@ public partial class App : Application
             WindowsTheme.Listen();
             WindowsTheme.Changed += () =>
             {
-                if (AppSettings.Current.Theme is "System" or "HighContrast" || AppSettings.Current.UseWindowsAccent) RefreshTheme();
+                if (AppSettings.Current.EffectiveTheme is "System" or "HighContrast" || AppSettings.Current.UseWindowsAccent) RefreshTheme();
             };
         }
 

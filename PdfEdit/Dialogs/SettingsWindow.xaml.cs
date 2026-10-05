@@ -98,7 +98,7 @@ public partial class SettingsWindow : Window
         var s = AppSettings.Current;
 
         // Theme
-        FillThemeBox(s.Theme);
+        FillThemeBox(s.EffectiveTheme);
         UseAccentCb.IsChecked = s.UseWindowsAccent;
 
         // Render engine
@@ -236,7 +236,7 @@ public partial class SettingsWindow : Window
             foreach (var c in new[] { bg, panel, accent })
                 row.Children.Add(new Border { Width = 12, Height = 12, Margin = new Thickness(0, 0, 2, 0), Background = new SolidColorBrush(c),
                                               BorderBrush = Brushes.Gray, BorderThickness = new Thickness(0.5) });
-            row.Children.Add(new TextBlock { Text = name, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
+            row.Children.Add(new TextBlock { Text = App.ThemeLabel(id, name), Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
             var item = new ComboBoxItem { Content = row, Tag = id };
             System.Windows.Automation.AutomationProperties.SetName(item, name);
             ThemeBox.Items.Add(item);
@@ -436,7 +436,7 @@ public partial class SettingsWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         // Restore original theme if user changed it without saving
-        App.SwitchTheme(AppSettings.Current.Theme);
+        App.RefreshTheme();
 
         // Revert any live font-size previews to the snapshot taken on open.
         AppSettings.Current.InterfaceFontSizes = new Dictionary<string, double>(_fontSnapshot);
