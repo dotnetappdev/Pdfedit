@@ -29,6 +29,7 @@ public partial class MainWindow : RibbonWindow
         DockManager.Theme = themeName switch
         {
             "Light" => new AvalonDock.Themes.Vs2013LightTheme(),
+            _ when ThemeCatalog.TryGet(themeName, out var p) && !p.IsDark => new AvalonDock.Themes.Vs2013LightTheme(),
             "HighContrast" => App.IsDarkTheme ? new AvalonDock.Themes.Vs2013DarkTheme() : new AvalonDock.Themes.Vs2013LightTheme(),
             _ => new AvalonDock.Themes.Vs2013DarkTheme()
         };
@@ -522,12 +523,28 @@ public partial class MainWindow : RibbonWindow
 
     private void ThemeMenu_Opened(object? sender, EventArgs e)
     {
-        string t = AppSettings.Current.Theme;
-        ThemeSystemItem.IsChecked = t is not ("Light" or "Dark" or "HighContrast");
-        ThemeLightItem.IsChecked = t == "Light";
-        ThemeDarkItem.IsChecked = t == "Dark";
-        ThemeContrastItem.IsChecked = t == "HighContrast";
+        // Rebuild the list each time: every theme, the current one ticked, then the accent option.
+        string current = AppSettings.Current.Theme;
+        ThemeMenu.Items.Clear();
+        foreach (var (id, name) in ThemeCatalog.Choices)
+        {
+            var (bg, _, accent) = ThemeCatalog.Swatch(id);
+            var swatch = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+            foreach (var c in new[] { bg, accent })
+                swatch.Children.Add(new System.Windows.Controls.Border { Width = 8, Height = 14, Background = new System.Windows.Media.SolidColorBrush(c) });
+            var item = new Fluent.MenuItem
+            {
+                Header = name, Tag = id, IsCheckable = true, Icon = swatch,
+                IsChecked = string.Equals(id, current, StringComparison.OrdinalIgnoreCase)
+                            || (id == "System" && !ThemeCatalog.Choices.Any(c => string.Equals(c.Id, current, StringComparison.OrdinalIgnoreCase))),
+            };
+            item.Click += ThemeItem_Click;
+            ThemeMenu.Items.Add(item);
+            if (id == "HighContrast") ThemeMenu.Items.Add(new System.Windows.Controls.Separator());
+        }
+        ThemeMenu.Items.Add(new System.Windows.Controls.Separator());
         ThemeAccentItem.IsChecked = AppSettings.Current.UseWindowsAccent;
+        ThemeMenu.Items.Add(ThemeAccentItem);
     }
 
     private void ThemeItem_Click(object sender, RoutedEventArgs e)

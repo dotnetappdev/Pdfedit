@@ -98,11 +98,8 @@ public partial class SettingsWindow : Window
         var s = AppSettings.Current;
 
         // Theme
-        RbSystem.IsChecked = s.Theme is not ("Dark" or "Light" or "HighContrast");
+        FillThemeBox(s.Theme);
         UseAccentCb.IsChecked = s.UseWindowsAccent;
-        RbDark.IsChecked = s.Theme == "Dark";
-        RbLight.IsChecked = s.Theme == "Light";
-        RbHighContrast.IsChecked = s.Theme == "HighContrast";
 
         // Render engine
         RbEngineCustom.IsChecked = s.RenderEngine == "Custom" || (s.RenderEngine != "Pdfium" && s.RenderEngine != "WinRT");
@@ -225,10 +222,34 @@ public partial class SettingsWindow : Window
         return "MMMM d, yyyy";
     }
 
-    private void Theme_Checked(object sender, RoutedEventArgs e)
+    private bool _fillingThemes;
+
+    /// <summary>Every theme with a three-colour preview.</summary>
+    private void FillThemeBox(string current)
     {
-        if (sender is RadioButton rb && rb.Tag is string tag)
-            App.SwitchTheme(tag);
+        _fillingThemes = true;
+        ThemeBox.Items.Clear();
+        foreach (var (id, name) in ThemeCatalog.Choices)
+        {
+            var (bg, panel, accent) = ThemeCatalog.Swatch(id);
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            foreach (var c in new[] { bg, panel, accent })
+                row.Children.Add(new Border { Width = 12, Height = 12, Margin = new Thickness(0, 0, 2, 0), Background = new SolidColorBrush(c),
+                                              BorderBrush = Brushes.Gray, BorderThickness = new Thickness(0.5) });
+            row.Children.Add(new TextBlock { Text = name, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
+            var item = new ComboBoxItem { Content = row, Tag = id };
+            System.Windows.Automation.AutomationProperties.SetName(item, name);
+            ThemeBox.Items.Add(item);
+            if (string.Equals(id, current, StringComparison.OrdinalIgnoreCase)) ThemeBox.SelectedItem = item;
+        }
+        if (ThemeBox.SelectedItem == null) ThemeBox.SelectedIndex = 0;
+        _fillingThemes = false;
+    }
+
+    private void ThemeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_fillingThemes || ThemeBox.SelectedItem is not ComboBoxItem { Tag: string id }) return;
+        App.SwitchTheme(id);
     }
 
     private void UseAccent_Click(object sender, RoutedEventArgs e)

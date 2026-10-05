@@ -54,28 +54,9 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHead}" Text="THEME"/>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <RadioButton x:Name="RbSystem" Content="Use Windows setting" GroupName="Theme"
-                                         Foreground="{DynamicResource ForegroundBrush}"
-                                         Margin="0,0,16,0"
-                                         Checked="Theme_Checked" Tag="System"
-                                         ToolTip="Light or dark like your Windows apps, and Windows' own contrast themes when one is on"
-                                         AutomationProperties.Name="Use the Windows theme"/>
-                            <RadioButton x:Name="RbDark" Content="Dark" GroupName="Theme"
-                                         Foreground="{DynamicResource ForegroundBrush}"
-                                         Margin="0,0,16,0" IsChecked="True"
-                                         Checked="Theme_Checked" Tag="Dark"
-                                         AutomationProperties.Name="Dark theme"/>
-                            <RadioButton x:Name="RbLight" Content="Light" GroupName="Theme"
-                                         Foreground="{DynamicResource ForegroundBrush}"
-                                         Margin="0,0,16,0"
-                                         Checked="Theme_Checked" Tag="Light"
-                                         AutomationProperties.Name="Light theme"/>
-                            <RadioButton x:Name="RbHighContrast" Content="High contrast" GroupName="Theme"
-                                         Foreground="{DynamicResource ForegroundBrush}"
-                                         Checked="Theme_Checked" Tag="HighContrast"
-                                         AutomationProperties.Name="High contrast theme"/>
-                        </StackPanel>
+                        <ComboBox x:Name="ThemeBox" Width="300" HorizontalAlignment="Left" Height="30" Margin="0,0,0,8"
+                                  SelectionChanged="ThemeBox_SelectionChanged"
+                                  AutomationProperties.Name="Theme"/>
 
                         <CheckBox x:Name="UseAccentCb" Content="Use my Windows accent colour"
                                   Foreground="{DynamicResource ForegroundBrush}" FontSize="13" Margin="0,0,0,4"

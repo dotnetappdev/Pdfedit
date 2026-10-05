@@ -107,6 +107,7 @@ public partial class App : Application
     public static bool IsDarkTheme => ResolvedTheme switch
     {
         "Light" => false,
+        _ when ThemeCatalog.TryGet(ResolvedTheme, out var palette) => palette.IsDark,
         "HighContrast" => !(Current?.TryFindResource("PanelBgColor") is Color c && WindowsTheme.Luminance(c) > 0.5),
         _ => true,
     };
@@ -128,6 +129,7 @@ public partial class App : Application
     public static string Resolve(string setting) => setting switch
     {
         "Light" or "Dark" or "HighContrast" => setting,
+        _ when ThemeCatalog.TryGet(setting, out _) => setting,
         _ => WindowsTheme.HighContrast ? "HighContrast" : WindowsTheme.AppsUseLightTheme ? "Light" : "Dark",
     };
 
@@ -145,17 +147,19 @@ public partial class App : Application
 
         string resolved = Resolve(themeName);
         ResolvedTheme = resolved;
-        string uri = resolved switch
+        ResourceDictionary newDict;
+        bool isPalette = ThemeCatalog.TryGet(resolved, out var palette);
+        if (isPalette) newDict = palette.Build();
+        else
         {
-            "Light" => "Themes/LightTheme.xaml",
-            "HighContrast" => "Themes/HighContrastTheme.xaml",
-            _ => "Themes/DarkTheme.xaml"
-        };
-
-        var newDict = new ResourceDictionary
-        {
-            Source = new Uri(uri, UriKind.Relative)
-        };
+            string uri = resolved switch
+            {
+                "Light" => "Themes/LightTheme.xaml",
+                "HighContrast" => "Themes/HighContrastTheme.xaml",
+                _ => "Themes/DarkTheme.xaml"
+            };
+            newDict = new ResourceDictionary { Source = new Uri(uri, UriKind.Relative) };
+        }
 
         var merged = Current.Resources.MergedDictionaries;
 
@@ -172,6 +176,7 @@ public partial class App : Application
             }
         }
         if (_overrides != null) merged.Remove(_overrides);
+        if (_themeDict != null) merged.Remove(_themeDict);   // a palette theme has no Source
 
         // Insert right after the Fluent generic dictionary (index 0).
         int insertAt = merged.Count > 0 ? 1 : 0;
@@ -180,7 +185,7 @@ public partial class App : Application
 
         // Windows colours on top: the contrast theme's own palette, or the accent colour.
         _overrides = WindowsOverrides(resolved);
-        Color? ribbonAccent = null;
+        Color? ribbonAccent = isPalette ? palette.AccentColor : null;
         if (_overrides != null)
         {
             merged.Insert(insertAt + 1, _overrides);
@@ -252,7 +257,7 @@ public partial class App : Application
     {
         try
         {
-            string baseColor = themeName == "Light" || (themeName == "HighContrast" && !IsDarkTheme) ? "Light" : "Dark";
+            string baseColor = IsDarkTheme ? "Dark" : "Light";
             if (accent is { } a)
             {
                 // A ribbon theme made from the Windows (or contrast) colour.
