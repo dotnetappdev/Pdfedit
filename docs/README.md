@@ -8,6 +8,7 @@
 - [Design canvas](design-canvas.md)
 - [Import, export and cloud](import-export-and-cloud.md)
 - [Automation and tools](automation.md)
+- [Themes](themes.md)
 - [AI assistant](ai-assistant.md)
 - [Keyboard shortcuts](keyboard-shortcuts.md)
 - [Screenshots](screenshots.md)
