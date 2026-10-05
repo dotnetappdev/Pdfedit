@@ -27,6 +27,10 @@
     <!-- AdornerDecorator: a layer above everything for the guided tour -->
     <AdornerDecorator>
     <Grid>
+        <!-- Interface size (View → UI Scale, Ctrl+Plus / Ctrl+Minus / Ctrl+0): the whole window scales. -->
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
+        </Grid.LayoutTransform>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- Ribbon -->
             <RowDefinition Height="*"/>      <!-- Content -->
@@ -3385,9 +3389,6 @@
             <avalonDock:DockingManager x:Name="DockManager"
                                        AllowMixedOrientation="True"
                                        Background="{DynamicResource PanelBgBrush}">
-                <avalonDock:DockingManager.LayoutTransform>
-                    <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
-                </avalonDock:DockingManager.LayoutTransform>
                 <avalonDock:LayoutRoot>
                     <avalonDock:LayoutPanel Orientation="Horizontal">
 

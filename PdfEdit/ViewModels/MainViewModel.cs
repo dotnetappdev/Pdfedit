@@ -1274,8 +1274,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         ToggleAiPanelCommand = new RelayCommand(() => ShowAiPanel = !ShowAiPanel);
         RunAiFillCommand = new AsyncRelayCommand(RunAiFillAsync, () => HasDocument && !IsAiRunning);
         ToggleSearchCommand = new RelayCommand(() => ShowSearchOverlay = !ShowSearchOverlay);
-        IncreaseUiScaleCommand = new RelayCommand(() => UiScale += 0.1);
-        DecreaseUiScaleCommand = new RelayCommand(() => UiScale -= 0.1);
+        IncreaseUiScaleCommand = new RelayCommand(() => { UiScale = Math.Round(UiScale + 0.1, 1); StatusText = $"Interface size {UiScale:P0}."; });
+        DecreaseUiScaleCommand = new RelayCommand(() => { UiScale = Math.Round(UiScale - 0.1, 1); StatusText = $"Interface size {UiScale:P0}."; });
         NavigateToResultCommand = new RelayCommand(p =>
         {
             if (p is SearchResult r) NavigateToSearchResult(r);

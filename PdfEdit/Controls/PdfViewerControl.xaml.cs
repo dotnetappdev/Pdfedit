@@ -126,7 +126,8 @@ public partial class PdfViewerControl : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
-        MouseWheel += OnMouseWheel;
+        // Preview: the scroll viewer inside handles (and swallows) the wheel before a bubbling handler sees it.
+        PreviewMouseWheel += OnMouseWheel;
         // handledEventsToo: a click on the bare page must reach the tools even if something on the
         // way up (the ScrollViewer) marked it handled. Clicks that a field, placed text or a toolbar
         // handled itself are still left alone (see OnPageMouseLeftButtonDown).
@@ -2940,17 +2941,41 @@ public partial class PdfViewerControl : UserControl
         menu.IsOpen = true;
     }
 
+    private DateTime _lastPageFlip;
+
     private void OnMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        // Ctrl+wheel = zoom (standard across apps)
-        // Plain wheel over the page image = zoom too (like most PDF viewers)
-        if (Keyboard.Modifiers == ModifierKeys.Control ||
-            (Keyboard.Modifiers == ModifierKeys.None && IsMouseOverPage(e)))
+        if (_vm?.Document == null) return;
+
+        // Ctrl+wheel zooms the page (10% a notch), anywhere over the document.
+        if (Keyboard.Modifiers == ModifierKeys.Control)
         {
-            if (_vm != null) _vm.Zoom += e.Delta > 0 ? 0.1 : -0.1;
+            double factor = Math.Pow(1.1, e.Delta / 120.0);
+            _vm.Zoom = Math.Clamp(_vm.Zoom * factor, 0.1, 8.0);
+            e.Handled = true;
+            return;
+        }
+        if (Keyboard.Modifiers != ModifierKeys.None) return;   // Shift+wheel scrolls sideways as usual
+
+        // Plain wheel scrolls; past the end of the page it turns to the next / previous page.
+        var sv = PdfScrollViewer;
+        bool atBottom = sv.VerticalOffset >= sv.ScrollableHeight - 1;
+        bool atTop = sv.VerticalOffset <= 1;
+        if ((DateTime.UtcNow - _lastPageFlip).TotalMilliseconds < 350) { if (atTop || atBottom) e.Handled = true; return; }
+        if (e.Delta < 0 && atBottom && _vm.CurrentPageIndex < _vm.PageCount - 1)
+        {
+            _vm.CurrentPageIndex++;
+            _lastPageFlip = DateTime.UtcNow;
+            Dispatcher.BeginInvoke(() => sv.ScrollToTop(), System.Windows.Threading.DispatcherPriority.Loaded);
             e.Handled = true;
         }
-        // Plain wheel without Ctrl scrolls the document (default ScrollViewer behavior)
+        else if (e.Delta > 0 && atTop && _vm.CurrentPageIndex > 0)
+        {
+            _vm.CurrentPageIndex--;
+            _lastPageFlip = DateTime.UtcNow;
+            Dispatcher.BeginInvoke(() => sv.ScrollToBottom(), System.Windows.Threading.DispatcherPriority.Loaded);
+            e.Handled = true;
+        }
     }
 
     private bool IsMouseOverPage(MouseWheelEventArgs e)

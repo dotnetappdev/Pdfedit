@@ -73,7 +73,7 @@ public static class TipsCatalog
         new("Panels go where you want",
             "Every side panel can be dragged, docked on another side, or floated as its own window, which is handy on a second screen."),
         new("Make it bigger",
-            "View → UI Scale enlarges the whole interface. Settings also lets you set the font size of the ribbon, panels, status bar and AI chat separately."),
+            "Ctrl+Plus and Ctrl+Minus (or View → UI Scale) make the whole window bigger or smaller, and Ctrl+0 puts it back. Ctrl+mouse wheel zooms the page. Settings also lets you set the font size of the ribbon, panels, status bar and AI chat separately."),
         new("Dark, light or high contrast",
             "View → Theme (or Settings → Appearance) switches between light, dark, high contrast, Office, Office Black, Dracula, Nord, One Dark, Monokai, Solarized and GitHub Light, or follows Windows, including its contrast themes, and can use your Windows accent colour. Every dialog follows it, title bar included."),
         new("Ask the AI about your document",

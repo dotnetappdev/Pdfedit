@@ -18,4 +18,13 @@ public partial class MainViewModel
         if (RedoCommand.CanExecute(null)) RedoCommand.Execute(null);
         else if (RedoAnnotationCommand.CanExecute(null)) RedoAnnotationCommand.Execute(null);
     }, () => RedoCommand.CanExecute(null) || RedoAnnotationCommand.CanExecute(null));
+
+    private ICommand? _resetUiScale;
+
+    /// <summary>Ctrl+0: interface back to 100%.</summary>
+    public ICommand ResetUiScaleCommand => _resetUiScale ??= new RelayCommand(() =>
+    {
+        UiScale = 1.0;
+        StatusText = "Interface size 100%.";
+    });
 }

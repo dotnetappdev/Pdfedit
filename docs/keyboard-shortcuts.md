@@ -13,8 +13,10 @@ Press F1 in the app to see the shortcuts in use. Single-letter shortcuts are ign
 | Open / Save / Save As | Ctrl+O / Ctrl+S / Ctrl+Shift+S |
 | Close tab / Print | Ctrl+W / Ctrl+P |
 | Next / previous tab | Ctrl+Tab / Ctrl+Shift+Tab |
-| Next / previous page | Ctrl+Right / Ctrl+Left |
-| Zoom in / out / fit | Ctrl+Plus / Ctrl+Minus / Ctrl+0 |
+| Next / previous page | Ctrl+Right / Ctrl+Left, or keep scrolling with the mouse wheel |
+| Make everything bigger / smaller / 100% | Ctrl+Plus / Ctrl+Minus / Ctrl+0 |
+| Zoom the page in / out | Ctrl+mouse wheel, Ctrl+Alt+Plus / Ctrl+Alt+Minus, or + / − over the page |
+| Fit page / actual size / fit width | Ctrl+Shift+0 / Ctrl+1 / Ctrl+Shift+W |
 | Rotate page | Ctrl+] / Ctrl+[ |
 | Search everything | Ctrl+Shift+F |
 | Export / import comments (XFDF) | Ctrl+Shift+E / Ctrl+Shift+I |
