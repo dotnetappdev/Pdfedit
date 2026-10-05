@@ -92,104 +92,8 @@
                                    FontSize="11" TextWrapping="Wrap" Margin="0,0,0,16"
                                    Text="Custom: pure C# engine — zero native dependencies, handles FlateDecode/JPEG/PNG streams and the 14 standard fonts. Pdfium: Chrome/Adobe quality with sub-pixel hinting (requires Docnet.Core). Restart not required; takes effect on next file open."/>
 
-                        <TextBlock Style="{StaticResource SectionHead}" Text="UI SCALE"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Style="{StaticResource SettingLabel}" Text="Scale factor:"/>
-                            <Slider x:Name="UiScaleSlider"
-                                    Minimum="0.75" Maximum="2.0" TickFrequency="0.25"
-                                    IsSnapToTickEnabled="True"
-                                    Width="200" VerticalAlignment="Center"
-                                    ValueChanged="UiScaleSlider_ValueChanged"
-                                    AutomationProperties.Name="UI scale slider"
-                                    AutomationProperties.HelpText="Adjust the overall interface scale"/>
-                            <TextBlock x:Name="UiScaleLabel"
-                                       Foreground="{DynamicResource ForegroundBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="8,0,0,0" Text="100%"/>
-                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
-
-            <!-- ── Fonts Tab (Visual Studio style) ───────────────────────── -->
-            <TabItem Header="Fonts" x:Name="FontsTab"
-                     AutomationProperties.Name="Interface font settings">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Style="{StaticResource SectionHead}"
-                               Margin="0,0,0,6" Text="INTERFACE FONT SIZES"/>
-                    <TextBlock Grid.Row="1"
-                               Foreground="{DynamicResource DimForegroundBrush}"
-                               FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"
-                               Text="Pick an area of the interface, then choose its font size. Changes apply immediately."/>
-
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="220"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Show settings for: -->
-                        <DockPanel Grid.Column="0" Margin="0,0,16,0">
-                            <TextBlock DockPanel.Dock="Top"
-                                       Style="{StaticResource SettingLabel}"
-                                       Margin="0,0,0,4" Text="Show settings for:"/>
-                            <ListBox x:Name="FontAreaList"
-                                     Background="{DynamicResource InputBgBrush}"
-                                     Foreground="{DynamicResource ForegroundBrush}"
-                                     BorderBrush="{DynamicResource InputBorderBrush}"
-                                     BorderThickness="1"
-                                     DisplayMemberPath="DisplayName"
-                                     SelectionChanged="FontAreaList_SelectionChanged"
-                                     AutomationProperties.Name="Interface area list"/>
-                        </DockPanel>
-
-                        <!-- Selected area editor -->
-                        <StackPanel Grid.Column="1">
-                            <TextBlock x:Name="FontAreaName"
-                                       Foreground="{DynamicResource ForegroundBrush}"
-                                       FontSize="14" FontWeight="SemiBold"
-                                       Margin="0,20,0,2"/>
-                            <TextBlock x:Name="FontAreaDesc"
-                                       Foreground="{DynamicResource DimForegroundBrush}"
-                                       FontSize="12" TextWrapping="Wrap"
-                                       Margin="0,0,0,14"/>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                                <TextBlock Style="{StaticResource SettingLabel}" Text="Size:"/>
-                                <ComboBox x:Name="FontSizeCombo"
-                                          Width="90" Height="30" IsEditable="True"
-                                          FontSize="13" VerticalContentAlignment="Center"
-                                          SelectionChanged="FontSizeCombo_Changed"
-                                          AutomationProperties.Name="Font size for selected area"/>
-                            </StackPanel>
-
-                            <Border Background="{DynamicResource InputBgBrush}"
-                                    BorderBrush="{DynamicResource InputBorderBrush}"
-                                    BorderThickness="1" Padding="12" CornerRadius="3">
-                                <TextBlock x:Name="FontPreview"
-                                           Foreground="{DynamicResource ForegroundBrush}"
-                                           TextWrapping="Wrap"
-                                           Text="AaBbCcXxYyZz 0123456789 — The quick brown fox."/>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-
-                    <Button Grid.Row="3" Content="Reset all to defaults"
-                            HorizontalAlignment="Left" Margin="0,16,0,0"
-                            Padding="12,6" Click="ResetFonts_Click"
-                            Background="{DynamicResource InputBgBrush}"
-                            Foreground="{DynamicResource ForegroundBrush}"
-                            BorderBrush="{DynamicResource InputBorderBrush}"
-                            BorderThickness="1"
-                            AutomationProperties.Name="Reset all interface font sizes to defaults"/>
-                </Grid>
             </TabItem>
 
             <!-- ── Editor Tab ────────────────────────────────────────────── -->
@@ -447,26 +351,86 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHead}" Text="SIZE" Margin="0,0,0,6"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Style="{StaticResource SettingLabel}" Text="Icon size:" Width="110"/>
-                            <ComboBox x:Name="IconSizeBox" Width="180" Height="30"
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="56"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource SettingLabel}" Text="Interface scale:"/>
+                            <Slider x:Name="UiScaleSlider" Grid.Column="1"
+                                    Minimum="0.5" Maximum="2.0" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" Margin="0,6"
+                                    ValueChanged="UiScaleSlider_ValueChanged"
+                                    AutomationProperties.Name="Interface scale"
+                                    AutomationProperties.HelpText="Makes the whole window bigger or smaller, like Ctrl+Plus and Ctrl+Minus"/>
+                            <TextBlock x:Name="UiScaleLabel" Grid.Column="2" Margin="8,0,0,0"
+                                       VerticalAlignment="Center" Text="100%"/>
+
+                            <TextBlock Grid.Row="1" Style="{StaticResource SettingLabel}" Text="Text size (all):"/>
+                            <Slider x:Name="GlobalTextSlider" Grid.Row="1" Grid.Column="1"
+                                    Minimum="0.8" Maximum="2.0" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center" Margin="0,6"
+                                    ValueChanged="GlobalTextSlider_ValueChanged"
+                                    AutomationProperties.Name="Text size for the whole window"
+                                    AutomationProperties.HelpText="Sets the text size of every part of the window at once"/>
+                            <TextBlock x:Name="GlobalTextLabel" Grid.Row="1" Grid.Column="2" Margin="8,0,0,0"
+                                       VerticalAlignment="Center" Text="100%"/>
+
+                            <TextBlock Grid.Row="2" Style="{StaticResource SettingLabel}" Text="Icon size:"/>
+                            <ComboBox x:Name="IconSizeBox" Grid.Row="2" Grid.Column="1" Width="180" Height="30"
+                                      HorizontalAlignment="Left" Margin="0,4"
                                       SelectionChanged="IconSizeBox_SelectionChanged"
                                       AutomationProperties.Name="Icon size"
                                       AutomationProperties.HelpText="Size of the ribbon and toolbar icons"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Style="{StaticResource SettingLabel}" Text="Menu text size:" Width="110"/>
-                            <ComboBox x:Name="MenuFontBox" Width="80" Height="30" IsEditable="True"
-                                      SelectionChanged="MenuFontBox_SelectionChanged"
-                                      LostFocus="MenuFontBox_LostFocus"
-                                      AutomationProperties.Name="Menu text size"
-                                      AutomationProperties.HelpText="Font size of right-click menus and the ribbon's drop-down menus"/>
-                        </StackPanel>
-                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4">
-                            <Run Text="Text size for the ribbon, panels, status bar and dialogs is on the"/>
-                            <Hyperlink Click="OpenFontsTab_Click" AutomationProperties.Name="Open the Fonts tab">Fonts</Hyperlink>
-                            <Run Text="tab. Ctrl+Plus and Ctrl+Minus make the whole window bigger or smaller."/>
-                        </TextBlock>
+                        </Grid>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"
+                                   Text="The interface scale applies when you click Save. Ctrl+Plus, Ctrl+Minus and Ctrl+0 change it at any time. Text and icon sizes change straight away."/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="TEXT SIZE FOR EACH PART OF THE WINDOW"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ListBox x:Name="FontAreaList" Height="150" Margin="0,0,16,0"
+                                     Background="{DynamicResource InputBgBrush}"
+                                     Foreground="{DynamicResource ForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}"
+                                     BorderThickness="1"
+                                     DisplayMemberPath="DisplayName"
+                                     SelectionChanged="FontAreaList_SelectionChanged"
+                                     AutomationProperties.Name="Part of the window"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="FontAreaName" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                                <TextBlock x:Name="FontAreaDesc" Foreground="{DynamicResource DimForegroundBrush}"
+                                           FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="Size:"/>
+                                    <ComboBox x:Name="FontSizeCombo" Width="80" Height="30" IsEditable="True"
+                                              VerticalContentAlignment="Center"
+                                              SelectionChanged="FontSizeCombo_Changed"
+                                              AutomationProperties.Name="Font size for the selected part"/>
+                                </StackPanel>
+                                <Border Background="{DynamicResource InputBgBrush}"
+                                        BorderBrush="{DynamicResource InputBorderBrush}"
+                                        BorderThickness="1" Padding="8" CornerRadius="3">
+                                    <TextBlock x:Name="FontPreview" TextWrapping="Wrap"
+                                               Text="AaBbCc 0123 — The quick brown fox."/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="Reset text sizes" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                Padding="12,4" Click="ResetFonts_Click"
+                                Background="{DynamicResource InputBgBrush}"
+                                Foreground="{DynamicResource ForegroundBrush}"
+                                BorderBrush="{DynamicResource InputBorderBrush}"
+                                AutomationProperties.Name="Reset all text sizes to their defaults"/>
 
                         <TextBlock Style="{StaticResource SectionHead}" Text="SCREEN READER"/>
                         <TextBlock x:Name="ScreenReaderStatus" Foreground="{DynamicResource DimForegroundBrush}"

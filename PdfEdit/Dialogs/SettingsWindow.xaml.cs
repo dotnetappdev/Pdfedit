@@ -88,6 +88,9 @@ public partial class SettingsWindow : Window
 
     private void ResetFonts_Click(object sender, RoutedEventArgs e)
     {
+        _fontsInitialized = false;            // don't let the slider re-apply sizes while it moves back
+        GlobalTextSlider.Value = 1.0;
+        _fontsInitialized = true;
         FontService.ResetAll();
         // Refresh the editor for the currently selected area.
         FontAreaList_SelectionChanged(FontAreaList, null!);
@@ -108,7 +111,7 @@ public partial class SettingsWindow : Window
 
         // UI Scale
         UiScaleSlider.Value = s.UiScale;
-        UiScaleLabel.Text = $"{(int)(s.UiScale * 100)}%";
+        UiScaleLabel.Text = $"{Math.Round(s.UiScale * 100)}%";
 
         // Editor
         DefaultFontCombo.ItemsSource = _fonts;
@@ -272,7 +275,7 @@ public partial class SettingsWindow : Window
     private void UiScaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (UiScaleLabel != null)
-            UiScaleLabel.Text = $"{(int)(e.NewValue * 100)}%";
+            UiScaleLabel.Text = $"{Math.Round(e.NewValue * 100)}%";
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -457,7 +460,7 @@ public partial class SettingsWindow : Window
     public void ShowTab(string name)
     {
         if (name == "Accessibility") SettingsTabs.SelectedItem = AccessibilityTab;
-        if (name == "Fonts") SettingsTabs.SelectedItem = FontsTab;
+        if (name == "Fonts") SettingsTabs.SelectedItem = AccessibilityTab;
         if (name == "Cloud") SettingsTabs.SelectedItem = CloudTab;
         if (name == "Keyboard") SettingsTabs.SelectedItem = KeyboardTab;
     }
@@ -524,8 +527,8 @@ public partial class SettingsWindow : Window
         IconSizeBox.SelectedItem = IconSizeBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.IconSize)
                                    ?? IconSizeBox.Items[1];
 
-        for (double size = InterfaceFonts.MinSize; size <= 24; size++) MenuFontBox.Items.Add(size.ToString("0"));
-        if (InterfaceFonts.Find("Menus") is { } menus) MenuFontBox.Text = FontService.GetSize(menus).ToString("0");
+        GlobalTextSlider.Value = Math.Clamp(s.GlobalTextScale, 0.8, 2.0);
+        GlobalTextLabel.Text = $"{Math.Round(GlobalTextSlider.Value * 100)}%";
 
         ScreenReaderStatus.Text = ScreenReader.IsRunning
             ? "A screen reader is running. PdfEdit's buttons, boxes and panels all have names it can read."
@@ -555,6 +558,7 @@ public partial class SettingsWindow : Window
     private void SaveAccessibility(AppSettings s)
     {
         s.IconSize = (IconSizeBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "Normal";
+        s.GlobalTextScale = GlobalTextSlider.Value;
         s.AnnounceToScreenReader = AnnounceToScreenReaderCb.IsChecked == true;
         s.AnnounceStatus = AnnounceStatusCb.IsChecked == true;
         s.AnnouncePageChanges = AnnouncePagesCb.IsChecked == true;
@@ -575,18 +579,14 @@ public partial class SettingsWindow : Window
             InterfaceStyleService.ApplyIconSize(key);
     }
 
-    private void MenuFontBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>One slider for every part of the window: each area's default size times the scale.</summary>
+    private void GlobalTextSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (MenuFontBox.SelectedItem is string text) ApplyMenuFontSize(text);
-    }
-
-    private void MenuFontBox_LostFocus(object sender, RoutedEventArgs e) => ApplyMenuFontSize(MenuFontBox.Text);
-
-    private void ApplyMenuFontSize(string text)
-    {
-        if (!_accessibilityLoaded || !double.TryParse(text, out var size) || InterfaceFonts.Find("Menus") is not { } menus) return;
-        FontService.SetSize(menus, size);
-        if (FontAreaList.SelectedItem == menus) FontAreaList_SelectionChanged(FontAreaList, null!);
+        if (GlobalTextLabel != null) GlobalTextLabel.Text = $"{Math.Round(e.NewValue * 100)}%";
+        if (!_accessibilityLoaded || !_fontsInitialized) return;
+        foreach (var area in InterfaceFonts.Areas)
+            FontService.SetSize(area, Math.Round(area.DefaultSize * e.NewValue));
+        FontAreaList_SelectionChanged(FontAreaList, null!);
     }
 
     private void VoiceRateSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -611,6 +611,5 @@ public partial class SettingsWindow : Window
         finally { (s.NarrationVoice, s.NarrationRate, s.NarrationVolume) = saved; }
     }
 
-    private void OpenFontsTab_Click(object sender, RoutedEventArgs e) => SettingsTabs.SelectedItem = FontsTab;
     private void OpenKeyboardTab_Click(object sender, RoutedEventArgs e) => SettingsTabs.SelectedItem = KeyboardTab;
 }

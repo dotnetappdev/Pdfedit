@@ -6,10 +6,14 @@ The size, screen reader and narration options are in **Settings → Accessibilit
 
 ## Size
 
-- **Ctrl+Plus / Ctrl+Minus** make the whole window bigger or smaller, and **Ctrl+0** puts it back to 100%. **Ctrl+mouse wheel** zooms the page.
+Every size setting is in one place, at the top of **Settings → Accessibility**:
+
+- **Interface scale** makes the whole window bigger or smaller. **Ctrl+Plus** and **Ctrl+Minus** do the same at any time, and **Ctrl+0** puts it back to 100%.
+- **Text size (all)** sets the text of every part of the window at once, from 80% to 200%.
 - **Icon size** sets the ribbon and toolbar icons to Small, Normal, Large or Extra large. The ribbon grows to fit.
-- **Menu text size** sets the font of right-click menus and the ribbon's drop-down menus.
-- The **Fonts** tab sets the text size of each part of the window separately: ribbon, menus, side panels, AI assistant, status bar and dialogs.
+- **Text size for each part of the window** fine-tunes one part at a time: ribbon, menus (right-click and drop-down), side panels, AI assistant, status bar and dialogs. **Reset text sizes** puts them all back.
+
+**Ctrl+mouse wheel** zooms the page itself.
 
 ## Screen readers
 

@@ -30,6 +30,8 @@ public class AppSettings
     // Per-area interface font sizes (keyed by InterfaceFontArea.Key).
     // Absent keys fall back to each area's default size.
     public Dictionary<string, double> InterfaceFontSizes { get; set; } = new();
+    /// <summary>The "Text size (all)" slider in Settings → Accessibility (1.0 = default sizes).</summary>
+    public double GlobalTextScale { get; set; } = 1.0;
 
     // ── Cloud storage (your own OAuth app credentials) ─────────────────────
     public string GoogleClientId { get; set; } = string.Empty;
