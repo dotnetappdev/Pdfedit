@@ -1,5 +1,6 @@
 # Docs
 
+- [Features](features.md)
 - [Filling and signing](filling-and-signing.md)
 - [Preparing forms](forms.md)
 - [Comments, stamps and links](comments-and-markup.md)
