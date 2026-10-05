@@ -12,7 +12,10 @@ public class AppSettings
     private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
 
     // ── Appearance ───────────────────────────────────────────────────────────
-    public string Theme { get; set; } = "Dark";
+    /// <summary>"System" (follow Windows), "Light", "Dark" or "HighContrast".</summary>
+    public string Theme { get; set; } = "System";
+    /// <summary>Use the Windows accent colour for highlights, buttons and the ribbon.</summary>
+    public bool UseWindowsAccent { get; set; }
     /// <summary>Spell check typed text and text fields.</summary>
     public bool SpellCheck { get; set; } = true;
     public double UiScale { get; set; } = 1.0;

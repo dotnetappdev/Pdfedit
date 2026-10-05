@@ -17,7 +17,7 @@ public partial class MainWindow : RibbonWindow
         // Value converters are registered application-wide in App.xaml so that
         // every control (including stand-alone UserControls) can resolve them.
         InitializeComponent();
-        ApplyDockTheme(AppSettings.Current.Theme);
+        ApplyDockTheme(App.ResolvedTheme);
         Loaded += OnWindowLoaded;
         KeyDown += OnPlainShortcutKeyDown;
         ContentRendered += OnFirstRendered;
@@ -29,7 +29,7 @@ public partial class MainWindow : RibbonWindow
         DockManager.Theme = themeName switch
         {
             "Light" => new AvalonDock.Themes.Vs2013LightTheme(),
-            "HighContrast" => new AvalonDock.Themes.Vs2013DarkTheme(),
+            "HighContrast" => App.IsDarkTheme ? new AvalonDock.Themes.Vs2013DarkTheme() : new AvalonDock.Themes.Vs2013LightTheme(),
             _ => new AvalonDock.Themes.Vs2013DarkTheme()
         };
     }
@@ -516,5 +516,29 @@ public partial class MainWindow : RibbonWindow
     private async void AskByVoice_Click(object sender, RoutedEventArgs e)
     {
         if (VM != null) await VM.AskByVoiceAsync();
+    }
+
+    // ── Theme menu (View → Theme) ─────────────────────────────────────────────
+
+    private void ThemeMenu_Opened(object? sender, EventArgs e)
+    {
+        string t = AppSettings.Current.Theme;
+        ThemeSystemItem.IsChecked = t is not ("Light" or "Dark" or "HighContrast");
+        ThemeLightItem.IsChecked = t == "Light";
+        ThemeDarkItem.IsChecked = t == "Dark";
+        ThemeContrastItem.IsChecked = t == "HighContrast";
+        ThemeAccentItem.IsChecked = AppSettings.Current.UseWindowsAccent;
+    }
+
+    private void ThemeItem_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string theme) App.SwitchTheme(theme);
+    }
+
+    private void ThemeAccent_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Current.UseWindowsAccent = !AppSettings.Current.UseWindowsAccent;
+        AppSettings.Current.Save();
+        App.RefreshTheme();
     }
 }

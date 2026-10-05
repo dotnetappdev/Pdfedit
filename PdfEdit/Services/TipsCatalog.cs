@@ -75,7 +75,7 @@ public static class TipsCatalog
         new("Make it bigger",
             "View → UI Scale enlarges the whole interface. Settings also lets you set the font size of the ribbon, panels, status bar and AI chat separately."),
         new("Dark, light or high contrast",
-            "Settings → Appearance switches theme. Every dialog follows it, title bar included."),
+            "View → Theme (or Settings → Appearance) switches between light, dark and high contrast, or follows Windows, including its contrast themes, and can use your Windows accent colour. Every dialog follows it, title bar included."),
         new("Ask the AI about your document",
             "The AI Assistant panel reads the open PDF. Ask a question and it answers with page references; click (p. 4) to jump there."),
         new("Let the AI do the clicking",

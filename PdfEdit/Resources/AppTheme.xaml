@@ -37,13 +37,13 @@
     <!-- ── StatusBar ──────────────────────────────────────────────────────────── -->
     <Style TargetType="StatusBar">
         <Setter Property="Background"  Value="{DynamicResource StatusBarBgBrush}"/>
-        <Setter Property="Foreground"  Value="#AAAAAA"/>
+        <Setter Property="Foreground"  Value="{DynamicResource StatusBarForegroundBrush}"/>
         <Setter Property="Height"      Value="24"/>
         <Setter Property="FontSize"    Value="11"/>
         <Setter Property="FontFamily"  Value="Segoe UI, Arial"/>
     </Style>
     <Style TargetType="StatusBarItem">
-        <Setter Property="Foreground"  Value="#AAAAAA"/>
+        <Setter Property="Foreground"  Value="{DynamicResource StatusBarForegroundBrush}"/>
         <Setter Property="Padding"     Value="8,0"/>
     </Style>
 

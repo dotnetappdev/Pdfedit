@@ -98,6 +98,8 @@ public partial class SettingsWindow : Window
         var s = AppSettings.Current;
 
         // Theme
+        RbSystem.IsChecked = s.Theme is not ("Dark" or "Light" or "HighContrast");
+        UseAccentCb.IsChecked = s.UseWindowsAccent;
         RbDark.IsChecked = s.Theme == "Dark";
         RbLight.IsChecked = s.Theme == "Light";
         RbHighContrast.IsChecked = s.Theme == "HighContrast";
@@ -227,6 +229,13 @@ public partial class SettingsWindow : Window
     {
         if (sender is RadioButton rb && rb.Tag is string tag)
             App.SwitchTheme(tag);
+    }
+
+    private void UseAccent_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Current.UseWindowsAccent = UseAccentCb.IsChecked == true;
+        AppSettings.Current.Save();
+        App.RefreshTheme();
     }
 
     private void RenderEngine_Checked(object sender, RoutedEventArgs e)

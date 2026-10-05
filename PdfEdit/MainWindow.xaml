@@ -1640,6 +1640,19 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
+                <Fluent:RibbonGroupBox Header="Theme" AutomationProperties.Name="Theme group">
+                    <Fluent:DropDownButton x:Name="ThemeMenu" Header="Theme" ToolTip="Light, dark, high contrast, or follow Windows"
+                                           DropDownOpened="ThemeMenu_Opened" AutomationProperties.Name="Choose a theme">
+                        <Fluent:DropDownButton.LargeIcon><Viewbox Width="32" Height="32"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:DropDownButton.LargeIcon>
+                        <Fluent:MenuItem x:Name="ThemeSystemItem" Header="Use Windows setting" Tag="System" Click="ThemeItem_Click" IsCheckable="True"/>
+                        <Fluent:MenuItem x:Name="ThemeLightItem" Header="Light" Tag="Light" Click="ThemeItem_Click" IsCheckable="True"/>
+                        <Fluent:MenuItem x:Name="ThemeDarkItem" Header="Dark" Tag="Dark" Click="ThemeItem_Click" IsCheckable="True"/>
+                        <Fluent:MenuItem x:Name="ThemeContrastItem" Header="High contrast" Tag="HighContrast" Click="ThemeItem_Click" IsCheckable="True"/>
+                        <Separator/>
+                        <Fluent:MenuItem x:Name="ThemeAccentItem" Header="Use my Windows accent colour" Click="ThemeAccent_Click" IsCheckable="True"/>
+                    </Fluent:DropDownButton>
+                </Fluent:RibbonGroupBox>
+
                 <Fluent:RibbonGroupBox Header="Display"
                                         AutomationProperties.Name="Display options group">
                     <Fluent:ToggleButton Header="Highlight Fields"

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using PdfEdit.Dialogs;
 using PdfEdit.Services;
@@ -99,6 +100,17 @@ public partial class App : Application
         e.SetObserved(); // prevent process termination
     }
 
+    /// <summary>The theme actually showing: "Light", "Dark" or "HighContrast" ("System" resolved).</summary>
+    public static string ResolvedTheme { get; private set; } = "Dark";
+
+    /// <summary>The theme is dark (title bars and docking chrome follow this).</summary>
+    public static bool IsDarkTheme => ResolvedTheme switch
+    {
+        "Light" => false,
+        "HighContrast" => !(Current?.TryFindResource("PanelBgColor") is Color c && WindowsTheme.Luminance(c) > 0.5),
+        _ => true,
+    };
+
     public static void SwitchTheme(string themeName)
     {
         AppSettings.Current.Theme = themeName;
@@ -106,9 +118,34 @@ public partial class App : Application
         ApplyTheme(themeName);
     }
 
+    /// <summary>Re-applies the saved theme (after the Windows theme, contrast or accent changes).</summary>
+    public static void RefreshTheme() => ApplyTheme(AppSettings.Current.Theme);
+
+    private static bool _watchingWindows;
+    private static ResourceDictionary? _overrides;
+
+    /// <summary>"System" → whatever Windows is set to: a contrast theme, else light or dark apps.</summary>
+    public static string Resolve(string setting) => setting switch
+    {
+        "Light" or "Dark" or "HighContrast" => setting,
+        _ => WindowsTheme.HighContrast ? "HighContrast" : WindowsTheme.AppsUseLightTheme ? "Light" : "Dark",
+    };
+
     private static void ApplyTheme(string themeName)
     {
-        string uri = themeName switch
+        if (!_watchingWindows)
+        {
+            _watchingWindows = true;
+            WindowsTheme.Listen();
+            WindowsTheme.Changed += () =>
+            {
+                if (AppSettings.Current.Theme is "System" or "HighContrast" || AppSettings.Current.UseWindowsAccent) RefreshTheme();
+            };
+        }
+
+        string resolved = Resolve(themeName);
+        ResolvedTheme = resolved;
+        string uri = resolved switch
         {
             "Light" => "Themes/LightTheme.xaml",
             "HighContrast" => "Themes/HighContrastTheme.xaml",
@@ -134,21 +171,76 @@ public partial class App : Application
                 merged.RemoveAt(i);
             }
         }
+        if (_overrides != null) merged.Remove(_overrides);
 
         // Insert right after the Fluent generic dictionary (index 0).
         int insertAt = merged.Count > 0 ? 1 : 0;
         merged.Insert(insertAt, newDict);
         _themeDict = newDict;
 
+        // Windows colours on top: the contrast theme's own palette, or the accent colour.
+        _overrides = WindowsOverrides(resolved);
+        Color? ribbonAccent = null;
+        if (_overrides != null)
+        {
+            merged.Insert(insertAt + 1, _overrides);
+            if (_overrides.Contains("AccentColor")) ribbonAccent = (Color)_overrides["AccentColor"];
+        }
+
         // Keep the Fluent ribbon in sync with the app theme.
-        ApplyRibbonTheme(themeName);
+        ApplyRibbonTheme(resolved, ribbonAccent);
 
         // Keep the AvalonDock docking chrome in sync (main window may not exist yet
         // during the very first theme application at startup).
-        (Current.MainWindow as MainWindow)?.ApplyDockTheme(themeName);
+        (Current.MainWindow as MainWindow)?.ApplyDockTheme(resolved);
 
         // Native title bars of windows already open.
         TitleBarTheme.ApplyAll();
+    }
+
+    /// <summary>
+    /// Colours taken from Windows: with a Windows contrast theme on, its window, text, highlight
+    /// and link colours replace the built-in ones; otherwise, if chosen, the accent colour.
+    /// </summary>
+    private static ResourceDictionary? WindowsOverrides(string resolved)
+    {
+        var d = new ResourceDictionary();
+        void Put(string name, Color c)
+        {
+            d[name + "Color"] = c;
+            d[name + "Brush"] = new SolidColorBrush(c);
+        }
+
+        if (resolved == "HighContrast" && WindowsTheme.HighContrast)
+        {
+            Color window = SystemColors.WindowColor, text = SystemColors.WindowTextColor;
+            Color highlight = SystemColors.HighlightColor, link = SystemColors.HotTrackColor;
+            Color face = SystemColors.ControlColor, gray = SystemColors.GrayTextColor;
+            foreach (var n in new[] { "AppBg", "PanelBg", "SidebarBg", "ContentBg", "StatusBarBg", "InputBg", "SearchBg", "ToastBg" }) Put(n, window);
+            foreach (var n in new[] { "Foreground", "InputForeground", "ToastForeground", "AppBorder", "InputBorder", "StatusBarForeground" }) Put(n, text);
+            Put("DimForeground", WindowsTheme.Luminance(gray) is var lg && Math.Abs(lg - WindowsTheme.Luminance(window)) > 0.3 ? gray : text);
+            Put("Accent", highlight);
+            Put("AccentHover", link);
+            Put("AccentMuted", highlight);
+            Put("ActiveBg", highlight);
+            Put("HoverBg", face);
+            d["ButtonBgBrush"] = new SolidColorBrush(face);
+            d["ButtonBorderBrush"] = new SolidColorBrush(text);
+            return d;
+        }
+
+        if (AppSettings.Current.UseWindowsAccent && resolved != "HighContrast" && WindowsTheme.Accent is { } accent)
+        {
+            // Dark theme: the lighter shade reads better on dark backgrounds.
+            var main = resolved == "Light" ? accent.Accent : accent.Light;
+            Put("Accent", main);
+            Put("AccentHover", resolved == "Light" ? accent.Dark : accent.Accent);
+            var muted = Color.FromArgb(resolved == "Light" ? (byte)0x33 : (byte)0x55, main.R, main.G, main.B);
+            Put("AccentMuted", muted);
+            Put("ActiveBg", muted);
+            return d;
+        }
+        return null;
     }
 
     /// <summary>
@@ -156,14 +248,25 @@ public partial class App : Application
     /// selected app theme. Runs best-effort: if the theme can't be applied the
     /// ribbon simply keeps its previous appearance.
     /// </summary>
-    private static void ApplyRibbonTheme(string themeName)
+    private static void ApplyRibbonTheme(string themeName, Color? accent = null)
     {
         try
         {
+            string baseColor = themeName == "Light" || (themeName == "HighContrast" && !IsDarkTheme) ? "Light" : "Dark";
+            if (accent is { } a)
+            {
+                // A ribbon theme made from the Windows (or contrast) colour.
+                var generated = ControlzEx.Theming.RuntimeThemeGenerator.Current.GenerateRuntimeTheme(baseColor, a);
+                if (generated != null)
+                {
+                    ControlzEx.Theming.ThemeManager.Current.ChangeTheme(Current, generated);
+                    return;
+                }
+            }
             string fluentTheme = themeName switch
             {
                 "Light" => "Light.Blue",
-                "HighContrast" => "Dark.Yellow",
+                "HighContrast" => IsDarkTheme ? "Dark.Yellow" : "Light.Blue",
                 _ => "Dark.Blue"
             };
             ControlzEx.Theming.ThemeManager.Current.ChangeTheme(Current, fluentTheme);

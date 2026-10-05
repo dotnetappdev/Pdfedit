@@ -5,6 +5,7 @@
     <!-- High Contrast Theme Color Tokens -->
     <Color x:Key="AccentColor">#1AEBFF</Color>
     <Color x:Key="AccentHoverColor">#37F0FF</Color>
+    <Color x:Key="AccentMutedColor">#003A57</Color>
     <Color x:Key="AppBgColor">#000000</Color>
     <Color x:Key="PanelBgColor">#000000</Color>
     <Color x:Key="SidebarBgColor">#000000</Color>
@@ -30,6 +31,7 @@
     <SolidColorBrush x:Key="SidebarBgBrush"        Color="{StaticResource SidebarBgColor}"/>
     <SolidColorBrush x:Key="ContentBgBrush"        Color="{StaticResource ContentBgColor}"/>
     <SolidColorBrush x:Key="StatusBarBgBrush"      Color="{StaticResource StatusBarBgColor}"/>
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#000000"/>
     <SolidColorBrush x:Key="ForegroundBrush"       Color="{StaticResource ForegroundColor}"/>
     <SolidColorBrush x:Key="DimForegroundBrush"    Color="{StaticResource DimForegroundColor}"/>
     <SolidColorBrush x:Key="AppBorderBrush"        Color="{StaticResource AppBorderColor}"/>

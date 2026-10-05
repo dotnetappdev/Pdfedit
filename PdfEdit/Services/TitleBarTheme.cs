@@ -51,7 +51,7 @@ public static class TitleBarTheme
             var hwnd = new WindowInteropHelper(window).Handle;
             if (hwnd == IntPtr.Zero) return;
 
-            bool dark = !string.Equals(AppSettings.Current?.Theme, "Light", StringComparison.OrdinalIgnoreCase);
+            bool dark = App.IsDarkTheme;
             int useDark = dark ? 1 : 0;
             if (DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDark, sizeof(int)) != 0)
                 DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, ref useDark, sizeof(int));

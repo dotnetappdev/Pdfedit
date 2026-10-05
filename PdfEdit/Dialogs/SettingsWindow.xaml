@@ -55,6 +55,12 @@
                         <TextBlock Style="{StaticResource SectionHead}" Text="THEME"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <RadioButton x:Name="RbSystem" Content="Use Windows setting" GroupName="Theme"
+                                         Foreground="{DynamicResource ForegroundBrush}"
+                                         Margin="0,0,16,0"
+                                         Checked="Theme_Checked" Tag="System"
+                                         ToolTip="Light or dark like your Windows apps, and Windows' own contrast themes when one is on"
+                                         AutomationProperties.Name="Use the Windows theme"/>
                             <RadioButton x:Name="RbDark" Content="Dark" GroupName="Theme"
                                          Foreground="{DynamicResource ForegroundBrush}"
                                          Margin="0,0,16,0" IsChecked="True"
@@ -65,11 +71,18 @@
                                          Margin="0,0,16,0"
                                          Checked="Theme_Checked" Tag="Light"
                                          AutomationProperties.Name="Light theme"/>
-                            <RadioButton x:Name="RbHighContrast" Content="High Contrast" GroupName="Theme"
+                            <RadioButton x:Name="RbHighContrast" Content="High contrast" GroupName="Theme"
                                          Foreground="{DynamicResource ForegroundBrush}"
                                          Checked="Theme_Checked" Tag="HighContrast"
                                          AutomationProperties.Name="High contrast theme"/>
                         </StackPanel>
+
+                        <CheckBox x:Name="UseAccentCb" Content="Use my Windows accent colour"
+                                  Foreground="{DynamicResource ForegroundBrush}" FontSize="13" Margin="0,0,0,4"
+                                  Click="UseAccent_Click"
+                                  AutomationProperties.Name="Use the Windows accent colour"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="With a Windows contrast theme on (Settings → Accessibility → Contrast themes), High contrast and Use Windows setting use its colours. Changes in Windows are picked up straight away."/>
 
                         <TextBlock Style="{StaticResource SectionHead}" Text="PDF RENDER ENGINE"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">

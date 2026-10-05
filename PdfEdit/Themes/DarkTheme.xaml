@@ -31,6 +31,7 @@
     <SolidColorBrush x:Key="SidebarBgBrush"        Color="{StaticResource SidebarBgColor}"/>
     <SolidColorBrush x:Key="ContentBgBrush"        Color="{StaticResource ContentBgColor}"/>
     <SolidColorBrush x:Key="StatusBarBgBrush"      Color="{StaticResource StatusBarBgColor}"/>
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#AAAAAA"/>
     <SolidColorBrush x:Key="ForegroundBrush"       Color="{StaticResource ForegroundColor}"/>
     <SolidColorBrush x:Key="DimForegroundBrush"    Color="{StaticResource DimForegroundColor}"/>
     <SolidColorBrush x:Key="AppBorderBrush"        Color="{StaticResource AppBorderColor}"/>

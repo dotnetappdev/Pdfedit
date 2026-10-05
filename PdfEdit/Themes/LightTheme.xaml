@@ -10,7 +10,7 @@
     <Color x:Key="PanelBgColor">#FAFAFA</Color>
     <Color x:Key="SidebarBgColor">#EBEBEB</Color>
     <Color x:Key="ContentBgColor">#D8D8D8</Color>
-    <Color x:Key="StatusBarBgColor">#1A1A1A</Color>
+    <Color x:Key="StatusBarBgColor">#EAEAEA</Color>
     <Color x:Key="ForegroundColor">#1A1A1A</Color>
     <Color x:Key="DimForegroundColor">#666666</Color>
     <Color x:Key="AppBorderColor">#D0D0D0</Color>
@@ -31,6 +31,7 @@
     <SolidColorBrush x:Key="SidebarBgBrush"        Color="{StaticResource SidebarBgColor}"/>
     <SolidColorBrush x:Key="ContentBgBrush"        Color="{StaticResource ContentBgColor}"/>
     <SolidColorBrush x:Key="StatusBarBgBrush"      Color="{StaticResource StatusBarBgColor}"/>
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#444444"/>
     <SolidColorBrush x:Key="ForegroundBrush"       Color="{StaticResource ForegroundColor}"/>
     <SolidColorBrush x:Key="DimForegroundBrush"    Color="{StaticResource DimForegroundColor}"/>
     <SolidColorBrush x:Key="AppBorderBrush"        Color="{StaticResource AppBorderColor}"/>
