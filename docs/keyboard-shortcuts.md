@@ -9,7 +9,8 @@ Press F1 in the app to see this list. Single-letter shortcuts are ignored while 
 | Action | Keys |
 |--------|------|
 | Open / Save / Save As | Ctrl+O / Ctrl+S / Ctrl+Shift+S |
-| Close / Print | Ctrl+W / Ctrl+P |
+| Close tab / Print | Ctrl+W / Ctrl+P |
+| Next / previous tab | Ctrl+Tab / Ctrl+Shift+Tab |
 | Next / previous page | Ctrl+Right / Ctrl+Left |
 | Zoom in / out / fit | Ctrl+Plus / Ctrl+Minus / Ctrl+0 |
 | Rotate page | Ctrl+] / Ctrl+[ |
@@ -36,4 +37,6 @@ Press F1 in the app to see this list. Single-letter shortcuts are ignored while 
 | Date | D | Stamp | M |
 | Checkmark | K | Edit fields | E |
 | Rectangle / Ellipse / Line | R / E / L | Arrow / Pen / Image | A / P / I |
-| Table | B | | |
+| Table | B | Select text (Live view) | S |
+
+In the Design canvas, S is the signature tool.

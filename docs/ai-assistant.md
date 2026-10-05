@@ -13,12 +13,16 @@ API keys are stored in `%AppData%\PdfEdit\settings.json` on your machine and are
 
 ## What it can do
 
-- **Smart Fill** reads the form and fills in every field it can, either from what you tell it or from another document.
-- **Summarise** gives an overview with the key people, dates and amounts.
-- **Extract key data** pulls out names, addresses, reference numbers and totals.
-- **Contract analysis** covers the parties, obligations, payment terms, termination clauses and risks.
-- **Find personal information** points out anything you might want to redact.
-- **Chat** answers questions about the open document, based on its actual text.
+- **Chat** answers questions about the open document, citing pages you can click to jump to. Replies can be copied or added to the page as a note.
+- **Select Text** (press S): drag over a passage and choose Explain, Summarise, Rewrite, Translate or Ask. Drag over a chart, table or scan and choose **Ask about this area** to send a picture of it.
+- **Changes on request**: ask it to fill fields, highlight or redact text, add notes or stamps, rotate or delete pages, or run PdfEdit commands ("compress this", "export to Word"). Each change appears as a card you Apply or Undo.
+- **Outline** writes a summary with section key points and page links in its own panel.
+- **Write** turns the document into an email, study notes, flashcards, a quiz, an FAQ, a list of actions and deadlines, or a plain-English version.
+- **Translate PDF** makes a translated copy that keeps the layout.
+- **Ask Across PDFs** answers from several files or a whole folder, citing file and page.
+- **Mind Map** shows the document as topics you can click.
+- **Smart Fill**, **Summarise**, **Extract key data**, **Contract analysis** and **Find personal information** run in one click.
+- **Ask by voice** with the microphone button (needs Windows online speech recognition).
 
 You can stop a response at any time.
 
