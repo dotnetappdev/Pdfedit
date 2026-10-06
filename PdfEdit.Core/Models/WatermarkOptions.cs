@@ -11,7 +11,26 @@ public class WatermarkOptions
     /// <summary>Image width as a share of the page width (0.1 – 1).</summary>
     public float  ImageScale { get; set; } = 0.5f;
 
-    public string FontName   { get; set; } = "Helvetica-Bold";   // a standard PDF font
+    public string FontName   { get; set; } = "Helvetica-Bold";   // a standard PDF font (see FontNameFor)
+
+    /// <summary>The colour used when none is chosen ("Automatic"): mid grey.</summary>
+    public const string AutomaticColor = "#808080";
+
+    /// <summary>
+    /// The standard PDF font for a family ("Helvetica", "Times" or "Courier") with bold and / or
+    /// italic, e.g. Times + bold + italic → "Times-BoldItalic".
+    /// </summary>
+    public static string FontNameFor(string family, bool bold, bool italic) => family switch
+    {
+        "Times" => bold && italic ? "Times-BoldItalic" : bold ? "Times-Bold" : italic ? "Times-Italic" : "Times-Roman",
+        "Courier" => bold && italic ? "Courier-BoldOblique" : bold ? "Courier-Bold" : italic ? "Courier-Oblique" : "Courier",
+        _ => bold && italic ? "Helvetica-BoldOblique" : bold ? "Helvetica-Bold" : italic ? "Helvetica-Oblique" : "Helvetica",
+    };
+
+    /// <summary>The family, bold and italic of a standard font name (the reverse of <see cref="FontNameFor"/>).</summary>
+    public static (string Family, bool Bold, bool Italic) SplitFontName(string name) =>
+        (name.StartsWith("Times") ? "Times" : name.StartsWith("Courier") ? "Courier" : "Helvetica",
+         name.Contains("Bold"), name.Contains("Italic") || name.Contains("Oblique"));
     public float  FontSize   { get; set; } = 72;
     public string Color      { get; set; } = "#FF808080";         // ARGB or RGB hex
     public float  Opacity    { get; set; } = 0.25f;

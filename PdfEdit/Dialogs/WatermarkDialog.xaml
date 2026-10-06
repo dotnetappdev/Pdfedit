@@ -73,13 +73,18 @@
                     </DockPanel>
                     <DockPanel Margin="0,2">
                         <TextBlock Text="Font" Style="{StaticResource Lbl}"/>
+                        <ToggleButton x:Name="ItalicBox" DockPanel.Dock="Right" Width="28" Height="26" Margin="4,0,0,0"
+                                      Checked="Changed" Unchecked="Changed" ToolTip="Italic" AutomationProperties.Name="Italic">
+                            <TextBlock Text="I" FontStyle="Italic" FontFamily="Georgia" FontSize="14"/>
+                        </ToggleButton>
+                        <ToggleButton x:Name="BoldBox" DockPanel.Dock="Right" Width="28" Height="26" Margin="6,0,0,0" IsChecked="True"
+                                      Checked="Changed" Unchecked="Changed" ToolTip="Bold" AutomationProperties.Name="Bold">
+                            <TextBlock Text="B" FontWeight="Bold" FontSize="14"/>
+                        </ToggleButton>
                         <ComboBox x:Name="FontBox" Height="26" SelectedIndex="0" SelectionChanged="Changed" AutomationProperties.Name="Font">
-                            <ComboBoxItem Content="Helvetica Bold" Tag="Helvetica-Bold"/>
-                            <ComboBoxItem Content="Helvetica" Tag="Helvetica"/>
-                            <ComboBoxItem Content="Times Bold" Tag="Times-Bold"/>
-                            <ComboBoxItem Content="Times" Tag="Times-Roman"/>
-                            <ComboBoxItem Content="Courier Bold" Tag="Courier-Bold"/>
-                            <ComboBoxItem Content="Courier" Tag="Courier"/>
+                            <ComboBoxItem Content="Helvetica (sans serif)" Tag="Helvetica"/>
+                            <ComboBoxItem Content="Times (serif)" Tag="Times"/>
+                            <ComboBoxItem Content="Courier (typewriter)" Tag="Courier"/>
                         </ComboBox>
                     </DockPanel>
                     <DockPanel Margin="0,2">
@@ -89,7 +94,11 @@
                     </DockPanel>
                     <DockPanel Margin="0,4,0,2">
                         <TextBlock Text="Colour" Style="{StaticResource Lbl}"/>
-                        <TextBox x:Name="ColorBox" DockPanel.Dock="Right" Width="74" Text="#808080" TextChanged="Changed" AutomationProperties.Name="Colour hex"/>
+                        <Button DockPanel.Dock="Right" Content="Automatic" Padding="8,0" Height="26" Margin="6,0,0,0" Click="AutoColor_Click"
+                                ToolTip="Clear the colour: the default grey, semi-transparent, like Word's automatic watermark"
+                                AutomationProperties.Name="Automatic colour"/>
+                        <TextBox x:Name="ColorBox" DockPanel.Dock="Right" Width="74" Text="" TextChanged="Changed"
+                                 ToolTip="A colour like #C62828; leave empty for automatic (grey)" AutomationProperties.Name="Colour hex, empty for automatic"/>
                         <WrapPanel x:Name="Swatches" VerticalAlignment="Center"/>
                     </DockPanel>
                 </StackPanel>
@@ -146,8 +155,8 @@
                 <TextBlock Text="LAYER" Style="{StaticResource Head}"/>
                 <RadioButton x:Name="LayerBehind" Content="Behind text and fields (background)" IsChecked="True" GroupName="Layer" Checked="Changed"
                              ToolTip="Text and form fields stay on top and readable"/>
-                <RadioButton x:Name="LayerTop" Content="On top of the page" GroupName="Layer" Margin="0,4,0,0" Checked="Changed"
-                             ToolTip="Visible even over images and filled backgrounds"/>
+                <RadioButton x:Name="LayerTop" Content="On top, see-through (text stays readable)" GroupName="Layer" Margin="0,4,0,0" Checked="Changed"
+                             ToolTip="Shows over pictures and coloured boxes too, but only tints them: black text is never covered"/>
 
                 <TextBlock Text="PAGES" Style="{StaticResource Head}"/>
                 <RadioButton x:Name="PagesAll" Content="All pages" IsChecked="True" GroupName="Pages"/>

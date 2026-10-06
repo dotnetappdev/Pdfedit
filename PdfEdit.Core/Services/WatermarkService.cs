@@ -53,7 +53,10 @@ public static class WatermarkService
             props.Put(PdfName.Subtype, PdfName.Watermark);
             canvas.BeginMarkedContent(PdfName.Artifact, props);
             canvas.SaveState();
-            canvas.SetExtGState(new PdfExtGState().SetFillOpacity(opt.Opacity).SetStrokeOpacity(opt.Opacity));
+            // Multiply: the watermark can only darken what's under it, so black text stays black and
+            // readable even when the watermark is on top (it tints the white paper around the text).
+            canvas.SetExtGState(new PdfExtGState().SetFillOpacity(opt.Opacity).SetStrokeOpacity(opt.Opacity)
+                                                  .SetBlendMode(PdfExtGState.BM_MULTIPLY));
 
             // Item size (unrotated) in points.
             float itemW, itemH;
@@ -204,15 +207,15 @@ public static class WatermarkService
         return set.ToList();
     }
 
-    private static PdfFont CreateFont(string name) => PdfFontFactory.CreateFont(name switch
+    private static readonly HashSet<string> StandardFontNames = new()
     {
-        "Helvetica" => StandardFonts.HELVETICA,
-        "Times-Bold" => StandardFonts.TIMES_BOLD,
-        "Times-Roman" => StandardFonts.TIMES_ROMAN,
-        "Courier-Bold" => StandardFonts.COURIER_BOLD,
-        "Courier" => StandardFonts.COURIER,
-        _ => StandardFonts.HELVETICA_BOLD,
-    });
+        StandardFonts.HELVETICA, StandardFonts.HELVETICA_BOLD, StandardFonts.HELVETICA_OBLIQUE, StandardFonts.HELVETICA_BOLDOBLIQUE,
+        StandardFonts.TIMES_ROMAN, StandardFonts.TIMES_BOLD, StandardFonts.TIMES_ITALIC, StandardFonts.TIMES_BOLDITALIC,
+        StandardFonts.COURIER, StandardFonts.COURIER_BOLD, StandardFonts.COURIER_OBLIQUE, StandardFonts.COURIER_BOLDOBLIQUE,
+    };
+
+    private static PdfFont CreateFont(string name) =>
+        PdfFontFactory.CreateFont(StandardFontNames.Contains(name) ? name : StandardFonts.HELVETICA_BOLD);
 
     private static DeviceRgb ParseColor(string hex)
     {

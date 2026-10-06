@@ -58,9 +58,13 @@ public partial class WatermarkDialog : Window
     private void Restore(WatermarkOptions o)
     {
         TextCombo.Text = o.Text;
-        foreach (ComboBoxItem it in FontBox.Items) if ((string)it.Tag == o.FontName) FontBox.SelectedItem = it;
+        var (family, bold, italic) = WatermarkOptions.SplitFontName(o.FontName);
+        foreach (ComboBoxItem it in FontBox.Items) if ((string)it.Tag == family) FontBox.SelectedItem = it;
+        BoldBox.IsChecked = bold;
+        ItalicBox.IsChecked = italic;
         SizeSlider.Value = o.FontSize;
-        ColorBox.Text = o.Color.Length == 9 ? "#" + o.Color[3..] : o.Color;
+        string c = o.Color.Length == 9 ? "#" + o.Color[3..] : o.Color;
+        ColorBox.Text = c.Equals(WatermarkOptions.AutomaticColor, StringComparison.OrdinalIgnoreCase) ? "" : c;
         OpacitySlider.Value = o.Opacity * 100;
         LayoutBox.SelectedIndex = (int)o.Layout;
         AngleSlider.Value = o.AngleDeg;
@@ -83,6 +87,14 @@ public partial class WatermarkDialog : Window
     }
 
     private void Changed(object sender, RoutedEventArgs e) => UpdatePreview();
+
+    /// <summary>Clears the colour back to automatic: the default grey, semi-transparent.</summary>
+    private void AutoColor_Click(object sender, RoutedEventArgs e)
+    {
+        ColorBox.Text = "";
+        OpacitySlider.Value = 25;
+        UpdatePreview();
+    }
 
     private void RangeBox_GotFocus(object sender, RoutedEventArgs e) => PagesRange.IsChecked = true;
 
@@ -122,6 +134,7 @@ public partial class WatermarkDialog : Window
 
     private Color CurrentColor()
     {
+        if (string.IsNullOrWhiteSpace(ColorBox.Text)) return (Color)ColorConverter.ConvertFromString(WatermarkOptions.AutomaticColor);
         try { return (Color)ColorConverter.ConvertFromString(ColorBox.Text.Trim()); }
         catch { return Colors.Gray; }
     }
@@ -151,7 +164,8 @@ public partial class WatermarkDialog : Window
             {
                 Text = TextCombo.Text,
                 FontFamily = new FontFamily(font.StartsWith("Times") ? "Times New Roman" : font.StartsWith("Courier") ? "Courier New" : "Arial"),
-                FontWeight = font.EndsWith("Bold") ? FontWeights.Bold : FontWeights.Normal,
+                FontWeight = BoldBox.IsChecked == true ? FontWeights.Bold : FontWeights.Normal,
+                FontStyle = ItalicBox.IsChecked == true ? FontStyles.Italic : FontStyles.Normal,
                 FontSize = Math.Max(1, itemH / 0.72 * k),
                 Foreground = new SolidColorBrush(CurrentColor()),
                 Opacity = opacity,
@@ -220,7 +234,7 @@ public partial class WatermarkDialog : Window
             Text = TextCombo.Text.Trim(),
             ImagePath = IsImage ? ImagePathBox.Text : null,
             ImageScale = (float)(ScaleSlider.Value / 100),
-            FontName = (string)((ComboBoxItem)FontBox.SelectedItem).Tag,
+            FontName = WatermarkOptions.FontNameFor((string)((ComboBoxItem)FontBox.SelectedItem).Tag, BoldBox.IsChecked == true, ItalicBox.IsChecked == true),
             FontSize = (float)SizeSlider.Value,
             Color = $"#{c.R:X2}{c.G:X2}{c.B:X2}",
             Opacity = (float)(OpacitySlider.Value / 100),
