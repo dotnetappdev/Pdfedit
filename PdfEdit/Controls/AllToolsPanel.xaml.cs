@@ -7,7 +7,7 @@ using PdfEdit.ViewModels;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat's "All tools" list: each tool expands to show its actions, which run the app's
+/// The "All tools" list: each tool expands to show its actions, which run the app's
 /// commands (export, edit, create, combine, organise, AI, summary, e-signatures, OCR, protect,
 /// redact, compress, prepare form). Docked to the left of the page thumbnails.
 /// </summary>
@@ -19,7 +19,6 @@ public partial class AllToolsPanel : UserControl
     {
         public required string Title { get; init; }
         public required string Glyph { get; init; }
-        public required Color Accent { get; init; }
         public required string Description { get; init; }
         public required List<ToolAction> Actions { get; init; }
         public bool IsExpanded { get; set; }
@@ -68,7 +67,7 @@ public partial class AllToolsPanel : UserControl
 
         _categories = new()
         {
-            new() { Title = "Export a PDF", Glyph = "", Accent = Color.FromRgb(0x3D, 0xC9, 0xA8),
+            new() { Title = "Convert & save as", Glyph = "\uE8AB",
                 Description = "Convert to Word, Excel, HTML, ePub, images or PDF/A",
                 Actions = new()
                 {
@@ -88,7 +87,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Comments (XFDF)", vm.ExportXfdfCommand),
                     Run("Comment summary (CSV)", vm.ExportAnnotationSummaryCommand),
                 } },
-            new() { Title = "Edit a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x4F, 0x9A),
+            new() { Title = "Edit content", Glyph = "\uE70F",
                 Description = "Add text, watermarks, headers, page numbers",
                 Actions = new()
                 {
@@ -106,7 +105,7 @@ public partial class AllToolsPanel : UserControl
                     Page("Find & replace in fields", vm.FindReplaceFieldsCommand),
                     Run("Document properties", vm.DocumentPropertiesCommand),
                 } },
-            new() { Title = "Create a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x5A, 0x4F),
+            new() { Title = "New PDF", Glyph = "\uE8A5",
                 Description = "Blank, from Office files, images or a design",
                 Actions = new()
                 {
@@ -118,14 +117,14 @@ public partial class AllToolsPanel : UserControl
                     Run("Design a PDF (Design canvas)", vm.NewDesignCommand),
                     Run("Export design as PDF", vm.ExportDesignCommand),
                 } },
-            new() { Title = "Cloud storage", Glyph = "\uE753", Accent = Color.FromRgb(0x4D, 0xA3, 0xFF),
+            new() { Title = "Cloud", Glyph = "\uE753",
                 Description = "Google Drive and OneDrive",
                 Actions = new()
                 {
                     Run("Import from Google Drive or OneDrive", vm.OpenFromCloudCommand, "PDFs, Word files and Google Docs, brought in as PDFs"),
                     Page("Save to Google Drive or OneDrive", vm.SaveToCloudCommand),
                 } },
-            new() { Title = "Combine files", Glyph = "", Accent = Color.FromRgb(0x8C, 0x7C, 0xFF),
+            new() { Title = "Merge & compare", Glyph = "\uE8C8",
                 Description = "Merge PDFs and images into one PDF",
                 Actions = new()
                 {
@@ -135,7 +134,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Compare two PDFs (text)", vm.ComparePdfsCommand),
                     Run("Compare two PDFs (visual)", vm.VisualCompareCommand, "Colours what was added, removed and changed on each page"),
                 } },
-            new() { Title = "Organize pages", Glyph = "", Accent = Color.FromRgb(0xB6, 0xE0, 0x4D),
+            new() { Title = "Pages", Glyph = "\uE8A9",
                 Description = "Rotate, insert, move, delete, extract, split",
                 Actions = new()
                 {
@@ -159,7 +158,7 @@ public partial class AllToolsPanel : UserControl
                     Page("Split PDF", vm.SplitPdfCommand),
                     Page("Pages per sheet / booklet…", vm.PrintLayoutCommand, "A new PDF with several pages on each sheet, or a booklet to fold"),
                 } },
-            new() { Title = "AI Assistant", Glyph = "", Accent = Color.FromRgb(0xE0, 0xE0, 0xE0),
+            new() { Title = "AI assistant", Glyph = "\uE945",
                 Description = "Chat about the document, fill forms with AI",
                 Actions = new()
                 {
@@ -174,7 +173,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Analyse contract", vm.AnalyzeContractCommand),
                     Run("Extract key data", vm.ExtractKeyDataCommand),
                 } },
-            new() { Title = "Generative summary", Glyph = "", Accent = Color.FromRgb(0xE0, 0xE0, 0xE0),
+            new() { Title = "Summaries & reading", Glyph = "\uE736",
                 Description = "Summarise the document with AI",
                 Actions = new()
                 {
@@ -184,7 +183,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Stop reading", vm.StopReadingCommand),
                     Run("Document statistics", vm.DocumentStatisticsCommand),
                 } },
-            new() { Title = "Request e-signatures", Glyph = "", Accent = Color.FromRgb(0xE0, 0x61, 0xF5),
+            new() { Title = "Signatures", Glyph = "\uE8FB",
                 Description = "Send for signature or sign yourself",
                 Actions = new()
                 {
@@ -194,7 +193,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Check signatures", vm.VerifySignaturesCommand),
                     Run("Check required fields", vm.ValidateRequiredFieldsCommand),
                 } },
-            new() { Title = "Automate", Glyph = "\uE9F5", Accent = Color.FromRgb(0xFF, 0xB0, 0x3B),
+            new() { Title = "Batch & automation", Glyph = "\uE895",
                 Description = "Run steps on many PDFs at once",
                 Actions = new()
                 {
@@ -202,7 +201,7 @@ public partial class AllToolsPanel : UserControl
                     Page("Bulk fill from spreadsheet…", vm.BulkFillCommand, "One filled copy of this form per CSV / Excel row"),
                     Run("Search PDFs in a folder…", vm.SearchFolderCommand, "Find text in every PDF in a folder and its subfolders"),
                 } },
-            new() { Title = "Scan & OCR", Glyph = "", Accent = Color.FromRgb(0x6F, 0xDC, 0x6F),
+            new() { Title = "Scan & recognise text", Glyph = "\uE8FE",
                 Description = "Make scanned pages searchable",
                 Actions = new()
                 {
@@ -212,7 +211,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Recognise text on this page (copy)", vm.OcrCurrentPageCommand),
                     Run("Create PDF from scans / images", vm.CreatePdfFromImagesCommand),
                 } },
-            new() { Title = "Protect a PDF", Glyph = "", Accent = Color.FromRgb(0x7A, 0xA7, 0xFF),
+            new() { Title = "Security & privacy", Glyph = "\uE72E",
                 Description = "Passwords and permissions",
                 Actions = new()
                 {
@@ -222,7 +221,7 @@ public partial class AllToolsPanel : UserControl
                     Page("Check accessibility", vm.AccessibilityCheckCommand, "Screen reader and keyboard checks, with fixes"),
                     Run("Flatten form & save", vm.FlattenAndSaveCommand, "Make field values part of the page so they can't be edited"),
                 } },
-            new() { Title = "Redact a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x7B, 0xAC),
+            new() { Title = "Redaction", Glyph = "\uE8C6",
                 Description = "Permanently remove sensitive content",
                 Actions = new()
                 {
@@ -230,10 +229,10 @@ public partial class AllToolsPanel : UserControl
                     Page("Apply redactions", vm.ApplyRedactionsCommand),
                     Run("Find personal information (AI)", vm.FindPiiCommand),
                 } },
-            new() { Title = "Compress a PDF", Glyph = "", Accent = Color.FromRgb(0xFF, 0x8A, 0x6A),
+            new() { Title = "Reduce file size", Glyph = "\uE73F",
                 Description = "Reduce file size",
                 Actions = new() { Run("Compress PDF", vm.CompressPdfCommand) } },
-            new() { Title = "Prepare a form", Glyph = "", Accent = Color.FromRgb(0xB9, 0x8C, 0xFF),
+            new() { Title = "Form builder", Glyph = "\uE9D5",
                 Description = "Add, move and edit form fields",
                 Actions = new()
                 {
@@ -259,24 +258,29 @@ public partial class AllToolsPanel : UserControl
 
     private FrameworkElement BuildCategoryView(ToolCategory c)
     {
-        var accent = new SolidColorBrush(c.Accent);
-        accent.Freeze();
-
         var chevron = new TextBlock
         {
-            Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 9,
+            Text = "\uE70D", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 9,
             Foreground = (Brush)FindResource("DimForegroundBrush"), VerticalAlignment = VerticalAlignment.Center,
         };
         var headerGrid = new Grid();
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(34) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var icon = new TextBlock
+        // One style for every tool, in the theme's accent colour: a softly tinted rounded tile
+        // with the symbol on it, like Windows 11 Settings.
+        var tint = new Border { CornerRadius = new CornerRadius(7), Opacity = 0.16 };
+        tint.SetResourceReference(Border.BackgroundProperty, "AccentBrush");
+        var glyph = new TextBlock
         {
-            Text = c.Glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 18,
-            Foreground = accent, VerticalAlignment = VerticalAlignment.Center,
+            Text = c.Glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 15,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
         };
+        glyph.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        var icon = new Grid { Width = 30, Height = 30, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+        icon.Children.Add(tint);
+        icon.Children.Add(glyph);
         var title = new TextBlock { Text = c.Title, FontSize = 14, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
         Grid.SetColumn(title, 1);
         Grid.SetColumn(chevron, 2);

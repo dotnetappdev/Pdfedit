@@ -50,15 +50,16 @@ public partial class StampManagerDialog : Window
         _vm = vm;
 
         foreach (var (hex, name) in new[] { ("#1B7A2E", "Green"), ("#C62828", "Red"), ("#1F4FB5", "Blue"), ("#6A1B9A", "Purple"),
-                                            ("#D35400", "Orange"), ("#555555", "Grey"), ("#000000", "Black") })
+                                            ("#D35400", "Orange"), ("#0E7490", "Teal"), ("#BE185D", "Pink"), ("#555555", "Grey"), ("#000000", "Black") })
         {
             var b = new Button
             {
-                Width = 22, Height = 22, Margin = new Thickness(0, 0, 5, 0), Padding = new Thickness(0),
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)), ToolTip = name,
+                Width = 24, Height = 24, Margin = new Thickness(0, 0, 5, 0), Padding = new Thickness(0),
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)), ToolTip = name, Tag = hex,
+                BorderThickness = new Thickness(2),
             };
-            System.Windows.Automation.AutomationProperties.SetName(b, name);
-            b.Click += (_, _) => { if (ColorBox.IsEnabled) ColorBox.Text = hex; };
+            System.Windows.Automation.AutomationProperties.SetName(b, name + " colour");
+            b.Click += (_, _) => ColorBox.Text = hex;
             Swatches.Children.Add(b);
         }
 
@@ -112,7 +113,10 @@ public partial class StampManagerDialog : Window
         if (Selected != null && !_editingNew) Use_Click(sender, e);
     }
 
-    /// <summary>Fills the editor from the selected stamp (editable only for custom stamps).</summary>
+    /// <summary>
+    /// Fills the editor from the selected stamp. Custom stamps are changed in place; changing a
+    /// built-in one starts your own copy of it (see <see cref="Editor_Changed"/>).
+    /// </summary>
     private void ShowSelected()
     {
         var d = Selected;
@@ -123,8 +127,7 @@ public partial class StampManagerDialog : Window
         _loading = false;
 
         bool editable = SelectedIsCustom;
-        TitleBox.IsEnabled = ColorBox.IsEnabled = DynamicBox.IsEnabled = editable;
-        Swatches.IsEnabled = editable;
+        TitleBox.IsEnabled = ColorBox.IsEnabled = DynamicBox.IsEnabled = Swatches.IsEnabled = d != null;
         BuiltInNote.Visibility = d != null && !editable ? Visibility.Visible : Visibility.Collapsed;
         SaveBtn.Content = "Save changes";
         SaveBtn.Visibility = editable ? Visibility.Visible : Visibility.Collapsed;
@@ -183,7 +186,21 @@ public partial class StampManagerDialog : Window
     {
         if (_loading) return;
         if (!_editingNew && SelectedIsCustom) SaveBtn.IsEnabled = true;
+        else if (!_editingNew && Selected != null) StartCopyOfBuiltIn();
         UpdatePreview();
+    }
+
+    /// <summary>A built-in stamp was changed: keep the edits and turn them into a new stamp of your own.</summary>
+    private void StartCopyOfBuiltIn()
+    {
+        _editingNew = true;
+        BuiltInNote.Visibility = Visibility.Collapsed;
+        SaveBtn.Content = "Create stamp";
+        SaveBtn.Visibility = CancelEditBtn.Visibility = Visibility.Visible;
+        SaveBtn.IsEnabled = true;
+        DeleteBtn.IsEnabled = DuplicateBtn.IsEnabled = DefaultBtn.IsEnabled = UseBtn.IsEnabled = BackgroundBtn.IsEnabled = false;
+        StampList.IsEnabled = false;
+        ModeText.Text = "NEW STAMP (YOUR OWN COPY)";
     }
 
     private string EditorColor()
@@ -196,6 +213,15 @@ public partial class StampManagerDialog : Window
 
     private void UpdatePreview()
     {
+        // Ring the swatch that matches the colour.
+        string current = EditorColor();
+        foreach (var b in Swatches.Children.OfType<Button>())
+        {
+            bool on = string.Equals(b.Tag as string, current, StringComparison.OrdinalIgnoreCase);
+            if (on) b.SetResourceReference(Control.BorderBrushProperty, "ForegroundBrush");
+            else b.BorderBrush = Brushes.Transparent;
+        }
+
         string title = string.IsNullOrWhiteSpace(TitleBox.Text) ? " " : TitleBox.Text.Trim();
         string color = EditorColor();
         ColorBox.BorderBrush = color.Length == 0 ? Brushes.IndianRed : (Brush)FindResource("InputBorderBrush");

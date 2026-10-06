@@ -98,7 +98,7 @@
                 <TextBlock Text="DETAILS" Style="{StaticResource Head}"/>
                 <TextBlock x:Name="BuiltInNote" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8"
                            Foreground="{DynamicResource DimForegroundBrush}"
-                           Text="This is a built-in stamp, so it can't be changed. Click Duplicate to make your own copy you can edit."/>
+                           Text="This is a built-in stamp. Change its text or colour below and it becomes a new stamp of your own; the original stays as it is."/>
                 <DockPanel Margin="0,3">
                     <TextBlock Text="Text" Style="{StaticResource Lbl}"/>
                     <TextBox x:Name="TitleBox" TextChanged="Editor_Changed" CharacterCasing="Upper" MaxLength="40"

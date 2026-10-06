@@ -256,7 +256,7 @@ public partial class CommentsPanel : UserControl
         var check = new CheckBox
         {
             IsChecked = c.Checked, VerticalAlignment = VerticalAlignment.Center, Focusable = false,
-            ToolTip = "Check off (Acrobat \"Add checkmark\")",
+            ToolTip = "Tick this comment off",
         };
         System.Windows.Automation.AutomationProperties.SetName(check, "Checkmark");
         check.Click += (_, _) => { c.Checked = check.IsChecked == true; Touch(c); };
@@ -329,7 +329,7 @@ public partial class CommentsPanel : UserControl
                 Touch(c);
             }, placeholder: "Write a reply…")));
 
-        var statusBtn = LinkButton("Status ▾", "Set review status (Acrobat \"Set Status\")", () => { });
+        var statusBtn = LinkButton("Status ▾", "Set review status", () => { });
         statusBtn.Click += (_, _) =>
         {
             var menu = new ContextMenu { PlacementTarget = statusBtn, Placement = PlacementMode.Bottom };

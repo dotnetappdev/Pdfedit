@@ -10,6 +10,7 @@
         xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="PdfEdit — PDF Form Filler"
+        Icon="/Resources/app.ico"
         Height="780" Width="1280"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -842,7 +843,7 @@
                     </Fluent:Button>
                     <Fluent:Button Header="Remove Hidden&#x0a;Info"
                                    Command="{Binding SanitizeCommand}"
-                                   ToolTip="Remove metadata, scripts, attachments and (optionally) comments — Acrobat's Sanitize"
+                                   ToolTip="Remove metadata, scripts, attachments and (optionally) comments"
                                    AutomationProperties.Name="Remove hidden information">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
@@ -2125,7 +2126,7 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="DrawCloud"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Cloud — drag to draw a revision cloud (Acrobat)"
+                                         ToolTip="Cloud — drag to draw a revision cloud"
                                          AutomationProperties.Name="Cloud tool">
                         <Fluent:ToggleButton.Icon>
                             <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
@@ -3773,7 +3774,7 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="78"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{StaticResource PropGridNameBorder}"><TextBlock Text="Spacing" Style="{StaticResource PropGridNameText}"/></Border>
                                             <Border Grid.Column="1" Style="{StaticResource PropGridValueBorder}">
-                                                <TextBox Text="{Binding SelectedAnnotationCharSpacing, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Extra space between characters, in points (Acrobat 'VA')" AutomationProperties.Name="Character spacing"/>
+                                                <TextBox Text="{Binding SelectedAnnotationCharSpacing, StringFormat='0.#', UpdateSourceTrigger=LostFocus}" Style="{StaticResource PropGridInlineTextBox}" ToolTip="Extra space between characters, in points" AutomationProperties.Name="Character spacing"/>
                                             </Border>
                                         </Grid>
                                         <Grid>

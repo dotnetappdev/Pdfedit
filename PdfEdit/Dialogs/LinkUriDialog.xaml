@@ -26,7 +26,7 @@
         </DockPanel>
 
         <CheckBox x:Name="BorderBox" Content="Show a rectangle around the link" Margin="0,12,0,0"
-                  ToolTip="Acrobat calls this a visible rectangle; most links are invisible"/>
+                  ToolTip="Draws a box round the link; most links are invisible"/>
 
         <TextBlock x:Name="ErrorText" Foreground="#E5534B" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
 

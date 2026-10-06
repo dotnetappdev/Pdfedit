@@ -63,7 +63,7 @@ public partial class MainWindow
                 "Zoom and rotate, read the document aloud, search a folder of PDFs or compare two versions side by side.",
                 () => MainRibbon, () => MainRibbon.SelectedTabItem = ViewTab),
             new("All tools",
-                "Every feature in one list, grouped like Acrobat's. Type in its search box to find a tool by name.",
+                "Every feature in one list, grouped by what you want to do. Type in its search box to find a tool by name.",
                 () => AllToolsPane, () => ShowDockPane("alltools")),
             new("Pages",
                 "Thumbnails of every page. Click one to jump to it, or right-click to rotate, move, insert, extract or delete it.",

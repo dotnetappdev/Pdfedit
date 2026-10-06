@@ -135,7 +135,7 @@
 
                 <TextBlock Text="LAYER" Style="{StaticResource Head}"/>
                 <RadioButton x:Name="LayerBehind" Content="Behind text and fields (background)" IsChecked="True" GroupName="Layer" Checked="Changed"
-                             ToolTip="Like Acrobat's 'Appear behind page': text and form fields stay on top and readable"/>
+                             ToolTip="Text and form fields stay on top and readable"/>
                 <RadioButton x:Name="LayerTop" Content="On top of the page" GroupName="Layer" Margin="0,4,0,0" Checked="Changed"
                              ToolTip="Visible even over images and filled backgrounds"/>
 
