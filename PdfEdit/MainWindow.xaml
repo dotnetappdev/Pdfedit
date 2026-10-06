@@ -785,6 +785,36 @@
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Resize&#x0a;Pages"
+                                   Command="{Binding ResizePagesCommand}"
+                                   KeyTip="RZ"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Change the paper size (A4, Letter, custom…) or add a margin; content is scaled to fit"
+                                   AutomationProperties.Name="Resize pages">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE740;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Pages per&#x0a;Sheet"
+                                   Command="{Binding PrintLayoutCommand}"
+                                   KeyTip="NU"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Make a PDF with 2, 4, 6, 9 or 16 pages on each sheet, or a booklet to fold"
+                                   AutomationProperties.Name="Pages per sheet and booklet">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xF0E2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Grey-&#x0a;scale"
+                                   Command="{Binding GreyscaleCommand}"
+                                   KeyTip="GY"
+                                   IsEnabled="{Binding HasDocument}"
+                                   ToolTip="Convert text, drawings and pictures to shades of grey (undoable)"
+                                   AutomationProperties.Name="Convert to greyscale">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 
                 <!-- Security group -->
