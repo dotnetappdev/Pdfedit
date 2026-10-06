@@ -129,7 +129,20 @@ public class AppSettings
     public string RenderEngine { get; set; } = "Custom";
 
     // ── Accessibility ────────────────────────────────────────────────────────
+    /// <summary>A thick yellow-and-black ring round whatever has keyboard focus.</summary>
     public bool HighContrastFocusIndicators { get; set; }
+    /// <summary>Turn off fades and slides (menus, notifications). Windows' "Animation effects: off" does the same.</summary>
+    public bool ReduceMotion { get; set; }
+    /// <summary>How long notifications stay on screen, in seconds; 0 = until clicked.</summary>
+    public int ToastSeconds { get; set; } = 4;
+    /// <summary>Wait before a tooltip appears, in milliseconds.</summary>
+    public int TooltipDelayMs { get; set; } = 500;
+    /// <summary>Keep tooltips open until the pointer moves away (instead of a few seconds).</summary>
+    public bool TooltipsStayOpen { get; set; }
+    /// <summary>Single-letter tool keys (H, V, T, D …). Off for screen reader users who navigate with letters.</summary>
+    public bool SingleKeyShortcuts { get; set; } = true;
+    /// <summary>Read the guided tour and Tip of the Day aloud in PdfEdit's voice.</summary>
+    public bool ReadTourAloud { get; set; }
     /// <summary>Ribbon and toolbar icon size: "Small", "Normal", "Large" or "ExtraLarge".</summary>
     public string IconSize { get; set; } = "Normal";
 
@@ -171,6 +184,53 @@ public class AppSettings
     [JsonIgnore]
     public static AppSettings Current { get; private set; } = new();
 
+    // Kept on this PC: never written to a preferences backup, and kept when one is restored or
+    // preferences are reset (API keys, sign-ins, recent file paths).
+    private static readonly string[] LocalOnly =
+    {
+        nameof(ClaudeApiKey), nameof(OpenAiApiKey), nameof(GitHubToken), nameof(LocalAiApiKey),
+        nameof(GoogleClientSecret), nameof(CloudTokens), nameof(CloudAccounts), nameof(CloudLinks), nameof(RecentFiles),
+    };
+
+    private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
+
+    /// <summary>Writes every preference except keys, sign-ins and recent files to <paramref name="path"/>.</summary>
+    public void ExportPreferences(string path)
+    {
+        var node = JsonSerializer.SerializeToNode(this)!.AsObject();
+        foreach (var key in LocalOnly) node.Remove(key);
+        node["PdfEditPreferences"] = 1;
+        File.WriteAllText(path, node.ToJsonString(Indented));
+    }
+
+    /// <summary>
+    /// Replaces the current preferences with a backup made by <see cref="ExportPreferences"/>,
+    /// keeping this PC's keys, sign-ins and recent files. Throws if the file isn't a backup.
+    /// </summary>
+    public static void ImportPreferences(string path)
+    {
+        var imported = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))?.AsObject()
+                       ?? throw new InvalidDataException("The file is empty.");
+        if (!imported.ContainsKey("PdfEditPreferences") && !imported.ContainsKey(nameof(Theme)))
+            throw new InvalidDataException("This file isn't a PdfEdit preferences backup.");
+        ReplaceKeepingLocal(imported);
+    }
+
+    /// <summary>Puts every preference back to its default, keeping this PC's keys, sign-ins and recent files.</summary>
+    public static void ResetPreferences() =>
+        ReplaceKeepingLocal(JsonSerializer.SerializeToNode(new AppSettings())!.AsObject());
+
+    private static void ReplaceKeepingLocal(System.Text.Json.Nodes.JsonObject incoming)
+    {
+        var current = JsonSerializer.SerializeToNode(Current)!.AsObject();
+        incoming.Remove("PdfEditPreferences");
+        foreach (var key in LocalOnly)
+            incoming[key] = current[key]?.DeepClone();
+        var next = incoming.Deserialize<AppSettings>() ?? throw new InvalidDataException("The preferences couldn't be read.");
+        Current = next;
+        next.Save();
+    }
+
     public static void Initialize()
     {
         Current = Load();
@@ -196,8 +256,7 @@ public class AppSettings
         try
         {
             Directory.CreateDirectory(SettingsDir);
-            var opts = new JsonSerializerOptions { WriteIndented = true };
-            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(this, opts));
+            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(this, Indented));
         }
         catch { }
     }

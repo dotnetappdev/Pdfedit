@@ -1,5 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Menus fade in; Settings → Accessibility → Reduce motion swaps this for None. -->
+    <PopupAnimation x:Key="PopupAnim">Fade</PopupAnimation>
+
 
     <!-- Colors defined in DarkTheme / LightTheme / HighContrastTheme          -->
     <!-- All styles use DynamicResource so they update on live theme swap       -->
@@ -586,7 +589,7 @@
                         </Border>
                         <Popup x:Name="Popup" Placement="Right"
                                IsOpen="{TemplateBinding IsSubmenuOpen}"
-                               AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                               AllowsTransparency="True" Focusable="False" PopupAnimation="{DynamicResource PopupAnim}">
                             <Border Background="{DynamicResource PanelBgBrush}"
                                     BorderBrush="{DynamicResource AppBorderBrush}"
                                     BorderThickness="1" CornerRadius="4">
@@ -654,7 +657,7 @@
                                  CaretBrush="{TemplateBinding Foreground}"
                                  IsReadOnly="{TemplateBinding IsReadOnly}"/>
                         <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False"
-                               IsOpen="{TemplateBinding IsDropDownOpen}" PopupAnimation="Fade">
+                               IsOpen="{TemplateBinding IsDropDownOpen}" PopupAnimation="{DynamicResource PopupAnim}">
                             <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                     MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                     Background="{DynamicResource InputBgBrush}"

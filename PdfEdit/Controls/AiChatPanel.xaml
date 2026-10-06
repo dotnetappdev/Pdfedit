@@ -433,7 +433,7 @@
                Placement="Bottom"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Fade">
+               PopupAnimation="{DynamicResource PopupAnim}">
             <Border Background="{DynamicResource PanelBgBrush}"
                     BorderBrush="{DynamicResource AppBorderBrush}"
                     BorderThickness="1"
@@ -590,7 +590,7 @@
                Placement="Bottom"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Fade">
+               PopupAnimation="{DynamicResource PopupAnim}">
             <Border Background="{DynamicResource PanelBgBrush}"
                     BorderBrush="{DynamicResource AppBorderBrush}"
                     BorderThickness="1"

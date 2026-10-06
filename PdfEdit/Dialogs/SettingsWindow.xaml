@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:PdfEdit.Controls"
         Title="Settings — PdfEdit"
-        Width="580" Height="560"
+        Width="720" Height="660" MinWidth="600" MinHeight="480"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="{DynamicResource PanelBgBrush}"
         Foreground="{DynamicResource ForegroundBrush}"
         FontSize="{DynamicResource DialogFontSize}"
@@ -518,7 +518,45 @@
                                        VerticalAlignment="Center" FontSize="12"/>
                         </Grid>
 
+                        <TextBlock Style="{StaticResource SectionHead}" Text="READING ALOUD"/>
+                        <CheckBox x:Name="ReadTourAloudCb" Margin="0,2"
+                                  Content="Read the guided tour and Tip of the Day aloud"
+                                  AutomationProperties.Name="Read the tour and tips aloud"
+                                  AutomationProperties.HelpText="Uses the voice above. The tour's speaker button (or R) turns it on and off too."/>
+
+                        <TextBlock Style="{StaticResource SectionHead}" Text="MOTION AND TIMING"/>
+                        <CheckBox x:Name="ReduceMotionCb" Margin="0,2"
+                                  Content="Reduce motion: no fading menus or sliding notifications"
+                                  AutomationProperties.Name="Reduce motion"/>
+                        <TextBlock x:Name="WindowsAnimationNote" Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
+                                   TextWrapping="Wrap" Margin="24,0,0,6"/>
+                        <Grid Margin="0,4,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource SettingLabel}" Text="Notifications stay for:"/>
+                            <ComboBox x:Name="ToastSecondsBox" Grid.Column="1" Width="200" Height="30" HorizontalAlignment="Left" Margin="0,3"
+                                      AutomationProperties.Name="How long notifications stay on screen"/>
+                            <TextBlock Grid.Row="1" Style="{StaticResource SettingLabel}" Text="Tooltips appear after:"/>
+                            <ComboBox x:Name="TooltipDelayBox" Grid.Row="1" Grid.Column="1" Width="200" Height="30" HorizontalAlignment="Left" Margin="0,3"
+                                      AutomationProperties.Name="Wait before tooltips appear"/>
+                        </Grid>
+                        <CheckBox x:Name="TooltipsStayOpenCb" Margin="0,2"
+                                  Content="Keep tooltips open until I move the pointer away"
+                                  AutomationProperties.Name="Keep tooltips open"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
+                                   Text="Tooltip timing applies the next time PdfEdit starts. Everything else here applies when you click Save."/>
+
                         <TextBlock Style="{StaticResource SectionHead}" Text="KEYBOARD"/>
+                        <CheckBox x:Name="SingleKeyShortcutsCb" Margin="0,2,0,6"
+                                  Content="Use single-letter tool keys (H hand, V select, T text, D date …)"
+                                  AutomationProperties.Name="Single-letter tool keys"
+                                  AutomationProperties.HelpText="Turn off if you use a screen reader's letter keys to move around, or press letters by accident"/>
                         <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="12" TextWrapping="Wrap">
                             <Run Text="Everything in PdfEdit can be reached from the keyboard: Alt shows the ribbon's key tips, F1 lists the shortcuts, and you can change them on the"/>
                             <Hyperlink Click="OpenKeyboardTab_Click" AutomationProperties.Name="Open the Keyboard tab">Keyboard</Hyperlink>
@@ -536,7 +574,17 @@
                 BorderBrush="{DynamicResource AppBorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="16,10">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Left" Content="Back up…" Height="32" Padding="12,0" Margin="0,0,6,0" Click="BackupPrefs_Click"
+                        ToolTip="Save your preferences to a file, to keep or to copy to another PC (API keys and sign-ins aren't included)"
+                        AutomationProperties.Name="Back up preferences to a file"/>
+                <Button DockPanel.Dock="Left" Content="Restore…" Height="32" Padding="12,0" Margin="0,0,6,0" Click="RestorePrefs_Click"
+                        ToolTip="Load preferences from a backup file"
+                        AutomationProperties.Name="Restore preferences from a file"/>
+                <Button DockPanel.Dock="Left" Content="Reset all…" Height="32" Padding="12,0" Click="ResetPrefs_Click"
+                        ToolTip="Put every preference back to how PdfEdit came (API keys, sign-ins and recent files are kept)"
+                        AutomationProperties.Name="Reset all preferences"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="Cancel" Width="80" Height="32" Margin="0,0,8,0"
                         Click="Cancel_Click"
                         Background="{DynamicResource InputBgBrush}"
@@ -548,7 +596,8 @@
                         Click="Save_Click"
                         Style="{StaticResource ModernButton}"
                         AutomationProperties.Name="Save settings"/>
-            </StackPanel>
+                </StackPanel>
+            </DockPanel>
         </Border>
     </Grid>
 </Window>

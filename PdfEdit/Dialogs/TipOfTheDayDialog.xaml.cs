@@ -21,6 +21,7 @@ public partial class TipOfTheDayDialog : Window
         PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; Close(); } };
         Closed += (_, _) =>
         {
+            if (s.ReadTourAloud) NarrationService.Stop();
             s.ShowTipsAtStartup = ShowAtStartup.IsChecked == true;
             s.NextTipIndex = Wrap(_index + 1);   // next time, start with the one after
             s.Save();
@@ -35,6 +36,8 @@ public partial class TipOfTheDayDialog : Window
         TipTitle.Text = tip.Title;
         TipText.Text = tip.Text;
         TipCount.Text = $"Tip {_index + 1} of {TipsCatalog.All.Count}";
+        if (AppSettings.Current.ReadTourAloud)
+            NarrationService.Speak($"{tip.Title}. {tip.Text}", evenIfQuiet: true);
     }
 
     private void Next_Click(object sender, RoutedEventArgs e) { _index = Wrap(_index + 1); ShowTip(); }

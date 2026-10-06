@@ -3212,6 +3212,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             CurrentFontColor = AppSettings.Current.DefaultFontColor;
             ForceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
             RefreshAiModels();   // local AI server / model may have changed
+            SyncStamps();        // custom / default stamps may have been restored or reset
             OnPropertyChanged(nameof(IsAiConfigured));
             ToastService.Instance.Success("Settings saved.");
         }

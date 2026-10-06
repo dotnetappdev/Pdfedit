@@ -68,17 +68,22 @@ public partial class ToastHost : UserControl
 
         ToastList.Items.Add(toast);
 
-        // Slide in
-        var slideIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
+        // Fade in (unless Reduce motion is on)
+        if (!AccessibilityService.ReduceMotion)
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        toast.BeginAnimation(OpacityProperty, slideIn);
+            var slideIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            toast.BeginAnimation(OpacityProperty, slideIn);
+        }
 
-        // Auto-dismiss after 4 seconds
+        // Auto-dismiss after the time set in Settings → Accessibility (0 = stay until clicked)
+        int seconds = AppSettings.Current.ToastSeconds;
+        if (seconds <= 0) return;
         var timer = new System.Windows.Threading.DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(4)
+            Interval = TimeSpan.FromSeconds(Math.Clamp(seconds, 2, 120))
         };
         timer.Tick += (_, _) =>
         {
@@ -90,6 +95,7 @@ public partial class ToastHost : UserControl
 
     private void DismissToast(Border toast)
     {
+        if (AccessibilityService.ReduceMotion) { ToastList.Items.Remove(toast); return; }
         var slideOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }

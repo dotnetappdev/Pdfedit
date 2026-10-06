@@ -34,12 +34,11 @@ public sealed class TourOverlay : Adorner
     private int _index;
     private bool _closed;
 
-    /// <summary>Whether each step is read out. Remembered for the rest of the session.</summary>
-    private static bool? _readAloud;
+    /// <summary>Whether each step is read out (Settings → Accessibility → Read the tour aloud).</summary>
     private static bool ReadAloud
     {
-        get => _readAloud ??= AppSettings.Current.NarrateAnnouncements || AppSettings.Current.NarrateFocus;
-        set => _readAloud = value;
+        get => AppSettings.Current.ReadTourAloud;
+        set { AppSettings.Current.ReadTourAloud = value; AppSettings.Current.Save(); }
     }
 
     private TourOverlay(UIElement adorned, AdornerLayer layer, Window window, IReadOnlyList<TourStep> steps, Action finished) : base(adorned)

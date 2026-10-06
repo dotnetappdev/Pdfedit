@@ -205,7 +205,7 @@
                 </Button>
             </Grid>
             <Popup x:Name="SelectPopup" PlacementTarget="{Binding ElementName=SelectBtn}" Placement="Left"
-                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
@@ -240,7 +240,7 @@
                 </Button>
             </Grid>
             <Popup x:Name="CommentPopup" PlacementTarget="{Binding ElementName=CommentBtn}" Placement="Left"
-                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
@@ -289,7 +289,7 @@
                 </Button>
             </Grid>
             <Popup x:Name="HighlightPopup" PlacementTarget="{Binding ElementName=HighlightBtn}" Placement="Left"
-                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
@@ -327,7 +327,7 @@
                 </Button>
             </Grid>
             <Popup x:Name="DrawPopup" PlacementTarget="{Binding ElementName=DrawBtn}" Placement="Left"
-                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
@@ -390,7 +390,7 @@
                 </Button>
             </Grid>
             <Popup x:Name="AddTextPopup" PlacementTarget="{Binding ElementName=AddTextBtn}" Placement="Left"
-                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,8" MinWidth="190">
                     <Border.Effect>
@@ -443,7 +443,7 @@
                    Placement="Left"
                    AllowsTransparency="True"
                    StaysOpen="False"
-                   PopupAnimation="Fade"
+                   PopupAnimation="{DynamicResource PopupAnim}"
                    Opened="SigPopup_Opened">
                 <Border Background="{DynamicResource PanelBgBrush}"
                         BorderBrush="{DynamicResource AppBorderBrush}"
@@ -497,7 +497,7 @@
             </Button>
             <Popup x:Name="MorePopup"
                    PlacementTarget="{Binding ElementName=MoreBtn}"
-                   Placement="Left" AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+                   Placement="Left" AllowsTransparency="True" StaysOpen="False" PopupAnimation="{DynamicResource PopupAnim}">
                 <Border Background="{DynamicResource PanelBgBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="6,4,6,8" MinWidth="220">
                     <Border.Effect>

@@ -313,6 +313,7 @@ public partial class SettingsWindow : Window
         ShortcutsEditor.Commit();
         s.Save();
         ShortcutService.RaiseChanged();
+        AccessibilityService.Apply();
         DialogResult = true;
         Close();
     }
@@ -554,6 +555,22 @@ public partial class SettingsWindow : Window
         VoiceVolumeSlider.Value = Math.Clamp(s.NarrationVolume, 0.1, 1.0);
         VoiceRateLabel.Text = $"{VoiceRateSlider.Value:0.##}×";
         VoiceVolumeLabel.Text = $"{VoiceVolumeSlider.Value:P0}";
+
+        ReadTourAloudCb.IsChecked = s.ReadTourAloud;
+        ReduceMotionCb.IsChecked = s.ReduceMotion;
+        WindowsAnimationNote.Text = SystemParameters.ClientAreaAnimation
+            ? "Turning off Windows' animation effects (Settings → Accessibility → Visual effects) does this too."
+            : "Windows' animation effects are off, so PdfEdit already keeps still.";
+        foreach (var (secs, label) in new[] { (3, "3 seconds"), (4, "4 seconds"), (6, "6 seconds"), (10, "10 seconds"),
+                                              (20, "20 seconds"), (60, "1 minute"), (0, "Until I click them") })
+            ToastSecondsBox.Items.Add(new ComboBoxItem { Content = label, Tag = secs });
+        ToastSecondsBox.SelectedItem = ToastSecondsBox.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (int)i.Tag == s.ToastSeconds)
+                                       ?? ToastSecondsBox.Items[1];
+        foreach (var (ms, label) in new[] { (100, "Straight away"), (500, "Half a second"), (1000, "1 second"), (2000, "2 seconds") })
+            TooltipDelayBox.Items.Add(new ComboBoxItem { Content = label, Tag = ms });
+        TooltipDelayBox.SelectedItem = TooltipDelayBox.Items.Cast<ComboBoxItem>().OrderBy(i => Math.Abs((int)i.Tag - s.TooltipDelayMs)).First();
+        TooltipsStayOpenCb.IsChecked = s.TooltipsStayOpen;
+        SingleKeyShortcutsCb.IsChecked = s.SingleKeyShortcuts;
         _accessibilityLoaded = true;
     }
 
@@ -572,6 +589,72 @@ public partial class SettingsWindow : Window
         s.NarrationVoice = (VoiceBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
         s.NarrationRate = VoiceRateSlider.Value;
         s.NarrationVolume = VoiceVolumeSlider.Value;
+        s.ReadTourAloud = ReadTourAloudCb.IsChecked == true;
+        s.ReduceMotion = ReduceMotionCb.IsChecked == true;
+        s.ToastSeconds = (ToastSecondsBox.SelectedItem as ComboBoxItem)?.Tag as int? ?? 4;
+        s.TooltipDelayMs = (TooltipDelayBox.SelectedItem as ComboBoxItem)?.Tag as int? ?? 500;
+        s.TooltipsStayOpen = TooltipsStayOpenCb.IsChecked == true;
+        s.SingleKeyShortcuts = SingleKeyShortcutsCb.IsChecked == true;
+    }
+
+    // ── Preferences backup / restore / reset ─────────────────────────────────
+
+    private void BackupPrefs_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Back up PdfEdit preferences",
+            FileName = $"PdfEdit preferences {DateTime.Now:yyyy-MM-dd}.json",
+            Filter = "PdfEdit preferences (*.json)|*.json",
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            AppSettings.Current.ExportPreferences(dlg.FileName);
+            AppDialog.ShowInfo("Your preferences are saved. API keys, sign-ins and recent files aren't included.\n\n" +
+                               "These are the saved settings: click Save first if you've just changed something here.", "Preferences backed up");
+        }
+        catch (Exception ex) { AppDialog.ShowError("Couldn't save the preferences.", ex); }
+    }
+
+    private void RestorePrefs_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Restore PdfEdit preferences",
+            Filter = "PdfEdit preferences (*.json)|*.json|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        if (!AppDialog.ShowConfirm("Replace your current preferences with the ones in this file?\nAPI keys, sign-ins and recent files stay as they are.",
+                "Restore preferences", "Restore", "Cancel"))
+            return;
+        try { AppSettings.ImportPreferences(dlg.FileName); }
+        catch (Exception ex) { AppDialog.ShowError("Couldn't restore the preferences from that file.", ex); return; }
+        AfterReplace("Preferences restored.");
+    }
+
+    private void ResetPrefs_Click(object sender, RoutedEventArgs e)
+    {
+        if (!AppDialog.ShowConfirm("Put every preference back to how PdfEdit came?\nTheme, text sizes, shortcuts, stamps, accessibility and the rest are reset. " +
+                                   "API keys, sign-ins and recent files are kept.\n\nTip: Back up… first if you might want them again.",
+                "Reset all preferences", "Reset", "Cancel", isDanger: true))
+            return;
+        try { AppSettings.ResetPreferences(); }
+        catch (Exception ex) { AppDialog.ShowError("Couldn't reset the preferences.", ex); return; }
+        AfterReplace("Preferences reset to their defaults.");
+    }
+
+    /// <summary>Applies freshly restored / reset preferences and closes, like Save.</summary>
+    private void AfterReplace(string message)
+    {
+        App.RefreshTheme();
+        FontService.ApplyAll();
+        InterfaceStyleService.ApplyIconSize(AppSettings.Current.IconSize);
+        AccessibilityService.Apply();
+        ShortcutService.RaiseChanged();
+        AppDialog.ShowInfo(message + " Tooltip timing and a few others apply the next time PdfEdit starts.", "Preferences");
+        DialogResult = true;
+        Close();
     }
 
     // Icon size previews live; Cancel puts the saved size back.

@@ -39,6 +39,7 @@ public partial class MainWindow
     private void OnPlainShortcutKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Handled || DataContext is not MainViewModel vm || vm.IsDesignMode) return;
+        if (!AppSettings.Current.SingleKeyShortcuts) return;   // Settings → Accessibility
         if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Windows)) != 0) return;
         if (PdfViewerControl.IsTextInputFocused()) return;
         if (!_plainShortcuts.TryGetValue(KeyCombo.FromEvent(e), out var action)) return;
