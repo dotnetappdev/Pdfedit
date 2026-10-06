@@ -13,17 +13,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licence"></a>
 </p>
 
-PdfEdit fills in and signs forms, marks up documents, rearranges pages and builds new PDFs, all in a native Windows app with an Office-style ribbon and a tab for every open file. Everything is included and nothing is locked behind an upgrade. It works offline and doesn't need an account.
+PdfEdit fills in and signs forms, marks up documents, rearranges pages and builds new PDFs, in a native Windows app with an Office-style ribbon. Everything is included, it works offline and it doesn't need an account.
 
-![PdfEdit filling in a form](docs/screenshots/demo-v4.gif)
+**[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
 
-See the [full feature list](docs/features.md), the [documentation](docs/) and [screenshots](docs/screenshots.md) of every tool.
+**[Features](docs/features.md)** · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
 
-## Quick start
-
-Download the installer or the portable zip from [Releases](https://github.com/dotnetappdev/Pdfedit/releases/latest). Both include everything you need. It runs on Windows 10 (2004 or later) and 11, 64-bit.
-
-To build from source with the .NET 10 SDK:
+## Build from source
 
 ```bash
 git clone https://github.com/dotnetappdev/Pdfedit.git
@@ -31,21 +27,8 @@ cd Pdfedit
 dotnet run --project PdfEdit
 ```
 
-## Resources
-
-- [Features](docs/features.md)
-- [Documentation](docs/)
-- [Building and releases](docs/building.md)
-- [Import, export and cloud](docs/import-export-and-cloud.md)
-- [Automation and tools](docs/automation.md)
-- [Themes](docs/themes.md)
-- [Accessibility](docs/accessibility.md)
-- [Keyboard shortcuts](docs/keyboard-shortcuts.md)
-
-## Support and contributing
-
-Found a bug or have an idea? Open an [issue](https://github.com/dotnetappdev/Pdfedit/issues). Pull requests are welcome; development happens on the `devmain` branch.
+Needs the .NET 10 SDK. Bugs and ideas go in [issues](https://github.com/dotnetappdev/Pdfedit/issues); pull requests go to the `devmain` branch.
 
 ## License
 
-PdfEdit is [MIT licensed](LICENSE). It uses [iText 7](https://itextpdf.com/) for PDF processing, which is licensed under the AGPL.
+[MIT](LICENSE). PDF processing uses [iText 7](https://itextpdf.com/), which is licensed under the AGPL.

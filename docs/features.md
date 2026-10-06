@@ -2,6 +2,8 @@
 
 [← Back to README](../README.md)
 
+![PdfEdit filling in a form](screenshots/demo-v4.gif)
+
 - **Fill & Sign**: type into any form, even flat PDFs with no fields, and add signatures, dates, ticks and stamps. Sign with a certificate too.
 - **Forms**: create fields by hand or let Detect Fields find them, with number formats and totals that add themselves up.
 - **Review**: highlights, sticky notes, drawing, links, Acrobat's standard stamps, redaction and visual compare.
