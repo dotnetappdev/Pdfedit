@@ -81,7 +81,12 @@ public class AppSettings
     public string DefaultDrawingColor { get; set; } = "#C62828";
 
     // ── Custom stamps ────────────────────────────────────────────────────────
+    /// <summary>Older settings files: custom stamp texts only. Moved into CustomStampDefinitions on load.</summary>
     public List<string> CustomStamps { get; set; } = new();
+    /// <summary>The user's own stamps: text, colour and whether they add name + time.</summary>
+    public List<CustomStampSetting> CustomStampDefinitions { get; set; } = new();
+    /// <summary>The stamp the Stamp tool starts with, as "Category|Title" ("" = the first, APPROVED).</summary>
+    public string DefaultStamp { get; set; } = string.Empty;
 
     // ── AI ───────────────────────────────────────────────────────────────────
     public string ClaudeApiKey { get; set; } = string.Empty;
@@ -204,4 +209,13 @@ public class CloudLink
     public string Provider { get; set; } = "";
     public string FileId { get; set; } = "";
     public string Name { get; set; } = "";
+}
+
+/// <summary>A custom stamp as saved in settings.json.</summary>
+public sealed class CustomStampSetting
+{
+    public string Title { get; set; } = string.Empty;
+    public string Color { get; set; } = "#6A1B9A";
+    /// <summary>Adds "By … at …" under the title, like Acrobat's dynamic stamps.</summary>
+    public bool Dynamic { get; set; }
 }

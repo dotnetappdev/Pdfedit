@@ -88,10 +88,7 @@ public partial class PdfViewerControl
                   ?? new StampDefinition(StampCatalog.CustomCategory, _vm.SelectedStamp, StampCatalog.ColorFor(_vm.SelectedStamp));
         string? subtitle = def.MakeSubtitle(DateTime.Now);
 
-        // Size from the title length, like Acrobat's stamps (points).
-        double hPt = subtitle != null ? 46 : 34;
-        double wPt = Math.Clamp(def.Title.Length * 12.5 + 34, 90, 330);
-        if (subtitle != null) wPt = Math.Max(wPt, subtitle.Length * 4.6 + 30);
+        var (wPt, hPt) = StampCatalog.SizeFor(def.Title, subtitle);
 
         var ann = new FreeTextAnnotation
         {

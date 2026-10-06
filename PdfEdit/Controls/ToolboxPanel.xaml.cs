@@ -232,6 +232,12 @@ public partial class ToolboxPanel : UserControl
         VM?.ShowCommentsPanel();
     }
 
+    private void ManageStamps_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var popup in RailPopups()) popup.IsOpen = false;
+        VM?.ManageStamps(createNew: false);
+    }
+
     private void MeasureUnit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string unit } && VM is MainViewModel vm)

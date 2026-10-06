@@ -259,12 +259,16 @@
                         <Button Style="{StaticResource PopupItem}" Tag="ReplaceText" Click="SubTool_Click" AutomationProperties.Name="Replace text">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Replace text" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button Style="{StaticResource PopupItem}" Tag="Stamp" Click="SubTool_Click" AutomationProperties.Name="Stamp">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Stamp" VerticalAlignment="Center"/>                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
-                        <Button Style="{StaticResource PopupItem}" Click="ShowComments_Click" AutomationProperties.Name="Show comments list">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Comments list…" VerticalAlignment="Center"/></StackPanel>
+                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <Button Style="{StaticResource PopupItem}" Tag="Stamp" Click="SubTool_Click" AutomationProperties.Name="Stamp  (M)">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Stamp  (M)" VerticalAlignment="Center"/><TextBlock Text="{Binding SelectedStamp, StringFormat=' · {0}'}" VerticalAlignment="Center" Foreground="{DynamicResource DimForegroundBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"/></StackPanel>
                         </Button>
-                    </StackPanel>
+                        <Button Style="{StaticResource PopupItem}" Click="ManageStamps_Click" AutomationProperties.Name="Choose or create stamps">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Choose or create stamps…" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
+                        <Separator Style="{StaticResource FDiv}" Margin="0,4"/>
+                        <Button Style="{StaticResource PopupItem}" Click="ShowComments_Click" AutomationProperties.Name="Show comments list">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Comments list…" VerticalAlignment="Center"/></StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>

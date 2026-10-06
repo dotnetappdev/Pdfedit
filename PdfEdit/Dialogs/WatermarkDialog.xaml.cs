@@ -74,6 +74,14 @@ public partial class WatermarkDialog : Window
         }
     }
 
+    /// <summary>Starts with this text (and colour), e.g. a stamp used as a page background.</summary>
+    public void UseText(string text, string? color)
+    {
+        KindText.IsChecked = true;
+        TextCombo.Text = text;
+        if (!string.IsNullOrWhiteSpace(color)) ColorBox.Text = color.Length == 9 ? "#" + color[3..] : color;
+    }
+
     private void Changed(object sender, RoutedEventArgs e) => UpdatePreview();
 
     private void RangeBox_GotFocus(object sender, RoutedEventArgs e) => PagesRange.IsChecked = true;

@@ -1076,8 +1076,13 @@
                             </GroupStyle>
                         </ComboBox.GroupStyle>
                     </ComboBox>
-                    <Fluent:Button Header="Custom Stamp…" Size="Middle" Command="{Binding AddCustomStampCommand}"
-                                   ToolTip="Create a stamp with your own text" AutomationProperties.Name="Create custom stamp">
+                    <Fluent:Button Header="Stamps…" Size="Middle" Command="{Binding ManageStampsCommand}"
+                                   ToolTip="Choose the stamp, set the default, create, edit or delete your own, or use one as a page background"
+                                   AutomationProperties.Name="Manage stamps">
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="New Stamp…" Size="Middle" Command="{Binding AddCustomStampCommand}"
+                                   ToolTip="Create a stamp with your own text and colour" AutomationProperties.Name="Create custom stamp">
                         <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
@@ -2199,11 +2204,16 @@
                             </GroupStyle>
                         </ComboBox.GroupStyle>
                     </ComboBox>
-                    <Fluent:Button Header="Custom&#x0a;Stamp"
+                    <Fluent:Button Header="Stamps…"
+                                   Command="{Binding ManageStampsCommand}"
+                                   Size="Middle"
+                                   ToolTip="Choose the stamp, set the default, create, edit or delete your own, or use one as a page background"
+                                   AutomationProperties.Name="Manage stamps"/>
+                    <Fluent:Button Header="New&#x0a;Stamp"
                                    Command="{Binding AddCustomStampCommand}"
                                    Size="Middle"
-                                   ToolTip="Create a custom stamp with your own text"
-                                   AutomationProperties.Name="Add custom stamp text"/>
+                                   ToolTip="Create a custom stamp with your own text and colour"
+                                   AutomationProperties.Name="Add custom stamp"/>
                     <Fluent:Button Header="Remove&#x0a;Custom"
                                    Command="{Binding RemoveCustomStampCommand}"
                                    Size="Middle"

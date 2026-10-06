@@ -12,7 +12,7 @@ public sealed record StampDefinition(string Category, string Title, string Color
 
 /// <summary>
 /// The stamp list: Acrobat's Standard Business, Sign Here and Dynamic stamps, plus more common
-/// office stamps. Custom stamps (Settings) are added under "Custom".
+/// office stamps. Custom stamps (Stamps… dialog) are added under "Custom".
 /// </summary>
 public static class StampCatalog
 {
@@ -104,9 +104,22 @@ public static class StampCatalog
     };
 
     /// <summary>Built-in stamps followed by the user's custom ones.</summary>
-    public static List<StampDefinition> All(IEnumerable<string> custom) =>
-        BuiltIn.Concat(custom.Where(c => !string.IsNullOrWhiteSpace(c))
-                             .Select(c => new StampDefinition(CustomCategory, c.Trim(), Purple))).ToList();
+    public static List<StampDefinition> All(IEnumerable<Services.CustomStampSetting> custom) =>
+        BuiltIn.Concat(custom.Where(c => !string.IsNullOrWhiteSpace(c.Title))
+                             .Select(c => new StampDefinition(CustomCategory, c.Title.Trim(), string.IsNullOrWhiteSpace(c.Color) ? Purple : c.Color, c.Dynamic)))
+               .ToList();
+
+    /// <summary>Default size of a placed stamp in points, from its text (like Acrobat's).</summary>
+    public static (double Width, double Height) SizeFor(string title, string? subtitle)
+    {
+        double h = subtitle != null ? 46 : 34;
+        double w = Math.Clamp(title.Length * 12.5 + 34, 90, 330);
+        if (subtitle != null) w = Math.Max(w, subtitle.Length * 4.6 + 30);
+        return (w, h);
+    }
+
+    /// <summary>"Category|Title": how the default stamp is remembered.</summary>
+    public static string KeyOf(StampDefinition d) => $"{d.Category}|{d.Title}";
 
     /// <summary>Colour for a stamp title (custom / unknown stamps are purple).</summary>
     public static string ColorFor(string title) =>

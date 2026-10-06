@@ -2361,7 +2361,10 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task WatermarkAsync()
+    private Task WatermarkAsync() => WatermarkWithAsync(null, null);
+
+    /// <summary>Watermark dialog, optionally starting with a stamp's text and colour (Stamps… → Use as background).</summary>
+    private async Task WatermarkWithAsync(string? text, string? color)
     {
         if (_currentFilePath == null || _document == null) return;
 
@@ -2373,6 +2376,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         bool has = await Task.Run(() => Services.WatermarkService.HasWatermark(path));
 
         var dlg = new Dialogs.WatermarkDialog(preview, size.Width, size.Height, has) { Owner = Application.Current.MainWindow };
+        if (text != null) dlg.UseText(text, color);
         if (dlg.ShowDialog() != true) return;
 
         if (dlg.RemoveRequested) { await RemoveWatermarkAsync(); return; }
