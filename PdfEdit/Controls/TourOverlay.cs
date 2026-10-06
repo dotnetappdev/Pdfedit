@@ -199,8 +199,8 @@ public sealed class TourOverlay : Adorner
         _title.Text = step.Title;
         _text.Text = step.Text;
         _count.Text = $"Step {_index + 1} of {_steps.Count}";
-        _back.Visibility = _index == 0 ? Visibility.Collapsed : Visibility.Visible;
-        _next.Content = _index == _steps.Count - 1 ? "Finish" : _index == 0 ? "Show me" : "Next";
+        _back.IsEnabled = _index > 0;   // always shown so Back / Next stay in the same place
+        _next.Content = _index == _steps.Count - 1 ? "Finish" : "Next";
         _skip.Visibility = _index == _steps.Count - 1 ? Visibility.Collapsed : Visibility.Visible;
         _close.SetResourceReference(Control.ForegroundProperty, "DimForegroundBrush");
         UpdateSpeakButton();
