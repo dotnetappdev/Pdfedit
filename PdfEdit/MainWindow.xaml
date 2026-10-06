@@ -1910,6 +1910,14 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Select text or an area to copy, highlight, snapshot or ask the AI about (Shift+S)"
                                          AutomationProperties.Name="Select text tool"/>
+                    <Fluent:ToggleButton Header="Edit Images"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=EditImages, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="EditImages"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Edit Images — select a picture in the PDF to move, resize, replace, save or delete it"
+                                         AutomationProperties.Name="Edit images tool"/>
                     <Fluent:Button Header="Snapshot"
                                    Command="{Binding SnapshotCommand}"
                                    ToolTip="Snapshot — drag a box round any area, then copy it or save it as a picture"

@@ -252,7 +252,7 @@ public partial class PdfViewerControl : UserControl
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
-        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); ClearTextSelection(); }
+        if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); ClearTextSelection(); BuildImageEditOverlay(LinkCanvas.Width, LinkCanvas.Height); }
         if (e.PropertyName is nameof(MainViewModel.CurrentPageIndex) or nameof(MainViewModel.Zoom)) { ClearTextSelection(); _chunkCache = null; }
         if (e.PropertyName == nameof(MainViewModel.IsAutoScrolling)) SyncAutoScroll();
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
@@ -786,6 +786,7 @@ public partial class PdfViewerControl : UserControl
             BuildShapeOverlay(_vm.GetShapeAnnotationsForCurrentPage());
             BuildTextEditOverlay();
             BuildLinkOverlay(w, h);
+            BuildImageEditOverlay(w, h);
         }
         catch (Exception ex)
         {
@@ -3022,6 +3023,7 @@ public partial class PdfViewerControl : UserControl
         if (HandlePolyKey(e)) { e.Handled = true; return; }
         // Don't steal shortcuts when a TextBox / field has focus
         bool textboxFocused = IsTextInputFocused();
+        if (!textboxFocused && HandleImageEditKey(e)) { e.Handled = true; return; }
 
         if (e.Key == Key.Escape)
         {

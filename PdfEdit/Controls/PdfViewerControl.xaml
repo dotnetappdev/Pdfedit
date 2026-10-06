@@ -233,6 +233,10 @@
                         <Canvas x:Name="AnnotationCanvas"
                                 IsHitTestVisible="True"/>
 
+                        <!-- Edit Images tool: the PDF's own pictures, to move, resize, replace or delete -->
+                        <Canvas x:Name="ImageEditCanvas" Visibility="Collapsed" Background="Transparent"
+                                AutomationProperties.Name="Pictures on this page"/>
+
                     </Grid>
                 </Border>
 

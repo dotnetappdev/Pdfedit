@@ -51,5 +51,7 @@ public enum ActiveTool
     // Drag over text (or any area) to copy it, highlight it or ask the AI about it
     SelectText,
     // Wavy underline under text (Acrobat's squiggly)
-    Squiggly
+    Squiggly,
+    // Select the pictures already in the PDF to move, resize, replace, save or delete them
+    EditImages
 }

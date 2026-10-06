@@ -93,6 +93,7 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Tool("Add text", "AddText", "Click on the page to type"),
+                    Tool("Edit images (move, resize, replace, delete)", "EditImages", "Select a picture already in the PDF"),
                     Run("Edit page on the Design canvas", vm.NewDesignCommand, "Move and restyle the page's text, images and fields"),
                     Page("Watermark", vm.WatermarkCommand),
                     Page("Header & footer", vm.AddHeaderFooterCommand),
