@@ -79,6 +79,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Plain text (.txt)", vm.ExportTextCommand),
                     Run("Images — all pages (PNG)", vm.ExportPagesAsImagesCommand),
                     Run("Image — current page", vm.ExportPageAsImageCommand),
+                    Page("Snapshot of an area (copy / save picture)", vm.SnapshotCommand, "Drag a box round any area, then copy it or save it as PNG"),
                     Run("PDF/A (archival)", vm.ExportPdfACommand),
                     Run("Form data", vm.ExportDataCommand),
                     Run("Comments (XFDF)", vm.ExportXfdfCommand),

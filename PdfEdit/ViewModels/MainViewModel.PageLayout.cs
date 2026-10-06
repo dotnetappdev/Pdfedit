@@ -22,6 +22,15 @@ public partial class MainViewModel
     /// <summary>Convert to Greyscale: text, drawings and pictures in shades of grey (undoable).</summary>
     public ICommand GreyscaleCommand => _greyscaleCommand ??= new AsyncRelayCommand(GreyscaleAsync, () => HasDocument);
 
+    private ICommand? _snapshotCommand;
+    /// <summary>Snapshot: the Select Text tool, ready to drag a box and copy or save it as a picture.</summary>
+    public ICommand SnapshotCommand => _snapshotCommand ??= new RelayCommand(() =>
+    {
+        IsDesignMode = false;
+        ActiveTool = Models.ActiveTool.SelectText;
+        StatusText = "Snapshot: drag a box round the area, then choose Copy image or Save image.";
+    }, () => HasDocument);
+
     private async Task ResizePagesAsync()
     {
         if (_currentFilePath == null || _document == null) return;

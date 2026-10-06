@@ -157,6 +157,11 @@ public partial class PdfViewerControl
             Add("", "Translate", "Translate into your language", () => _ = _vm!.AskAboutSelectionAsync("translate", text, null, page));
             Add("", "Ask…", "Ask your own question about this", () => _vm!.StartQuestionAboutSelection(text, page));
         }
+        if (area is { } snap)
+        {
+            Add("\uE8C8", "Copy image", "Copy this area as a picture (snapshot) to paste into other apps", () => _ = SnapshotAsync(snap, page, save: false));
+            Add("\uE74E", "Save image…", "Save this area as a PNG picture", () => _ = SnapshotAsync(snap, page, save: true));
+        }
         if (area is { } a)
             Add("", "Ask about this area", "Send a picture of this area to the AI: charts, tables, scans, photos", () => _ = AskAboutAreaAsync(a, page));
         if (bar.Children.Count == 0) { ClearTextSelection(); return; }
@@ -199,6 +204,39 @@ public partial class PdfViewerControl
         byte[]? png = await _vm.CapturePageAreaAsync(page - 1, area);
         if (png == null) { _vm.StatusText = "Couldn't capture that area."; return; }
         await _vm.AskAboutSelectionAsync("image", "", png, page);
+    }
+
+    /// <summary>Snapshot: the area as a sharp picture (3× zoom, about 216 dpi), copied or saved as PNG.</summary>
+    private async Task SnapshotAsync(Rect area, int page, bool save)
+    {
+        if (_vm == null) return;
+        ClearTextSelection();
+        byte[]? png = await _vm.CapturePageAreaAsync(page - 1, area, zoom: 3.0, maxSide: 6000);
+        if (png == null) { _vm.StatusText = "Couldn't capture that area."; return; }
+        try
+        {
+            if (save)
+            {
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Save snapshot", Filter = "PNG image (*.png)|*.png",
+                    FileName = $"{System.IO.Path.GetFileNameWithoutExtension(_vm.CurrentFilePath)} page {page} snapshot.png",
+                };
+                if (dlg.ShowDialog() != true) return;
+                await System.IO.File.WriteAllBytesAsync(dlg.FileName, png);
+                _vm.StatusText = $"Snapshot saved to {System.IO.Path.GetFileName(dlg.FileName)}.";
+            }
+            else
+            {
+                using var ms = new System.IO.MemoryStream(png);
+                var bmp = System.Windows.Media.Imaging.BitmapFrame.Create(ms, System.Windows.Media.Imaging.BitmapCreateOptions.None,
+                                                                           System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+                Clipboard.SetImage(bmp);
+                _vm.StatusText = "Snapshot copied: paste it into another app.";
+                ToastService.Instance.Success("Snapshot copied to the clipboard.");
+            }
+        }
+        catch (Exception ex) { Dialogs.AppDialog.ShowError("The snapshot couldn't be copied or saved.", ex); }
     }
 
     private void CloseSelectionBar()

@@ -1884,8 +1884,12 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="SelectText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Select text or an area to copy, highlight or ask the AI about (Shift+S)"
+                                         ToolTip="Select text or an area to copy, highlight, snapshot or ask the AI about (Shift+S)"
                                          AutomationProperties.Name="Select text tool"/>
+                    <Fluent:Button Header="Snapshot"
+                                   Command="{Binding SnapshotCommand}"
+                                   ToolTip="Snapshot — drag a box round any area, then copy it or save it as a picture"
+                                   AutomationProperties.Name="Snapshot tool"/>
                     <Fluent:ToggleButton Header="Highlight"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"

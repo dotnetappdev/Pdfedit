@@ -51,12 +51,12 @@ public partial class MainViewModel
     public event Action? AiInputFocusRequested;
 
     /// <summary>A PNG of part of a page (area in PDF points, origin bottom-left).</summary>
-    public async Task<byte[]?> CapturePageAreaAsync(int pageIndex, Rect area)
+    public async Task<byte[]?> CapturePageAreaAsync(int pageIndex, Rect area, double zoom = 2.0, int maxSide = 1568)
     {
         if (_document == null) return null;
         try
         {
-            var bmp = await _renderService.RenderPageAsync(pageIndex, 2.0, 1.0);
+            var bmp = await _renderService.RenderPageAsync(pageIndex, zoom, 1.0);
             var size = _document.PageSizes[pageIndex];
             double sx = bmp.PixelWidth / size.Width, sy = bmp.PixelHeight / size.Height;
             var px = new Int32Rect(
@@ -65,8 +65,8 @@ public partial class MainViewModel
             px.Width = (int)Math.Clamp(area.Width * sx, 1, bmp.PixelWidth - px.X);
             px.Height = (int)Math.Clamp(area.Height * sy, 1, bmp.PixelHeight - px.Y);
             BitmapSource crop = new CroppedBitmap(bmp, px);
-            // Keep the picture a sensible size for the AI.
-            double fit = Math.Min(1.0, 1568.0 / Math.Max(crop.PixelWidth, crop.PixelHeight));
+            // Keep the picture a sensible size (for the AI, 1568 px).
+            double fit = Math.Min(1.0, (double)maxSide / Math.Max(crop.PixelWidth, crop.PixelHeight));
             if (fit < 1.0) crop = new TransformedBitmap(crop, new System.Windows.Media.ScaleTransform(fit, fit));
             var enc = new PngBitmapEncoder();
             enc.Frames.Add(BitmapFrame.Create(crop));
