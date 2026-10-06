@@ -34,7 +34,7 @@ public partial class StampManagerDialog : Window
     private readonly List<StampRow> _rows = new();
     private ICollectionView? _view;
     private bool _editingNew;     // the editor holds a stamp that isn't saved yet
-    private bool _loading;
+    private bool _loading = true;   // true until the first stamp is shown: XAML sets ColorBox.Text during InitializeComponent
 
     /// <summary>The stamp chosen (Use this stamp / Use as page background).</summary>
     public StampDefinition? Chosen { get; private set; }
