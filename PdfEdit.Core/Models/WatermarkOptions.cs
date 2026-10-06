@@ -16,10 +16,40 @@ public class WatermarkOptions
     public string Color      { get; set; } = "#FF808080";         // ARGB or RGB hex
     public float  Opacity    { get; set; } = 0.25f;
 
-    /// <summary>Corner to corner on each page (ignores <see cref="AngleDeg"/>).</summary>
-    public bool   Diagonal   { get; set; } = true;
-    /// <summary>Counter-clockwise degrees as seen on screen.</summary>
+    /// <summary>Which way the watermark runs, like Word's Diagonal / Horizontal layouts.</summary>
+    public WatermarkLayout Layout { get; set; } = WatermarkLayout.DiagonalUp;
+
+    /// <summary>Corner to corner on each page. Kept for older callers: true is <see cref="WatermarkLayout.DiagonalUp"/>.</summary>
+    public bool Diagonal
+    {
+        get => Layout is WatermarkLayout.DiagonalUp or WatermarkLayout.DiagonalDown;
+        set
+        {
+            if (value && !Diagonal) Layout = WatermarkLayout.DiagonalUp;
+            else if (!value && Diagonal) Layout = WatermarkLayout.Custom;
+        }
+    }
+
+    /// <summary>Counter-clockwise degrees as seen on screen, for <see cref="WatermarkLayout.Custom"/>.</summary>
     public float  AngleDeg   { get; set; } = 45;
+
+    /// <summary>The angle (counter-clockwise degrees, as seen) on a page <paramref name="w"/> × <paramref name="h"/>.</summary>
+    public double AngleFor(double w, double h) => Layout switch
+    {
+        WatermarkLayout.DiagonalUp => Math.Atan2(h, w) * 180 / Math.PI,
+        WatermarkLayout.DiagonalDown => -Math.Atan2(h, w) * 180 / Math.PI,
+        WatermarkLayout.Horizontal => 0,
+        WatermarkLayout.VerticalUp => 90,
+        WatermarkLayout.VerticalDown => -90,
+        _ => AngleDeg,
+    };
+
+    /// <summary>Length of the line through the page's centre at <paramref name="angleDeg"/>, edge to edge.</summary>
+    public static double LineAcross(double w, double h, double angleDeg)
+    {
+        double a = angleDeg * Math.PI / 180, c = Math.Abs(Math.Cos(a)), s = Math.Abs(Math.Sin(a));
+        return Math.Min(c < 1e-6 ? double.MaxValue : w / c, s < 1e-6 ? double.MaxValue : h / s);
+    }
 
     public WatermarkPosition Position { get; set; } = WatermarkPosition.Center;
 
@@ -31,4 +61,20 @@ public class WatermarkOptions
 
     // Kept for older callers
     public bool AllPages { get => Pages == WatermarkPages.All; set { if (value) Pages = WatermarkPages.All; } }
+}
+
+/// <summary>Which way a watermark runs across the page.</summary>
+public enum WatermarkLayout
+{
+    /// <summary>Bottom-left corner to top-right corner.</summary>
+    DiagonalUp,
+    /// <summary>Top-left corner to bottom-right corner.</summary>
+    DiagonalDown,
+    Horizontal,
+    /// <summary>Up the page, reading from bottom to top.</summary>
+    VerticalUp,
+    /// <summary>Down the page, reading from top to bottom.</summary>
+    VerticalDown,
+    /// <summary>At <see cref="WatermarkOptions.AngleDeg"/>.</summary>
+    Custom,
 }

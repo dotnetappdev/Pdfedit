@@ -62,7 +62,7 @@ public partial class WatermarkDialog : Window
         SizeSlider.Value = o.FontSize;
         ColorBox.Text = o.Color.Length == 9 ? "#" + o.Color[3..] : o.Color;
         OpacitySlider.Value = o.Opacity * 100;
-        DiagonalBox.IsChecked = o.Diagonal;
+        LayoutBox.SelectedIndex = (int)o.Layout;
         AngleSlider.Value = o.AngleDeg;
         PositionBox.SelectedIndex = (int)o.Position;
         (o.Behind ? LayerBehind : LayerTop).IsChecked = true;
@@ -134,7 +134,9 @@ public partial class WatermarkDialog : Window
         PreviewCanvas.Children.Clear();
 
         double k = PreviewCanvas.Width / _pageW;                // preview DIPs per point
-        double angle = DiagonalBox.IsChecked == true ? Math.Atan2(_pageH, _pageW) * 180 / Math.PI : AngleSlider.Value;
+        var layout = (WatermarkLayout)Math.Max(0, LayoutBox.SelectedIndex);
+        AngleSlider.IsEnabled = layout == WatermarkLayout.Custom;
+        double angle = new WatermarkOptions { Layout = layout, AngleDeg = (float)AngleSlider.Value }.AngleFor(_pageW, _pageH);
         double opacity = OpacitySlider.Value / 100;
         var pos = (WatermarkPosition)Math.Max(0, PositionBox.SelectedIndex);
 
@@ -169,10 +171,10 @@ public partial class WatermarkDialog : Window
                 new Typeface("Arial Black"), SizeSlider.Value, Brushes.Black, 1.0);
             itemW = probe.WidthIncludingTrailingWhitespace * 0.92;
             itemH = SizeSlider.Value * 0.72;
-            double diag = Math.Sqrt(_pageW * _pageW + _pageH * _pageH);
-            if (pos != WatermarkPosition.Tiled && DiagonalBox.IsChecked == true && itemW > diag * 0.9)
+            double across = WatermarkOptions.LineAcross(_pageW, _pageH, angle);
+            if (pos != WatermarkPosition.Tiled && itemW > across * 0.9)
             {
-                double f = diag * 0.9 / itemW;
+                double f = across * 0.9 / itemW;
                 itemW *= f; itemH *= f;
             }
         }
@@ -222,7 +224,7 @@ public partial class WatermarkDialog : Window
             FontSize = (float)SizeSlider.Value,
             Color = $"#{c.R:X2}{c.G:X2}{c.B:X2}",
             Opacity = (float)(OpacitySlider.Value / 100),
-            Diagonal = DiagonalBox.IsChecked == true,
+            Layout = (WatermarkLayout)Math.Max(0, LayoutBox.SelectedIndex),
             AngleDeg = (float)AngleSlider.Value,
             Position = (WatermarkPosition)Math.Max(0, PositionBox.SelectedIndex),
             Behind = LayerBehind.IsChecked == true,

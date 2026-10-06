@@ -114,13 +114,23 @@
                 </DockPanel>
 
                 <TextBlock Text="APPEARANCE" Style="{StaticResource Head}"/>
-                <CheckBox x:Name="DiagonalBox" Content="Diagonal — corner to corner" IsChecked="True" Checked="Changed" Unchecked="Changed"/>
+                <DockPanel Margin="0,2">
+                    <TextBlock Text="Layout" Style="{StaticResource Lbl}"/>
+                    <ComboBox x:Name="LayoutBox" Height="26" SelectedIndex="0" SelectionChanged="Changed" AutomationProperties.Name="Layout">
+                        <ComboBoxItem Content="↗  Diagonal: bottom left to top right"/>
+                        <ComboBoxItem Content="↘  Diagonal: top left to bottom right"/>
+                        <ComboBoxItem Content="→  Horizontal"/>
+                        <ComboBoxItem Content="↑  Vertical: reads bottom to top"/>
+                        <ComboBoxItem Content="↓  Vertical: reads top to bottom"/>
+                        <ComboBoxItem Content="∠  Custom angle"/>
+                    </ComboBox>
+                </DockPanel>
                 <DockPanel Margin="0,4,0,2">
                     <TextBlock Text="Angle" Style="{StaticResource Lbl}"/>
                     <TextBlock DockPanel.Dock="Right" Style="{StaticResource Val}" Text="{Binding Value, ElementName=AngleSlider, StringFormat={}{0:0}°}"/>
                     <Slider x:Name="AngleSlider" Minimum="-90" Maximum="90" Value="45" TickFrequency="15" IsSnapToTickEnabled="True"
                             VerticalAlignment="Center" ValueChanged="Changed"
-                            IsEnabled="{Binding IsChecked, ElementName=DiagonalBox, Converter={StaticResource InverseBoolConverter}}"
+                            IsEnabled="False"
                             AutomationProperties.Name="Angle"/>
                 </DockPanel>
                 <DockPanel Margin="0,2">

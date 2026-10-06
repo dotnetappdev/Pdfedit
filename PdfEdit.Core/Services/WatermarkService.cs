@@ -41,7 +41,7 @@ public static class WatermarkService
             // Size and angle as the page is seen on screen (a rotated page is shown turned).
             float viewW = swap ? box.GetHeight() : box.GetWidth();
             float viewH = swap ? box.GetWidth() : box.GetHeight();
-            double viewAngle = opt.Diagonal ? Math.Atan2(viewH, viewW) * 180 / Math.PI : opt.AngleDeg;
+            double viewAngle = opt.AngleFor(viewW, viewH);
             double angle = (viewAngle + rot) * Math.PI / 180;   // into unrotated page space
 
             var stream = opt.Behind ? page.NewContentStreamBefore() : page.NewContentStreamAfter();
@@ -66,11 +66,11 @@ public static class WatermarkService
             {
                 itemW = font!.GetWidth(opt.Text, opt.FontSize);
                 itemH = opt.FontSize * 0.72f;   // cap height-ish
-                // Diagonal / centred text that would run off the page shrinks to fit.
-                double diag = Math.Sqrt(viewW * viewW + viewH * viewH);
-                if (opt.Position != WatermarkPosition.Tiled && opt.Diagonal && itemW > diag * 0.9)
+                // Text that would run off the page (in whichever direction it runs) shrinks to fit.
+                double across = WatermarkOptions.LineAcross(viewW, viewH, viewAngle);
+                if (opt.Position != WatermarkPosition.Tiled && itemW > across * 0.9)
                 {
-                    float k = (float)(diag * 0.9 / itemW);
+                    float k = (float)(across * 0.9 / itemW);
                     itemW *= k; itemH *= k;
                 }
             }
