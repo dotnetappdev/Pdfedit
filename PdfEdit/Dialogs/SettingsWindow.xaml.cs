@@ -136,6 +136,7 @@ public partial class SettingsWindow : Window
         // AI
         ApiKeyBox.Password = s.ClaudeApiKey;
         OpenAiKeyBox.Password = s.OpenAiApiKey;
+        GitHubTokenBox.Password = s.GitHubToken;
         LocalEndpointBox.Text = s.LocalAiEndpoint;
         LocalModelBox.ItemsSource = AiProviderService.LocalModels;
         LocalModelBox.Text = s.LocalAiModel;
@@ -298,6 +299,7 @@ public partial class SettingsWindow : Window
 
         s.ClaudeApiKey = ApiKeyBox.Password;
         s.OpenAiApiKey = OpenAiKeyBox.Password;
+        s.GitHubToken = GitHubTokenBox.Password.Trim();
         s.LocalAiEndpoint = LocalEndpointBox.Text.Trim();
         s.LocalAiModel = LocalModelBox.Text.Trim();
         s.LocalAiApiKey = LocalKeyBox.Password;

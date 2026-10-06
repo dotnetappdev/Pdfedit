@@ -6,7 +6,9 @@ The AI features are entirely optional. PdfEdit sends nothing anywhere until you 
 
 ## Providers
 
-- **Claude** (Anthropic) or **OpenAI**, using your own API key
+- **Claude** (Anthropic), using your own API key from console.anthropic.com. Pick Opus 5.5 (the default), Sonnet 5.5, Haiku 4.5 (quickest and cheapest) or Fable 5.1 (most capable). If Claude's safety checks decline a request, a suitable fallback model answers it instead of stopping.
+- **GitHub Copilot**: the models behind Copilot (GPT-4.1, GPT-4o) through GitHub Models, signed in with a GitHub personal access token that has the *Models: Read-only* permission. It's free to try within GitHub's rate limits.
+- **OpenAI** (ChatGPT), using your own API key
 - **A local model** through Ollama, LM Studio, llama.cpp or another OpenAI-compatible server. It's free, and the document never leaves your PC.
 
 API keys are stored in `%AppData%\PdfEdit\settings.json` on your machine and are only sent to the provider you chose.

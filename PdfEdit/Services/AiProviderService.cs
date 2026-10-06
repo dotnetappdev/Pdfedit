@@ -15,20 +15,34 @@ public static class AiProviderService
     private static readonly HttpClient _localHttp = new() { Timeout = TimeSpan.FromMinutes(15) };
 
     public const string LocalProvider = "Local";
+    /// <summary>
+    /// GitHub Copilot's models through GitHub Models (an OpenAI-style API at models.github.ai),
+    /// signed in with a GitHub personal access token that has the "models" permission.
+    /// </summary>
+    public const string CopilotProvider = "Copilot";
+    private const string GitHubModelsEndpoint = "https://models.github.ai/inference";
 
     public static readonly Dictionary<string, string[]> Providers = new()
     {
         ["Claude"] = new[]
         {
-            "claude-haiku-4-5-20251001",
-            "claude-sonnet-5",
-            "claude-opus-5"
+            "claude-opus-5-5",
+            "claude-sonnet-5-5",
+            "claude-haiku-4-5",
+            "claude-fable-5-1",
         },
         ["OpenAI"] = new[]
         {
             "gpt-4o-mini",
             "gpt-4o",
             "gpt-3.5-turbo"
+        },
+        [CopilotProvider] = new[]
+        {
+            "openai/gpt-4.1",
+            "openai/gpt-4.1-mini",
+            "openai/gpt-4o",
+            "openai/gpt-4o-mini",
         },
         // Filled from the local server (Settings → AI → Detect models); see GetModels.
         [LocalProvider] = Array.Empty<string>(),
@@ -39,12 +53,26 @@ public static class AiProviderService
 
     public static readonly Dictionary<string, string> ModelDisplayNames = new()
     {
-        ["claude-haiku-4-5-20251001"] = "Haiku 4.5",
-        ["claude-sonnet-5"]           = "Sonnet 5",
-        ["claude-opus-5"]             = "Opus 5",
+        ["claude-opus-5-5"]           = "Opus 5.5",
+        ["claude-sonnet-5-5"]         = "Sonnet 5.5",
+        ["claude-haiku-4-5"]          = "Haiku 4.5",
+        ["claude-fable-5-1"]          = "Fable 5.1",
+        ["openai/gpt-4.1"]            = "GPT-4.1",
+        ["openai/gpt-4.1-mini"]       = "GPT-4.1 mini",
+        ["openai/gpt-4o"]             = "GPT-4o",
+        ["openai/gpt-4o-mini"]        = "GPT-4o mini",
         ["gpt-4o-mini"]               = "GPT-4o mini",
         ["gpt-4o"]                    = "GPT-4o",
         ["gpt-3.5-turbo"]             = "GPT-3.5",
+    };
+
+    /// <summary>Model IDs saved by older versions, mapped to the current ones.</summary>
+    public static string UpgradeModelId(string model) => model switch
+    {
+        "claude-haiku-4-5-20251001" => "claude-haiku-4-5",
+        "claude-sonnet-5" => "claude-sonnet-5-5",
+        "claude-opus-5" => "claude-opus-5-5",
+        _ => model,
     };
 
     public static string[] GetModels(string provider)
@@ -103,6 +131,8 @@ public static class AiProviderService
         Action<string> onChunk, CancellationToken ct, string? systemPrompt, int maxTokens = 4096) => provider switch
     {
         "OpenAI" => SendOpenAiStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens),
+        CopilotProvider => SendOpenAiStreamAsync(messages, model, apiKey, onChunk, ct, systemPrompt, maxTokens,
+            baseUrl: GitHubModelsEndpoint, serviceName: "GitHub Copilot"),
         LocalProvider => SendOpenAiStreamAsync(messages,
             string.IsNullOrWhiteSpace(model) ? AppSettings.Current.LocalAiModel : model,
             AppSettings.Current.LocalAiApiKey, onChunk, ct, systemPrompt, maxTokens,
@@ -296,14 +326,26 @@ public static class AiProviderService
             })
             .ToArray();
 
-        object requestObj = string.IsNullOrEmpty(systemPrompt)
-            ? new { model, max_tokens = maxTokens, stream = true, messages }
-            : new { model, max_tokens = maxTokens, stream = true, system = systemPrompt, messages };
+        // Current Claude models think before they answer (always on for Opus 5.5 and Fable 5.1), and
+        // thinking counts towards max_tokens, so leave room for it as well as the reply.
+        var request = new JsonObject
+        {
+            ["model"] = model,
+            ["max_tokens"] = Math.Max(maxTokens, 16000),
+            ["stream"] = true,
+            ["messages"] = JsonSerializer.SerializeToNode(messages),
+        };
+        if (!string.IsNullOrEmpty(systemPrompt)) request["system"] = systemPrompt;
+        // If a safety check declines a request, let Anthropic answer it with a suitable fallback
+        // model in the same call instead of stopping (server-side refusal fallbacks).
+        bool fallbacks = model is "claude-opus-5-5" or "claude-sonnet-5-5" or "claude-fable-5-1";
+        if (fallbacks) request["fallbacks"] = "default";
 
-        var body = JsonSerializer.Serialize(requestObj);
+        var body = request.ToJsonString();
         var req = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         req.Headers.Add("x-api-key", apiKey);
         req.Headers.Add("anthropic-version", "2023-06-01");
+        if (fallbacks) req.Headers.Add("anthropic-beta", "server-side-fallback-2026-07-01");
         req.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
         var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -324,10 +366,15 @@ public static class AiProviderService
             try
             {
                 var node = JsonNode.Parse(data);
-                if (node?["type"]?.GetValue<string>() == "content_block_delta")
+                string? type = node?["type"]?.GetValue<string>();
+                if (type == "content_block_delta" && node!["delta"]?["type"]?.GetValue<string>() == "text_delta")
                 {
                     var text = node["delta"]?["text"]?.GetValue<string>();
                     if (!string.IsNullOrEmpty(text)) onChunk(text);
+                }
+                else if (type == "message_delta" && node!["delta"]?["stop_reason"]?.GetValue<string>() == "refusal")
+                {
+                    onChunk("\n\n(Claude declined to answer this request.)");
                 }
             }
             catch { }
@@ -345,7 +392,8 @@ public static class AiProviderService
         string? systemPrompt = null,
         int maxTokens = 4096,
         string? baseUrl = null,
-        bool local = false)
+        bool local = false,
+        string serviceName = "OpenAI")
     {
         var msgList = history
             .Select(m => (object)new
@@ -367,6 +415,7 @@ public static class AiProviderService
         var req = new HttpRequestMessage(HttpMethod.Post, url);
         if (!string.IsNullOrWhiteSpace(apiKey))
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        if (baseUrl == GitHubModelsEndpoint) req.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         req.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
         HttpResponseMessage resp;
@@ -384,7 +433,7 @@ public static class AiProviderService
             var err = await resp.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(local
                 ? $"Local AI error {(int)resp.StatusCode} (model \"{model}\"): {err}"
-                : $"OpenAI API error {(int)resp.StatusCode}: {err}");
+                : $"{serviceName} error {(int)resp.StatusCode}: {err}");
         }
 
         using var stream = await resp.Content.ReadAsStreamAsync(ct);

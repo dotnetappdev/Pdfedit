@@ -84,6 +84,8 @@ public static class TipsCatalog
             "The AI Assistant panel reads the open PDF. Ask a question and it answers with page references; click (p. 4) to jump there."),
         new("Let the AI do the clicking",
             "Ask the assistant to fill in fields, highlight passages, add notes or stamps, or mark personal details for redaction. Each change appears as a card you Apply or Undo."),
+        new("Claude, Copilot or ChatGPT",
+            "The AI assistant works with Claude, GitHub Copilot's models (with a GitHub token) or ChatGPT. Pick one with the tabs at the top of the model picker in the AI panel, and connect it with the key icon."),
         new("Free, private AI",
             "You don't need a paid AI account. Point PdfEdit at a local model (Ollama, LM Studio and others) in Settings → AI Assistant and nothing leaves your PC."),
         new("Profiles for repeat forms",

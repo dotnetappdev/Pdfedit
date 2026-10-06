@@ -86,6 +86,8 @@ public class AppSettings
     // ── AI ───────────────────────────────────────────────────────────────────
     public string ClaudeApiKey { get; set; } = string.Empty;
     public string OpenAiApiKey { get; set; } = string.Empty;
+    /// <summary>GitHub personal access token with the "models" permission, for GitHub Copilot (GitHub Models).</summary>
+    public string GitHubToken { get; set; } = string.Empty;
     public string AiProvider { get; set; } = "Claude";
     // Local AI (free, private, no API cost): any OpenAI-compatible server on this machine or the
     // network — Ollama (http://localhost:11434/v1), LM Studio (http://localhost:1234/v1), llama.cpp
@@ -111,7 +113,7 @@ public class AppSettings
     public int ScanFileType { get; set; }          // 0 PDF, 1 PNG, 2 JPEG, 3 TIFF, 4 BMP
     public string ScanPaperSize { get; set; } = "Auto";
     public bool ScanAutoCrop { get; set; }
-    public string AiModel { get; set; } = "claude-haiku-4-5-20251001";
+    public string AiModel { get; set; } = "claude-opus-5-5";
 
     // ── Floating toolbox position ────────────────────────────────────────────
     public double ToolboxLeft { get; set; } = double.NaN;

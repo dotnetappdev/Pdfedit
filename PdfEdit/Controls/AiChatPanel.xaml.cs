@@ -66,7 +66,7 @@ public partial class AiChatPanel : UserControl
             if (running)
                 Dispatcher.BeginInvoke(() => ChatScroll.ScrollToBottom());
         }
-        else if (e.PropertyName is nameof(MainViewModel.IsClaudeConnected) or nameof(MainViewModel.IsOpenAiConnected))
+        else if (e.PropertyName is nameof(MainViewModel.IsClaudeConnected) or nameof(MainViewModel.IsOpenAiConnected) or nameof(MainViewModel.IsCopilotConnected))
         {
             RefreshConnectionStatus();
         }
@@ -163,9 +163,14 @@ public partial class AiChatPanel : UserControl
 
     private static string ModelShortName(string model) => model switch
     {
-        "claude-haiku-4-5-20251001" => "Haiku  ·  fast & efficient",
-        "claude-sonnet-5"           => "Sonnet 5  ·  balanced",
-        "claude-opus-5"             => "Opus 5  ·  most capable",
+        "claude-opus-5-5"           => "Opus 5.5  ·  smart, the default",
+        "claude-sonnet-5-5"         => "Sonnet 5.5  ·  fast & capable",
+        "claude-haiku-4-5"          => "Haiku 4.5  ·  quickest & cheapest",
+        "claude-fable-5-1"          => "Fable 5.1  ·  most capable",
+        "openai/gpt-4.1"            => "GPT-4.1  ·  balanced",
+        "openai/gpt-4.1-mini"       => "GPT-4.1 mini  ·  fast",
+        "openai/gpt-4o"             => "GPT-4o  ·  balanced",
+        "openai/gpt-4o-mini"        => "GPT-4o mini  ·  fast & efficient",
         "gpt-4o-mini"               => "4o mini  ·  fast & efficient",
         "gpt-4o"                    => "4o  ·  balanced",
         "gpt-3.5-turbo"             => "3.5 Turbo  ·  legacy",
@@ -206,6 +211,13 @@ public partial class AiChatPanel : UserControl
             var key = AppSettings.Current.OpenAiApiKey;
             OpenAiKeyHint.Text = MaskKey(key);
         }
+
+        bool copilotOk = _vm?.IsCopilotConnected == true;
+        CopilotStatusDot.Fill   = copilotOk ? green : red;
+        CopilotStatusText.Text  = copilotOk ? "Connected" : "Not connected";
+        CopilotConnectedView.Visibility = copilotOk ? Visibility.Visible : Visibility.Collapsed;
+        CopilotConnectView.Visibility   = copilotOk ? Visibility.Collapsed : Visibility.Visible;
+        if (copilotOk) CopilotKeyHint.Text = MaskKey(AppSettings.Current.GitHubToken);
     }
 
     private async Task DetectLocalModelsAsync()
@@ -260,6 +272,27 @@ public partial class AiChatPanel : UserControl
     private void OpenAiSignOut_Click(object sender, RoutedEventArgs e)
     {
         _vm?.DisconnectOpenAi();
+        RefreshConnectionStatus();
+        RefreshPopupStatus();
+    }
+
+    private void CopilotConnect_Click(object sender, RoutedEventArgs e)
+    {
+        var token = CopilotKeyBox.Password;
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            CopilotKeyBox.BorderBrush = new SolidColorBrush(Color.FromRgb(204, 68, 68));
+            return;
+        }
+        _vm?.ConnectCopilot(token);
+        CopilotKeyBox.Clear();
+        RefreshConnectionStatus();
+        RefreshPopupStatus();
+    }
+
+    private void CopilotSignOut_Click(object sender, RoutedEventArgs e)
+    {
+        _vm?.DisconnectCopilot();
         RefreshConnectionStatus();
         RefreshPopupStatus();
     }

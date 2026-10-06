@@ -203,6 +203,22 @@
                                    Margin="0,6,0,20"
                                    Text="Get your API key from platform.openai.com"/>
 
+                        <TextBlock Style="{StaticResource SectionHead}" Text="GITHUB COPILOT"/>
+                        <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12"
+                                   TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Use the models behind GitHub Copilot (GPT-4.1, GPT-4o) through GitHub Models, with your GitHub account. Free to try within GitHub's limits."/>
+                        <TextBlock Style="{StaticResource SettingLabel}" Text="GitHub token:" Margin="0,0,0,4"/>
+                        <PasswordBox x:Name="GitHubTokenBox"
+                                     Background="{DynamicResource InputBgBrush}"
+                                     Foreground="{DynamicResource InputForegroundBrush}"
+                                     BorderBrush="{DynamicResource InputBorderBrush}"
+                                     BorderThickness="1" Padding="6,4" FontSize="13" Height="30"
+                                     AutomationProperties.Name="GitHub personal access token"
+                                     AutomationProperties.HelpText="A GitHub personal access token with the Models permission"/>
+                        <TextBlock Foreground="{DynamicResource DimForegroundBrush}" FontSize="11"
+                                   Margin="0,6,0,20" TextWrapping="Wrap"
+                                   Text="Create a fine-grained token at github.com → Settings → Developer settings → Personal access tokens, with Models: Read-only."/>
+
                         <!-- Local AI: free, private, offline -->
                         <TextBlock Style="{StaticResource SectionHead}" Text="LOCAL AI (FREE · PRIVATE · OFFLINE)"/>
                         <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12"

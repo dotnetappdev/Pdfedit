@@ -26,8 +26,8 @@ public class ClaudeAiService
 
         var body = new
         {
-            model = "claude-haiku-4-5-20251001",
-            max_tokens = 1024,
+            model = "claude-opus-5-5",
+            max_tokens = 16000,   // room for thinking, which is always on for this model
             messages = new[] { new { role = "user", content = fullPrompt } }
         };
 

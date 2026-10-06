@@ -776,7 +776,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private string _aiChatInput = string.Empty;
     private string _aiProvider = "Claude";
-    private string _aiModel = "claude-haiku-4-5-20251001";
+    private string _aiModel = "claude-opus-5-5";
     private CancellationTokenSource? _aiCts;
     private PersonalProfile? _selectedProfile;
     private string _documentText = string.Empty;  // extracted text for AI context
@@ -828,6 +828,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     public bool IsClaudeConnected => !string.IsNullOrEmpty(AppSettings.Current.ClaudeApiKey);
     public bool IsOpenAiConnected => !string.IsNullOrEmpty(AppSettings.Current.OpenAiApiKey);
+    public bool IsCopilotConnected => !string.IsNullOrEmpty(AppSettings.Current.GitHubToken);
 
     public bool IsLocalAiConnected => !string.IsNullOrWhiteSpace(AppSettings.Current.LocalAiEndpoint);
 
@@ -835,6 +836,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     public string CurrentAiKey => _aiProvider switch
     {
         "OpenAI" => AppSettings.Current.OpenAiApiKey,
+        Services.AiProviderService.CopilotProvider => AppSettings.Current.GitHubToken,
         Services.AiProviderService.LocalProvider => AppSettings.Current.LocalAiApiKey,
         _ => AppSettings.Current.ClaudeApiKey,
     };
@@ -847,6 +849,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     public string ProviderIcon => _aiProvider switch
     {
         "OpenAI" => "☁",
+        Services.AiProviderService.CopilotProvider => "⌬",
         Services.AiProviderService.LocalProvider => "🖥",
         _ => "✦",
     };
@@ -855,16 +858,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         get
         {
-            return _aiModel switch
-            {
-                "claude-haiku-4-5-20251001" => "Haiku",
-                "claude-sonnet-5"           => "Sonnet 5",
-                "claude-opus-5"             => "Opus 5",
-                "gpt-4o-mini"               => "4o mini",
-                "gpt-4o"                    => "4o",
-                "gpt-3.5-turbo"             => "3.5 Turbo",
-                _                           => _aiModel
-            };
+            return Services.AiProviderService.ModelDisplayNames.TryGetValue(_aiModel, out var name) ? name : _aiModel;
         }
     }
 
@@ -896,6 +890,21 @@ public partial class MainViewModel : INotifyPropertyChanged
         AppSettings.Current.OpenAiApiKey = string.Empty;
         AppSettings.Current.Save();
         OnPropertyChanged(nameof(IsOpenAiConnected));
+    }
+
+    public void ConnectCopilot(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token)) return;
+        AppSettings.Current.GitHubToken = token.Trim();
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsCopilotConnected));
+    }
+
+    public void DisconnectCopilot()
+    {
+        AppSettings.Current.GitHubToken = string.Empty;
+        AppSettings.Current.Save();
+        OnPropertyChanged(nameof(IsCopilotConnected));
     }
 
     public ObservableCollection<PersonalProfile> Profiles => Services.PersonalProfileStore.All;
@@ -1175,7 +1184,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         _currentDrawingColor = AppSettings.Current.DefaultDrawingColor;
         _forceUpperCase = AppSettings.Current.ForceUpperCaseDefault;
         _aiProvider = AppSettings.Current.AiProvider;
-        _aiModel = AppSettings.Current.AiModel;
+        _aiModel = Services.AiProviderService.UpgradeModelId(AppSettings.Current.AiModel);
         SyncAiModels();
         SyncStamps();
 
