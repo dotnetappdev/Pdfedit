@@ -23,6 +23,43 @@ public partial class MainViewModel
         set { if (AppSettings.Current.TwoPageView == value) return; AppSettings.Current.TwoPageView = value; AppSettings.Current.Save(); OnPropertyChanged(); PageChanged?.Invoke(); }
     }
 
+    private bool _isAutoScrolling;
+    /// <summary>Auto-scroll: the page moves up by itself and turns at the bottom (Esc or a click stops it).</summary>
+    public bool IsAutoScrolling
+    {
+        get => _isAutoScrolling;
+        set
+        {
+            if (_isAutoScrolling == value || (value && !HasDocument)) return;
+            _isAutoScrolling = value;
+            OnPropertyChanged();
+            StatusText = value ? $"Auto-scroll on ({AutoScrollLabel}). Faster / Slower to change, Esc or a click to stop." : "Auto-scroll off.";
+        }
+    }
+
+    /// <summary>Screen pixels a second (10 to 400).</summary>
+    public double AutoScrollSpeed
+    {
+        get => Math.Clamp(AppSettings.Current.AutoScrollSpeed, 10, 400);
+        set
+        {
+            value = Math.Clamp(value, 10, 400);
+            if (Math.Abs(AppSettings.Current.AutoScrollSpeed - value) < 0.5) return;
+            AppSettings.Current.AutoScrollSpeed = value;
+            AppSettings.Current.Save();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AutoScrollLabel));
+            if (_isAutoScrolling) StatusText = $"Auto-scroll speed: {AutoScrollLabel}.";
+        }
+    }
+
+    public string AutoScrollLabel => $"{AutoScrollSpeed / 40:0.##}×";
+
+    private ICommand? _toggleAutoScrollCommand, _autoScrollFasterCommand, _autoScrollSlowerCommand;
+    public ICommand ToggleAutoScrollCommand => _toggleAutoScrollCommand ??= new RelayCommand(() => IsAutoScrolling = !IsAutoScrolling, () => HasDocument);
+    public ICommand AutoScrollFasterCommand => _autoScrollFasterCommand ??= new RelayCommand(() => AutoScrollSpeed *= 1.25);
+    public ICommand AutoScrollSlowerCommand => _autoScrollSlowerCommand ??= new RelayCommand(() => AutoScrollSpeed /= 1.25);
+
     public ICommand ToggleNightModeCommand => _toggleNightCommand ??= new RelayCommand(() => NightMode = !NightMode);
     public ICommand ToggleTwoPageViewCommand => _toggleTwoPageCommand ??= new RelayCommand(() => TwoPageView = !TwoPageView);
 

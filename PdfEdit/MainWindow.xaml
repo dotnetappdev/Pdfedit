@@ -1673,6 +1673,20 @@
                                          ToolTip="Show the next page beside this one" AutomationProperties.Name="Two-page view">
                         <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
                     </Fluent:ToggleButton>
+                    <Fluent:ToggleButton Header="Auto Scroll" Size="Middle" IsChecked="{Binding IsAutoScrolling, Mode=TwoWay}"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Scroll through the document by itself, turning pages at the bottom. Up / Down change the speed; Esc, Space or a click stops it."
+                                         AutomationProperties.Name="Auto scroll">
+                        <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>
+                    </Fluent:ToggleButton>
+                    <StackPanel Orientation="Horizontal" Margin="4,2,0,0">
+                        <Button Content="&#xE738;" FontFamily="Segoe MDL2 Assets" Width="26" Height="22" Command="{Binding AutoScrollSlowerCommand}"
+                                ToolTip="Auto-scroll slower (Down arrow while scrolling)" AutomationProperties.Name="Auto scroll slower"/>
+                        <TextBlock Text="{Binding AutoScrollLabel}" VerticalAlignment="Center" Margin="6,0" MinWidth="34" TextAlignment="Center"
+                                   AutomationProperties.Name="Auto scroll speed"/>
+                        <Button Content="&#xE710;" FontFamily="Segoe MDL2 Assets" Width="26" Height="22" Command="{Binding AutoScrollFasterCommand}"
+                                ToolTip="Auto-scroll faster (Up arrow while scrolling)" AutomationProperties.Name="Auto scroll faster"/>
+                    </StackPanel>
                     <Fluent:ToggleButton Header="Night Mode" Size="Middle" IsChecked="{Binding NightMode, Mode=TwoWay}"
                                          ToolTip="Dark pages for reading at night (colours keep their hue)" AutomationProperties.Name="Night mode">
                         <Fluent:ToggleButton.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:ToggleButton.Icon>

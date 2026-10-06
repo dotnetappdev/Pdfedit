@@ -254,6 +254,7 @@ public partial class PdfViewerControl : UserControl
         // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
         if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); ClearTextSelection(); }
         if (e.PropertyName is nameof(MainViewModel.CurrentPageIndex) or nameof(MainViewModel.Zoom)) { ClearTextSelection(); _chunkCache = null; }
+        if (e.PropertyName == nameof(MainViewModel.IsAutoScrolling)) SyncAutoScroll();
         if (e.PropertyName == nameof(MainViewModel.ActiveTool) && IsFieldLayoutMode != _builtInLayoutMode)
         {
             if (IsFieldLayoutMode && _vm?.ActiveTool == ActiveTool.EditFields)
@@ -2977,6 +2978,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
         if (Keyboard.Modifiers != ModifierKeys.None) return;   // Shift+wheel scrolls sideways as usual
+        if (_vm.IsAutoScrolling) _vm.IsAutoScrolling = false;  // taking over by hand
 
         // Plain wheel scrolls; past the end of the page it turns to the next / previous page.
         var sv = PdfScrollViewer;

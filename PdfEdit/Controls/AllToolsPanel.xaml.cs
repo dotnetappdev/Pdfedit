@@ -138,6 +138,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Slide show (full screen)", vm.SlideShowCommand),
                     Run("Two-page view on / off", vm.ToggleTwoPageViewCommand),
                     Run("Night mode on / off", vm.ToggleNightModeCommand),
+                    Run("Auto-scroll on / off", vm.ToggleAutoScrollCommand, "Hands-free reading: Up / Down change the speed, Esc stops"),
                     Page("Rotate page right", vm.RotatePageCWCommand),
                     Page("Rotate page left", vm.RotatePageCCWCommand),
                     Page("Rotate all pages right", vm.RotateAllPagesCWCommand),

@@ -55,6 +55,8 @@ public class AppSettings
     // ── Reading views ────────────────────────────────────────────────────────
     public bool NightMode { get; set; }
     public bool TwoPageView { get; set; }
+    /// <summary>Auto-scroll speed in screen pixels a second.</summary>
+    public double AutoScrollSpeed { get; set; } = 40;
 
     // ── Welcome ──────────────────────────────────────────────────────────────
     /// <summary>False until the first-launch tour has been finished or skipped.</summary>
