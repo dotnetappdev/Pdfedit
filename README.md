@@ -13,7 +13,15 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licence"></a>
 </p>
 
-PdfEdit fills in and signs forms, marks up documents, rearranges pages and builds new PDFs, in a native Windows app with an Office-style ribbon. Everything is included, it works offline and it doesn't need an account.
+## Why PdfEdit?
+
+You open a form, click to type into it, and get asked to upgrade. You want to merge two files, and that's a paid feature. A "free" editor turns out to watermark every page, or cap you at three documents a day. Acrobat Reader lets you look at a PDF, but doing almost anything with it means a monthly subscription.
+
+PdfEdit is the PDF editor I wanted instead: everything included, nothing locked, no account, no ads and no watermarks. It works offline and your files stay on your PC.
+
+## What it can do
+
+Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact. Rotate, reorder, merge and split pages, scan straight to a searchable PDF, and turn Word documents into fillable forms. Batch-process a folder, fill a form from every row of a spreadsheet, and save to Google Drive or OneDrive. There's an optional AI assistant if you want one, and it can run on a free local model.
 
 **[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
 
