@@ -27,6 +27,7 @@ public static class XfdfService
             {
                 HighlightKind.Underline     => "underline",
                 HighlightKind.Strikethrough => "strikeout",
+                HighlightKind.Squiggly      => "squiggly",
                 _                           => "highlight",
             };
             annotsEl.Add(new XElement(Ns + tag,
@@ -132,6 +133,9 @@ public static class XfdfService
                     break;
                 case "strikeout":
                     highlights.Add(MakeHighlight(page, r, colour, el, HighlightKind.Strikethrough));
+                    break;
+                case "squiggly":
+                    highlights.Add(MakeHighlight(page, r, colour, el, HighlightKind.Squiggly));
                     break;
                 case "text":
                     stickyNotes.Add(new StickyNoteAnnotation

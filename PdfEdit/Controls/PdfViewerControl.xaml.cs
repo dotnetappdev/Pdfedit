@@ -1519,6 +1519,26 @@ public partial class PdfViewerControl : UserControl
             Canvas.SetTop(rect, y + h - lineH);
             elem = rect;
         }
+        else if (hl.Kind == Models.HighlightKind.Squiggly)
+        {
+            // Wavy line along the bottom of the box.
+            double amp = Math.Max(1.2, h * 0.07), step = Math.Max(3, amp * 2.2);
+            var fig = new PathFigure { StartPoint = new Point(0, amp) };
+            bool up = true;
+            for (double px = step; px < w + step; px += step, up = !up)
+                fig.Segments.Add(new LineSegment(new Point(Math.Min(px, w), up ? 0 : amp * 2), true));
+            var path = new System.Windows.Shapes.Path
+            {
+                Data = new PathGeometry(new[] { fig }),
+                Stroke = new SolidColorBrush(Color.FromArgb(230, c.R, c.G, c.B)),
+                StrokeThickness = Math.Max(1.2, h * 0.06),
+                StrokeLineJoin = PenLineJoin.Round,
+                Width = w, Height = amp * 2 + 2,
+            };
+            Canvas.SetLeft(path, x);
+            Canvas.SetTop(path, y + h - amp * 2 - 1);
+            elem = path;
+        }
         else // Strikethrough
         {
             double lineH = Math.Max(2, h * 0.1);
@@ -2222,7 +2242,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        if (tool is ActiveTool.Highlight or ActiveTool.Underline or ActiveTool.Strikethrough)
+        if (tool is ActiveTool.Highlight or ActiveTool.Underline or ActiveTool.Strikethrough or ActiveTool.Squiggly)
         {
             var posOnPage = e.GetPosition(HlAnnotCanvas);
             if (!IsOnPage(posOnPage)) return;
@@ -2494,6 +2514,7 @@ public partial class PdfViewerControl : UserControl
                         {
                             ActiveTool.Underline      => Models.HighlightKind.Underline,
                             ActiveTool.Strikethrough  => Models.HighlightKind.Strikethrough,
+                            ActiveTool.Squiggly       => Models.HighlightKind.Squiggly,
                             _                         => Models.HighlightKind.Highlight,
                         };
                         var hl = new Models.HighlightAnnotation

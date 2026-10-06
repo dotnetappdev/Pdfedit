@@ -19,4 +19,4 @@ public class HighlightAnnotation
     public CommentInfo Comment { get; set; } = new();
 }
 
-public enum HighlightKind { Highlight, Underline, Strikethrough }
+public enum HighlightKind { Highlight, Underline, Strikethrough, Squiggly }

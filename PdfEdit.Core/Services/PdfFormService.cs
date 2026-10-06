@@ -647,6 +647,8 @@ public class PdfFormService
                 iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation pdfHL;
                 if (hl.Kind == Models.HighlightKind.Strikethrough)
                     pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateStrikeout(rect, quadPoints);
+                else if (hl.Kind == Models.HighlightKind.Squiggly)
+                    pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateSquiggly(rect, quadPoints);
                 else if (hl.Kind == Models.HighlightKind.Underline)
                     pdfHL = iText.Kernel.Pdf.Annot.PdfTextMarkupAnnotation.CreateUnderline(rect, quadPoints);
                 else

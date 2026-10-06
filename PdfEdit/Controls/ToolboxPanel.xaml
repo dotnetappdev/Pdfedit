@@ -302,6 +302,9 @@
                         <Button Style="{StaticResource PopupItem}" Tag="Underline" Click="SubTool_Click" AutomationProperties.Name="Underline text">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8DC;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Underline text" VerticalAlignment="Center"/></StackPanel>
                         </Button>
+                        <Button Style="{StaticResource PopupItem}" Tag="Squiggly" Click="SubTool_Click" AutomationProperties.Name="Squiggly underline">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#x223F;" FontSize="16" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Squiggly underline" VerticalAlignment="Center"/></StackPanel>
+                        </Button>
                         <Button Style="{StaticResource PopupItem}" Tag="Strikethrough" Click="SubTool_Click" AutomationProperties.Name="Strikethrough text">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEDE0;" FontFamily="Segoe MDL2 Assets" FontSize="14" Width="22" TextAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0"/><TextBlock Text="Strikethrough text" VerticalAlignment="Center"/></StackPanel>
                         </Button>

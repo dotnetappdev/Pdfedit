@@ -123,6 +123,7 @@ public partial class CommentsPanel : UserControl
                 {
                     HighlightKind.Underline => "Underline",
                     HighlightKind.Strikethrough => "Strikethrough",
+                    HighlightKind.Squiggly => "Squiggly underline",
                     _ => "Highlight",
                 }, h.Kind == HighlightKind.Highlight ? "" : h.Kind == HighlightKind.Underline ? "" : "",
                 h.PageNumber, h.Comment, () => h.Comment.Note, t => h.Comment.Note = t,

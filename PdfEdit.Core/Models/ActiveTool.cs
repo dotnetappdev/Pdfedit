@@ -49,5 +49,7 @@ public enum ActiveTool
     // Drag the box for a certificate (digital) signature
     DigitalSignature,
     // Drag over text (or any area) to copy it, highlight it or ask the AI about it
-    SelectText
+    SelectText,
+    // Wavy underline under text (Acrobat's squiggly)
+    Squiggly
 }

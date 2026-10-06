@@ -1872,6 +1872,14 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Underline — drag to draw underline annotation"
                                          AutomationProperties.Name="Underline annotation tool"/>
+                    <Fluent:ToggleButton Header="Squiggly"
+                                         GroupName="ToolGroup"
+                                         IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Squiggly, Mode=TwoWay}"
+                                         Command="{Binding SetToolCommand}"
+                                         CommandParameter="Squiggly"
+                                         IsEnabled="{Binding HasDocument}"
+                                         ToolTip="Squiggly underline — drag under text to draw a wavy underline"
+                                         AutomationProperties.Name="Squiggly underline annotation tool"/>
                     <Fluent:ToggleButton Header="Strikethrough"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Strikethrough, Mode=TwoWay}"
