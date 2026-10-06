@@ -15,3 +15,4 @@ node docs/screenshots/src/render.mjs fill-stamps.png # just one
 - `scenes.mjs` has the page artwork, window layout and the screenshot scenes.
 - `render.mjs` writes the PNGs.
 - `gif.mjs` writes `fill-and-sign.gif` (needs `ffmpeg`): `node docs/screenshots/src/gif.mjs`
+- `tour.mjs` writes the video tour in `docs/tour` (MP4, GIF and the README poster; needs `ffmpeg`): `node docs/screenshots/src/tour.mjs`

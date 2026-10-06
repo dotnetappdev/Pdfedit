@@ -23,9 +23,11 @@ PdfEdit is the PDF editor I wanted instead: everything included, nothing locked,
 
 Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact. Rotate, reorder, merge and split pages, scan straight to a searchable PDF, and turn Word documents into fillable forms. Batch-process a folder, fill a form from every row of a spreadsheet, and save to Google Drive or OneDrive. There's an optional AI assistant if you want one, and it can run on a free local model.
 
+<p align="center"><a href="docs/tour.md"><img src="docs/tour/tour-poster.png" width="640" alt="Watch the PdfEdit tour"></a></p>
+
 **[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
 
-**[Features](docs/features.md)** · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
+**[Features](docs/features.md)** · [Video tour](docs/tour.md) · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
 
 ## Build from source
 
