@@ -46,7 +46,7 @@ public partial class MainWindow
         var steps = new List<TourStep>
         {
             new("Welcome to PdfEdit",
-                "A quick look round: about a minute. You can skip it now and take it later from File → Take the Tour."),
+                "A quick look round: about a minute. Use Next and Back (or the arrow keys) to move, the speaker button (or R) to hear each step read aloud, and × or Esc to close. You can take the tour again later from File → Take the Tour."),
             new("The ribbon: Home",
                 "Everything is grouped into tabs, like Office. Home is for files and pages: open, save, merge, split, rotate, number, watermark and protect.",
                 () => MainRibbon, () => MainRibbon.SelectedTabItem = HomeTab),

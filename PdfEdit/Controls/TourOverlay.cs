@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using PdfEdit.Services;
 using Shapes = System.Windows.Shapes;
 
 namespace PdfEdit.Controls;
@@ -12,8 +13,8 @@ public sealed record TourStep(string Title, string Text, Func<FrameworkElement?>
 
 /// <summary>
 /// A guided tour drawn over the main window: everything is dimmed except the part being
-/// explained, which gets an accent outline and a card beside it with Back / Next / Skip.
-/// Keys: → or Enter for next, ← for back, Esc to skip.
+/// explained, which gets an accent outline and a card beside it with Back / Next / Skip / Close
+/// and a Read aloud toggle. Keys: → or Enter for next, ← for back, R read aloud, Esc to close.
 /// </summary>
 public sealed class TourOverlay : Adorner
 {
@@ -24,14 +25,22 @@ public sealed class TourOverlay : Adorner
     private readonly Canvas _root = new();
     private readonly Shapes.Path _dim = new() { Fill = new SolidColorBrush(Color.FromArgb(0xA8, 0, 0, 0)) };
     private readonly Border _ring = new() { BorderThickness = new Thickness(2.5), CornerRadius = new CornerRadius(8), IsHitTestVisible = false };
-    private readonly Border _card = new() { Width = 360, CornerRadius = new CornerRadius(10), Padding = new Thickness(18, 16, 18, 14), BorderThickness = new Thickness(1) };
-    private readonly TextBlock _title = new() { FontSize = 16, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
-    private readonly TextBlock _text = new() { FontSize = 13, TextWrapping = TextWrapping.Wrap, LineHeight = 20 };
-    private readonly TextBlock _count = new() { FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
-    private readonly StackPanel _dots = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
-    private readonly Button _back, _next, _skip;
+    private readonly Border _card = new() { Width = 480, CornerRadius = new CornerRadius(10), Padding = new Thickness(22, 18, 22, 18), BorderThickness = new Thickness(1) };
+    private readonly TextBlock _title = new() { FontSize = 18, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _text = new() { FontSize = 14, TextWrapping = TextWrapping.Wrap, LineHeight = 22, Margin = new Thickness(0, 10, 0, 0) };
+    private readonly TextBlock _count = new() { FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+    private readonly WrapPanel _dots = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+    private readonly Button _back, _next, _skip, _close, _speak;
     private int _index;
     private bool _closed;
+
+    /// <summary>Whether each step is read out. Remembered for the rest of the session.</summary>
+    private static bool? _readAloud;
+    private static bool ReadAloud
+    {
+        get => _readAloud ??= AppSettings.Current.NarrateAnnouncements || AppSettings.Current.NarrateFocus;
+        set => _readAloud = value;
+    }
 
     private TourOverlay(UIElement adorned, AdornerLayer layer, Window window, IReadOnlyList<TourStep> steps, Action finished) : base(adorned)
     {
@@ -48,32 +57,48 @@ public sealed class TourOverlay : Adorner
         _count.SetResourceReference(TextBlock.ForegroundProperty, "DimForegroundBrush");
         _card.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 24, ShadowDepth = 4, Opacity = 0.45 };
 
-        _back = MakeButton("Back", () => Go(_index - 1));
-        _next = MakeButton("Next", () => Go(_index + 1));
-        _skip = MakeButton("Skip tour", Finish);
+        _back = MakeButton("Back", () => Go(_index - 1), "Previous step");
+        _next = MakeButton("Next", () => Go(_index + 1), "Next step");
+        _next.SetResourceReference(StyleProperty, "ModernButton");
+        _next.Padding = new Thickness(16, 0, 16, 0);
+        _skip = MakeButton("Skip tour", Finish, "Skip the tour");
+        _skip.Margin = new Thickness(0);
         _skip.Background = Brushes.Transparent;
         _skip.BorderThickness = new Thickness(0);
-        _next.SetResourceReference(Control.BackgroundProperty, "AccentBrush");
-        _next.Foreground = Brushes.White;
+        _skip.SetResourceReference(Control.ForegroundProperty, "DimForegroundBrush");
 
-        var buttons = new Grid { Margin = new Thickness(0, 16, 0, 0) };
-        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        buttons.ColumnDefinitions.Add(new ColumnDefinition());
-        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var left = new StackPanel { Orientation = Orientation.Horizontal };
-        left.Children.Add(_count);
-        left.Children.Add(_dots);
-        var right = new StackPanel { Orientation = Orientation.Horizontal };
-        right.Children.Add(_skip);
-        right.Children.Add(_back);
-        right.Children.Add(_next);
-        Grid.SetColumn(right, 2);
-        buttons.Children.Add(left);
-        buttons.Children.Add(right);
+        _close = MakeIconButton("\uE711", "Close the tour", Finish);
+        _speak = MakeIconButton("\uE767", "Read aloud", ToggleReadAloud);
+
+        // Header: title, then read-aloud and close at the top right.
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition());
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(_speak, 1);
+        Grid.SetColumn(_close, 2);
+        header.Children.Add(_title);
+        header.Children.Add(_speak);
+        header.Children.Add(_close);
+
+        // Progress on its own row so it never squeezes the buttons.
+        var progress = new DockPanel { Margin = new Thickness(0, 16, 0, 0), LastChildFill = true };
+        DockPanel.SetDock(_count, Dock.Left);
+        progress.Children.Add(_count);
+        progress.Children.Add(_dots);
+
+        var buttons = new DockPanel { Margin = new Thickness(0, 14, 0, 0), LastChildFill = false };
+        DockPanel.SetDock(_skip, Dock.Left);
+        DockPanel.SetDock(_next, Dock.Right);
+        DockPanel.SetDock(_back, Dock.Right);
+        buttons.Children.Add(_skip);
+        buttons.Children.Add(_next);
+        buttons.Children.Add(_back);
 
         var body = new StackPanel();
-        body.Children.Add(_title);
+        body.Children.Add(header);
         body.Children.Add(_text);
+        body.Children.Add(progress);
         body.Children.Add(buttons);
         _card.Child = body;
         System.Windows.Automation.AutomationProperties.SetName(_card, "Tour");
@@ -100,11 +125,50 @@ public sealed class TourOverlay : Adorner
         return true;
     }
 
-    private static Button MakeButton(string text, Action click)
+    private static Button MakeButton(string text, Action click, string name)
     {
-        var b = new Button { Content = text, MinWidth = 64, Height = 28, Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(12, 0, 12, 0), Cursor = Cursors.Hand };
+        var b = new Button { Content = text, MinWidth = 88, Height = 34, FontSize = 13, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(14, 0, 14, 0), Cursor = Cursors.Hand };
+        System.Windows.Automation.AutomationProperties.SetName(b, name);
         b.Click += (_, _) => click();
         return b;
+    }
+
+    private static Button MakeIconButton(string glyph, string name, Action click)
+    {
+        var b = new Button
+        {
+            Content = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14,
+            Width = 34, Height = 34, Padding = new Thickness(0), Margin = new Thickness(6, 0, 0, 0),
+            Background = Brushes.Transparent, BorderThickness = new Thickness(0), Cursor = Cursors.Hand,
+            VerticalAlignment = VerticalAlignment.Top, ToolTip = name,
+        };
+        System.Windows.Automation.AutomationProperties.SetName(b, name);
+        b.Click += (_, _) => click();
+        return b;
+    }
+
+    private void ToggleReadAloud()
+    {
+        ReadAloud = !ReadAloud;
+        UpdateSpeakButton();
+        if (ReadAloud) SpeakStep(); else NarrationService.Stop();
+    }
+
+    private void UpdateSpeakButton()
+    {
+        _speak.Content = ReadAloud ? "\uE767" : "\uE74F";   // Volume / Mute
+        string tip = ReadAloud ? "Read aloud is on: click to stop (R)" : "Read each step aloud (R)";
+        _speak.ToolTip = tip;
+        System.Windows.Automation.AutomationProperties.SetName(_speak, tip);
+        if (ReadAloud) _speak.SetResourceReference(Control.ForegroundProperty, "AccentBrush");
+        else _speak.SetResourceReference(Control.ForegroundProperty, "DimForegroundBrush");
+    }
+
+    private void SpeakStep()
+    {
+        if (!ReadAloud || _closed) return;
+        var step = _steps[_index];
+        NarrationService.Speak($"{step.Title}. {step.Text} Step {_index + 1} of {_steps.Count}.", evenIfQuiet: true);
     }
 
     private void OnKey(object sender, KeyEventArgs e)
@@ -112,8 +176,11 @@ public sealed class TourOverlay : Adorner
         switch (e.Key)
         {
             case Key.Escape: Finish(); break;
+            case Key.Enter or Key.Space when Keyboard.FocusedElement is Button b && b != _next && b.IsDescendantOf(_card):
+                return;   // let the focused Back / Skip / Close / Read aloud button handle it
             case Key.Right or Key.Enter or Key.Space: Go(_index + 1); break;
             case Key.Left: if (_index > 0) Go(_index - 1); break;
+            case Key.R: ToggleReadAloud(); break;
             default: return;
         }
         e.Handled = true;
@@ -131,16 +198,17 @@ public sealed class TourOverlay : Adorner
 
         _title.Text = step.Title;
         _text.Text = step.Text;
-        _count.Text = $"{_index + 1} of {_steps.Count}";
+        _count.Text = $"Step {_index + 1} of {_steps.Count}";
         _back.Visibility = _index == 0 ? Visibility.Collapsed : Visibility.Visible;
         _next.Content = _index == _steps.Count - 1 ? "Finish" : _index == 0 ? "Show me" : "Next";
         _skip.Visibility = _index == _steps.Count - 1 ? Visibility.Collapsed : Visibility.Visible;
-        _skip.SetResourceReference(Control.ForegroundProperty, "DimForegroundBrush");
+        _close.SetResourceReference(Control.ForegroundProperty, "DimForegroundBrush");
+        UpdateSpeakButton();
 
         _dots.Children.Clear();
         for (int i = 0; i < _steps.Count; i++)
         {
-            var dot = new Shapes.Ellipse { Width = 6, Height = 6, Margin = new Thickness(0, 0, 4, 0), Opacity = i == _index ? 1 : 0.35 };
+            var dot = new Shapes.Ellipse { Width = 7, Height = 7, Margin = new Thickness(0, 2, 5, 2), Opacity = i == _index ? 1 : 0.35 };
             dot.SetResourceReference(Shapes.Shape.FillProperty, i == _index ? "AccentBrush" : "DimForegroundBrush");
             _dots.Children.Add(dot);
         }
@@ -149,6 +217,7 @@ public sealed class TourOverlay : Adorner
         // Let a tab switch or panel change lay out before measuring the target.
         Dispatcher.BeginInvoke(new Action(PlaceAll), System.Windows.Threading.DispatcherPriority.Loaded);
         _next.Focus();
+        SpeakStep();   // after Focus, so it isn't cut off by the focus narration
     }
 
     private void PlaceAll()
@@ -203,6 +272,7 @@ public sealed class TourOverlay : Adorner
     {
         if (_closed) return;
         _closed = true;
+        if (ReadAloud) NarrationService.Stop();
         _window.PreviewKeyDown -= OnKey;
         if (AdornedElement is FrameworkElement fe) fe.SizeChanged -= OnSizeChanged;
         _layer.Remove(this);
