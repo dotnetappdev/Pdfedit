@@ -51,6 +51,13 @@ function miniWindow([name, app, panel, side, content, sbBg, sbFg, fg, dim, borde
   <div style="text-align:center;font-size:13px;color:#e8e8e8">${name}</div></div>`;
 }
 
+/** One theme, full size: the gallery window drawn at 3× for a crisp README image. */
+export function sceneTheme(name) {
+  const t = THEMES.find(x => x[0] === name);
+  const win = miniWindow(t).replace(/<div style="text-align:center;font-size:13px;color:#e8e8e8">[^<]*<\/div><\/div>$/, '</div>');
+  return `<div class="win" style="display:inline-block;background:transparent"><div style="zoom:3">${win}</div></div>`;
+}
+
 export function sceneThemes() {
   return `<div class="win" style="display:inline-grid;grid-template-columns:repeat(4,300px);gap:18px 20px;padding:20px 22px;background:#161616">
     ${THEMES.map(miniWindow).join('')}</div>`;

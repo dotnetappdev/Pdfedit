@@ -4,7 +4,7 @@ import path from 'path';
 import { chromium } from './browser.mjs';
 import { CSS } from './ui.mjs';
 import { FILL_SIGN, HOME, TOOLS, EDIT } from './ribbons.mjs';
-import { sceneThemes, sceneAccessibility } from './settings.mjs';
+import { sceneThemes, sceneTheme, sceneAccessibility } from './settings.mjs';
 import { OUT, ribbonStrip, sceneTextFit, sceneMarks, sceneDate, sceneStamps, sceneSign } from './scenes.mjs';
 
 // ── Render ──────────────────────────────────────────────────────────────────
@@ -19,6 +19,8 @@ const shots = [
   ['fill-stamps.png', sceneStamps()],
   ['fill-signature.png', sceneSign()],
   ['themes.png', sceneThemes()],
+  ...['Light', 'Dark', 'High contrast', 'Office', 'Dracula', 'Nord']
+    .map(n => [`theme-${n.toLowerCase().replace(' ', '-')}.png`, sceneTheme(n)]),
   ['settings-accessibility.png', sceneAccessibility()],
 ];
 const only = process.argv.slice(2);

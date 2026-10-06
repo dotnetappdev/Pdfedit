@@ -6,6 +6,12 @@ PdfEdit follows your Windows theme until you choose one yourself. Change it in *
 
 ![PdfEdit in each of its themes](screenshots/themes.png)
 
+| Light | Dark | High contrast |
+|---|---|---|
+| ![Light](screenshots/theme-light.png) | ![Dark](screenshots/theme-dark.png) | ![High contrast](screenshots/theme-high-contrast.png) |
+| **Office** | **Dracula** | **Nord** |
+| ![Office](screenshots/theme-office.png) | ![Dracula](screenshots/theme-dracula.png) | ![Nord](screenshots/theme-nord.png) |
+
 ## Following Windows
 
 **Use Windows setting** matches *Settings → Personalisation → Colours → Choose your app mode*: light or dark. With a Windows contrast theme on (*Settings → Accessibility → Contrast themes*: Aquatic, Desert, Dusk, Night sky or your own), PdfEdit uses that theme's colours. It switches straight away when you change Windows.

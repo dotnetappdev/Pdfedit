@@ -29,6 +29,43 @@ Fill in and sign any form, even a flat scan with no fields, and send it back. Hi
 
 **[Features](docs/features.md)** · [Video tour](docs/tour.md) · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
 
+## Screenshots
+
+![Filling in and signing a flat PDF form](docs/screenshots/fill-and-sign.gif)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/live-view.png" alt="Highlights, a sticky note, a stamp and a signature"></td>
+    <td width="50%"><img src="docs/screenshots/ai-features.png" alt="The AI assistant after Smart Fill"></td>
+  </tr>
+</table>
+
+### Themes
+
+PdfEdit follows your Windows light, dark or contrast theme, or you can pick one of twelve. [More about themes](docs/themes.md).
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/theme-light.png" alt="PdfEdit in the Light theme"><br>Light</td>
+    <td align="center"><img src="docs/screenshots/theme-dark.png" alt="PdfEdit in the Dark theme"><br>Dark</td>
+    <td align="center"><img src="docs/screenshots/theme-high-contrast.png" alt="PdfEdit in the High contrast theme"><br>High contrast</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/theme-office.png" alt="PdfEdit in the Office theme"><br>Office</td>
+    <td align="center"><img src="docs/screenshots/theme-dracula.png" alt="PdfEdit in the Dracula theme"><br>Dracula</td>
+    <td align="center"><img src="docs/screenshots/theme-nord.png" alt="PdfEdit in the Nord theme"><br>Nord</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="66%"><img src="docs/screenshots/themes.png" alt="All twelve themes"><br><p align="center">All twelve themes</p></td>
+    <td width="34%"><img src="docs/screenshots/settings-accessibility.png" alt="Settings, Accessibility tab"><br><p align="center"><a href="docs/accessibility.md">Accessibility settings</a></p></td>
+  </tr>
+</table>
+
+More in the [screenshot gallery](docs/screenshots.md).
+
 ## Build from source
 
 ```bash
