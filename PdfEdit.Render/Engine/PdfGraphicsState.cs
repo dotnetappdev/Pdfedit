@@ -1,29 +1,29 @@
-using System.Windows.Media;
+using PdfEdit.Render.Drawing;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>PDF graphics state, including text state sub-object.</summary>
 internal sealed class PdfGraphicsState
 {
-    // CTM — column-major [a b c d e f] = WPF Matrix(a,b,c,d,e,f)
-    public Matrix Ctm { get; set; } = Matrix.Identity;
+    // CTM — [a b c d e f] = Matrix2D(a,b,c,d,e,f)
+    public Matrix2D Ctm { get; set; } = Matrix2D.Identity;
 
-    // Colors — BGRA stored as WPF Color
-    public Color StrokeColor { get; set; } = Colors.Black;
-    public Color FillColor   { get; set; } = Colors.Black;
+    // Colors
+    public RgbaColor StrokeColor { get; set; } = RgbaColor.Black;
+    public RgbaColor FillColor   { get; set; } = RgbaColor.Black;
 
     // Current color spaces (a name like /DeviceRGB or an array like [/ICCBased ...]).
     // Null means the device default implied by the last color operator.
     public PdfObject? StrokeColorSpace { get; set; }
     public PdfObject? FillColorSpace   { get; set; }
 
-    // Number of DrawingContext clip pushes active at this state level (popped on Q).
+    // Number of drawing-surface clip pushes active at this state level (popped on Q).
     public int ClipPushes { get; set; }
 
     // Line style
     public double LineWidth    { get; set; } = 1.0;
-    public PenLineCap  LineCap  { get; set; } = PenLineCap.Flat;
-    public PenLineJoin LineJoin { get; set; } = PenLineJoin.Miter;
+    public LineCap  LineCap  { get; set; } = LineCap.Flat;
+    public LineJoin LineJoin { get; set; } = LineJoin.Miter;
     public double MiterLimit   { get; set; } = 10.0;
 
     // Dash pattern
@@ -77,8 +77,8 @@ internal sealed class TextState
     public double Rise         { get; set; } = 0;
 
     // Text matrix and text-line matrix (set by BT/Td/TD/Tm/T*)
-    public Matrix Tm  { get; set; } = Matrix.Identity;
-    public Matrix Tlm { get; set; } = Matrix.Identity;
+    public Matrix2D Tm  { get; set; } = Matrix2D.Identity;
+    public Matrix2D Tlm { get; set; } = Matrix2D.Identity;
 
     public void CopyTo(TextState t)
     {

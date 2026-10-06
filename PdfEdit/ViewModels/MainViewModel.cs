@@ -1,3 +1,4 @@
+using PdfEdit.Drawing.Wpf;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -4132,7 +4133,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             // it comes in as a locked full-page backdrop beneath the editable elements.
             try
             {
-                var artwork = Engine.CustomPdfEngine.RenderPageArtwork(_currentFilePath, _currentPageIndex);
+                var artwork = PdfEdit.Render.Engine.CustomPdfEngine.RenderPageArtwork(PdfEdit.Drawing.Wpf.WpfDrawingBackend.Instance, _currentFilePath, _currentPageIndex)?.ToBitmapSource();
                 if (artwork != null)
                 {
                     DesignCanvas.Elements.Add(new Models.ImageDesignElement

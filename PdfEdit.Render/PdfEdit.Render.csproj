@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PdfEdit.Render: PDF page rendering with no UI framework in it. The built-in engine parses the
+    PDF and interprets each page's drawing operators, drawing through IDrawingSurface; the Pdfium
+    engine renders to raw pixels. A UI supplies an IDrawingBackend (PdfEdit.Drawing.Wpf for WPF)
+    to turn drawing calls into its own bitmaps.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PdfEdit.Render</RootNamespace>
+    <AssemblyName>PdfEdit.Render</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Page sizes and rotation for the Pdfium engine -->
+    <PackageReference Include="itext7" Version="8.0.4" />
+    <!-- Pdfium (the engine in Chrome and Edge) with native builds for Windows, macOS and Linux -->
+    <PackageReference Include="Docnet.Core" Version="2.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PdfEdit.Tests" />
+  </ItemGroup>
+
+</Project>

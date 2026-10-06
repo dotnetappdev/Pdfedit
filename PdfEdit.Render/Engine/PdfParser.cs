@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>
 /// Parses a PDF binary file into an object graph.

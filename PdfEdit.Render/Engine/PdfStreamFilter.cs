@@ -1,7 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>Decodes a PDF stream's filter chain (FlateDecode, DCTDecode, etc.).</summary>
 internal static class PdfStreamFilter

@@ -1,10 +1,11 @@
 using System.Windows.Media.Imaging;
 
-namespace PdfEdit.Services;
+namespace PdfEdit.Drawing.Wpf;
 
 /// <summary>
-/// Common interface for PDF page renderers.
-/// Implementations: PdfRenderService (WinRT fallback) and PdfiumRenderEngine (Pdfium/Adobe quality).
+/// A PDF page renderer that hands back WPF bitmaps, for the WPF app. <see cref="WpfPdfRenderer"/>
+/// wraps any of PdfEdit.Render's UI-free renderers; <see cref="WinRtPdfRenderer"/> uses Windows'
+/// own PDF engine.
 /// </summary>
 public interface IPdfRenderer : IDisposable
 {

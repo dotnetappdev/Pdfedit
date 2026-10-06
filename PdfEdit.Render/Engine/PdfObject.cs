@@ -1,4 +1,4 @@
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 internal abstract class PdfObject { }
 

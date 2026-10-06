@@ -1,13 +1,8 @@
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using Docnet.Core;
 using Docnet.Core.Models;
 using iText.Kernel.Pdf;
 
-namespace PdfEdit.Services;
+namespace PdfEdit.Render;
 
 /// <summary>
 /// High-quality PDF renderer built on Pdfium — the same engine used by Google Chrome and
@@ -18,11 +13,12 @@ namespace PdfEdit.Services;
 ///   • Correct ICC colour profiles and blend-mode transparency
 ///   • High-DPI rendering: accepts dpiScale so the bitmap fills physical pixels without blur
 ///   • Correct unrotated MediaBox sizes so form-field overlay coordinates are always accurate
-///   • White-filled background (transparent fills look wrong over dark WPF backgrounds)
+///   • White-filled background (transparent fills look wrong over dark backgrounds)
+/// Returns raw BGRA pixels, so any UI can show them. Docnet ships Pdfium for Windows, macOS and Linux.
 /// </summary>
-public sealed class PdfiumRenderEngine : IPdfRenderer
+public sealed class PdfiumRenderEngine : IPageRenderer
 {
-    // PDF user-space is 72 pt/inch; WPF logical units are 96 DIP/inch.
+    // PDF user-space is 72 pt/inch; logical pixels are 96 per inch.
     private const double WpfDpi       = 96.0;
     private const double PdfPointDpi  = 72.0;
     public  const double PointsToDips = WpfDpi / PdfPointDpi;  // ≈1.3333
@@ -47,7 +43,7 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
     private static readonly IDocLib Lib = Docnet.Core.DocLib.Instance;
     private readonly SemaphoreSlim  _lock = new(1, 1);
 
-    // ── IPdfRenderer ────────────────────────────────────────────────────────────
+    // ── IPageRenderer ───────────────────────────────────────────────────────────
 
     public int  PageCount           => _pageCount;
     public bool RendersAnnotations  => true;  // we pass RenderFlags.RenderAnnotations
@@ -94,7 +90,7 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
 
     // ── Render ──────────────────────────────────────────────────────────────────
 
-    public async Task<BitmapSource> RenderPageAsync(int pageIndex, double zoom = 1.0, double dpiScale = 1.0)
+    public async Task<RenderedPage> RenderPageAsync(int pageIndex, double zoom = 1.0, double dpiScale = 1.0)
     {
         if (_fileBytes == null)
             throw new InvalidOperationException("No document loaded.");
@@ -118,8 +114,7 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
         // and a width mismatch shears every row of the image.
         if (renderedW > 0 && renderedH > 0) { pixelW = renderedW; pixelH = renderedH; }
 
-        return await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-            MakeBitmap(bgra, pixelW, pixelH, bitmapDpi));
+        return new RenderedPage(pixelW, pixelH, bitmapDpi, bgra);
     }
 
     // ── Pdfium render (thread-pool) ──────────────────────────────────────────────
@@ -165,19 +160,6 @@ public sealed class PdfiumRenderEngine : IPdfRenderer
             bgra[i + 3] = 255;
         }
         return bgra;
-    }
-
-    // ── Build frozen WriteableBitmap ─────────────────────────────────────────────
-
-    private static WriteableBitmap MakeBitmap(byte[] bgra, int width, int height, double dpi)
-    {
-        var bmp = new WriteableBitmap(width, height, dpi, dpi, PixelFormats.Bgra32, null);
-        // WritePixels honours the back buffer's stride (Marshal.Copy into BackBuffer does not)
-        int stride = width * 4;
-        int rows   = Math.Min(height, bgra.Length / stride);
-        if (rows > 0) bmp.WritePixels(new Int32Rect(0, 0, width, rows), bgra, stride, 0);
-        bmp.Freeze();
-        return bmp;
     }
 
     // ── Page metadata ────────────────────────────────────────────────────────────

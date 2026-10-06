@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PdfEdit.Drawing.Wpf: everything that draws with WPF. It implements PdfEdit.Render's drawing
+    backend (DrawingContext, glyph runs, system fonts, image decoding), turns rendered pages into
+    BitmapSources for the WPF app, and holds the Windows-only Windows.Data.Pdf renderer.
+    Another UI (Avalonia, MAUI …) would replace this library with its own, and keep PdfEdit.Render.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PdfEdit.Drawing.Wpf</RootNamespace>
+    <AssemblyName>PdfEdit.Drawing.Wpf</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PdfEdit.Render\PdfEdit.Render.csproj" />
+  </ItemGroup>
+
+</Project>

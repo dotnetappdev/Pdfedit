@@ -4,13 +4,14 @@ using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace PdfEdit.Services;
+namespace PdfEdit.Drawing.Wpf;
 
 /// <summary>
 /// Renders PDF pages to WPF BitmapSource using Windows.Data.Pdf (built-in Windows PDF engine).
+/// Windows only, so it lives with the WPF drawing code rather than in PdfEdit.Render.
 /// Scale factor: PDF points * (96/72) = WPF DIPs at 100% zoom.
 /// </summary>
-public class PdfRenderService : IPdfRenderer
+public class WinRtPdfRenderer : IPdfRenderer
 {
     private PdfDocument? _pdfDoc;
     private bool _disposed;

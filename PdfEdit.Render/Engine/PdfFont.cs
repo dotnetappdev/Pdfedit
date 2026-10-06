@@ -1,7 +1,6 @@
-using System.Windows;
-using System.Windows.Media;
+using PdfEdit.Render.Drawing;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>
 /// Maps PDF font resources to WPF typefaces and handles character encoding.
@@ -9,10 +8,11 @@ namespace PdfEdit.Engine;
 /// </summary>
 internal sealed class PdfFont
 {
-    public  string       WpfFamilyName  { get; }
+    public  string       FamilyName     { get; }
     public  bool         IsBold         { get; }
     public  bool         IsItalic       { get; }
-    public  GlyphTypeface? GlyphTypeface { get; }
+    /// <summary>The installed font used to draw the glyphs (null when it couldn't be loaded).</summary>
+    public  IGlyphFont?  Glyphs         { get; }
     public  double       FirstChar      { get; }
     public  double[]?    Widths         { get; }   // per-character widths in PDF glyph units (1000 = 1pt)
     private readonly Dictionary<int, char> _toUnicode = new();
@@ -37,7 +37,7 @@ internal sealed class PdfFont
         ["ZapfDingbats"]          = ("Wingdings",       false, false),
     };
 
-    public static PdfFont FromDictionary(PdfDictionary dict, PdfParser parser)
+    public static PdfFont FromDictionary(PdfDictionary dict, PdfParser parser, IFontProvider fonts)
     {
         string baseFont  = dict.GetName("BaseFont") ?? "Helvetica";
         string encoding  = dict.GetName("Encoding") ?? "WinAnsiEncoding";
@@ -46,7 +46,7 @@ internal sealed class PdfFont
         if (baseFont.Length > 7 && baseFont[6] == '+') baseFont = baseFont[7..];
 
         // Determine WPF family, bold, italic
-        (string family, bool bold, bool italic) = ResolveFamily(baseFont, dict);
+        (string family, bool bold, bool italic) = ResolveFamily(baseFont, dict, fonts);
         var descriptor = parser.ResolveDict(dict.Get("FontDescriptor"));
         int weight = ResolveWeight(baseFont, descriptor, bold);
         if (family == "Arial" && !StandardFonts.ContainsKey(baseFont) && descriptor != null)
@@ -57,7 +57,7 @@ internal sealed class PdfFont
         }
         // Arial has no light face; Segoe UI does (WPF picks it by weight). Glyphs are
         // stretched to the PDF's widths when drawn, so metrics differences don't matter.
-        if (weight <= 300 && family == "Arial" && IsInstalled("Segoe UI"))
+        if (weight <= 300 && family == "Arial" && fonts.FindInstalledFamily("Segoe UI") != null)
             family = "Segoe UI";
 
         // Glyph widths
@@ -85,20 +85,21 @@ internal sealed class PdfFont
             if (diffArr != null) differences = ParseDifferences(diffArr);
         }
 
-        return new PdfFont(family, weight, italic, (int)firstChar, widths, toUnicodeMap, differences);
+        return new PdfFont(family, weight, italic, (int)firstChar, widths, toUnicodeMap, differences, fonts);
     }
 
     private PdfFont(string family, int weight, bool italic, int firstChar, double[]? widths,
-                    Dictionary<int, char> toUnicode, int[]? differences)
+                    Dictionary<int, char> toUnicode, int[]? differences, IFontProvider fonts)
     {
-        WpfFamilyName = family;
+        FamilyName    = family;
         IsBold        = weight >= 600;
         IsItalic      = italic;
         FirstChar     = firstChar;
         Widths        = widths;
         _toUnicode    = toUnicode;
         _differences  = differences;
-        GlyphTypeface = ResolveGlyphTypeface(family, weight, italic);
+        // Medium (500) has no Arial face; nudge it to bold so it still reads as heavier
+        try { Glyphs = fonts.GetFont(family, weight == 500 ? 600 : weight, italic); } catch { Glyphs = null; }
     }
 
     // ── glyph typeface ────────────────────────────────────────────────────────
@@ -129,25 +130,6 @@ internal sealed class PdfFont
         return 400;
     }
 
-    private static bool IsInstalled(string family) =>
-        System.Windows.Media.Fonts.SystemFontFamilies.Any(f => string.Equals(f.Source, family, StringComparison.OrdinalIgnoreCase));
-
-    private static GlyphTypeface? ResolveGlyphTypeface(string family, int weight, bool italic)
-    {
-        try
-        {
-            var typeface = new Typeface(
-                new FontFamily(family),
-                italic ? FontStyles.Italic : FontStyles.Normal,
-                // Medium (500) has no Arial face; nudge it to bold so it still reads as heavier
-                FontWeight.FromOpenTypeWeight(weight == 500 ? 600 : weight),
-                FontStretches.Normal);
-            typeface.TryGetGlyphTypeface(out var gt);
-            return gt;
-        }
-        catch { return null; }
-    }
-
     // ── character decoding ────────────────────────────────────────────────────
 
     /// <summary>Decodes a PDF string byte into a Unicode character for display.</summary>
@@ -169,19 +151,15 @@ internal sealed class PdfFont
             if (idx >= 0 && idx < Widths.Length)
                 return Widths[idx] * fontSize / 1000.0;
         }
-        // Estimate from glyph typeface
-        if (GlyphTypeface != null)
-        {
-            char c = DecodeChar(code);
-            if (GlyphTypeface.CharacterToGlyphMap.TryGetValue(c, out ushort glyph))
-                return GlyphTypeface.AdvanceWidths[glyph] * fontSize;
-        }
+        // Estimate from the installed font
+        if (Glyphs != null && Glyphs.TryGetAdvanceWidth(DecodeChar(code), out double em))
+            return em * fontSize;
         return fontSize * 0.5; // fallback
     }
 
     // ── family resolution ─────────────────────────────────────────────────────
 
-    private static (string Family, bool Bold, bool Italic) ResolveFamily(string baseFont, PdfDictionary dict)
+    private static (string Family, bool Bold, bool Italic) ResolveFamily(string baseFont, PdfDictionary dict, IFontProvider fonts)
     {
         if (StandardFonts.TryGetValue(baseFont, out var std)) return std;
 
@@ -199,12 +177,8 @@ internal sealed class PdfFont
             .Trim();
 
         // Try to find a matching installed font
-        foreach (var ff in System.Windows.Media.Fonts.SystemFontFamilies)
-        {
-            string fname = ff.Source;
-            if (string.Equals(fname, clean, StringComparison.OrdinalIgnoreCase))
-                return (fname, bold, italic);
-        }
+        if (fonts.FindInstalledFamily(clean) is { } installed)
+            return (installed, bold, italic);
 
         return ("Arial", bold, italic); // ultimate fallback
     }

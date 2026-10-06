@@ -1,24 +1,24 @@
-using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using PdfEdit.Services;
+using PdfEdit.Render.Drawing;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>
 /// Custom C# PDF rendering engine — no native dependencies.
-/// Parses the PDF binary format and rasterises pages using WPF's own drawing APIs
-/// (DrawingContext → RenderTargetBitmap).
+/// Parses the PDF binary format and draws pages through an <see cref="IDrawingBackend"/>
+/// (for WPF: DrawingContext → RenderTargetBitmap, in PdfEdit.Drawing.Wpf).
 ///
 /// Coverage: FlateDecode / JPEG / PNG image streams, the standard 14 PDF fonts,
 /// all common content stream operators (paths, text, color, XObjects).
 /// Encrypted PDFs and JPEG2000 images are not supported in this initial version.
 /// </summary>
-public sealed class CustomPdfEngine : IPdfRenderer
+public sealed class CustomPdfEngine : IPageRenderer
 {
+    private readonly IDrawingBackend _backend;
+
+    public CustomPdfEngine(IDrawingBackend backend) => _backend = backend;
+
     private const double PdfDpi  = 72.0;
-    private const double WpfDpi  = 96.0;
+    private const double WpfDpi  = 96.0;   // logical pixels per inch
     public const  double PtsToDips = WpfDpi / PdfDpi;  // ~1.3333
 
     private byte[]?                    _fileBytes;
@@ -31,7 +31,7 @@ public sealed class CustomPdfEngine : IPdfRenderer
 
     private readonly SemaphoreSlim _lock = new(1, 1);
 
-    // ── IPdfRenderer ─────────────────────────────────────────────────────────
+    // ── IPageRenderer ────────────────────────────────────────────────────────
 
     public int  PageCount          => _pageCount;
     public bool RendersAnnotations => false;  // custom engine renders page content only
@@ -70,7 +70,7 @@ public sealed class CustomPdfEngine : IPdfRenderer
         }
     }
 
-    public async Task<BitmapSource> RenderPageAsync(int pageIndex, double zoom = 1.0, double dpiScale = 1.0)
+    public async Task<RenderedPage> RenderPageAsync(int pageIndex, double zoom = 1.0, double dpiScale = 1.0)
     {
         if (_parser == null || _pages == null)
             throw new InvalidOperationException("No document loaded.");
@@ -88,41 +88,33 @@ public sealed class CustomPdfEngine : IPdfRenderer
         var resources = _parser.GetResources(page);
         var content   = _parser.GetPageContent(page);
 
-        return await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-            RenderPage(page, resources, content, pixelW, pixelH, wPts, hPts, scale, bitmapDpi, rot));
+        return await _backend.RenderAsync(pixelW, pixelH, bitmapDpi, dc =>
+            DrawPage(dc, resources, content, pixelW, pixelH, hPts, scale, bitmapDpi, rot));
     }
 
-    private BitmapSource RenderPage(PdfDictionary page, PdfDictionary? resources,
-                                     byte[] content, int pixelW, int pixelH,
-                                     double wPts, double hPts, double scale, double bitmapDpi, int rot,
-                                     bool skipText = false, bool skipImages = false, bool whiteBackground = true)
+    private void DrawPage(IDrawingSurface dc, PdfDictionary? resources, byte[] content, int pixelW, int pixelH,
+                          double hPts, double scale, double bitmapDpi, int rot,
+                          bool skipText = false, bool skipImages = false, bool whiteBackground = true)
     {
-        var rtb = new RenderTargetBitmap(pixelW, pixelH, bitmapDpi, bitmapDpi, PixelFormats.Pbgra32);
-        var dv  = new DrawingVisual();
-
-        using (var dc = dv.RenderOpen())
         {
-            // All drawing below is in device pixels, but RenderTargetBitmap at a DPI above 96
-            // scales the visual by bitmapDpi/96 again. Undo that so content fills the bitmap exactly.
+            // All drawing below is in device pixels, but a bitmap at a DPI above 96 (WPF's
+            // RenderTargetBitmap) scales by bitmapDpi/96 again. Undo that so content fills it exactly.
             double dpiFactor = bitmapDpi / WpfDpi;
             if (Math.Abs(dpiFactor - 1) > 1e-6)
-                dc.PushTransform(new ScaleTransform(1 / dpiFactor, 1 / dpiFactor));
+                dc.PushTransform(Matrix2D.Scale(1 / dpiFactor, 1 / dpiFactor));
 
             // White page background
             if (whiteBackground)
-                dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, pixelW, pixelH));
+                dc.FillRectangle(RgbaColor.White, 0, 0, pixelW, pixelH);
 
             // Apply page rotation (viewer transform)
             if (rot != 0)
-            {
-                var rotTransform = new RotateTransform(rot, pixelW / 2.0, pixelH / 2.0);
-                dc.PushTransform(rotTransform);
-            }
+                dc.PushTransform(Matrix2D.Rotation(rot, pixelW / 2.0, pixelH / 2.0));
 
             // Render content
             try
             {
-                var renderer = new PdfContentRenderer(dc, _parser!, resources, hPts, scale)
+                var renderer = new PdfContentRenderer(dc, _backend, _parser!, resources, hPts, scale)
                 {
                     SkipText = skipText, SkipImages = skipImages
                 };
@@ -133,21 +125,17 @@ public sealed class CustomPdfEngine : IPdfRenderer
             if (rot != 0) dc.Pop();
             if (Math.Abs(dpiFactor - 1) > 1e-6) dc.Pop();
         }
-
-        rtb.Render(dv);
-        rtb.Freeze();
-        return rtb;
     }
 
     /// <summary>
     /// Synchronously renders only a page's vector artwork (paths and fills) with no text
     /// and no images, on a transparent background. Used by the Design import, which
     /// recreates text and images as editable elements and needs the rest as a backdrop.
-    /// Must be called on the UI thread.
+    /// Runs on the calling thread (for WPF, the UI thread).
     /// </summary>
-    public static BitmapSource? RenderPageArtwork(string path, int pageIndex, double zoom = 2.0)
+    public static RenderedPage? RenderPageArtwork(IDrawingBackend backend, string path, int pageIndex, double zoom = 2.0)
     {
-        var eng = new CustomPdfEngine();
+        var eng = new CustomPdfEngine(backend);
         eng._fileBytes = File.ReadAllBytes(path);
         eng.ParseDocument();
         if (eng._parser == null || eng._pages == null || pageIndex < 0 || pageIndex >= eng._pageCount) return null;
@@ -159,9 +147,11 @@ public sealed class CustomPdfEngine : IPdfRenderer
         int pixelW = Math.Max(1, (int)Math.Round((swapped ? hPts : wPts) * scale));
         int pixelH = Math.Max(1, (int)Math.Round((swapped ? wPts : hPts) * scale));
         var page = eng._pages[pageIndex];
-        return eng.RenderPage(page, eng._parser.GetResources(page), eng._parser.GetPageContent(page),
-            pixelW, pixelH, wPts, hPts, scale, WpfDpi, rot,
-            skipText: true, skipImages: true, whiteBackground: false);
+        var resources = eng._parser.GetResources(page);
+        var content = eng._parser.GetPageContent(page);
+        return backend.Render(pixelW, pixelH, WpfDpi, dc =>
+            eng.DrawPage(dc, resources, content, pixelW, pixelH, hPts, scale, WpfDpi, rot,
+                skipText: true, skipImages: true, whiteBackground: false));
     }
 
     // ── Page metadata ─────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 using System.Globalization;
-using System.Windows.Media;
+using PdfEdit.Render.Drawing;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>
 /// Converts colour values in any PDF colour space (device, CIE-based, ICCBased,
@@ -11,17 +11,17 @@ internal static class PdfColorSpace
 {
     // ── device colours ────────────────────────────────────────────────────────
 
-    public static Color Gray(double g)
+    public static RgbaColor Gray(double g)
     {
         byte b = ToByte(g);
-        return Color.FromRgb(b, b, b);
+        return RgbaColor.FromRgb(b, b, b);
     }
 
-    public static Color Rgb(double r, double g, double b) =>
-        Color.FromRgb(ToByte(r), ToByte(g), ToByte(b));
+    public static RgbaColor Rgb(double r, double g, double b) =>
+        RgbaColor.FromRgb(ToByte(r), ToByte(g), ToByte(b));
 
-    public static Color Cmyk(double c, double m, double y, double k) =>
-        Color.FromRgb(
+    public static RgbaColor Cmyk(double c, double m, double y, double k) =>
+        RgbaColor.FromRgb(
             ToByte((1 - Clamp01(c)) * (1 - Clamp01(k))),
             ToByte((1 - Clamp01(m)) * (1 - Clamp01(k))),
             ToByte((1 - Clamp01(y)) * (1 - Clamp01(k))));
@@ -62,7 +62,7 @@ internal static class PdfColorSpace
     }
 
     /// <summary>Converts component values to a colour, or null for spaces we cannot paint (Pattern).</summary>
-    public static Color? ToColor(PdfObject cs, double[] c, PdfParser parser, int depth = 0)
+    public static RgbaColor? ToColor(PdfObject cs, double[] c, PdfParser parser, int depth = 0)
     {
         if (depth > 8) return null;
         cs = parser.Resolve(cs);
@@ -124,7 +124,7 @@ internal static class PdfColorSpace
                 if (arr == null || arr.Count < 4) return Gray(1 - At(c, 0));
                 if (family == "Separation" && arr[1] is PdfName sepName)
                 {
-                    if (sepName.Value == "None") return Colors.Transparent;
+                    if (sepName.Value == "None") return RgbaColor.Transparent;
                     if (sepName.Value == "All")  return Gray(1 - At(c, 0));
                 }
                 var alt = arr[2];
@@ -146,9 +146,9 @@ internal static class PdfColorSpace
     }
 
     /// <summary>The initial colour set by cs/CS (PDF spec 8.6.8).</summary>
-    public static Color InitialColor(PdfObject? cs, PdfParser parser)
+    public static RgbaColor InitialColor(PdfObject? cs, PdfParser parser)
     {
-        if (cs == null) return Colors.Black;
+        if (cs == null) return RgbaColor.Black;
         string fam = Family(cs, parser);
         double[] init = fam switch
         {
@@ -160,12 +160,12 @@ internal static class PdfColorSpace
             "Pattern"                     => Array.Empty<double>(),
             _                             => new double[ComponentCount(cs, parser)],
         };
-        return ToColor(cs, init, parser) ?? Colors.Black;
+        return ToColor(cs, init, parser) ?? RgbaColor.Black;
     }
 
     // ── CIE L*a*b* ────────────────────────────────────────────────────────────
 
-    private static Color LabToRgb(PdfArray? arr, double[] c, PdfParser parser)
+    private static RgbaColor LabToRgb(PdfArray? arr, double[] c, PdfParser parser)
     {
         double xw = 0.9642, yw = 1.0, zw = 0.8249;   // D50 default
         if (arr != null && arr.Count > 1 && parser.ResolveDict(arr[1]) is { } d && d.GetArray("WhitePoint") is { Count: >= 3 } wp)

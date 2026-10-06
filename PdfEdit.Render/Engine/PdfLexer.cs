@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 internal sealed class PdfLexer
 {

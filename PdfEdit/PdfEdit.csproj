@@ -26,8 +26,6 @@
     <PackageReference Include="Fluent.Ribbon" Version="10.0.3" />
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.4" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
-    <!-- Pdfium render engine (same engine as Chrome/Edge — Adobe-quality rendering) -->
-    <PackageReference Include="Docnet.Core" Version="2.6.0" />
     <!-- TWAIN scanning (MIT) — talks to any TWAIN scanner driver via the TWAIN DSM -->
     <PackageReference Include="NTwain" Version="3.7.6" />
     <!-- Tesseract OCR (Apache-2.0): OCR without a Windows OCR language pack -->
@@ -37,6 +35,9 @@
   <ItemGroup>
     <!-- The app's logic (PDF, forms, AI, cloud, settings), shared with any other front end -->
     <ProjectReference Include="..\PdfEdit.Core\PdfEdit.Core.csproj" />
+    <!-- Page rendering (UI-free engines) and its WPF drawing backend -->
+    <ProjectReference Include="..\PdfEdit.Render\PdfEdit.Render.csproj" />
+    <ProjectReference Include="..\PdfEdit.Drawing.Wpf\PdfEdit.Drawing.Wpf.csproj" />
   </ItemGroup>
 
   <ItemGroup>

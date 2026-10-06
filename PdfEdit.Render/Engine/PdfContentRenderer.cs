@@ -1,17 +1,15 @@
-using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using PdfEdit.Render.Drawing;
 
-namespace PdfEdit.Engine;
+namespace PdfEdit.Render.Engine;
 
 /// <summary>
-/// Interprets a PDF page content stream and renders it to a WPF DrawingContext.
+/// Interprets a PDF page content stream and draws it on an <see cref="IDrawingSurface"/>.
 /// Covers the common operator subset needed for business/form PDFs.
 /// </summary>
 internal sealed class PdfContentRenderer
 {
-    private readonly DrawingContext    _dc;
+    private readonly IDrawingSurface   _dc;
+    private readonly IDrawingBackend   _backend;
     private readonly PdfParser         _parser;
     private readonly PdfDictionary?    _resources;
     private readonly double            _pageH;   // page height in pts (for Y flip)
@@ -21,10 +19,9 @@ internal sealed class PdfContentRenderer
     private PdfGraphicsState _gs = new();
 
     // Current path segments
-    private StreamGeometry? _pathGeom;
-    private StreamGeometryContext? _pathCtx;
-    private Point _currentPoint;
-    private Point _subpathStart;
+    private PathData? _pathGeom;
+    private Point2D _currentPoint;
+    private Point2D _subpathStart;
     private bool  _pathOpen;
 
     // Clip requested by W / W* — takes effect after the next path-painting operator
@@ -42,18 +39,19 @@ internal sealed class PdfContentRenderer
 
     // ── ctor ─────────────────────────────────────────────────────────────────
 
-    public PdfContentRenderer(DrawingContext dc, PdfParser parser, PdfDictionary? resources,
+    public PdfContentRenderer(IDrawingSurface dc, IDrawingBackend backend, PdfParser parser, PdfDictionary? resources,
                                double pageHeightPts, double scale)
     {
         _dc        = dc;
+        _backend   = backend;
         _parser    = parser;
         _resources = resources;
         _pageH     = pageHeightPts;
         _scale     = scale;
 
-        // PDF coords: origin bottom-left, Y up. WPF: origin top-left, Y down.
+        // PDF coords: origin bottom-left, Y up. Device: origin top-left, Y down.
         // Initial CTM flips Y and scales.
-        _gs.Ctm = new Matrix(scale, 0, 0, -scale, 0, pageHeightPts * scale);
+        _gs.Ctm = new Matrix2D(scale, 0, 0, -scale, 0, pageHeightPts * scale);
     }
 
     // ── entry point ──────────────────────────────────────────────────────────
@@ -91,7 +89,7 @@ internal sealed class PdfContentRenderer
             }
         }
 
-        // Unwind any clips left by unbalanced q/Q so the DrawingContext stays balanced.
+        // Unwind any clips left by unbalanced q/Q so the drawing surface stays balanced.
         for (int i = 0; i < _gs.ClipPushes; i++) _dc.Pop();
         _gs.ClipPushes = 0;
     }
@@ -104,14 +102,13 @@ internal sealed class PdfContentRenderer
         _gs = prev;
     }
 
-    private void ApplyPendingClip(Geometry? geom)
+    private void ApplyPendingClip(PathData? geom)
     {
         if (!_pendingClip) return;
         _pendingClip = false;
         if (geom == null) return;
-        var clip = geom.Clone();
-        if (clip is StreamGeometry sg) sg.FillRule = _pendingClipEvenOdd ? FillRule.EvenOdd : FillRule.Nonzero;
-        clip.Freeze();
+        var clip = new PathData { EvenOdd = _pendingClipEvenOdd };
+        clip.Figures.AddRange(geom.Figures);
         _dc.PushClip(clip);
         _gs.ClipPushes++;
     }
@@ -127,8 +124,8 @@ internal sealed class PdfContentRenderer
             case "Q":  RestoreState(); break;
             case "cm": SetCtm(ops); break;
             case "w":  _gs.LineWidth = GetReal(ops, 0, 1); break;
-            case "J":  _gs.LineCap  = (PenLineCap)(int)GetReal(ops, 0, 0); break;
-            case "j":  _gs.LineJoin = (PenLineJoin)(int)GetReal(ops, 0, 0); break;
+            case "J":  _gs.LineCap  = (LineCap)(int)GetReal(ops, 0, 0); break;
+            case "j":  _gs.LineJoin = (LineJoin)(int)GetReal(ops, 0, 0); break;
             case "M":  _gs.MiterLimit = GetReal(ops, 0, 10); break;
             case "d":  SetDash(ops); break;
             case "ri": break; // rendering intent — ignore
@@ -216,17 +213,15 @@ internal sealed class PdfContentRenderer
         double a = GetReal(ops, 0), b = GetReal(ops, 1),
                c = GetReal(ops, 2), d = GetReal(ops, 3),
                e = GetReal(ops, 4), f = GetReal(ops, 5);
-        var m = new Matrix(a, b, c, d, e, f);
-        _gs.Ctm = Matrix.Multiply(m, _gs.Ctm);
+        var m = new Matrix2D(a, b, c, d, e, f);
+        _gs.Ctm = Matrix2D.Multiply(m, _gs.Ctm);
     }
 
     // ── Path construction ─────────────────────────────────────────────────────
 
     private void BeginPath()
     {
-        if (_pathCtx != null) { try { _pathCtx.Close(); } catch { } _pathCtx = null; }
-        _pathGeom = new StreamGeometry();
-        _pathCtx  = _pathGeom.Open();
+        _pathGeom = new PathData();
         _pathOpen = false;
     }
 
@@ -235,18 +230,14 @@ internal sealed class PdfContentRenderer
         if (_pathGeom == null) BeginPath();
     }
 
-    private Point TransformPoint(double x, double y)
-    {
-        var p = _gs.Ctm.Transform(new Point(x, y));
-        return p;
-    }
+    private Point2D TransformPoint(double x, double y) => _gs.Ctm.Transform(new Point2D(x, y));
 
     private void MoveTo(List<PdfObject> ops)
     {
         EnsurePath();
         _currentPoint = TransformPoint(GetReal(ops, 0), GetReal(ops, 1));
         _subpathStart = _currentPoint;
-        _pathCtx!.BeginFigure(_currentPoint, isFilled: true, isClosed: false);
+        _pathGeom!.BeginFigure(_currentPoint, isFilled: true, isClosed: false);
         _pathOpen = true;
     }
 
@@ -254,7 +245,7 @@ internal sealed class PdfContentRenderer
     {
         EnsurePath();
         var p = TransformPoint(GetReal(ops, 0), GetReal(ops, 1));
-        _pathCtx!.LineTo(p, isStroked: true, isSmoothJoin: false);
+        _pathGeom!.LineTo(p, isStroked: true);
         _currentPoint = p;
     }
 
@@ -264,7 +255,7 @@ internal sealed class PdfContentRenderer
         // c: (x1,y1) (x2,y2) (x3,y3)
         // v: current_pt (x2,y2) (x3,y3)
         // y: (x1,y1) (x3,y3) (x3,y3)
-        Point p1, p2, p3;
+        Point2D p1, p2, p3;
         if (v)
         {
             p1 = _currentPoint;
@@ -283,15 +274,15 @@ internal sealed class PdfContentRenderer
             p2 = TransformPoint(GetReal(ops, 2), GetReal(ops, 3));
             p3 = TransformPoint(GetReal(ops, 4), GetReal(ops, 5));
         }
-        _pathCtx!.BezierTo(p1, p2, p3, isStroked: true, isSmoothJoin: false);
+        _pathGeom!.BezierTo(p1, p2, p3, isStroked: true);
         _currentPoint = p3;
     }
 
     private void ClosePath()
     {
-        if (_pathCtx != null && _pathOpen)
+        if (_pathGeom != null && _pathOpen)
         {
-            _pathCtx.LineTo(_subpathStart, isStroked: true, isSmoothJoin: false);
+            _pathGeom.LineTo(_subpathStart, isStroked: true);
             _currentPoint = _subpathStart;
             _pathOpen = false;
         }
@@ -307,87 +298,74 @@ internal sealed class PdfContentRenderer
         var tr = TransformPoint(x + w, y);
         var br = TransformPoint(x + w, y + h);
         var bl = TransformPoint(x,     y + h);
-        _pathCtx!.BeginFigure(tl, isFilled: true, isClosed: true);
-        _pathCtx.LineTo(tr, true, false);
-        _pathCtx.LineTo(br, true, false);
-        _pathCtx.LineTo(bl, true, false);
+        _pathGeom!.BeginFigure(tl, isFilled: true, isClosed: true);
+        _pathGeom.LineTo(tr);
+        _pathGeom.LineTo(br);
+        _pathGeom.LineTo(bl);
         _pathOpen = true;
     }
 
     // ── Path painting ─────────────────────────────────────────────────────────
 
-    private Geometry? FinalizeGeom(bool evenOdd)
+    private PathData? FinalizeGeom(bool evenOdd)
     {
         if (_pathGeom == null) return null;
-        try { _pathCtx?.Close(); } catch { }
-        _pathCtx = null;
-        _pathGeom.FillRule = evenOdd ? FillRule.EvenOdd : FillRule.Nonzero;
+        _pathGeom.EvenOdd = evenOdd;
         var g = _pathGeom;
         _pathGeom = null;
         _pathOpen = false;
         return g;
     }
 
-    private Pen MakePen()
+    private StrokeStyle MakePen()
     {
-        var color = Color.FromArgb((byte)(_gs.AlphaStroke * _gs.StrokeColor.A),
-            _gs.StrokeColor.R, _gs.StrokeColor.G, _gs.StrokeColor.B);
+        var color = _gs.StrokeColor.WithOpacity(_gs.AlphaStroke);
         // Line width is in user space: scale it by the CTM (geometric mean of the axes).
         double ctmScale = Math.Sqrt(Math.Abs(_gs.Ctm.Determinant));
         double width = _gs.LineWidth * ctmScale;
         if (width < 1) width = 1;   // PDF: width 0 means "thinnest visible line"
-        var pen = new Pen(new SolidColorBrush(color), width);
-        pen.StartLineCap = pen.EndLineCap = pen.DashCap = _gs.LineCap;
-        pen.LineJoin = _gs.LineJoin;
-        pen.MiterLimit = _gs.MiterLimit;
+        double[]? dashes = null;
+        double dashOffset = 0;
         if (_gs.DashArray != null && _gs.DashArray.Length > 0 && _gs.DashArray.Any(d => d > 0))
         {
-            // WPF dash lengths are multiples of pen thickness; PDF's are user-space units.
-            pen.DashStyle = new DashStyle(_gs.DashArray.Select(d => d * ctmScale / width),
-                                          _gs.DashPhase * ctmScale / width);
+            // PDF dash lengths are user-space units; the surface takes device pixels.
+            dashes = _gs.DashArray.Select(d => d * ctmScale).ToArray();
+            dashOffset = _gs.DashPhase * ctmScale;
         }
-        pen.Freeze();
-        return pen;
+        return new StrokeStyle(color, width, _gs.LineCap, _gs.LineJoin, _gs.MiterLimit, dashes, dashOffset);
     }
 
-    private Brush MakeFillBrush()
-    {
-        var color = Color.FromArgb((byte)(_gs.AlphaFill * _gs.FillColor.A),
-            _gs.FillColor.R, _gs.FillColor.G, _gs.FillColor.B);
-        var b = new SolidColorBrush(color);
-        b.Freeze();
-        return b;
-    }
+    private RgbaColor MakeFillBrush() => _gs.FillColor.WithOpacity(_gs.AlphaFill);
 
     private void StrokePath()
     {
         var geom = FinalizeGeom(_gs.EvenOddFill);
-        if (geom != null) _dc.DrawGeometry(null, MakePen(), geom);
+        if (geom != null) _dc.DrawPath(geom, null, MakePen());
         ApplyPendingClip(geom);
     }
 
     private void FillPath(bool evenOdd)
     {
         var geom = FinalizeGeom(evenOdd);
-        if (geom != null) _dc.DrawGeometry(MakeFillBrush(), null, geom);
+        if (geom != null) _dc.DrawPath(geom, MakeFillBrush(), null);
         ApplyPendingClip(geom);
     }
 
     private void FillAndStroke(bool evenOdd)
     {
         var geom = FinalizeGeom(evenOdd);
-        if (geom != null) _dc.DrawGeometry(MakeFillBrush(), MakePen(), geom);
+        if (geom != null) _dc.DrawPath(geom, MakeFillBrush(), MakePen());
         ApplyPendingClip(geom);
     }
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
-    private static Color Gray(double g) => PdfColorSpace.Gray(g);
+    private static RgbaColor Gray(double g) => PdfColorSpace.Gray(g);
 
-    private static Color Rgb(List<PdfObject> ops, int startIdx) =>
+    private static RgbaColor Rgb(List<PdfObject> ops, int startIdx) =>
         PdfColorSpace.Rgb(GetReal(ops, startIdx), GetReal(ops, startIdx + 1), GetReal(ops, startIdx + 2));
 
-    private static Color Cmyk(List<PdfObject> ops, int startIdx) =>
+    private static RgbaColor Cmyk(List<PdfObject> ops, int startIdx) =>
         PdfColorSpace.Cmyk(GetReal(ops, startIdx), GetReal(ops, startIdx + 1),
                            GetReal(ops, startIdx + 2), GetReal(ops, startIdx + 3));
 
@@ -402,7 +380,7 @@ internal sealed class PdfContentRenderer
         return cs != null ? _parser.Resolve(cs) : n;
     }
 
-    private Color ParseColor(List<PdfObject> ops, PdfObject? colorSpace, Color current)
+    private RgbaColor ParseColor(List<PdfObject> ops, PdfObject? colorSpace, RgbaColor current)
     {
         var comps = ops.Where(o => o is PdfInteger or PdfReal)
                        .Select(o => o is PdfReal r ? r.Value : ((PdfInteger)o).Value)
@@ -451,8 +429,8 @@ internal sealed class PdfContentRenderer
 
     private void BeginText()
     {
-        _gs.Text.Tm  = Matrix.Identity;
-        _gs.Text.Tlm = Matrix.Identity;
+        _gs.Text.Tm  = Matrix2D.Identity;
+        _gs.Text.Tlm = Matrix2D.Identity;
     }
 
     private void EndText() { }
@@ -473,7 +451,7 @@ internal sealed class PdfContentRenderer
         if (_resources == null) return null;
         var dict = _parser.GetFont(_resources, name);
         if (dict == null) return null;
-        var font = PdfFont.FromDictionary(dict, _parser);
+        var font = PdfFont.FromDictionary(dict, _parser, _backend.Fonts);
         _fontCache[name] = font;
         return font;
     }
@@ -482,15 +460,15 @@ internal sealed class PdfContentRenderer
     {
         double tx = GetReal(ops, 0), ty = GetReal(ops, 1);
         if (setLeading) _gs.Text.Leading = -ty;
-        var m = new Matrix(1, 0, 0, 1, tx, ty);
-        _gs.Text.Tlm = Matrix.Multiply(m, _gs.Text.Tlm);
+        var m = new Matrix2D(1, 0, 0, 1, tx, ty);
+        _gs.Text.Tlm = Matrix2D.Multiply(m, _gs.Text.Tlm);
         _gs.Text.Tm  = _gs.Text.Tlm;
     }
 
     private void SetTextMatrix(List<PdfObject> ops)
     {
         if (ops.Count < 6) return;
-        var m = new Matrix(GetReal(ops,0), GetReal(ops,1), GetReal(ops,2),
+        var m = new Matrix2D(GetReal(ops,0), GetReal(ops,1), GetReal(ops,2),
                            GetReal(ops,3), GetReal(ops,4), GetReal(ops,5));
         _gs.Text.Tm  = m;
         _gs.Text.Tlm = m;
@@ -498,8 +476,8 @@ internal sealed class PdfContentRenderer
 
     private void NextLine()
     {
-        var m = new Matrix(1, 0, 0, 1, 0, -_gs.Text.Leading);
-        _gs.Text.Tlm = Matrix.Multiply(m, _gs.Text.Tlm);
+        var m = new Matrix2D(1, 0, 0, 1, 0, -_gs.Text.Leading);
+        _gs.Text.Tlm = Matrix2D.Multiply(m, _gs.Text.Tlm);
         _gs.Text.Tm  = _gs.Text.Tlm;
     }
 
@@ -527,33 +505,27 @@ internal sealed class PdfContentRenderer
 
     private void AdjustTextPosition(double tx)
     {
-        var m = new Matrix(1, 0, 0, 1, tx, 0);
-        _gs.Text.Tm = Matrix.Multiply(m, _gs.Text.Tm);
+        var m = new Matrix2D(1, 0, 0, 1, tx, 0);
+        _gs.Text.Tm = Matrix2D.Multiply(m, _gs.Text.Tm);
     }
 
     /// <summary>
     /// Text rendering matrix per PDF 9.4.4: [Tfs·Th 0 0 Tfs 0 Trise] × Tm × CTM.
     /// Maps glyph space (1 unit = 1 em, y up) to device pixels.
     /// </summary>
-    private Matrix TextRenderMatrix()
+    private Matrix2D TextRenderMatrix()
     {
         var t = _gs.Text;
-        var m = new Matrix(t.FontSize * t.HorizScale / 100.0, 0, 0, t.FontSize, 0, t.Rise);
-        m = Matrix.Multiply(m, t.Tm);
-        return Matrix.Multiply(m, _gs.Ctm);
+        var m = new Matrix2D(t.FontSize * t.HorizScale / 100.0, 0, 0, t.FontSize, 0, t.Rise);
+        m = Matrix2D.Multiply(m, t.Tm);
+        return Matrix2D.Multiply(m, _gs.Ctm);
     }
 
-    private Brush TextBrush()
-    {
-        var c = _gs.FillColor;
-        var brush = new SolidColorBrush(Color.FromArgb((byte)(_gs.AlphaFill * c.A), c.R, c.G, c.B));
-        brush.Freeze();
-        return brush;
-    }
+    private RgbaColor TextBrush() => _gs.FillColor.WithOpacity(_gs.AlphaFill);
 
     /// <summary>
     /// Pushes a transform so that drawing a glyph run of em size <paramref name="emSize"/>
-    /// at (0,0) (WPF y-down) lands where the PDF text rendering matrix puts it.
+    /// at (0,0) (device y-down) lands where the PDF text rendering matrix puts it.
     /// Returns the em size to use, or 0 when the text is degenerate / too small to see.
     /// </summary>
     private double PushGlyphTransform(out bool pushed)
@@ -565,9 +537,9 @@ internal sealed class PdfContentRenderer
         double emSize = Math.Sqrt(trm.M21 * trm.M21 + trm.M22 * trm.M22);
         if (emSize < 0.5 || double.IsNaN(emSize)) return 0;
 
-        // WPF glyph space is y-down: flip, then apply trm, all scaled down by emSize.
-        var g = Matrix.Multiply(new Matrix(1 / emSize, 0, 0, -1 / emSize, 0, 0), trm);
-        _dc.PushTransform(new MatrixTransform(g));
+        // Glyph space on the surface is y-down: flip, then apply trm, all scaled down by emSize.
+        var g = Matrix2D.Multiply(new Matrix2D(1 / emSize, 0, 0, -1 / emSize, 0, 0), trm);
+        _dc.PushTransform(g);
         pushed = true;
         return emSize;
     }
@@ -575,11 +547,11 @@ internal sealed class PdfContentRenderer
     private void RenderTextBytes(byte[] bytes)
     {
         if (_currentFont == null) return;
-        var gt = _currentFont.GlyphTypeface;
+        var glyphs = _currentFont.Glyphs;
         double fontSize = _gs.Text.FontSize;
         double hScale   = _gs.Text.HorizScale / 100.0;
         bool visible    = !SkipText && _gs.Text.RenderMode is not 3 and not 7;
-        Brush? brush    = visible ? TextBrush() : null;
+        var brush       = visible ? TextBrush() : default;
 
         foreach (byte b in bytes)
         {
@@ -592,39 +564,15 @@ internal sealed class PdfContentRenderer
                 {
                     try
                     {
-                        if (gt != null && gt.CharacterToGlyphMap.TryGetValue(ch, out ushort glyphIdx))
+                        // Stretch the substitute glyph to the PDF's advance width so
+                        // words keep their original length when the font is not embedded.
+                        double xStretch = 1.0;
+                        if (glyphs != null && glyphs.TryGetAdvanceWidth(ch, out double sysW))
                         {
-                            // Stretch the substitute glyph to the PDF's advance width so
-                            // words keep their original length when the font is not embedded.
-                            double pdfW  = _currentFont.GetCharWidth(b, 1.0);
-                            double sysW  = gt.AdvanceWidths[glyphIdx];
-                            double xStretch = pdfW > 0 && sysW > 0 ? Math.Clamp(pdfW / sysW, 0.6, 1.4) : 1.0;
-                            if (Math.Abs(xStretch - 1) > 0.02)
-                                _dc.PushTransform(new ScaleTransform(xStretch, 1));
-
-                            var glyphRun = new GlyphRun(
-                                glyphTypeface:   gt,
-                                bidiLevel:       0,
-                                isSideways:      false,
-                                renderingEmSize: emSize,
-                                pixelsPerDip:    1.0f,
-                                glyphIndices:    new[] { glyphIdx },
-                                baselineOrigin:  new Point(0, 0),
-                                advanceWidths:   new[] { sysW * emSize },
-                                glyphOffsets:    null,
-                                characters:      new[] { ch },
-                                deviceFontName:  null,
-                                clusterMap:      null,
-                                caretStops:      null,
-                                language:        System.Windows.Markup.XmlLanguage.GetLanguage("en-us"));
-                            _dc.DrawGlyphRun(brush, glyphRun);
-
-                            if (Math.Abs(xStretch - 1) > 0.02) _dc.Pop();
+                            double pdfW = _currentFont.GetCharWidth(b, 1.0);
+                            xStretch = pdfW > 0 && sysW > 0 ? Math.Clamp(pdfW / sysW, 0.6, 1.4) : 1.0;
                         }
-                        else
-                        {
-                            RenderTextCharFallback(ch, emSize, brush!);
-                        }
+                        _dc.DrawGlyph(glyphs, _currentFont.FamilyName, ch, emSize, brush, xStretch);
                     }
                     catch { }
                     finally { _dc.Pop(); }
@@ -637,21 +585,6 @@ internal sealed class PdfContentRenderer
             if (b == 32) charW += _gs.Text.WordSpacing;
             AdjustTextPosition(charW * hScale);
         }
-    }
-
-    private void RenderTextCharFallback(char ch, double emSize, Brush brush)
-    {
-        if (_currentFont == null) return;
-        var ft = new System.Windows.Media.FormattedText(
-            ch.ToString(),
-            System.Globalization.CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight,
-            new Typeface(_currentFont.WpfFamilyName),
-            Math.Max(1, emSize),
-            brush,
-            1.0);
-        // DrawText positions by the top of the line box; shift up so the baseline sits at 0.
-        _dc.DrawText(ft, new Point(0, -ft.Baseline));
     }
 
     // ── XObjects ──────────────────────────────────────────────────────────────
@@ -679,17 +612,17 @@ internal sealed class PdfContentRenderer
     /// Paints a bitmap into the current unit square. PDF images map row 0 to the top
     /// of the unit square (user y = 1), so flip vertically before applying the CTM.
     /// </summary>
-    private void PaintImage(BitmapSource bitmap)
+    private void PaintImage(RasterImage bitmap)
     {
-        var m = Matrix.Multiply(new Matrix(1, 0, 0, -1, 0, 1), _gs.Ctm);
-        _dc.PushTransform(new MatrixTransform(m));
+        var m = Matrix2D.Multiply(new Matrix2D(1, 0, 0, -1, 0, 1), _gs.Ctm);
+        _dc.PushTransform(m);
         if (_gs.AlphaFill < 1) _dc.PushOpacity(_gs.AlphaFill);
-        _dc.DrawImage(bitmap, new Rect(0, 0, 1, 1));
+        _dc.DrawImage(bitmap, 0, 0, 1, 1);
         if (_gs.AlphaFill < 1) _dc.Pop();
         _dc.Pop();
     }
 
-    private BitmapSource? DecodeImage(PdfStream stm)
+    private RasterImage? DecodeImage(PdfStream stm)
     {
         var d   = stm.Dict;
         int w   = (int)(_parser.Resolve(d.Get("Width")  ?? d.Get("W") ?? PdfNull.Instance) is PdfInteger wi ? wi.Value : 0);
@@ -708,14 +641,14 @@ internal sealed class PdfContentRenderer
         byte[]? bgra;
         if (filters.Contains("DCTDecode") || filters.Contains("DCT") || IsJpeg(data))
         {
-            var jpeg = LoadJpegBitmap(data);
+            bool needsMask = d.Get("SMask") != null || d.Get("Mask") is PdfIndirectRef or PdfStream;
+            RasterImage? jpeg;
+            try { jpeg = _backend.DecodeImage(data, needPixels: needsMask); } catch { return null; }
             if (jpeg == null) return null;
-            if (d.Get("SMask") == null && d.Get("Mask") is not PdfIndirectRef and not PdfStream) return jpeg;
-            // Need per-pixel alpha: convert to BGRA so the mask can be applied
-            var conv = new FormatConvertedBitmap(jpeg, PixelFormats.Bgra32, null, 0);
-            w = conv.PixelWidth; h = conv.PixelHeight;
-            bgra = new byte[w * h * 4];
-            conv.CopyPixels(bgra, w * 4, 0);
+            if (!needsMask || jpeg.Pixels == null) return jpeg;
+            // Per-pixel alpha: BGRA pixels so the mask can be applied
+            w = jpeg.Width; h = jpeg.Height;
+            bgra = jpeg.Pixels;
         }
         else
         {
@@ -735,14 +668,7 @@ internal sealed class PdfContentRenderer
                 ApplyAlphaMask(bgra, w, h, mask, invert: true);
         }
 
-        try
-        {
-            var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
-            wb.WritePixels(new Int32Rect(0, 0, w, h), bgra, w * 4, 0);
-            wb.Freeze();
-            return wb;
-        }
-        catch { return null; }
+        return bgra.Length >= w * h * 4 ? new RasterImage(w, h, bgra) : null;
     }
 
     private PdfObject ResolveImageColorSpace(PdfObject cs)
@@ -800,14 +726,14 @@ internal sealed class PdfContentRenderer
             for (int i = 0; i < Math.Min(dec.Length, decodeArr.Count); i++) dec[i] = PdfColorSpace.GetNum(decodeArr[i]);
 
         // Palette for indexed images; memo cache for the non-device spaces
-        Color[]? palette = null;
+        RgbaColor[]? palette = null;
         if (indexed)
         {
-            palette = new Color[maxV + 1];
+            palette = new RgbaColor[maxV + 1];
             for (int i = 0; i <= maxV; i++)
-                palette[i] = PdfColorSpace.ToColor(cs, new double[] { i }, _parser) ?? Colors.Black;
+                palette[i] = PdfColorSpace.ToColor(cs, new double[] { i }, _parser) ?? RgbaColor.Black;
         }
-        var cache = new Dictionary<long, Color>();
+        var cache = new Dictionary<long, RgbaColor>();
         bool fastDevice = family is "DeviceGray" or "G" or "CalGray" or "DeviceRGB" or "RGB" or "CalRGB" or "DeviceCMYK" or "CMYK"
                           || (family == "ICCBased" && comps is 1 or 3 or 4);
 
@@ -818,7 +744,7 @@ internal sealed class PdfContentRenderer
             long bit = y * rowBits;
             for (int x = 0; x < w; x++)
             {
-                Color col;
+                RgbaColor col;
                 if (indexed)
                 {
                     int raw = ReadSample(data, bit, bpc); bit += bpc;
@@ -845,7 +771,7 @@ internal sealed class PdfContentRenderer
                     }
                     else if (!cache.TryGetValue(key, out col))
                     {
-                        col = PdfColorSpace.ToColor(cs, (double[])vals.Clone(), _parser) ?? Colors.Black;
+                        col = PdfColorSpace.ToColor(cs, (double[])vals.Clone(), _parser) ?? RgbaColor.Black;
                         if (cache.Count < 65536) cache[key] = col;
                     }
                 }
@@ -889,11 +815,15 @@ internal sealed class PdfContentRenderer
         try { md = PdfStreamFilter.Decode(mask); } catch { return; }
         if (GetFilterNames(mask).Contains("DCTDecode"))
         {
-            var jpeg = LoadJpegBitmap(md);
-            if (jpeg == null) return;
-            var gray = new FormatConvertedBitmap(jpeg, PixelFormats.Gray8, null, 0);
-            md = new byte[gray.PixelWidth * gray.PixelHeight];
-            gray.CopyPixels(md, gray.PixelWidth, 0);
+            RasterImage? jpeg;
+            try { jpeg = _backend.DecodeImage(md, needPixels: true); } catch { return; }
+            if (jpeg?.Pixels == null) return;
+            // The grey level of each pixel (Rec. 601 luma) is the mask value
+            var px = jpeg.Pixels;
+            md = new byte[jpeg.Width * jpeg.Height];
+            for (int i = 0; i < md.Length; i++)
+                md[i] = (byte)((px[i * 4 + 2] * 299 + px[i * 4 + 1] * 587 + px[i * 4] * 114 + 500) / 1000);
+            mw = jpeg.Width; mh = jpeg.Height;
             bpc = 8;
         }
         int maxV = bpc == 16 ? 255 : (1 << bpc) - 1;
@@ -920,22 +850,6 @@ internal sealed class PdfContentRenderer
     private static bool IsJpeg(byte[] data) =>
         data.Length >= 2 && data[0] == 0xFF && data[1] == 0xD8;
 
-    private static BitmapSource? LoadJpegBitmap(byte[] jpegBytes)
-    {
-        try
-        {
-            using var ms = new MemoryStream(jpegBytes);
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.StreamSource = ms;
-            bmp.CacheOption  = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
-    }
-
     private void DrawFormXObject(PdfStream stm)
     {
         if (_formDepth >= 12) return;   // guard against self-referencing forms
@@ -952,11 +866,11 @@ internal sealed class PdfContentRenderer
         var matrix = stm.Dict.GetArray("Matrix");
         if (matrix?.Count >= 6)
         {
-            var m = new Matrix(
+            var m = new Matrix2D(
                 GetArrReal(matrix, 0), GetArrReal(matrix, 1),
                 GetArrReal(matrix, 2), GetArrReal(matrix, 3),
                 GetArrReal(matrix, 4), GetArrReal(matrix, 5));
-            gs.Ctm = Matrix.Multiply(m, gs.Ctm);
+            gs.Ctm = Matrix2D.Multiply(m, gs.Ctm);
         }
 
         // Clip to the form's BBox
@@ -965,20 +879,14 @@ internal sealed class PdfContentRenderer
         if (bbox?.Count >= 4)
         {
             double x0 = GetArrReal(bbox, 0), y0 = GetArrReal(bbox, 1), x1 = GetArrReal(bbox, 2), y1 = GetArrReal(bbox, 3);
-            var geo = new StreamGeometry();
-            using (var ctx = geo.Open())
-            {
-                ctx.BeginFigure(gs.Ctm.Transform(new Point(x0, y0)), true, true);
-                ctx.LineTo(gs.Ctm.Transform(new Point(x1, y0)), false, false);
-                ctx.LineTo(gs.Ctm.Transform(new Point(x1, y1)), false, false);
-                ctx.LineTo(gs.Ctm.Transform(new Point(x0, y1)), false, false);
-            }
-            geo.Freeze();
+            var geo = PathData.Rectangle(
+                gs.Ctm.Transform(new Point2D(x0, y0)), gs.Ctm.Transform(new Point2D(x1, y0)),
+                gs.Ctm.Transform(new Point2D(x1, y1)), gs.Ctm.Transform(new Point2D(x0, y1)));
             _dc.PushClip(geo);
             clipped = true;
         }
 
-        var sub = new PdfContentRenderer(_dc, _parser, res, _pageH, _scale)
+        var sub = new PdfContentRenderer(_dc, _backend, _parser, res, _pageH, _scale)
         {
             _formDepth = _formDepth + 1, SkipText = SkipText, SkipImages = SkipImages
         };
