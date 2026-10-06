@@ -69,7 +69,7 @@ public partial class ToastHost : UserControl
         ToastList.Items.Add(toast);
 
         // Fade in (unless Reduce motion is on)
-        if (!AccessibilityService.ReduceMotion)
+        if (!UiAccessibilityService.ReduceMotion)
         {
             var slideIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250))
             {
@@ -95,7 +95,7 @@ public partial class ToastHost : UserControl
 
     private void DismissToast(Border toast)
     {
-        if (AccessibilityService.ReduceMotion) { ToastList.Items.Remove(toast); return; }
+        if (UiAccessibilityService.ReduceMotion) { ToastList.Items.Remove(toast); return; }
         var slideOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }

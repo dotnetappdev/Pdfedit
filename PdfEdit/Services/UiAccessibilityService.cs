@@ -11,7 +11,7 @@ namespace PdfEdit.Services;
 /// Applies Settings → Accessibility across the app: the high-contrast focus ring, reduced motion
 /// (menus and notifications appear without fading) and tooltip timing.
 /// </summary>
-public static class AccessibilityService
+public static class UiAccessibilityService
 {
     private static bool _registered;
     private static FocusRingAdorner? _ring;

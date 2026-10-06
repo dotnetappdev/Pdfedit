@@ -313,7 +313,7 @@ public partial class SettingsWindow : Window
         ShortcutsEditor.Commit();
         s.Save();
         ShortcutService.RaiseChanged();
-        AccessibilityService.Apply();
+        UiAccessibilityService.Apply();
         DialogResult = true;
         Close();
     }
@@ -650,7 +650,7 @@ public partial class SettingsWindow : Window
         App.RefreshTheme();
         FontService.ApplyAll();
         InterfaceStyleService.ApplyIconSize(AppSettings.Current.IconSize);
-        AccessibilityService.Apply();
+        UiAccessibilityService.Apply();
         ShortcutService.RaiseChanged();
         AppDialog.ShowInfo(message + " Tooltip timing and a few others apply the next time PdfEdit starts.", "Preferences");
         DialogResult = true;

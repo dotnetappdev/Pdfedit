@@ -64,7 +64,7 @@ public partial class App : Application
         // Settings → Accessibility: speak focused controls and tooltips when that's turned on.
         NarrationService.Register();
         // Settings → Accessibility: focus ring, reduced motion, tooltip timing.
-        try { AccessibilityService.Initialize(); }
+        try { UiAccessibilityService.Initialize(); }
         catch (Exception ex) { ErrorDialog.Show("Failed to apply the accessibility settings.", ex); }
 
         MainWindow mainWindow;
