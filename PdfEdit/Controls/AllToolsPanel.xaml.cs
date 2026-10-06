@@ -69,7 +69,7 @@ public partial class AllToolsPanel : UserControl
         _categories = new()
         {
             new() { Title = "Export a PDF", Glyph = "", Accent = Color.FromRgb(0x3D, 0xC9, 0xA8),
-                Description = "Convert to Word, text, images or PDF/A",
+                Description = "Convert to Word, Excel, HTML, ePub, images or PDF/A",
                 Actions = new()
                 {
                     Run("Microsoft Word (.docx)", vm.ExportWordCommand, "Text of every page as a Word document"),
@@ -77,6 +77,9 @@ public partial class AllToolsPanel : UserControl
                     Run("Microsoft PowerPoint (.pptx)", vm.ExportPowerPointCommand, "One slide per page"),
                     Run("All images", vm.ExtractImagesCommand, "Save every picture in the PDF to a folder"),
                     Run("Plain text (.txt)", vm.ExportTextCommand),
+                    Run("Web page (.html)", vm.ExportHtmlCommand, "Text with its headings, lists and paragraphs"),
+                    Run("Markdown (.md)", vm.ExportMarkdownCommand),
+                    Run("E-book (.epub)", vm.ExportEpubCommand, "One chapter per page, for e-readers"),
                     Run("Images — all pages (PNG)", vm.ExportPagesAsImagesCommand),
                     Run("Image — current page", vm.ExportPageAsImageCommand),
                     Page("Snapshot of an area (copy / save picture)", vm.SnapshotCommand, "Drag a box round any area, then copy it or save it as PNG"),
@@ -109,6 +112,7 @@ public partial class AllToolsPanel : UserControl
                     Run("Blank PDF", vm.CreateBlankPdfCommand),
                     Run("From images", vm.CreatePdfFromImagesCommand, "One page per image"),
                     Run("From Word, Excel or PowerPoint", vm.CreatePdfFromOfficeCommand, "Word works on its own; Excel and PowerPoint use Office or LibreOffice"),
+                    Run("From text, Markdown or HTML", vm.CreatePdfFromOfficeCommand, "Headings, lists, tables and pictures are kept"),
                     Run("From a Google Docs link", vm.ImportGoogleLinkCommand, "Google Docs, Sheets, Slides, or a Word file on Drive"),
                     Run("Design a PDF (Design canvas)", vm.NewDesignCommand),
                     Run("Export design as PDF", vm.ExportDesignCommand),

@@ -277,7 +277,7 @@
 
                     <Fluent:Button Header="From&#x0a;Office"
                                    Command="{Binding CreatePdfFromOfficeCommand}"
-                                   ToolTip="Create PDFs from Word, Excel or PowerPoint files (uses Microsoft Office or LibreOffice)"
+                                   ToolTip="Create PDFs from Word, Excel, PowerPoint, text, Markdown or HTML files (Excel and PowerPoint use Microsoft Office or LibreOffice)"
                                    AutomationProperties.Name="Create PDF from Office files">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
@@ -1432,6 +1432,16 @@
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:DropDownButton Header="Export to&#x0a;Other" IsEnabled="{Binding HasDocument}"
+                                           ToolTip="Save the text with its headings and lists as a web page, Markdown or an e-book"
+                                           AutomationProperties.Name="Export to other formats">
+                        <Fluent:DropDownButton.LargeIcon>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:DropDownButton.LargeIcon>
+                        <Fluent:MenuItem Header="Web page (.html)" Command="{Binding ExportHtmlCommand}" AutomationProperties.Name="Export as HTML"/>
+                        <Fluent:MenuItem Header="Markdown (.md)" Command="{Binding ExportMarkdownCommand}" AutomationProperties.Name="Export as Markdown"/>
+                        <Fluent:MenuItem Header="E-book (.epub)" Command="{Binding ExportEpubCommand}" AutomationProperties.Name="Export as ePub"/>
+                    </Fluent:DropDownButton>
                     <Fluent:Button Header="Extract&#x0a;Images"
                                    Command="{Binding ExtractImagesCommand}"
                                    ToolTip="Save every picture in the PDF to a folder"

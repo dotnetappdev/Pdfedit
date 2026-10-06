@@ -19,6 +19,8 @@
   <ItemGroup>
     <PackageReference Include="itext7" Version="8.0.4" />
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.4" />
+    <PackageReference Include="itext7.pdfhtml" Version="5.0.4" />
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <!-- Cloud sign-in tokens are encrypted for the Windows user (DPAPI) -->
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
   </ItemGroup>

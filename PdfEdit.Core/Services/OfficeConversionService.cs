@@ -14,21 +14,25 @@ public static class OfficeConversionService
     public static readonly string[] WordExtensions = { ".doc", ".docx", ".docm", ".dot", ".dotx", ".rtf", ".odt", ".wpd" };
     public static readonly string[] ExcelExtensions = { ".xls", ".xlsx", ".xlsm", ".xlsb", ".ods", ".csv" };
     public static readonly string[] PowerPointExtensions = { ".ppt", ".pptx", ".pptm", ".pps", ".ppsx", ".odp" };
+    /// <summary>Text, Markdown and web pages: always converted by PdfEdit itself.</summary>
+    public static readonly string[] TextExtensions = { ".txt", ".md", ".markdown", ".html", ".htm" };
 
     public const string FileFilter =
-        "Office documents|*.doc;*.docx;*.docm;*.dot;*.dotx;*.rtf;*.odt;*.wpd;*.xls;*.xlsx;*.xlsm;*.xlsb;*.ods;*.csv;*.ppt;*.pptx;*.pptm;*.pps;*.ppsx;*.odp" +
+        "Documents|*.doc;*.docx;*.docm;*.dot;*.dotx;*.rtf;*.odt;*.wpd;*.xls;*.xlsx;*.xlsm;*.xlsb;*.ods;*.csv;*.ppt;*.pptx;*.pptm;*.pps;*.ppsx;*.odp;*.txt;*.md;*.markdown;*.html;*.htm" +
+        "|Text, Markdown and web pages|*.txt;*.md;*.markdown;*.html;*.htm" +
         "|Word documents|*.doc;*.docx;*.docm;*.rtf;*.odt|Excel workbooks|*.xls;*.xlsx;*.xlsm;*.xlsb;*.ods;*.csv|PowerPoint presentations|*.ppt;*.pptx;*.pptm;*.pps;*.ppsx;*.odp|All files|*.*";
 
     /// <summary>Files PdfEdit can convert itself, without Office or LibreOffice.</summary>
     public static readonly string[] BuiltInExtensions = { ".docx", ".docm", ".dotx" };
 
     public static bool CanConvert(string path) =>
-        AvailableConverter() != null || BuiltInExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
+        TextExtensions.Contains(Path.GetExtension(path).ToLowerInvariant())
+        || AvailableConverter() != null || BuiltInExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
     public static bool IsOfficeFile(string path)
     {
         string ext = Path.GetExtension(path).ToLowerInvariant();
-        return WordExtensions.Contains(ext) || ExcelExtensions.Contains(ext) || PowerPointExtensions.Contains(ext);
+        return WordExtensions.Contains(ext) || ExcelExtensions.Contains(ext) || PowerPointExtensions.Contains(ext) || TextExtensions.Contains(ext);
     }
 
     /// <summary>What can do the conversion on this PC, for messages.</summary>
@@ -52,6 +56,7 @@ public static class OfficeConversionService
     public static void Convert(string source, string dest)
     {
         string ext = Path.GetExtension(source).ToLowerInvariant();
+        if (TextExtensions.Contains(ext)) { DocumentConvertService.ToPdf(source, dest); return; }
         string? progId = WordExtensions.Contains(ext) ? "Word.Application"
                        : ExcelExtensions.Contains(ext) ? "Excel.Application"
                        : PowerPointExtensions.Contains(ext) ? "PowerPoint.Application" : null;

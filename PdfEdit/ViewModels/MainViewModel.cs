@@ -1754,8 +1754,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         var dlg = new OpenFileDialog
         {
             Title = "Open",
-            Filter = "PDF and Office documents|*.pdf;*.doc;*.docx;*.docm;*.rtf;*.odt;*.xls;*.xlsx;*.ods;*.csv;*.ppt;*.pptx;*.odp" +
-                     "|PDF Files (*.pdf)|*.pdf|Word documents|*.doc;*.docx;*.docm;*.rtf;*.odt|All Files (*.*)|*.*",
+            Filter = "PDF and documents|*.pdf;*.doc;*.docx;*.docm;*.rtf;*.odt;*.xls;*.xlsx;*.ods;*.csv;*.ppt;*.pptx;*.odp;*.txt;*.md;*.markdown;*.html;*.htm" +
+                     "|PDF Files (*.pdf)|*.pdf|Word documents|*.doc;*.docx;*.docm;*.rtf;*.odt|Text, Markdown and web pages|*.txt;*.md;*.markdown;*.html;*.htm|All Files (*.*)|*.*",
             DefaultExt = ".pdf"
         };
         if (dlg.ShowDialog() != true) return;
