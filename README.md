@@ -21,7 +21,9 @@ PdfEdit is the PDF editor I wanted instead: everything included, nothing locked,
 
 ## What it can do
 
-Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact. Rotate, reorder, merge and split pages, scan straight to a searchable PDF, and turn Word documents into fillable forms. Batch-process a folder, fill a form from every row of a spreadsheet, and save to Google Drive or OneDrive. There's an optional AI assistant if you want one, and it can run on a free local model.
+Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact, with your own stamps alongside Acrobat's. Move, resize, replace or delete the pictures already in a PDF, or snapshot any area as an image. Rotate, reorder, merge, split and resize pages, convert to greyscale, and print several pages per sheet or as a folded booklet. Scan straight to a searchable PDF and turn Word documents into fillable forms.
+
+Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PDFs as Word, Excel, PowerPoint, HTML, Markdown or ePub. Batch-process a folder, fill a form from every row of a spreadsheet, and save to Google Drive or OneDrive. Read hands-free with read aloud and auto-scroll, and set it up the way you need: text sizes, a high-contrast focus ring, reduced motion and a voice that reads things out. There's an optional AI assistant if you want one, and it can run on a free local model.
 
 <p align="center"><a href="docs/tour.md"><img src="docs/tour/tour-poster.png" width="640" alt="Watch the PdfEdit tour"></a></p>
 
