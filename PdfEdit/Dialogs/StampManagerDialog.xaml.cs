@@ -40,6 +40,8 @@ public partial class StampManagerDialog : Window
     public StampDefinition? Chosen { get; private set; }
     /// <summary>True when the chosen stamp should go behind the pages as a watermark.</summary>
     public bool UseAsBackground { get; private set; }
+    /// <summary>True when the Watermark dialog should open on its own (Watermark… button).</summary>
+    public bool OpenWatermark { get; private set; }
 
     private StampDefinition? Selected => (StampList.SelectedItem as StampRow)?.Def;
     private bool SelectedIsCustom => Selected?.Category == StampCatalog.CustomCategory;
@@ -138,6 +140,7 @@ public partial class StampManagerDialog : Window
         DefaultBtn.IsEnabled = d != null && !_vm.IsDefaultStamp(d);
         DefaultBtn.Content = d != null && _vm.IsDefaultStamp(d) ? "Default stamp ✓" : "Set as default";
         UseBtn.IsEnabled = d != null;
+        WatermarkBtn.IsEnabled = _vm.HasDocument;
         BackgroundBtn.IsEnabled = d != null && _vm.HasDocument;
         StampList.IsEnabled = true;
         ModeText.Text = d == null ? "PREVIEW" : $"PREVIEW: {d.Category.ToUpperInvariant()}";
@@ -161,6 +164,7 @@ public partial class StampManagerDialog : Window
         SaveBtn.Visibility = CancelEditBtn.Visibility = Visibility.Visible;
         SaveBtn.IsEnabled = true;
         DeleteBtn.IsEnabled = DuplicateBtn.IsEnabled = DefaultBtn.IsEnabled = UseBtn.IsEnabled = BackgroundBtn.IsEnabled = false;
+        WatermarkBtn.IsEnabled = false;
         StampList.IsEnabled = false;
         ModeText.Text = "NEW STAMP";
         UpdatePreview();
@@ -199,6 +203,7 @@ public partial class StampManagerDialog : Window
         SaveBtn.Visibility = CancelEditBtn.Visibility = Visibility.Visible;
         SaveBtn.IsEnabled = true;
         DeleteBtn.IsEnabled = DuplicateBtn.IsEnabled = DefaultBtn.IsEnabled = UseBtn.IsEnabled = BackgroundBtn.IsEnabled = false;
+        WatermarkBtn.IsEnabled = false;
         StampList.IsEnabled = false;
         ModeText.Text = "NEW STAMP (YOUR OWN COPY)";
     }
@@ -284,6 +289,13 @@ public partial class StampManagerDialog : Window
         if (Selected is not { } d || _editingNew) return;
         Chosen = d;
         UseAsBackground = true;
+        DialogResult = true;
+    }
+
+    private void Watermark_Click(object sender, RoutedEventArgs e)
+    {
+        if (_editingNew) return;
+        OpenWatermark = true;
         DialogResult = true;
     }
 

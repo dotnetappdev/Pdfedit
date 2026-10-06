@@ -148,7 +148,13 @@ public partial class MainViewModel
     public void ManageStamps(bool createNew)
     {
         var dlg = new Dialogs.StampManagerDialog(this, createNew) { Owner = Application.Current.MainWindow };
-        if (dlg.ShowDialog() != true || dlg.Chosen is not { } def) return;
+        if (dlg.ShowDialog() != true) return;
+        if (dlg.OpenWatermark)
+        {
+            if (HasDocument) _ = WatermarkAsync();
+            return;
+        }
+        if (dlg.Chosen is not { } def) return;
         SelectedStampDefinition = def;
         if (dlg.UseAsBackground)
         {

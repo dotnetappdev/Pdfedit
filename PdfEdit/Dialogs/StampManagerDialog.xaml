@@ -134,6 +134,14 @@
         </ScrollViewer>
 
         <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0" LastChildFill="False">
+            <Button x:Name="WatermarkBtn" DockPanel.Dock="Left" Padding="12,5" Click="Watermark_Click"
+                    ToolTip="Open Watermark &amp; Background: put text or a picture behind or over every page, or remove one"
+                    AutomationProperties.Name="Open the watermark dialog">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Watermark…" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
             <Button DockPanel.Dock="Right" Content="Close" Padding="16,5" Margin="8,0,0,0" IsCancel="True"/>
             <Button x:Name="UseBtn" DockPanel.Dock="Right" Content="Use this stamp" Padding="16,5" IsDefault="True"
                     Style="{StaticResource ModernButton}" Click="Use_Click"
