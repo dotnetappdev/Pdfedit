@@ -73,6 +73,14 @@ public partial class MainViewModel
             sb.AppendLine("Commands: " + string.Join(", ", AiCommands.Keys) + ".");
         }
 
+        sb.AppendLine().AppendLine("""
+            When the user asks you to create or design a new form (e.g. "make me a job application form",
+            "I need a car damage report"), don't describe it in text: put this at the end of your reply in a
+            fenced block tagged actions holding a JSON array, and say in one sentence what the form will cover.
+            {"action":"design_form","description":"<what the form is for, who fills it in, and every field or section the user asked for>"}
+            PdfEdit then designs the form with fillable fields on its Design canvas.
+            """);
+
         sb.AppendLine("Finish every reply with one line of two or three short follow-up questions the user might ask next, in this exact form:");
         sb.AppendLine("FOLLOW-UPS: question one | question two | question three");
         return sb.ToString();
@@ -142,6 +150,12 @@ public partial class MainViewModel
     public async Task ApplyAiActionAsync(AiActionItem item)
     {
         if (!item.IsPending) return;
+        if (item.Action == "design_form")
+        {
+            // Works without an open PDF: the form is built on the Design canvas.
+            if (DesignFormWithAi(item.Arg("description"))) Applied(item, "Designed on the Design canvas", () => DesignCanvas.Undo());
+            return;
+        }
         if (!HasDocument || _currentFilePath == null) { Fail("No PDF is open."); return; }
         try
         {

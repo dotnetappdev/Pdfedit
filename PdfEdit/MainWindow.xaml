@@ -2637,6 +2637,11 @@
                                    AutomationProperties.Name="Ask across PDFs">
                         <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button Header="Design Form&#x0a;with AI" Command="{Binding DesignFormWithAiCommand}"
+                                   ToolTip="Describe the form you need (an application form, a car damage report…) and the AI lays out fillable fields on the Design canvas"
+                                   AutomationProperties.Name="Design a form with AI">
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Mind&#x0a;Map" Command="{Binding MindMapCommand}"
                                    ToolTip="The document as a mind map; click a topic to go to its page"
                                    AutomationProperties.Name="Mind map">
@@ -2771,6 +2776,15 @@
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
+
+                <!-- AI form designer -->
+                <Fluent:RibbonGroupBox Header="AI" AutomationProperties.Name="AI design group">
+                    <Fluent:Button Header="Design Form&#x0a;with AI" Command="{Binding DesignFormWithAiCommand}"
+                                   ToolTip="Describe the form you need (an application form, a car damage report…) and the AI lays out fillable fields on the Design canvas"
+                                   AutomationProperties.Name="Design a form with AI">
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
 

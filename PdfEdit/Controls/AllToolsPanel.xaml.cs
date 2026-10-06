@@ -157,6 +157,7 @@ public partial class AllToolsPanel : UserControl
                     Page("Translate the PDF (keep layout)", vm.TranslatePdfCommand, "A translated copy, paragraph by paragraph in place"),
                     Run("Ask across several PDFs", vm.AskAcrossPdfsCommand, "Answers cite the file and page"),
                     Page("Mind map of this document", vm.MindMapCommand),
+                    Run("Design a form with AI", vm.DesignFormWithAiCommand, "Describe the form; the AI lays out fillable fields on the Design canvas"),
                     Page("Summary outline", vm.GenerateSummaryCommand),
                     Page("Fill the form with AI", vm.RunAiFillCommand),
                     Page("Smart fill from another document", vm.SmartFillFromDocCommand),

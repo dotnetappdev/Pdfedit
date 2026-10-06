@@ -533,6 +533,21 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasMultiSelection));
     }
 
+    /// <summary>Replaces the whole canvas (one undo step), e.g. with a form the AI designed.</summary>
+    public void ReplaceAll(IEnumerable<DesignElement> elements, DesignPageSize pageSize, double customWidth = 0, double customHeight = 0)
+    {
+        SaveUndo();
+        Elements.Clear();
+        SelectedElement = null;
+        _multiSelection.Clear();
+        if (pageSize == DesignPageSize.Custom) { CustomPageWidth = customWidth; CustomPageHeight = customHeight; }
+        PageSize = pageSize;
+        int z = 0;
+        foreach (var e in elements) { e.ZOrder = z++; Elements.Add(e); }
+        ActiveTool = DesignTool.Select;
+        OnPropertyChanged(nameof(HasMultiSelection));
+    }
+
     public void SelectAll()
     {
         SetMultiSelection(Elements);

@@ -179,6 +179,7 @@ public static class ShortcutService
         new("ai_translate", "AI", "Translate PDF", "", vm => vm.TranslatePdfCommand),
         new("ai_ask_across", "AI", "Ask across PDFs", "", vm => vm.AskAcrossPdfsCommand),
         new("ai_mind_map", "AI", "Mind map", "", vm => vm.MindMapCommand),
+        new("ai_design_form", "AI", "Design a form with AI", "", vm => vm.DesignFormWithAiCommand),
     };
 
     public static IReadOnlyList<KeyCombo> ParseList(string text) =>

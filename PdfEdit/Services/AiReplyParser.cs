@@ -79,6 +79,7 @@ public static class AiReplyParser
         "add_bookmark" => $"Add bookmark “{Get(a, "title")}” to page {Get(a, "page")}",
         "zoom" => Get(a, "mode").Length > 0 ? $"Zoom: {Get(a, "mode").Replace('_', ' ')}" : $"Zoom to {Get(a, "percent").TrimEnd('%')}%",
         "command" => $"Run: {Get(a, "name").Replace('_', ' ')}",
+        "design_form" => $"Design a form: {Get(a, "description")}",
         _ => $"{action} {string.Join(", ", a.Where(kv => kv.Key != "action").Select(kv => $"{kv.Key}={kv.Value}"))}",
     };
 
@@ -86,6 +87,6 @@ public static class AiReplyParser
     {
         "fill_field" => "", "go_to_page" => "", "highlight" => "", "redact" => "",
         "add_note" => "", "add_stamp" => "", "rotate_page" => "", "delete_page" => "",
-        "add_watermark" => "", "add_bookmark" => "", "zoom" => "\uE71E", "command" => "\uE768", _ => "",
+        "add_watermark" => "", "add_bookmark" => "", "zoom" => "\uE71E", "command" => "\uE768", "design_form" => "\uE70F", _ => "",
     };
 }

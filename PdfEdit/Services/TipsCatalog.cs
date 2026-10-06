@@ -68,6 +68,8 @@ public static class TipsCatalog
             "Add a Sticky Note anywhere on the page. Every note, highlight and mark is listed in the Comments panel, where you can reply, filter and jump to it."),
         new("Undo is always there",
             "Ctrl+Z undoes almost anything, including page changes, watermarks and links. Ctrl+Y puts it back."),
+        new("Let the AI design a form",
+            "Design → Design Form with AI: describe what you need (a job application, a car damage report, a patient intake form) and the AI lays out fillable boxes, tick boxes, drop-downs and signature boxes for you. Or just ask for one in the AI chat."),
         new("Design your own documents",
             "The Design tab is a page layout editor. Start from a template (invoice, letter, flyer, résumé, business card) or a blank page, then export to PDF or an image."),
         new("Panels go where you want",
