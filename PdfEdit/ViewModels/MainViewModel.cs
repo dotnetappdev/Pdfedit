@@ -526,7 +526,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 CurrentFontItalic = value.IsItalic;
                 CurrentFontUnderline = value.IsUnderline;
                 CurrentFontColor = value.FontColor;
-                CurrentTextAlignment = value.TextAlignment;
+                CurrentTextAlignment = value.TextAlignment.ToWpf();
                 ForceUpperCase = value.ForceUpperCase;
                 _updatingFromAnnotation = false;
             }
@@ -750,7 +750,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             if (!_updatingFromAnnotation && _selectedAnnotation != null)
             {
-                _selectedAnnotation.TextAlignment = value;
+                _selectedAnnotation.TextAlignment = value.ToCore();
                 AnnotationFormattingChanged?.Invoke();
             }
         }
@@ -1540,7 +1540,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             IsItalic = _currentFontItalic,
             IsUnderline = _currentFontUnderline,
             FontColor = _currentFontColor,
-            TextAlignment = _currentTextAlignment,
+            TextAlignment = _currentTextAlignment.ToCore(),
             ForceUpperCase = _forceUpperCase,
         };
         FreeTextAnnotations.Add(ann);

@@ -35,6 +35,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The app's logic (PDF, forms, AI, cloud, settings), shared with any other front end -->
+    <ProjectReference Include="..\PdfEdit.Core\PdfEdit.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- English OCR data (tessdata_fast, Apache-2.0) shipped with the app; more languages download on demand -->
     <None Include="tessdata\*.traineddata" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

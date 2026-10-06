@@ -1439,7 +1439,7 @@ public class PdfFormService
         float[]? interior = !string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb)
             ? new[] { fr, fg, fb } : null;
         float[] Vertices() => (shape.Points ?? new()).SelectMany(p => new[] { (float)p.X, (float)p.Y }).ToArray();
-        string label = Controls.PdfViewerControl.MeasureLabel(shape);
+        string label = Measurement.Label(shape);
 
         PdfAnnotation annot;
         switch (shape.Kind)

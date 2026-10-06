@@ -1,4 +1,3 @@
-using System.Windows;
 
 namespace PdfEdit.Models;
 
@@ -26,7 +25,7 @@ public class FreeTextAnnotation
     public bool IsBold { get; set; }
     public bool IsItalic { get; set; }
     public bool IsUnderline { get; set; }
-    public TextAlignment TextAlignment { get; set; } = TextAlignment.Left;
+    public TextAlign TextAlignment { get; set; } = TextAlign.Left;
     public bool ForceUpperCase { get; set; }
 
     // Highlight-mode: renders as a semi-transparent colored rectangle instead of text

@@ -6,7 +6,7 @@
         xmlns:Fluent="urn:fluent-ribbon"
         xmlns:controls="clr-namespace:PdfEdit.Controls"
         xmlns:vm="clr-namespace:PdfEdit.ViewModels"
-        xmlns:models="clr-namespace:PdfEdit.Models"
+        xmlns:models="clr-namespace:PdfEdit.Models;assembly=PdfEdit.Core"
         xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="PdfEdit — PDF Form Filler"

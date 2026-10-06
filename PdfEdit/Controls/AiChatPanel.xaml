@@ -1,7 +1,7 @@
 <UserControl x:Class="PdfEdit.Controls.AiChatPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="clr-namespace:PdfEdit.Models"
+             xmlns:models="clr-namespace:PdfEdit.Models;assembly=PdfEdit.Core"
              xmlns:local="clr-namespace:PdfEdit.Controls"
              Background="{DynamicResource PanelBgBrush}"
              AutomationProperties.Name="AI chat assistant">
@@ -248,7 +248,7 @@
                         CornerRadius="14,14,4,14" Padding="12,8"
                         Margin="48,0,0,0">
                     <StackPanel>
-                        <Image Source="{Binding ImagePreview}" MaxHeight="160" MaxWidth="380" Stretch="Uniform"
+                        <Image Source="{Binding ImagePng, Converter={StaticResource PngBytesToImageConverter}}" MaxHeight="160" MaxWidth="380" Stretch="Uniform"
                                HorizontalAlignment="Left" Margin="0,0,0,6"
                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <TextBlock Text="{Binding Content}" TextWrapping="Wrap"

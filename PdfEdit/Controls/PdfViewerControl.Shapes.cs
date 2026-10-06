@@ -28,52 +28,15 @@ public partial class PdfViewerControl
 
     private static bool IsDragLineTool(ActiveTool t) => t is ActiveTool.DrawLine or ActiveTool.MeasureDistance;
 
-    // ── Measurement text ─────────────────────────────────────────────────────
+    // ── Measurement text (the maths is in PdfEdit.Core's Measurement) ───────
 
-    private static double PointsPerUnit(string unit) => unit switch
-    {
-        "mm" => 72.0 / 25.4,
-        "cm" => 72.0 / 2.54,
-        "pt" => 1.0,
-        _    => 72.0,   // in
-    };
-
-    private static string FormatLength(double pts, string unit) =>
-        (pts / PointsPerUnit(unit)).ToString(unit == "pt" ? "0" : "0.00", CultureInfo.CurrentCulture) + " " + unit;
-
-    private static string FormatArea(double sqPts, string unit)
-    {
-        double k = PointsPerUnit(unit);
-        return (sqPts / (k * k)).ToString(unit == "pt" ? "0" : "0.00", CultureInfo.CurrentCulture) + " sq " + unit;
-    }
-
-    private static double PolyLength(IReadOnlyList<Point> pts, bool closed)
-    {
-        double len = 0;
-        for (int i = 1; i < pts.Count; i++) len += (pts[i] - pts[i - 1]).Length;
-        if (closed && pts.Count > 2) len += (pts[0] - pts[^1]).Length;
-        return len;
-    }
-
-    private static double PolyArea(IReadOnlyList<Point> pts)
-    {
-        double a = 0;
-        for (int i = 0; i < pts.Count; i++)
-        {
-            var p = pts[i]; var q = pts[(i + 1) % pts.Count];
-            a += p.X * q.Y - q.X * p.Y;
-        }
-        return Math.Abs(a) / 2;
-    }
+    private static string FormatLength(double pts, string unit) => Measurement.FormatLength(pts, unit);
+    private static string FormatArea(double sqPts, string unit) => Measurement.FormatArea(sqPts, unit);
+    private static double PolyLength(IEnumerable<Point> pts, bool closed) => Measurement.PolyLength(pts.Select(p => new PointD(p.X, p.Y)).ToList(), closed);
+    private static double PolyArea(IEnumerable<Point> pts) => Measurement.PolyArea(pts.Select(p => new PointD(p.X, p.Y)).ToList());
 
     /// <summary>The label a measurement shows (also written to the saved annotation).</summary>
-    public static string MeasureLabel(ShapeAnnotation s) => s.Kind switch
-    {
-        ShapeKind.Distance  => FormatLength((new Point(s.X2, s.Y2) - new Point(s.X1, s.Y1)).Length, s.MeasureUnit),
-        ShapeKind.Perimeter => FormatLength(PolyLength(s.Points ?? new(), closed: false), s.MeasureUnit),
-        ShapeKind.Area      => FormatArea(PolyArea(s.Points ?? new()), s.MeasureUnit),
-        _ => string.Empty,
-    };
+    public static string MeasureLabel(ShapeAnnotation s) => Measurement.Label(s);
 
     // ── Cloud (Acrobat revision cloud): scalloped rectangle ──────────────────
 
@@ -484,7 +447,7 @@ public partial class PdfViewerControl
                 ActiveTool.MeasurePerimeter => ShapeKind.Perimeter,
                 _ => ShapeKind.Area,
             },
-            Points = pdfPts,
+            Points = pdfPts.Select(p => p.ToCore()).ToList(),
             X1 = pdfPts.Min(p => p.X), Y1 = pdfPts.Min(p => p.Y),
             X2 = pdfPts.Max(p => p.X), Y2 = pdfPts.Max(p => p.Y),
             StrokeColor = _vm.CurrentDrawingColor ?? "#C62828",

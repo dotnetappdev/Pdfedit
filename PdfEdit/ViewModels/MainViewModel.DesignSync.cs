@@ -170,7 +170,7 @@ public partial class MainViewModel
         ann.FontFamily = t.FontFamily;
         ann.IsBold = t.Bold; ann.IsItalic = t.Italic; ann.IsUnderline = t.Underline;
         ann.FontColor = ToHex(t.Color);
-        ann.TextAlignment = t.Alignment;
+        ann.TextAlignment = t.Alignment.ToCore();
         ann.AutoSize = false;
     }
 
@@ -414,7 +414,7 @@ public partial class MainViewModel
         t.FontFamily = a.FontFamily;
         t.Bold = a.IsBold; t.Italic = a.IsItalic; t.Underline = a.IsUnderline;
         t.Color = FromHex(a.FontColor, Colors.Black);
-        t.Alignment = MarkShapes.FromGlyph(a.Text) != null ? TextAlignment.Center : a.TextAlignment;
+        t.Alignment = MarkShapes.FromGlyph(a.Text) != null ? TextAlignment.Center : a.TextAlignment.ToWpf();
         t.Wrap = !a.AutoSize;
     }
 }

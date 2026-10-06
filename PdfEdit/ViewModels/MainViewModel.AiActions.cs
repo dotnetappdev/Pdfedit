@@ -356,7 +356,7 @@ public partial class MainViewModel
             Width = w, Height = h,
             Text = def.Title, IsStamp = true,
             FontSize = 18, FontFamily = "Arial", IsBold = true, FontColor = def.Color,
-            TextAlignment = TextAlignment.Center,
+            TextAlignment = TextAlign.Center,
         };
         FreeTextAnnotations.Add(ann);
         PushUndo(

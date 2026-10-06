@@ -1,5 +1,3 @@
-using System.Windows;
-
 namespace PdfEdit.Models;
 
 /// <summary>
@@ -22,17 +20,17 @@ public static class MarkShapes
     };
 
     /// <summary>Open polylines to stroke (empty for the dot / circle).</summary>
-    public static Point[][] Strokes(Kind kind) => kind switch
+    public static PointD[][] Strokes(Kind kind) => kind switch
     {
         // Acrobat's tick: short down-stroke, long up-stroke
-        Kind.Check => new[] { new[] { new Point(0.14, 0.54), new Point(0.40, 0.80), new Point(0.88, 0.20) } },
+        Kind.Check => new[] { new[] { new PointD(0.14, 0.54), new PointD(0.40, 0.80), new PointD(0.88, 0.20) } },
         Kind.Cross => new[]
         {
-            new[] { new Point(0.20, 0.20), new Point(0.80, 0.80) },
-            new[] { new Point(0.80, 0.20), new Point(0.20, 0.80) },
+            new[] { new PointD(0.20, 0.20), new PointD(0.80, 0.80) },
+            new[] { new PointD(0.80, 0.20), new PointD(0.20, 0.80) },
         },
-        Kind.Line => new[] { new[] { new Point(0.08, 0.5), new Point(0.92, 0.5) } },
-        _ => Array.Empty<Point[]>(),
+        Kind.Line => new[] { new[] { new PointD(0.08, 0.5), new PointD(0.92, 0.5) } },
+        _ => Array.Empty<PointD[]>(),
     };
 
     /// <summary>Stroke width as a fraction of the square's side.</summary>

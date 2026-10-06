@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PdfEdit.Core: the app's logic with no UI in it — PDF reading and editing (iText), forms,
+    annotations, import / export, AI providers, cloud storage, settings and stores. It targets
+    plain .NET (no WPF, no Windows-only types), so another front end (Avalonia, MAUI, a CLI or a
+    web API) can use it as is. Windows-only parts (rendering, OCR, scanning, speech, themes) stay
+    in the WPF app.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PdfEdit</RootNamespace>
+    <AssemblyName>PdfEdit.Core</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="itext7" Version="8.0.4" />
+    <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.4" />
+    <!-- Cloud sign-in tokens are encrypted for the Windows user (DPAPI) -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PdfEdit" />
+    <InternalsVisibleTo Include="PdfEdit.Tests" />
+  </ItemGroup>
+
+</Project>

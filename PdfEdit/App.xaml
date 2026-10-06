@@ -36,6 +36,7 @@
             <conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
             <conv:FreehandGeometryConverter x:Key="FreehandGeometryConverter"/>
             <conv:LineGeometryConverter x:Key="LineGeometryConverter"/>
+            <conv:PngBytesToImageConverter x:Key="PngBytesToImageConverter"/>
 
             <!-- Per-area interface font sizes (defaults; overridden live by FontService
                  from the user's settings). Controls bind via DynamicResource. -->

@@ -1812,7 +1812,7 @@ public partial class PdfViewerControl : UserControl
         tb.FontStyle = ann.IsItalic ? FontStyles.Italic : FontStyles.Normal;
         tb.TextDecorations = ann.IsUnderline ? TextDecorations.Underline : null;
         tb.Foreground = ParseBrush(ann.FontColor);
-        tb.TextAlignment = ann.TextAlignment;
+        tb.TextAlignment = ann.TextAlignment.ToWpf();
 
         // ✓ ✕ ● ○ — are drawn as shapes like Acrobat (not font glyphs): the box keeps the glyph
         // as its text (for select / drag / swap), hidden, and shows the drawing as its background.
@@ -1850,8 +1850,8 @@ public partial class PdfViewerControl : UserControl
         group.Children.Add(new GeometryDrawing(Brushes.Transparent, null, new RectangleGeometry(new Rect(0, 0, 1, 1))));
         foreach (var stroke in MarkShapes.Strokes(kind))
         {
-            var fig = new PathFigure { StartPoint = stroke[0], IsClosed = false };
-            fig.Segments.Add(new PolyLineSegment(stroke.Skip(1), isStroked: true));
+            var fig = new PathFigure { StartPoint = stroke[0].ToWpf(), IsClosed = false };
+            fig.Segments.Add(new PolyLineSegment(stroke.Skip(1).Select(p => p.ToWpf()), isStroked: true));
             group.Children.Add(new GeometryDrawing(null, pen, new PathGeometry(new[] { fig })));
         }
         double r = MarkShapes.Radius(kind);
@@ -3191,7 +3191,7 @@ public partial class PdfViewerControl : UserControl
             FontFamily = _vm.CurrentFontFamily,
             IsBold = true,
             FontColor = colorHex,
-            TextAlignment = System.Windows.TextAlignment.Center,
+            TextAlignment = TextAlign.Center,
         };
         _vm.FreeTextAnnotations.Add(ann);
 
@@ -3257,7 +3257,7 @@ public partial class PdfViewerControl : UserControl
             IsItalic = _vm.CurrentFontItalic,
             IsUnderline = _vm.CurrentFontUnderline,
             FontColor = _vm.CurrentFontColor,
-            TextAlignment = _vm.CurrentTextAlignment,
+            TextAlignment = _vm.CurrentTextAlignment.ToCore(),
             ForceUpperCase = _vm.ForceUpperCase,
             AutoSize = !vertical,
         };

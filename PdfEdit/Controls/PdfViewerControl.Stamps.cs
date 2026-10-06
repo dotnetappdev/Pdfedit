@@ -107,7 +107,7 @@ public partial class PdfViewerControl
             FontFamily = "Arial",
             IsBold = true,
             FontColor = def.Color,
-            TextAlignment = TextAlignment.Center,
+            TextAlignment = TextAlign.Center,
         };
         _vm.FreeTextAnnotations.Add(ann);
         PlaceAnnotationVisual(ann, pageH);

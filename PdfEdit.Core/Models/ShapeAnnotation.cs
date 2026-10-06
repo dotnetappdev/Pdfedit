@@ -27,7 +27,7 @@ public class ShapeAnnotation
     // 0–1 (Acrobat's opacity slider)
     public double    Opacity     { get; set; } = 1.0;
     // Vertices in PDF points for Polygon / Polyline / Perimeter / Area (X1..Y2 hold their bounds)
-    public List<System.Windows.Point>? Points { get; set; }
+    public List<PointD>? Points { get; set; }
     // Unit the measurement label is shown in: "in", "mm", "cm" or "pt"
     public string    MeasureUnit { get; set; } = "in";
     // Author, date, note, replies and review status (Comments panel)
