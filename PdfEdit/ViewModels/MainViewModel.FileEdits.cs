@@ -22,12 +22,17 @@ public partial class MainViewModel
             byte[] before = await File.ReadAllBytesAsync(path);
             await Task.Run(() => edit(path, tmp));
             byte[] after = await File.ReadAllBytesAsync(tmp);
-            await File.WriteAllBytesAsync(path, after);
+            await WriteOpenFileAsync(path, after);
             _linkCache = null;
             await ReloadCurrentFileAsync();
             PushFileUndo(path, before, after, description);
             StatusText = $"{description}.";
             return true;
+        }
+        catch (IOException ex) when (IsFileLocked(ex))
+        {
+            Dialogs.AppDialog.ShowError(LockedMessage(path, description), ex);
+            return false;
         }
         catch (Exception ex)
         {
@@ -39,6 +44,35 @@ public partial class MainViewModel
             try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
         }
     }
+
+    /// <summary>
+    /// Overwrites the open PDF. Virus scanners, Explorer's preview pane and search indexing hold a
+    /// file for a moment (often right after a download), so a sharing violation is retried briefly
+    /// before giving up; a file kept open in another program still fails.
+    /// </summary>
+    private static async Task WriteOpenFileAsync(string path, byte[] bytes)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await File.WriteAllBytesAsync(path, bytes);
+                return;
+            }
+            catch (IOException ex) when (IsFileLocked(ex) && attempt < 6)
+            {
+                await Task.Delay(150 * attempt);
+            }
+        }
+    }
+
+    /// <summary>ERROR_SHARING_VIOLATION (32) or ERROR_LOCK_VIOLATION (33).</summary>
+    private static bool IsFileLocked(IOException ex) => (ex.HResult & 0xFFFF) is 32 or 33;
+
+    private static string LockedMessage(string path, string description) =>
+        $"{description} couldn't be saved: {Path.GetFileName(path)} is open in another program " +
+        "(another PDF reader, a browser tab, or Explorer's preview pane).\n\n" +
+        "Close it there and try again, or use Save As to keep a copy under another name.";
 
     private void PushFileUndo(string path, byte[] before, byte[] after, string description)
     {
@@ -52,7 +86,7 @@ public partial class MainViewModel
             if (!string.Equals(_currentFilePath, path, StringComparison.OrdinalIgnoreCase)) return;
             try
             {
-                await File.WriteAllBytesAsync(path, bytes);
+                await WriteOpenFileAsync(path, bytes);
                 _linkCache = null;
                 await ReloadCurrentFileAsync();
                 // The reload emptied both stacks: put this step back where Undo / Redo expects it.
@@ -60,6 +94,10 @@ public partial class MainViewModel
                 OnPropertyChanged(nameof(CanUndo));
                 OnPropertyChanged(nameof(CanRedo));
                 StatusText = toRedo ? $"Undone: {description}." : $"Redone: {description}.";
+            }
+            catch (IOException ex) when (IsFileLocked(ex))
+            {
+                Dialogs.AppDialog.ShowError(LockedMessage(path, toRedo ? $"Undo \"{description}\"" : $"Redo \"{description}\""), ex);
             }
             catch (Exception ex)
             {
