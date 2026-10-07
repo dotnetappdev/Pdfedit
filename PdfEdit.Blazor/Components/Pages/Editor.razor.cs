@@ -81,7 +81,7 @@ public partial class Editor
     private bool CanUndo => Doc != null && (Doc.UndoStack.Count > 0 || HasPending);
     private bool CanRedo => Doc != null && Doc.RedoStack.Count > 0;
 
-    private static string TabName(RibbonTab t) => t switch { RibbonTab.FillSign => "Fill & Sign", _ => t.ToString() };
+    private static string TabName(RibbonTab t) => t switch { RibbonTab.FillSign => "Fill & Sign", RibbonTab.AI => "AI Assistant", _ => t.ToString() };
 
     protected override void OnInitialized()
     {
@@ -89,6 +89,7 @@ public partial class Editor
         var folder = Path.GetFullPath(Path.Combine(Env.ContentRootPath, Config["PdfEdit:SamplesFolder"] ?? "../Samples"));
         if (Directory.Exists(folder))
             Samples = Directory.GetFiles(folder, "*.pdf").Order().ToList();
+        InitAi();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

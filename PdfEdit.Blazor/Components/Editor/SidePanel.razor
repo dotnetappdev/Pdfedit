@@ -1,9 +1,14 @@
 @* The right-hand panel: Properties, Fields, Comments, Bookmarks and Search, like the Windows app's docked panes. *@
-@if (Ed.Doc is not { } doc)
+@if (Ed.RightPanelTab == RightTab.AI)
+{
+    <AiPanel Ed="Ed" />
+}
+else if (Ed.Doc is not { } doc)
 {
     <p class="pe-hint">Open a PDF to see its @Ed.RightPanelTab.ToString().ToLowerInvariant() here.</p>
-    return;
 }
+else
+{
 @switch (Ed.RightPanelTab)
 {
     case RightTab.Properties:
@@ -156,6 +161,7 @@
             <p class="pe-hint">No matches for “@Ed.SearchText”. Scanned pages need OCR (in the Windows app) before they can be searched.</p>
         }
         break;
+}
 }
 
 @code {

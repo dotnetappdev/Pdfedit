@@ -25,8 +25,26 @@ offered on the start page.
 | Edit | Undo/Redo for everything, export/import form data, reset form, check required fields, rectangles and ellipses |
 | View | Zoom, fit width/page, thumbnails, side panel, bookmarks, comments, search with highlights, light/dark theme, statistics |
 | Export | Word, Excel, PowerPoint, HTML, Markdown, ePub, text, page images, pictures |
+| AI Assistant | Chat about the open PDF with page links, Summarize, Extract data, Review contract, Find personal info, Translate, Fill form with AI, and the changes the AI proposes (fill fields, highlight, redact, notes, rotate, delete, watermark, bookmarks, commands) applied one by one or all at once |
 
 Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.
+
+## AI keys
+
+The AI Assistant works with Claude, OpenAI, GitHub Copilot models or a local AI server (Ollama,
+LM Studio …), through the same code as the Windows app. Each user can paste their own key in
+**AI Assistant → API Keys**; it's kept only in memory for their session. To give everyone a key,
+set it in the server's configuration — environment variables or `dotnet user-secrets`, never in a
+committed file:
+
+```bash
+export PdfEdit__Ai__Provider=Claude          # Claude, OpenAI, Copilot or Local
+export PdfEdit__Ai__ClaudeApiKey=...
+export PdfEdit__Ai__OpenAiApiKey=...
+export PdfEdit__Ai__GitHubToken=...
+export PdfEdit__Ai__LocalEndpoint=http://localhost:11434/v1
+export PdfEdit__Ai__LocalModel=llama3.2
+```
 
 ## How it works
 
@@ -38,7 +56,7 @@ Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+
 
 ## Not in the web version yet
 
-The AI assistant, the design canvas, creating and editing form fields (Prepare Form), OCR,
+The design canvas, creating and editing form fields (Prepare Form), OCR,
 scanning, compare, read aloud, certificate signing, stamps, ink drawing and measuring, moving or
 resizing things after placing them, adding things to rotated pages, cloud storage, batch and bulk
 fill, translation, Office-to-PDF conversion, and several documents open at once.

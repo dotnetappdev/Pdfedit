@@ -1,0 +1,146 @@
+@* The AI Assistant panel: chat about the open PDF, like the Windows app's AI pane. *@
+<div class="pe-ai">
+    <div class="d-flex align-items-baseline">
+        <h3>AI Assistant</h3>
+        <span class="pe-hint ms-auto" title="@Ed.AiModel">@(Ed.AiProvider == AiProviderService.LocalProvider ? "Local AI" : Ed.AiProvider) · @Ed.ModelName(Ed.AiModel)</span>
+    </div>
+
+    @if (!Ed.AiReady)
+    {
+        <div class="pe-ai-setup">
+            <p class="mb-2">To use the assistant, add an API key for @Ed.AiProvider (or pick another provider).</p>
+            <button class="pe-btn primary" @onclick="() => Act(() => Ed.ShowDialog(DialogKind.AiSettings))"><i class="bi bi-key"></i> Set up AI</button>
+        </div>
+    }
+
+    <div class="pe-ai-presets">
+        @foreach (var (type, label, icon) in Editor.AiPresets)
+        {
+            var t = type;
+            <button class="pe-chip" disabled="@(Ed.NoDoc || Ed.AiRunning)" @onclick="() => ActAsync(() => Ed.RunAiPresetAsync(t))"><i class="bi @icon"></i> @label</button>
+        }
+    </div>
+
+    <div class="pe-ai-messages" aria-live="polite">
+        @if (Ed.AiHistory.Count == 0)
+        {
+            <p class="pe-hint">@(Ed.NoDoc ? "Open a PDF, then ask anything about it." : "Ask anything about this PDF — “What are the key dates?”, “Fill in my details”, “Highlight every amount”.")</p>
+        }
+        @foreach (var m in Ed.AiHistory)
+        {
+            var msg = m;
+            <div class="pe-msg @(m.Role == "user" ? "user" : "assistant")">
+                @if (m.Role == "user")
+                {
+                    @m.Content
+                }
+                else
+                {
+                    @((MarkupString)Ed.ReplyHtml(m.Content))
+                    @if (m.IsStreaming) { <span class="pe-caret">▍</span> }
+                    @foreach (var a in m.Actions)
+                    {
+                        var action = a;
+                        <div class="pe-action">
+                            <span class="pe-action-text"><i class="bi @ActionIcon(a.Action)" style="color:var(--pe-accent)"></i> @a.Description</span>
+                            @if (a.State == AiActionState.Pending)
+                            {
+                                <button class="pe-btn primary" @onclick="() => ActAsync(() => Ed.ApplyAiActionAsync(action))">Apply</button>
+                            }
+                            else
+                            {
+                                <span class="pe-action-state @(a.State == AiActionState.Failed ? "failed" : "")">@a.StateText</span>
+                            }
+                        </div>
+                    }
+                    @if (m.Actions.Count(a => a.State == AiActionState.Pending) > 1)
+                    {
+                        <button class="pe-btn mt-1" @onclick="() => ApplyAll(msg)">Apply all</button>
+                    }
+                    @if (m.FollowUps.Count > 0 && msg == Ed.AiHistory[^1])
+                    {
+                        <div class="pe-ai-presets mt-2">
+                            @foreach (var f in m.FollowUps)
+                            {
+                                var q = f;
+                                <button class="pe-chip" disabled="@Ed.AiRunning" @onclick="() => ActAsync(() => Ed.SendAiAsync(q))">@f</button>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+    <div class="pe-ai-input">
+        <textarea class="form-control" rows="2" placeholder="Ask about this PDF…" aria-label="Message to the AI"
+                  @bind="_input" @bind:event="oninput" @onkeydown="Key" @onkeydown:preventDefault="_preventEnter"></textarea>
+        @if (Ed.AiRunning)
+        {
+            <button class="pe-btn" title="Stop" aria-label="Stop" @onclick="() => Act(Ed.StopAi)"><i class="bi bi-stop-fill"></i></button>
+        }
+        else
+        {
+            <button class="pe-btn primary" title="Send (Enter)" aria-label="Send" disabled="@string.IsNullOrWhiteSpace(_input)" @onclick="Send"><i class="bi bi-send"></i></button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private string _input = "";
+    private bool _preventEnter;
+
+    private async Task Key(KeyboardEventArgs e)
+    {
+        // Enter sends; Shift+Enter starts a new line.
+        _preventEnter = e.Key == "Enter" && !e.ShiftKey;
+        if (_preventEnter) await Send();
+    }
+
+    private async Task Send()
+    {
+        var text = _input;
+        if (string.IsNullOrWhiteSpace(text)) return;
+        _input = "";
+        await ActAsync(() => Ed.SendAiAsync(text));
+    }
+
+    private async Task ApplyAll(AiChatMessage msg)
+    {
+        foreach (var a in msg.Actions.Where(a => a.State == AiActionState.Pending).ToList())
+            await Ed.ApplyAiActionAsync(a);
+        Ed.Refresh();
+    }
+
+    private static string ActionIcon(string action) => action switch
+    {
+        "fill_field" => "bi-input-cursor-text",
+        "go_to_page" => "bi-arrow-right-square",
+        "highlight" => "bi-highlighter",
+        "redact" => "bi-eraser-fill",
+        "add_note" => "bi-sticky",
+        "add_stamp" => "bi-patch-check",
+        "rotate_page" => "bi-arrow-clockwise",
+        "delete_page" => "bi-trash",
+        "add_watermark" => "bi-droplet-half",
+        "add_bookmark" => "bi-bookmark-plus",
+        "zoom" => "bi-zoom-in",
+        "command" => "bi-lightning",
+        "design_form" => "bi-ui-checks-grid",
+        _ => "bi-check2-square",
+    };
+
+    private void Act(Action action)
+    {
+        action();
+        Ed.Refresh();
+    }
+
+    private async Task ActAsync(Func<Task> action)
+    {
+        await action();
+        Ed.Refresh();
+    }
+}

@@ -241,6 +241,40 @@
                 </RibbonGroup>
                 break;
 
+            case RibbonTab.AI:
+                <RibbonGroup Title="Assist">
+                    <RibbonButton Large Icon="bi-chat-dots" Label="Chat" Title="Ask about the open PDF" OnClick="() => ShowRight(RightTab.AI)" />
+                    <RibbonButton Large Icon="bi-trash3" Label="Clear Chat" Disabled="@(AiHistory.Count == 0)" OnClick="ClearAiChat" />
+                </RibbonGroup>
+                <RibbonGroup Title="Document AI">
+                    @foreach (var (type, label, icon) in AiPresets)
+                    {
+                        var t = type;
+                        <RibbonButton Large Icon="@icon" Label="@label" Disabled="@(NoDoc || AiRunning)" OnClick="() => RunAiPresetAsync(t)" />
+                    }
+                </RibbonGroup>
+                <RibbonGroup Title="Provider">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Provider</span>
+                            <select value="@AiProvider" @onchange="ProviderChanged" aria-label="AI provider">
+                                @foreach (var p in AiProviderService.Providers.Keys) { <option value="@p">@(p == AiProviderService.LocalProvider ? "Local AI" : p)</option> }
+                            </select>
+                        </div>
+                        <div class="pe-field-inline">
+                            <span>Model</span>
+                            <select @bind="AiModel" aria-label="AI model" style="max-width:140px">
+                                @foreach (var m in AiModels) { <option value="@m">@ModelName(m)</option> }
+                            </select>
+                        </div>
+                        <span class="pe-field-inline" style="color:var(--pe-dim)">@(AiReady ? "✓ Ready" : "No API key")</span>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Setup">
+                    <RibbonButton Large Icon="bi-key" Label="API Keys" OnClick="() => ShowDialog(DialogKind.AiSettings)" />
+                </RibbonGroup>
+                break;
+
             case RibbonTab.Help:
                 <RibbonGroup Title="Learn">
                     <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
@@ -341,7 +375,7 @@
                     @foreach (var t in Enum.GetValues<RightTab>())
                     {
                         var tab = t;
-                        <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@tab</button>
+                        <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@(tab == RightTab.AI ? "AI" : tab.ToString())</button>
                     }
                 </div>
                 <div class="pe-panel-body"><SidePanel Ed="this" /></div>

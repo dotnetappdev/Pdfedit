@@ -1,8 +1,8 @@
 namespace PdfEdit.Blazor.Components.Editor;
 
-public enum RibbonTab { Home, FillSign, Edit, View, Tools, Help }
+public enum RibbonTab { Home, FillSign, Edit, View, Tools, AI, Help }
 
-public enum RightTab { Properties, Fields, Comments, Bookmarks, Search }
+public enum RightTab { Properties, Fields, Comments, Bookmarks, Search, AI }
 
 public enum Backstage { Info, New, Open, SaveAs, Export, Close }
 
@@ -13,7 +13,7 @@ public enum DialogKind
 {
     None, Password, Properties, Watermark, PageNumbers, HeaderFooter, Bates, Protect, Sanitize,
     Resize, NUp, Signature, Note, Merge, InsertPdf, Combine, ExtractRange, DeleteRange, ImportData,
-    Statistics, Shortcuts, About,
+    Statistics, Shortcuts, About, AiSettings,
 }
 
 public enum ExportFormat { Word, Excel, PowerPoint, Html, Markdown, Epub, Text, Images, Pictures }

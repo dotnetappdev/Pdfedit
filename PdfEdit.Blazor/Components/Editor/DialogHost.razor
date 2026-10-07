@@ -378,6 +378,39 @@
         </Modal>
         break;
 
+    case DialogKind.AiSettings:
+        <Modal Title="AI Assistant Setup" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2">
+                    <label>Provider</label>
+                    <select class="form-select" value="@_aiProvider" @onchange="e => { _aiProvider = e.Value?.ToString() ?? _aiProvider; _aiKey = Ed.SessionKey(_aiProvider); }">
+                        @foreach (var p in AiProviderService.Providers.Keys) { <option value="@p">@(p == AiProviderService.LocalProvider ? "Local AI (Ollama, LM Studio…)" : p == AiProviderService.CopilotProvider ? "GitHub Copilot models" : p)</option> }
+                    </select>
+                </div>
+                @if (_aiProvider == AiProviderService.LocalProvider)
+                {
+                    <p class="pe-hint mb-0">
+                        @(Ed.HasServerKey(_aiProvider)
+                            ? $"This server uses a local AI server at {AppSettings.Current.LocalAiEndpoint} (model {AppSettings.Current.LocalAiModel})."
+                            : "No local AI server is set up for this site. The site's owner sets PdfEdit:Ai:LocalEndpoint in its configuration.")
+                    </p>
+                }
+                else
+                {
+                    <div class="mb-2">
+                        <label>@(_aiProvider == AiProviderService.CopilotProvider ? "GitHub token (with the models permission)" : $"{_aiProvider} API key")</label>
+                        <input class="form-control" type="password" autocomplete="off" @bind="_aiKey" placeholder="@(Ed.HasServerKey(_aiProvider) ? "Using the site's key — type one to use your own" : "Paste your key")" />
+                    </div>
+                    <p class="pe-hint mb-0">Your key stays in this browser session's memory on the server and is forgotten when you close the page. It's sent only to @_aiProvider.</p>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="SaveAiSettings">Use @(_aiProvider == AiProviderService.LocalProvider ? "Local AI" : _aiProvider)</button>
+            </Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>
@@ -422,6 +455,7 @@
     private IReadOnlyList<IBrowserFile> _files = [];
     private bool _insertAtStart;
     private List<(string, string)>? _stats;
+    private string _aiProvider = "", _aiKey = "";
 
     private ElementReference _sigCanvas;
     private bool _sigTyped, _sigPadReady;
@@ -448,6 +482,10 @@
         {
             case DialogKind.Password:
                 _password = "";
+                break;
+            case DialogKind.AiSettings:
+                _aiProvider = Ed.AiProvider;
+                _aiKey = Ed.SessionKey(_aiProvider);
                 break;
             case DialogKind.Properties when Ed.Doc != null:
                 var m = Ed.Doc.Metadata;
@@ -532,6 +570,18 @@
     private async Task PasswordKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await OpenWithPassword();
+    }
+
+    private void SaveAiSettings()
+    {
+        if (_aiProvider != AiProviderService.LocalProvider) Ed.SetSessionKey(_aiProvider, _aiKey);
+        if (Ed.AiProvider != _aiProvider)
+        {
+            Ed.AiProvider = _aiProvider;
+            Ed.AiModel = Editor.DefaultModel(_aiProvider);
+        }
+        Ed.ShowRight(RightTab.AI);
+        Close();
     }
 
     private Task ApplyWatermark()
