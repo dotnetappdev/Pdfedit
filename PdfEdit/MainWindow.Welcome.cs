@@ -9,7 +9,7 @@ namespace PdfEdit;
 /// <summary>
 /// First launch: the guided tour. Later launches: Tip of the Day (unless turned off). Both are
 /// remembered in settings.json (TourCompleted, ShowTipsAtStartup, NextTipIndex) and can be
-/// opened again from File or View → Help.
+/// opened again from File or the Help tab.
 /// </summary>
 public partial class MainWindow
 {
@@ -81,8 +81,11 @@ public partial class MainWindow
             new("Page number",
                 "Shows where you are. Click it (or press Ctrl+G) to jump to a page.",
                 () => PageNavStatusPanel),
+            new("Help",
+                "Check for Updates, What's New, this tour, Tip of the Day, keyboard shortcuts, Report a Problem and About PdfEdit are all here.",
+                () => MainRibbon, () => MainRibbon.SelectedTabItem = HelpTab),
             new("You're all set",
-                "Press F1 any time for keyboard shortcuts. A Tip of the Day appears when PdfEdit starts; turn it off in the tip window, or find it under View → Help."),
+                "Press F1 any time for keyboard shortcuts. A Tip of the Day appears when PdfEdit starts; turn it off in the tip window, or find it on the Help tab, along with Check for Updates and About."),
         };
 
         _tourRunning = TourOverlay.Start(this, steps, () =>

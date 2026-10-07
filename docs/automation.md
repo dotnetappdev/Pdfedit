@@ -29,4 +29,4 @@
 - **Tabs**: every open file has one. Ctrl+Tab switches; Ctrl+W closes.
 - **Slide Show**, **Two Pages** and **Night Mode** are on the View tab.
 - **Read Aloud** (View) reads the page, or to the end, with a Windows voice.
-- **Tip of the Day** and **Take the Tour** are under View → Help.
+- **Tip of the Day** and **Take the Tour** are on the Help tab.

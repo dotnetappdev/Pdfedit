@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using PdfEdit.Dialogs;
 using PdfEdit.Services;
@@ -5,12 +6,28 @@ using PdfEdit.Services;
 namespace PdfEdit;
 
 /// <summary>
-/// Software updates: File → Check for Updates (also in About), and a check of GitHub each time
-/// PdfEdit starts (unless turned off) that asks about a newer version the user hasn't skipped.
+/// The Help tab: Check for Updates, What's New, the tour and tips, Report a Problem, GitHub and
+/// About; plus a check of GitHub each time PdfEdit starts (unless turned off) that asks about a
+/// newer version the user hasn't skipped.
 /// </summary>
 public partial class MainWindow
 {
+    public const string GitHubUrl = "https://github.com/dotnetappdev/pdfedit";
+
     private void CheckForUpdates_Click(object sender, RoutedEventArgs e) => ShowUpdateDialog();
+
+    private void WhatsNew_Click(object sender, RoutedEventArgs e) => OpenWebPage(UpdateService.ReleasesPage);
+
+    private void ReportProblem_Click(object sender, RoutedEventArgs e) => OpenWebPage(GitHubUrl + "/issues/new");
+
+    private void GitHubPage_Click(object sender, RoutedEventArgs e) => OpenWebPage(GitHubUrl);
+
+    /// <summary>Opens <paramref name="url"/> in the default browser.</summary>
+    public static void OpenWebPage(string url)
+    {
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception ex) { AppDialog.ShowError($"Couldn't open {url}.", ex, "Open web page"); }
+    }
 
     /// <summary>Opens the Software Update window (optionally with a release already found).</summary>
     public void ShowUpdateDialog(UpdateInfo? found = null) =>
@@ -40,7 +57,7 @@ public partial class MainWindow
             await Task.Delay(1000);
         if (OwnedWindows.Count > 0 || _tourRunning || !IsVisible)
         {
-            ToastService.Instance.Info($"PdfEdit {latest.Version} is available — File → Check for Updates to install it.");
+            ToastService.Instance.Info($"PdfEdit {latest.Version} is available — Help → Check for Updates to install it.");
             return;
         }
 

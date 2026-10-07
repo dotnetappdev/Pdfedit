@@ -7,7 +7,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// File → Check for Updates: looks for a newer release on GitHub, downloads the package that
+/// Help → Check for Updates: looks for a newer release on GitHub, downloads the package that
 /// matches how PdfEdit was installed (to a folder the user picks) with a progress bar, and installs
 /// it, optionally closing PdfEdit first and starting it again afterwards.
 /// </summary>
