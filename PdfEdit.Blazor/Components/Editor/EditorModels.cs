@@ -7,13 +7,18 @@ public enum RightTab { Properties, Fields, Comments, Bookmarks, Search, AI }
 public enum Backstage { Info, New, Open, SaveAs, Export, Close }
 
 /// <summary>What a click (or drag) on the page does.</summary>
-public enum Tool { Select, Text, Date, Check, Cross, Dot, Signature, Note, Highlight, Redact, Rectangle, Ellipse }
+public enum Tool
+{
+    Select, Text, Date, Check, Cross, Dot, Signature, Note, Highlight, Redact, Rectangle, Ellipse,
+    // Prepare Form: add a form field
+    FieldText, FieldCheckbox, FieldRadio, FieldCombo, FieldList, FieldDate, FieldSignature,
+}
 
 public enum DialogKind
 {
     None, Password, Properties, Watermark, PageNumbers, HeaderFooter, Bates, Protect, Sanitize,
     Resize, NUp, Signature, Note, Merge, InsertPdf, Combine, ExtractRange, DeleteRange, ImportData,
-    Statistics, Shortcuts, About, AiSettings,
+    Statistics, Shortcuts, About, AiSettings, DetectFields,
 }
 
 public enum ExportFormat { Word, Excel, PowerPoint, Html, Markdown, Epub, Text, Images, Pictures }

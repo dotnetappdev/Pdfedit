@@ -30,7 +30,70 @@ else
         </table>
         <button class="pe-btn" @onclick="() => Act(() => Ed.ShowDialog(DialogKind.Properties))">Edit properties…</button>
 
-        @if (SelectedField is { } sf)
+        @if (Ed.PrepareMode && Ed.SelectedFieldInfo is { } pf)
+        {
+            var d = Ed.FieldDraft(pf);
+            <h3 class="mt-3">Field properties</h3>
+            <div class="pe-props">
+                <label>Name</label>
+                <input class="form-control form-control-sm" value="@d.DisplayName" @onchange="e => Set(() => d.PendingName = e.Value?.ToString()?.Trim())" />
+                <label>Tooltip (read by screen readers)</label>
+                <input class="form-control form-control-sm" value="@d.Tooltip" @onchange="e => Set(() => d.Tooltip = e.Value?.ToString())" />
+                <div class="d-flex flex-wrap gap-3 mt-1">
+                    <label class="pe-check-label"><input type="checkbox" checked="@d.IsRequired" @onchange="e => Set(() => d.IsRequired = e.Value is true)" /> Required</label>
+                    <label class="pe-check-label"><input type="checkbox" checked="@d.IsReadOnly" @onchange="e => Set(() => d.IsReadOnly = e.Value is true)" /> Read only</label>
+                    @if (d.FieldType == FieldType.Text)
+                    {
+                        <label class="pe-check-label"><input type="checkbox" checked="@d.IsMultiline" @onchange="e => Set(() => d.IsMultiline = e.Value is true)" /> Multi-line</label>
+                    }
+                </div>
+                @if (d.FieldType is FieldType.Text or FieldType.ComboBox or FieldType.ListBox)
+                {
+                    <div class="row g-2 mt-1">
+                        <div class="col-6">
+                            <label>Alignment</label>
+                            <select class="form-select form-select-sm" value="@d.Alignment" @onchange="e => Set(() => d.Alignment = Enum.Parse<FieldAlignment>(e.Value!.ToString()!))">
+                                <option value="@FieldAlignment.Left">Left</option>
+                                <option value="@FieldAlignment.Center">Centre</option>
+                                <option value="@FieldAlignment.Right">Right</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label>Font size (0 = auto)</label>
+                            <input class="form-control form-control-sm" type="number" min="0" max="72" value="@d.FontSize" @onchange="e => Set(() => d.FontSize = double.TryParse(e.Value?.ToString(), out var v) ? Math.Max(0, v) : 0)" />
+                        </div>
+                    </div>
+                }
+                @if (d.FieldType == FieldType.Text)
+                {
+                    <div class="row g-2 mt-1">
+                        <div class="col-6">
+                            <label>Max characters (0 = any)</label>
+                            <input class="form-control form-control-sm" type="number" min="0" value="@d.MaxLength" @onchange="e => Set(() => d.MaxLength = int.TryParse(e.Value?.ToString(), out var v) ? Math.Max(0, v) : 0)" />
+                        </div>
+                        <div class="col-6">
+                            <label>Format</label>
+                            <select class="form-select form-select-sm" value="@FormatValue(d)" @onchange="e => FormatChanged(d, e)">
+                                <option value="">None</option>
+                                @foreach (var df in DateFormats) { <option value="@("date:" + df)">Date @df</option> }
+                                @foreach (var nf in NumberFormats) { <option value="@("num:" + nf)">@nf</option> }
+                            </select>
+                        </div>
+                    </div>
+                }
+                @if (d.Options.Count > 0)
+                {
+                    <label class="mt-1">Choices</label>
+                    <div class="pe-hint">@string.Join(", ", d.Options)</div>
+                }
+                <p class="pe-hint mt-2 mb-1">Page @pf.PageNumber · @pf.FieldType. Changes are written into the PDF when you Apply Changes.</p>
+                <div class="d-flex gap-2">
+                    <button class="pe-btn primary" disabled="@(!Ed.HasPending)" @onclick="() => ActAsync(Ed.CommitAsync)">Apply changes</button>
+                    <button class="pe-btn danger" @onclick="() => Act(Ed.DeleteSelectedField)"><i class="bi bi-trash"></i> Delete field</button>
+                </div>
+            </div>
+        }
+        else if (SelectedField is { } sf)
         {
             <h3 class="mt-3">Field</h3>
             <table class="table table-sm" style="font-size:12px;color:inherit">
@@ -228,6 +291,26 @@ else
         ItemKind.Ellipse => "bi-circle",
         _ => "bi-square",
     };
+
+    private static readonly string[] DateFormats = ["dd/mm/yyyy", "mm/dd/yyyy", "yyyy-mm-dd", "d mmm yyyy"];
+    private static readonly string[] NumberFormats = ["Number", "Currency", "Percent", "Zip", "Phone"];
+
+    private static string FormatValue(FormFieldInfo d) =>
+        d.IsDateField ? "date:" + d.DateFormat : d.HasNumberFormat ? "num:" + d.NumberFormat : "";
+
+    private static void SetFormat(FormFieldInfo d, string value)
+    {
+        d.DateFormat = value.StartsWith("date:") ? value[5..] : null;
+        d.NumberFormat = value.StartsWith("num:") ? value[4..] : null;
+    }
+
+    private void FormatChanged(FormFieldInfo d, ChangeEventArgs e) => Set(() => SetFormat(d, e.Value?.ToString() ?? ""));
+
+    private void Set(Action change)
+    {
+        change();
+        Ed.Refresh();
+    }
 
     private static string Clip(string s) => s.Length > 60 ? s[..57] + "…" : s;
 

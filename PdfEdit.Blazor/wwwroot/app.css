@@ -696,3 +696,45 @@ html, body {
 .pe-action-state.failed { color: #C62828; }
 .pe-ai-input { display: flex; gap: 6px; align-items: flex-end; }
 .pe-ai-input textarea { resize: none; font-size: 12.5px; }
+
+/* ── Prepare Form: field boxes ───────────────────────────────────────────── */
+
+.pe-fbox {
+    position: absolute;
+    z-index: 12;
+    box-sizing: border-box;
+    border: 1px solid rgba(10, 132, 255, .8);
+    background: rgba(10, 132, 255, .16);
+    color: #0b3d91;
+    cursor: move;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+}
+.pe-fbox:hover { background: rgba(10, 132, 255, .26); }
+.pe-fbox.selected { border: 2px solid var(--pe-accent); background: rgba(10, 132, 255, .22); overflow: visible; }
+.pe-fbox-label {
+    display: block;
+    font-size: 10px;
+    line-height: 1.2;
+    padding: 1px 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+.pe-fbox.small .pe-fbox-label { display: none; }
+.pe-fbox-handle {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border: 2px solid var(--pe-accent);
+    border-radius: 2px;
+    cursor: nwse-resize;
+}
+.pe-dragging { opacity: .85; outline: 2px dashed var(--pe-accent); }
+.pe-props label { font-size: 11px; color: var(--pe-dim); margin: 4px 0 1px; display: block; }
+.pe-props .pe-check-label { display: flex; gap: 5px; align-items: center; color: var(--pe-fg); font-size: 12px; margin: 0; }

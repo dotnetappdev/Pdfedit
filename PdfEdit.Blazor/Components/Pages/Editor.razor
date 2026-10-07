@@ -160,6 +160,28 @@
                     <RibbonButton Large Icon="bi-arrow-counterclockwise" Label="Undo" Disabled="!CanUndo" OnClick="UndoAsync" />
                     <RibbonButton Large Icon="bi-arrow-clockwise" Label="Redo" Disabled="!CanRedo" OnClick="RedoAsync" />
                 </RibbonGroup>
+                <RibbonGroup Title="Prepare Form">
+                    <RibbonButton Large Icon="bi-ui-checks-grid" Label="Prepare Form" Title="Add, move, resize and change form fields" Disabled="NoDoc" Active="PrepareMode" OnClick="TogglePrepareMode" />
+                    <RibbonButton Large Icon="bi-magic" Label="Detect Fields" Title="Find the boxes and blank lines of a flat form and make them fillable" Disabled="NoDoc" OnClick="DetectFieldsAsync" />
+                    <RibbonButton Large Icon="bi-check2-circle" Label="Apply Changes" Title="Write the moved, resized, changed and deleted fields into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Add Form Field">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-input-cursor-text" Label="Text Field" Disabled="NoDoc" Active="_tool == Tool.FieldText" OnClick="() => SetTool(Tool.FieldText)" />
+                        <RibbonButton Icon="bi-check2-square" Label="Checkbox" Disabled="NoDoc" Active="_tool == Tool.FieldCheckbox" OnClick="() => SetTool(Tool.FieldCheckbox)" />
+                        <RibbonButton Icon="bi-record-circle" Label="Radio Button" Disabled="NoDoc" Active="_tool == Tool.FieldRadio" OnClick="() => SetTool(Tool.FieldRadio)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-menu-button-wide" Label="Dropdown" Disabled="NoDoc" Active="_tool == Tool.FieldCombo" OnClick="() => SetTool(Tool.FieldCombo)" />
+                        <RibbonButton Icon="bi-list-ul" Label="List Box" Disabled="NoDoc" Active="_tool == Tool.FieldList" OnClick="() => SetTool(Tool.FieldList)" />
+                        <RibbonButton Icon="bi-calendar-date" Label="Date Field" Disabled="NoDoc" Active="_tool == Tool.FieldDate" OnClick="() => SetTool(Tool.FieldDate)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-pen" Label="Signature Field" Disabled="NoDoc" Active="_tool == Tool.FieldSignature" OnClick="() => SetTool(Tool.FieldSignature)" />
+                        <RibbonButton Icon="bi-sliders" Label="Field Properties" Disabled="@(SelectedFieldInfo == null)" OnClick="() => ShowRight(RightTab.Properties)" />
+                        <RibbonButton Icon="bi-x-square" Label="Delete Field" Disabled="@(!PrepareMode || SelectedFieldInfo == null)" OnClick="DeleteSelectedField" />
+                    </div>
+                </RibbonGroup>
                 <RibbonGroup Title="Form Data">
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-box-arrow-up" Label="Export Data" Title="Download the field values as a tab-separated file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ExportDataAsync" />
@@ -345,9 +367,17 @@
 
                             @if (rot == 0)
                             {
-                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1))
+                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f)))
                                 {
-                                    <FieldInput Ed="this" Field="f" Overlay="true" Style="@OverlayStyle(f.Left, f.Bottom, f.Width, f.Height, w, h, FieldFontPts(f))" />
+                                    var r = FieldRect(f);
+                                    if (PrepareMode)
+                                    {
+                                        <FieldBox Ed="this" Field="f" Style="@OverlayStyle(r.Left, r.Bottom, r.Width, r.Height, w, h)" />
+                                    }
+                                    else
+                                    {
+                                        <FieldInput Ed="this" Field="f" Overlay="true" Style="@OverlayStyle(r.Left, r.Bottom, r.Width, r.Height, w, h, FieldFontPts(f))" />
+                                    }
                                 }
                             }
 

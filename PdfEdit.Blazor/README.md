@@ -25,6 +25,7 @@ offered on the start page.
 | Edit | Undo/Redo for everything, export/import form data, reset form, check required fields, rectangles and ellipses |
 | View | Zoom, fit width/page, thumbnails, side panel, bookmarks, comments, search with highlights, light/dark theme, statistics |
 | Export | Word, Excel, PowerPoint, HTML, Markdown, ePub, text, page images, pictures |
+| Prepare Form | Detect Fields on flat forms (named from their printed labels), add text, checkbox, radio, dropdown, list, date and signature fields by drawing them, select, drag to move, drag the corner to resize, Delete key, field properties (name, tooltip, required, read only, multi-line, alignment, font size, max characters, date and number formats) |
 | AI Assistant | Chat about the open PDF with page links, Summarize, Extract data, Review contract, Find personal info, Translate, Fill form with AI, and the changes the AI proposes (fill fields, highlight, redact, notes, rotate, delete, watermark, bookmarks, commands) applied one by one or all at once |
 
 Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.
@@ -56,7 +57,7 @@ export PdfEdit__Ai__LocalModel=llama3.2
 
 ## Not in the web version yet
 
-The design canvas, creating and editing form fields (Prepare Form), OCR,
+The design canvas, OCR,
 scanning, compare, read aloud, certificate signing, stamps, ink drawing and measuring, moving or
 resizing things after placing them, adding things to rotated pages, cloud storage, batch and bulk
 fill, translation, Office-to-PDF conversion, and several documents open at once.

@@ -1,0 +1,44 @@
+@* A form field in Prepare Form: a box to select (click), move (drag) and resize (drag the corner). *@
+@{
+    var selected = Ed.SelectedWidget is { } sw && sw.Name == Field.Name && sw.Widget == Field.WidgetIndex;
+    var key = $"f:{Uri.EscapeDataString(Field.Name)}|{Field.WidgetIndex}";
+}
+<div class="pe-fbox @(selected ? "selected" : "") @Kind" style="@Style" data-drag="@key" title="@Ed.FieldLabel(Field) (@Field.FieldType)"
+     tabindex="0" role="button" aria-label="Field @Ed.FieldLabel(Field)" aria-pressed="@selected"
+     @onclick="Select" @ondblclick="Properties">
+    <span class="pe-fbox-label"><i class="bi @Icon"></i> @Ed.FieldLabel(Field)</span>
+    @if (selected) { <span class="pe-fbox-handle" data-resize="1" aria-hidden="true"></span> }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public FormFieldInfo Field { get; set; } = default!;
+    [Parameter] public string Style { get; set; } = "";
+
+    private string Kind => Field.FieldType is FieldType.Checkbox or FieldType.RadioButton ? "small" : "";
+
+    private string Icon => Field.FieldType switch
+    {
+        FieldType.Text when Field.IsDateField => "bi-calendar-date",
+        FieldType.Text => "bi-input-cursor-text",
+        FieldType.Checkbox => "bi-check2-square",
+        FieldType.RadioButton => "bi-record-circle",
+        FieldType.ComboBox => "bi-menu-button-wide",
+        FieldType.ListBox => "bi-list-ul",
+        FieldType.Signature => "bi-pen",
+        _ => "bi-square",
+    };
+
+    private void Select()
+    {
+        Ed.SelectWidget(Field);
+        Ed.Refresh();
+    }
+
+    private void Properties()
+    {
+        Ed.SelectWidget(Field);
+        Ed.ShowRight(RightTab.Properties);
+        Ed.Refresh();
+    }
+}

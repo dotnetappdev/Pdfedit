@@ -77,7 +77,7 @@ public partial class Editor
     public int PageCount => Doc?.Info.PageCount ?? 0;
     public int CurrentPage => _page;
     public int FieldCount => Doc?.Info.FormFields.Select(f => f.Name).Distinct().Count() ?? 0;
-    public bool HasPending => _items.Count > 0 || ChangedValues().Count > 0;
+    public bool HasPending => _items.Count > 0 || ChangedValues().Count > 0 || FieldChangeCount > 0;
     private bool CanUndo => Doc != null && (Doc.UndoStack.Count > 0 || HasPending);
     private bool CanRedo => Doc != null && Doc.RedoStack.Count > 0;
 
@@ -98,6 +98,7 @@ public partial class Editor
         {
             _self = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("pdfedit.listenKeys", _self);
+            await JS.InvokeVoidAsync("pdfedit.listenDrag", _self);
         }
         if (_observePages && Doc != null)
         {
@@ -196,6 +197,8 @@ public partial class Editor
         SelectedField = null;
         _tool = Tool.Select;
         _backstage = null;
+        ClearFieldChanges();
+        PrepareMode = false;
         LoadValues();
         _observePages = true;
         if (FieldCount > 0) _right = RightTab.Fields;
@@ -208,6 +211,8 @@ public partial class Editor
         _items.Clear();
         Values.Clear();
         _original.Clear();
+        ClearFieldChanges();
+        PrepareMode = false;
         _searchHits = new();
         _backstage = null;
         Status("Ready");
@@ -290,17 +295,21 @@ public partial class Editor
             .Select(i => (i.Page + 1, (float)i.Left, (float)(H(i.Page) - i.Top - i.Height), (float)i.Width, (float)i.Height))
             .ToList();
 
+        var deleted = _deleted.ToList();
+        var bounds = new Dictionary<(string Name, int WidgetIndex), FieldBounds>(_bounds);
+        var edits = _edits.Values.Where(e => !_deleted.Contains(e.Name)).ToList();
+
         await Store.ApplyAsync(doc, (src, dest) =>
         {
             bool annotate = values.Count > 0 || texts.Count > 0 || signatures.Count > 0 || notes.Count > 0
-                            || highlights.Count > 0 || shapes.Count > 0;
+                            || highlights.Count > 0 || shapes.Count > 0 || deleted.Count > 0 || bounds.Count > 0 || edits.Count > 0;
             var step = src;
             if (annotate)
             {
                 step = redactions.Count > 0 ? dest + ".tmp" : dest;
                 Store.Forms.SaveFull(src, step, values, new Dictionary<int, int>(), texts, signatures,
-                    flatten: false, fieldExportValues: onValues, highlightAnnotations: highlights,
-                    stickyNotes: notes, shapeAnnotations: shapes);
+                    flatten: false, deletedFieldNames: deleted, fieldExportValues: onValues, highlightAnnotations: highlights,
+                    stickyNotes: notes, shapeAnnotations: shapes, fieldBounds: bounds, fieldEdits: edits);
             }
             if (redactions.Count > 0)
             {
@@ -309,12 +318,22 @@ public partial class Editor
             }
         });
         _items.Clear();
+        ClearFieldChanges();
         LoadValues();
+    }
+
+    private void ClearFieldChanges()
+    {
+        _bounds.Clear();
+        _edits.Clear();
+        _deleted.Clear();
+        SelectedWidget = null;
     }
 
     public void DiscardPending()
     {
         _items.Clear();
+        ClearFieldChanges();
         LoadValues();
         Status("Discarded the changes you hadn't applied");
     }
@@ -446,6 +465,8 @@ public partial class Editor
         Tool.Highlight => "Drag over the area to highlight",
         Tool.Redact => "Drag over what to remove; Apply Redactions removes it for good",
         Tool.Rectangle or Tool.Ellipse => "Drag to draw",
+        Tool.FieldCheckbox or Tool.FieldRadio => "Click where the box should go",
+        Tool.FieldText or Tool.FieldCombo or Tool.FieldList or Tool.FieldDate or Tool.FieldSignature => "Drag to draw the field (or click for a standard size)",
         _ => "Ready",
     };
 
@@ -477,6 +498,12 @@ public partial class Editor
         double left = Math.Min(start.Item1, x), top = Math.Min(start.Item2, y);
         double width = Math.Abs(x - start.Item1), height = Math.Abs(y - start.Item2);
         var (pw, ph) = PageSize(page);
+
+        if (IsFieldTool(_tool))
+        {
+            await AddFieldAsync(page, left, top, width, height);
+            return;
+        }
 
         PageItem? added = null;
         switch (_tool)
@@ -583,7 +610,8 @@ public partial class Editor
             case "Escape":
                 if (_dialog != DialogKind.None) CloseDialog();
                 else if (_backstage != null) _backstage = null;
-                else SetTool(Tool.Select);
+                else if (_tool != Tool.Select) SetTool(Tool.Select);
+                else SelectedWidget = null;
                 break;
         }
         StateHasChanged();

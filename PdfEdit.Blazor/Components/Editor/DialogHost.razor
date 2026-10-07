@@ -411,6 +411,35 @@
         </Modal>
         break;
 
+    case DialogKind.DetectFields when Ed.DetectedFields is { } found:
+        <Modal Title="Detect Fields" OnClose="Close" Wide>
+            <ChildContent>
+                <p class="pe-hint">Found @found.Count possible field@(found.Count == 1 ? "" : "s"). Untick any you don't want, and change names if you like.</p>
+                <div style="max-height:50vh;overflow:auto">
+                    <table class="table table-sm" style="color:inherit;font-size:12px">
+                        <thead><tr><th></th><th>Name</th><th>Kind</th><th>Page</th></tr></thead>
+                        <tbody>
+                            @foreach (var f in found)
+                            {
+                                var field = f;
+                                <tr>
+                                    <td><input type="checkbox" checked="@f.Include" @onchange="e => field.Include = e.Value is true" aria-label="Include @f.Name" /></td>
+                                    <td><input class="form-control form-control-sm" value="@f.Name" @onchange="e => field.Name = e.Value?.ToString() ?? field.Name" /></td>
+                                    <td>@f.Kind</td>
+                                    <td>@f.Page</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(Ed.AddDetectedFieldsAsync)">Add @found.Count(f => f.Include) field@(found.Count(f => f.Include) == 1 ? "" : "s")</button>
+            </Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>

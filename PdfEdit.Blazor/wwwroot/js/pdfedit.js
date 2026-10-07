@@ -44,7 +44,51 @@ window.pdfedit = (() => {
 
         openInNewTab(url) { window.open(url, '_blank', 'noopener'); },
 
-        // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc).
+        // Drag to move, or drag the corner handle to resize, anything marked data-drag (Prepare Form
+        // field boxes, things placed on a page). Moves are shown live and reported to .NET at the end
+        // as percentages of the page.
+        listenDrag(dotnet) {
+            document.addEventListener('pointerdown', e => {
+                const box = e.target.closest?.('[data-drag]');
+                if (!box || e.button !== 0) return;
+                const page = box.closest('.pe-page');
+                if (!page || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)) return;
+                const resize = !!e.target.closest('[data-resize]');
+                const pr = page.getBoundingClientRect();
+                const br = box.getBoundingClientRect();
+                const start = { x: e.clientX, y: e.clientY, l: br.left - pr.left, t: br.top - pr.top, w: br.width, h: br.height };
+                let moved = false;
+                const move = ev => {
+                    const dx = ev.clientX - start.x, dy = ev.clientY - start.y;
+                    if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+                    moved = true;
+                    box.classList.add('pe-dragging');
+                    let l = start.l, t = start.t, w = start.w, h = start.h;
+                    if (resize) { w = Math.max(6, start.w + dx); h = Math.max(6, start.h + dy); }
+                    else { l = Math.min(Math.max(0, start.l + dx), pr.width - w); t = Math.min(Math.max(0, start.t + dy), pr.height - h); }
+                    box.style.left = (l / pr.width * 100) + '%';
+                    box.style.top = (t / pr.height * 100) + '%';
+                    box.style.width = (w / pr.width * 100) + '%';
+                    box.style.height = (h / pr.height * 100) + '%';
+                };
+                const up = () => {
+                    document.removeEventListener('pointermove', move);
+                    document.removeEventListener('pointerup', up);
+                    box.classList.remove('pe-dragging');
+                    if (!moved) return;
+                    const r = box.getBoundingClientRect();
+                    dotnet.invokeMethodAsync('OnBoxMoved', box.dataset.drag,
+                        (r.left - pr.left) / pr.width * 100, (r.top - pr.top) / pr.height * 100,
+                        r.width / pr.width * 100, r.height / pr.height * 100);
+                    // Don't let the end of a drag count as a click.
+                    box.addEventListener('click', ev => ev.stopPropagation(), { capture: true, once: true });
+                };
+                document.addEventListener('pointermove', move);
+                document.addEventListener('pointerup', up);
+            });
+        },
+
+        // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc, Delete).
         listenKeys(dotnet) {
             document.addEventListener('keydown', e => {
                 const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
@@ -56,6 +100,8 @@ window.pdfedit = (() => {
                     }
                 } else if (k === 'escape') {
                     dotnet.invokeMethodAsync('OnShortcut', 'Escape');
+                } else if (k === 'delete' && !inField) {
+                    dotnet.invokeMethodAsync('OnDeleteKey');
                 }
             });
         },
