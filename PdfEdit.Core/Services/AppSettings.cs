@@ -67,7 +67,7 @@ public class AppSettings
     public int NextTipIndex { get; set; }
 
     // ── Updates ──────────────────────────────────────────────────────────────
-    /// <summary>Look for a new release on GitHub when PdfEdit starts (at most once a day).</summary>
+    /// <summary>Look for a new release on GitHub each time PdfEdit starts.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
     /// <summary>Offer pre-release (beta) versions too.</summary>
     public bool IncludePrereleaseUpdates { get; set; }

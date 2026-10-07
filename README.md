@@ -70,7 +70,7 @@ More in the [screenshot gallery](docs/screenshots.md).
 
 ## Updates
 
-**File → Check for Updates…** looks at the [GitHub releases](https://github.com/dotnetappdev/pdfedit/releases) for a newer version. It picks the download that matches how PdfEdit was installed (setup EXE, portable ZIP or MSIX), lets you choose where to save it, shows a progress bar while it downloads, and checks the file against its SHA-256. Then it installs the update. By default it closes PdfEdit (and any other PdfEdit windows) first and starts it again afterwards. Your unsaved work is kept, as it is on any normal close. PdfEdit also checks once a day when it starts. You can turn that off, or include pre-releases, in the same window.
+**File → Check for Updates…** looks at the [GitHub releases](https://github.com/dotnetappdev/pdfedit/releases) for a newer version. It picks the download that matches how PdfEdit was installed (setup EXE, portable ZIP or MSIX), lets you choose where to save it, shows a progress bar while it downloads, and checks the file against its SHA-256. Then it installs the update. By default it closes PdfEdit (and any other PdfEdit windows) first and starts it again afterwards. Your unsaved work is kept, as it is on any normal close. Each time PdfEdit starts it also checks for a new version. If there is one, it shows the version and a link to it on GitHub, with **See release notes**, and asks **Yes, update** / **No** (skip this version) / **Cancel** (ask again next time). **File → About PdfEdit** has a **Check for Updates…** button too. You can turn the startup check off, or include pre-releases, in the update window.
 
 ## Build from source
 

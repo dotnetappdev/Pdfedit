@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 
@@ -19,4 +20,17 @@ public partial class AboutDialog : Window
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void CheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+        if (Owner is MainWindow main) main.ShowUpdateDialog();
+        else new UpdateDialog { Owner = Owner }.ShowDialog();
+    }
+
+    private void GitHub_Click(object sender, RoutedEventArgs e)
+    {
+        try { Process.Start(new ProcessStartInfo("https://github.com/dotnetappdev/pdfedit") { UseShellExecute = true }); }
+        catch { /* no browser */ }
+    }
 }

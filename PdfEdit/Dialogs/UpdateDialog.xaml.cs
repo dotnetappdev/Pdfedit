@@ -129,7 +129,7 @@ public partial class UpdateDialog : Window
     }
 
     /// <summary>The "What's new" part of the release text (the install instructions below it aren't needed here).</summary>
-    private static string Notes(UpdateInfo release)
+    internal static string Notes(UpdateInfo release)
     {
         var text = release.Notes.Replace("\r\n", "\n");
         int cut = text.IndexOf("\n---", StringComparison.Ordinal);
