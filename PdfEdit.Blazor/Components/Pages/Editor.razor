@@ -520,29 +520,25 @@
                     @for (int p = 0; p < PageCount; p++)
                     {
                         int pg = p;
-                        var (w, h) = PageSize(pg);
-                        int rot = Rotation(pg);
+                        var (w, h) = ViewSize(pg);
                         <div class="pe-page" id="@($"page-{pg}")" data-page="@pg" style="width:@Css(DisplayWidth(pg))px;height:@Css(DisplayHeight(pg))px">
                             <img class="pe-page-img" src="@PageUrl(pg, ImageScale)" alt="Page @(pg + 1)" loading="lazy" draggable="false" />
 
                             @foreach (var hit in _searchHits.Where(x => x.PageNumber == pg + 1))
                             {
-                                <div class="pe-search-hit @(hit == CurrentHit ? "current" : "")" style="@HitStyle(hit, w, h)"></div>
+                                <div class="pe-search-hit @(hit == CurrentHit ? "current" : "")" style="@HitStyle(hit)"></div>
                             }
 
-                            @if (rot == 0)
+                            @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f) && !Doc.SignedFields.Contains(f.Name)))
                             {
-                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f) && !Doc.SignedFields.Contains(f.Name)))
+                                var r = FieldRect(f);
+                                if (PrepareMode)
                                 {
-                                    var r = FieldRect(f);
-                                    if (PrepareMode)
-                                    {
-                                        <FieldBox Ed="this" Field="f" Style="@OverlayStyle(r.Left, r.Bottom, r.Width, r.Height, w, h)" />
-                                    }
-                                    else
-                                    {
-                                        <FieldInput Ed="this" Field="f" Overlay="true" Style="@OverlayStyle(r.Left, r.Bottom, r.Width, r.Height, w, h, FieldFontPts(f))" />
-                                    }
+                                    <FieldBox Ed="this" Field="f" Style="@ViewStyle(pg, r.Left, r.Bottom, r.Width, r.Height)" />
+                                }
+                                else
+                                {
+                                    <FieldInput Ed="this" Field="f" Overlay="true" Style="@FieldViewStyle(pg, r.Left, r.Bottom, r.Width, r.Height, FieldFontPts(f))" />
                                 }
                             }
 

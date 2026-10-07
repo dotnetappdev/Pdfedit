@@ -83,12 +83,7 @@ public partial class Editor
     public Task OnSketch(int page, double[] pct)
     {
         if (Doc == null || pct.Length < 4) return Task.CompletedTask;
-        if (Rotation(page) != 0)
-        {
-            Toast("Adding things to rotated pages isn't supported here yet. Rotate the page upright first.", "error");
-            return InvokeAsync(StateHasChanged);
-        }
-        var (pw, ph) = PageSize(page);
+        var (pw, ph) = ViewSize(page);
         var pts = new List<PointD>();
         for (int i = 0; i + 1 < pct.Length; i += 2)
             pts.Add(new PointD(Math.Clamp(pct[i], 0, 100) / 100 * pw, Math.Clamp(pct[i + 1], 0, 100) / 100 * ph));
@@ -130,7 +125,7 @@ public partial class Editor
             ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area => 14,
             _ => item.LineWidth + 4,
         };
-        var (pw, ph) = PageSize(item.Page);
+        var (pw, ph) = ViewSize(item.Page);
         double l = Math.Max(0, p.Min(q => q.X) - pad), t = Math.Max(0, p.Min(q => q.Y) - pad);
         double r = Math.Min(pw, p.Max(q => q.X) + pad), b = Math.Min(ph, p.Max(q => q.Y) + pad);
         item.Left = l; item.Top = t;
@@ -147,16 +142,16 @@ public partial class Editor
 
     // ── Writing them into the PDF ────────────────────────────────────────────
 
-    private IEnumerable<FreeTextAnnotation> StampAndInkAnnotations(Func<int, double> pageHeight)
+    private IEnumerable<FreeTextAnnotation> StampAndInkAnnotations()
     {
         foreach (var i in _items)
         {
-            double h = pageHeight(i.Page);
+            var (l, b, w, h) = ToUser(i.Page, i.Left, i.Top, i.Width, i.Height);
             if (i.Kind == ItemKind.Stamp)
             {
                 yield return new FreeTextAnnotation
                 {
-                    PageNumber = i.Page + 1, Left = i.Left, Bottom = h - i.Top - i.Height, Width = i.Width, Height = i.Height,
+                    PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h, RotationAngle = -Rotation(i.Page),
                     Text = i.Text, IsStamp = true, StampSubtitle = i.Subtitle, FontColor = i.Color,
                     Comment = new CommentInfo { Author = string.IsNullOrWhiteSpace(_stampAuthor) ? "PdfEdit web" : _stampAuthor.Trim() },
                 };
@@ -165,10 +160,11 @@ public partial class Editor
             {
                 // The Windows app's ink format: __INK__:#RRGGBB|width:x,y;x,y;… in PDF points.
                 var inv = CultureInfo.InvariantCulture;
-                string path = string.Join(';', pts.Select(p => $"{p.X.ToString("0.##", inv)},{(h - p.Y).ToString("0.##", inv)}"));
+                string path = string.Join(';', pts.Select(p => ToUserPoint(i.Page, p.X, p.Y))
+                                                   .Select(p => $"{p.X.ToString("0.##", inv)},{p.Y.ToString("0.##", inv)}"));
                 yield return new FreeTextAnnotation
                 {
-                    PageNumber = i.Page + 1, Left = i.Left, Bottom = h - i.Top - i.Height, Width = i.Width, Height = i.Height,
+                    PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h,
                     Text = $"__INK__:{i.Color.ToUpperInvariant()}|{i.LineWidth.ToString("0.##", inv)}:{path}",
                     Comment = new CommentInfo { Author = "PdfEdit web" },
                 };
@@ -176,13 +172,12 @@ public partial class Editor
         }
     }
 
-    private IEnumerable<ShapeAnnotation> LineAndMeasureShapes(Func<int, double> pageHeight)
+    private IEnumerable<ShapeAnnotation> LineAndMeasureShapes()
     {
         foreach (var i in _items.Where(i => i.Points is { Count: > 1 } && i.Kind is ItemKind.Line or ItemKind.Arrow
                                              or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area))
         {
-            double h = pageHeight(i.Page);
-            var pts = i.Points!.Select(p => new PointD(p.X, h - p.Y)).ToList();
+            var pts = i.Points!.Select(p => ToUserPoint(i.Page, p.X, p.Y)).ToList();
             bool poly = i.Kind is ItemKind.Perimeter or ItemKind.Area;
             var shape = new ShapeAnnotation
             {

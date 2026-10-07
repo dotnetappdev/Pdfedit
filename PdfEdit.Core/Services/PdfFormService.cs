@@ -585,6 +585,7 @@ public class PdfFormService
                 if (ParseHexColor(ann.FontColor, out float sr, out float sg, out float sb))
                     stamp.SetColor(new DeviceRgb(sr, sg, sb));
                 stamp.SetNormalAppearance(BuildStampAppearance(doc, ann).GetPdfObject());
+                if (ContentRotation(ann) != 0) stamp.Put(PdfName.Rotate, new PdfNumber(ContentRotation(ann)));
                 stamp.SetFlags(PdfAnnotation.PRINT);
                 AddTracked(page, stamp, ann.Comment);
                 continue;
@@ -600,6 +601,13 @@ public class PdfFormService
                 pdfAnn.SetNormalAppearance(BuildMarkAppearance(doc, markKind, ann).GetPdfObject());
                 pdfAnn.SetBorder(new PdfArray(new float[] { 0, 0, 0 }));
                 pdfAnn.SetFlags(PdfAnnotation.PRINT);
+            }
+            else if (!string.IsNullOrEmpty(ann.Text))
+            {
+                // Drawn text, so viewers that don't lay out FreeText themselves (Pdfium — Chrome, Edge
+                // — and many phone apps) still show it.
+                try { pdfAnn.SetNormalAppearance(BuildTextAppearance(doc, ann).GetPdfObject()); }
+                catch (Exception ex) { saveErrors.Add($"Text on page {pageNum}: {ex.Message}"); }
             }
 
             if (ann.RotationAngle != 0)
@@ -814,6 +822,7 @@ public class PdfFormService
                 if (sig.ImageBytes == null || sig.ImageBytes.Length == 0) continue;
 
                 var page = doc.GetPage(pageNum);
+                int sigRot = (int)((Math.Round(sig.Rotation / 90.0) * 90 % 360 + 360) % 360);
                 try
                 {
                     var imageData = ImageDataFactory.Create(sig.ImageBytes);
@@ -822,9 +831,10 @@ public class PdfFormService
                     {
                         // Flattened copy: burn the signature into the page content.
                         var canvas = new PdfCanvas(page);
-                        canvas.AddXObjectWithTransformationMatrix(xobj,
-                            (float)sig.Width, 0f, 0f, (float)sig.Height,
-                            (float)sig.Left, (float)sig.Bottom);
+                        float sw = (float)sig.Width, sh = (float)sig.Height;
+                        var m = PlaceMatrix(sigRot, (float)sig.Left, (float)sig.Bottom, sw, sh,
+                            sigRot is 90 or 270 ? sh : sw, sigRot is 90 or 270 ? sw : sh);
+                        canvas.AddXObjectWithTransformationMatrix(xobj, m[0], m[1], m[2], m[3], m[4], m[5]);
                         canvas.Release();
                     }
                     else
@@ -832,10 +842,13 @@ public class PdfFormService
                         // A stamp annotation showing the signature image (like Acrobat Fill & Sign), so a
                         // later save replaces it rather than stacking another copy into the page.
                         float w = (float)sig.Width, h = (float)sig.Height;
-                        var ap = new PdfFormXObject(new Rectangle(0, 0, w, h));
-                        new PdfCanvas(ap, doc).AddXObjectWithTransformationMatrix(xobj, w, 0, 0, h, 0, 0).Release();
+                        var (cw, ch) = sigRot is 90 or 270 ? (h, w) : (w, h);
+                        var ap = new PdfFormXObject(new Rectangle(0, 0, cw, ch));
+                        new PdfCanvas(ap, doc).AddXObjectWithTransformationMatrix(xobj, cw, 0, 0, ch, 0, 0).Release();
+                        Orient(ap, sigRot);
                         var stamp = new PdfStampAnnotation(new Rectangle((float)sig.Left, (float)sig.Bottom, w, h));
                         stamp.SetNormalAppearance(ap.GetPdfObject());
+                        if (sigRot != 0) stamp.Put(PdfName.Rotate, new PdfNumber(sigRot));
                         stamp.SetFlags(PdfAnnotation.PRINT | PdfAnnotation.LOCKED);
                         stamp.SetContents("Signature");
                         stamp.Put(PdfName.NM, new PdfString(TrackedName(sig.Id)));
@@ -1408,7 +1421,7 @@ public class PdfFormService
     /// <summary>Form XObject drawing a rubber stamp: rounded double border, title, optional subtitle.</summary>
     private static PdfFormXObject BuildStampAppearance(PdfDocument doc, FreeTextAnnotation ann)
     {
-        float w = (float)ann.Width, h = (float)ann.Height;
+        var (w, h) = ContentBox(ann);
         var xobj = new PdfFormXObject(new Rectangle(0, 0, w, h));
         var canvas = new PdfCanvas(xobj, doc);
         if (!ParseHexColor(ann.FontColor, out float r, out float g, out float b)) (r, g, b) = (0.42f, 0.11f, 0.6f);
@@ -1456,13 +1469,104 @@ public class PdfFormService
             canvas.BeginText().SetFontAndSize(italic, ss).SetFillColor(color)
                   .MoveText((w - italic.GetWidth(sub, ss)) / 2, h * 0.2f).ShowText(sub).EndText();
         }
+        Orient(xobj, ContentRotation(ann));
+        return xobj;
+    }
+
+    /// <summary>
+    /// How far (degrees anticlockwise, 0/90/180/270) an annotation's content is turned on the page —
+    /// its /Rotate. Text and stamps added on a rotated page are turned with it so they read upright.
+    /// </summary>
+    private static int ContentRotation(FreeTextAnnotation ann) =>
+        (int)((-Math.Round(ann.RotationAngle / 90) * 90 % 360 + 360) % 360);
+
+    /// <summary>The box the content is laid out in: the annotation's box, turned with its content.</summary>
+    private static (float W, float H) ContentBox(FreeTextAnnotation ann) =>
+        ContentRotation(ann) is 90 or 270 ? ((float)ann.Height, (float)ann.Width) : ((float)ann.Width, (float)ann.Height);
+
+    /// <summary>Turns an appearance anticlockwise; the viewer fits the turned box to the annotation's Rect.</summary>
+    private static void Orient(PdfFormXObject xobj, int degrees)
+    {
+        if (degrees == 0) return;
+        var m = PlaceMatrix(degrees, 0, 0, 0, 0, 1, 1);
+        xobj.Put(PdfName.Matrix, new PdfArray(new[] { m[0], m[1], m[2], m[3], 0f, 0f }));
+    }
+
+    /// <summary>
+    /// Matrix drawing content of <paramref name="cw"/> × <paramref name="ch"/> (laid out upright),
+    /// turned <paramref name="degrees"/> anticlockwise, into the page box (left, bottom, width, height).
+    /// </summary>
+    private static float[] PlaceMatrix(int degrees, float left, float bottom, float width, float height, float cw, float ch) => degrees switch
+    {
+        90 => new[] { 0, cw, -ch, 0, left + width, bottom },
+        180 => new[] { -cw, 0, 0, -ch, left + width, bottom + height },
+        270 => new[] { 0, -cw, ch, 0, left, bottom + height },
+        _ => new[] { cw, 0, 0, ch, left, bottom },
+    };
+
+    /// <summary>
+    /// Form XObject drawing typed text (font, size, colour, bold/italic, alignment, character spacing,
+    /// underline), wrapped at the box width like the editors show it.
+    /// </summary>
+    private static PdfFormXObject BuildTextAppearance(PdfDocument doc, FreeTextAnnotation ann)
+    {
+        var (w, h) = ContentBox(ann);
+        var xobj = new PdfFormXObject(new Rectangle(0, 0, w, h));
+        var canvas = new PdfCanvas(xobj, doc);
+        string fontName = ann.IsBold && ann.IsItalic ? iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLDOBLIQUE
+                        : ann.IsBold ? iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD
+                        : ann.IsItalic ? iText.IO.Font.Constants.StandardFonts.HELVETICA_OBLIQUE
+                        : iText.IO.Font.Constants.StandardFonts.HELVETICA;
+        var font = PdfFontFactory.CreateFont(fontName);
+        float size = (float)Math.Max(1, ann.FontSize), lead = size * 1.15f, cs = (float)Math.Max(0, ann.CharacterSpacing);
+        if (!ParseHexColor(ann.FontColor, out float r, out float g, out float b)) (r, g, b) = (0, 0, 0);
+        string text = ann.ForceUpperCase ? ann.Text.ToUpperInvariant() : ann.Text;
+
+        float Measure(string line) => font.GetWidth(line, size) + cs * line.Length;
+        var lines = new List<string>();
+        foreach (var para in text.Replace("\r\n", "\n").Split('\n'))
+        {
+            string current = "";
+            foreach (var word in para.Split(' '))
+            {
+                string trial = current.Length == 0 ? word : current + " " + word;
+                if (current.Length > 0 && Measure(trial) > w - 2) { lines.Add(current); current = word; }
+                else current = trial;
+            }
+            lines.Add(current);
+        }
+
+        float y = h - 1 - size * 0.8f;   // first baseline: Helvetica's ascent below the top
+        var color = new DeviceRgb(r, g, b);
+        canvas.SaveState().SetFillColor(color).SetStrokeColor(color);
+        foreach (var line in lines)
+        {
+            float lw = Measure(line);
+            float x = ann.TextAlignment switch
+            {
+                TextAlign.Center => (w - lw) / 2,
+                TextAlign.Right => w - 1 - lw,
+                _ => 1,
+            };
+            if (line.Length > 0)
+            {
+                canvas.BeginText().SetFontAndSize(font, size);
+                if (cs > 0) canvas.SetCharacterSpacing(cs);
+                canvas.MoveText(x, y).ShowText(line).EndText();
+                if (ann.IsUnderline)
+                    canvas.SetLineWidth(Math.Max(0.5f, size * 0.06f)).MoveTo(x, y - size * 0.12f).LineTo(x + lw, y - size * 0.12f).Stroke();
+            }
+            y -= lead;
+        }
+        canvas.RestoreState();
+        Orient(xobj, ContentRotation(ann));
         return xobj;
     }
 
     /// <summary>Form XObject drawing a Fill &amp; Sign mark (see <see cref="MarkShapes"/>) in its box.</summary>
     private static PdfFormXObject BuildMarkAppearance(PdfDocument doc, MarkShapes.Kind kind, FreeTextAnnotation ann)
     {
-        float w = (float)ann.Width, h = (float)ann.Height;
+        var (w, h) = ContentBox(ann);
         var xobj = new PdfFormXObject(new Rectangle(0, 0, w, h));
         var canvas = new PdfCanvas(xobj, doc);
         ParseHexColor(ann.FontColor, out float r, out float g, out float b);
@@ -1494,6 +1598,7 @@ public class PdfFormService
             if (kind == MarkShapes.Kind.Dot) canvas.Fill(); else canvas.Stroke();
         }
         canvas.RestoreState();
+        Orient(xobj, ContentRotation(ann));
         return xobj;
     }
 

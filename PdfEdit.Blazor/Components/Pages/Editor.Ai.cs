@@ -311,7 +311,7 @@ public partial class Editor
                     done = $"{n} place{(n == 1 ? "" : "s")}" + (item.Action == "redact" ? " — Apply Redactions to remove them" : "");
                     break;
                 case "add_note":
-                    var (w, _) = PageSize(page);
+                    var (w, _) = ViewSize(page);
                     _items.Add(new PageItem { Kind = ItemKind.Note, Page = page, Left = w - 40, Top = 30 + 26 * _items.Count(i => i.Page == page && i.Kind == ItemKind.Note), Width = 20, Height = 20, Text = item.Arg("text") });
                     break;
                 case "add_stamp":
@@ -319,7 +319,7 @@ public partial class Editor
                     if (stampTitle.Length == 0) throw new InvalidOperationException("No stamp was named.");
                     var def = StampCatalog.BuiltIn.FirstOrDefault(d => d.Title == stampTitle && !d.Dynamic);
                     var (sw2, sh2) = StampCatalog.SizeFor(stampTitle, null);
-                    var (pw2, _) = PageSize(page);
+                    var (pw2, _) = ViewSize(page);
                     _items.Add(new PageItem
                     {
                         Kind = ItemKind.Stamp, Page = page, Left = Math.Max(0, pw2 - sw2 - 36), Top = 36 + 52 * _items.Count(i => i.Page == page && i.Kind == ItemKind.Stamp),
@@ -414,8 +414,8 @@ public partial class Editor
             hits = await Task.Run(() => PdfTextExtractorService.FindTextPositions(path, text.Trim(), 0, ignoreCase: true));
         foreach (var h in hits)
         {
-            var (_, ph) = PageSize(h.PageNumber - 1);
-            _items.Add(new PageItem { Kind = kind, Page = h.PageNumber - 1, Left = h.Left, Top = ph - h.Bottom - h.Height, Width = h.Width, Height = h.Height });
+            var v = ToView(h.PageNumber - 1, h.Left, h.Bottom, h.Width, h.Height);
+            _items.Add(new PageItem { Kind = kind, Page = h.PageNumber - 1, Left = v.Left, Top = v.Top, Width = v.Width, Height = v.Height });
         }
         if (hits.Count > 0) await GoToPageAsync(hits[0].PageNumber - 1);
         return hits.Count;

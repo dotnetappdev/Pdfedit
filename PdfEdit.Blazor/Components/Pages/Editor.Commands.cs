@@ -78,8 +78,7 @@ public partial class Editor
         if (index < 0 || index >= _searchHits.Count) return;
         HitIndex = index;
         var hit = _searchHits[index];
-        var (_, h) = PageSize(hit.PageNumber - 1);
-        await ScrollToSpotAsync(hit.PageNumber - 1, (h - hit.Bottom - hit.Height) / h * 100);
+        await ScrollToSpotAsync(hit.PageNumber - 1, ViewTopPercent(hit.PageNumber - 1, hit.Left, hit.Bottom, hit.Width, hit.Height));
     }
 
     // ── Pages ────────────────────────────────────────────────────────────────
@@ -332,8 +331,7 @@ public partial class Editor
     public async Task SelectFieldAsync(FormFieldInfo f)
     {
         SelectedField = f.Name;
-        var (_, h) = PageSize(f.PageNumber - 1);
-        await ScrollToSpotAsync(f.PageNumber - 1, (h - f.Bottom - f.Height) / h * 100);
+        await ScrollToSpotAsync(f.PageNumber - 1, ViewTopPercent(f.PageNumber - 1, f.Left, f.Bottom, f.Width, f.Height));
         await FocusAsync(FieldElementId(f));
     }
 

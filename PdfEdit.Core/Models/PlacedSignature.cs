@@ -12,6 +12,11 @@ public class PlacedSignature
     public double Width { get; set; }
     public double Height { get; set; }
     public byte[] ImageBytes { get; set; } = Array.Empty<byte>();
+    /// <summary>
+    /// Degrees anticlockwise the signature is turned on the page (0/90/180/270) — the page's rotation
+    /// when it was placed on a rotated page, so it reads upright there.
+    /// </summary>
+    public double Rotation { get; set; }
     // Written to the PDF as /NM "pdfedit:<id>" (see CommentInfo.Id)
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 }

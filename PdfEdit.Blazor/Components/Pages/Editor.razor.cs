@@ -259,42 +259,44 @@ public partial class Editor
         var values = ChangedValues();
         var onValues = doc.Info.FormFields.Where(f => f.FieldType == FieldType.Checkbox)
                           .GroupBy(f => f.Name).ToDictionary(g => g.Key, g => g.First().ExportValue);
-        double H(int page) => PageSize(page).H;
+        // Boxes on the page as seen → PDF rectangles; text, stamps and signatures on a rotated page
+        // are turned with it so they read upright.
+        (double L, double B, double W, double H) U(PageItem i) => ToUser(i.Page, i.Left, i.Top, i.Width, i.Height);
+        double Turn(PageItem i) => -Rotation(i.Page);
 
         var texts = _items.Where(i => i.Kind is ItemKind.Text or ItemKind.Mark && !string.IsNullOrWhiteSpace(i.Text))
             .Select(i => new FreeTextAnnotation
             {
-                PageNumber = i.Page + 1, Left = i.Left, Bottom = H(i.Page) - i.Top - i.Height,
-                Width = i.Width, Height = i.Height, Text = i.Text, FontSize = i.FontSize,
+                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i),
                 FontColor = i.Color, FontFamily = "Helvetica", GrowToFit = true,
-            }).Concat(StampAndInkAnnotations(H)).ToList();
+            }).Concat(StampAndInkAnnotations()).ToList();
         var signatures = _items.Where(i => i.Kind == ItemKind.Signature && i.Image != null)
             .Select(i => new PlacedSignature
             {
-                PageNumber = i.Page + 1, Left = i.Left, Bottom = H(i.Page) - i.Top - i.Height,
-                Width = i.Width, Height = i.Height, ImageBytes = i.Image!,
+                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                ImageBytes = i.Image!, Rotation = Rotation(i.Page),
             }).ToList();
         var notes = _items.Where(i => i.Kind == ItemKind.Note)
             .Select(i => new StickyNoteAnnotation
             {
-                PageNumber = i.Page + 1, Left = i.Left, Bottom = H(i.Page) - i.Top, Text = i.Text,
+                PageNumber = i.Page + 1, Left = ToUserPoint(i.Page, i.Left, i.Top).X, Bottom = ToUserPoint(i.Page, i.Left, i.Top).Y, Text = i.Text,
                 Comment = new CommentInfo { Author = "PdfEdit web", Note = i.Text },
             }).ToList();
         var highlights = _items.Where(i => i.Kind == ItemKind.Highlight)
             .Select(i => new HighlightAnnotation
             {
-                PageNumber = i.Page + 1, Left = i.Left, Bottom = H(i.Page) - i.Top - i.Height,
-                Width = i.Width, Height = i.Height, Color = "#FFEB00",
+                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H, Color = "#FFEB00",
             }).ToList();
         var shapes = _items.Where(i => i.Kind is ItemKind.Rectangle or ItemKind.Ellipse)
             .Select(i => new ShapeAnnotation
             {
                 PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
-                X1 = i.Left, Y1 = H(i.Page) - i.Top - i.Height, X2 = i.Left + i.Width, Y2 = H(i.Page) - i.Top,
+                X1 = U(i).L, Y1 = U(i).B, X2 = U(i).L + U(i).W, Y2 = U(i).B + U(i).H,
                 StrokeColor = i.Color, FillColor = "", LineWidth = 2,
-            }).Concat(LineAndMeasureShapes(H)).ToList();
+            }).Concat(LineAndMeasureShapes()).ToList();
         var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
-            .Select(i => (i.Page + 1, (float)i.Left, (float)(H(i.Page) - i.Top - i.Height), (float)i.Width, (float)i.Height))
+            .Select(i => (i.Page + 1, (float)U(i).L, (float)U(i).B, (float)U(i).W, (float)U(i).H))
             .ToList();
 
         var deleted = _deleted.ToList();
@@ -495,17 +497,12 @@ public partial class Editor
     private async Task ToolUpAsync(int page, MouseEventArgs e)
     {
         if (Doc == null) return;
-        if (Rotation(page) != 0)
-        {
-            Toast("Adding things to rotated pages isn't supported here yet. Rotate the page upright first.", "error");
-            return;
-        }
         var (x, y) = ToPoints(page, e);
         var start = _dragStart is { } d && d.Page == page ? (d.X, d.Y) : (x, y);
         _dragStart = null;
         double left = Math.Min(start.Item1, x), top = Math.Min(start.Item2, y);
         double width = Math.Abs(x - start.Item1), height = Math.Abs(y - start.Item2);
-        var (pw, ph) = PageSize(page);
+        var (pw, ph) = ViewSize(page);
 
         if (IsFieldTool(_tool))
         {
@@ -585,7 +582,7 @@ public partial class Editor
 
     private (double X, double Y) ToPoints(int page, MouseEventArgs e)
     {
-        var (w, _) = PageSize(page);
+        var (w, _) = ViewSize(page);
         double scale = DisplayWidth(page) / w;   // pixels per point
         return (e.OffsetX / scale, e.OffsetY / scale);
     }
@@ -677,6 +674,83 @@ public partial class Editor
 
     private bool Sideways(int page) => Rotation(page) is 90 or 270;
 
+    // ── Rotated pages ────────────────────────────────────────────────────────
+    // Things on a page are placed and shown as the page is seen (turned by its rotation), with
+    // positions in points from the seen page's top-left; they are turned back into the PDF's own
+    // coordinates (bottom-left origin, unrotated) when written.
+
+    /// <summary>The page's size as it is seen, i.e. turned by its rotation.</summary>
+    public (double W, double H) ViewSize(int page)
+    {
+        var (w, h) = PageSize(page);
+        return Sideways(page) ? (h, w) : (w, h);
+    }
+
+    /// <summary>A point on the seen page (from its top-left) in PDF coordinates.</summary>
+    public PointD ToUserPoint(int page, double x, double y)
+    {
+        var (w, h) = PageSize(page);
+        return Rotation(page) switch
+        {
+            90 => new PointD(y, x),
+            180 => new PointD(w - x, y),
+            270 => new PointD(w - y, h - x),
+            _ => new PointD(x, h - y),
+        };
+    }
+
+    /// <summary>A box on the seen page (from its top-left) as a PDF rectangle (left, bottom, width, height).</summary>
+    public (double Left, double Bottom, double Width, double Height) ToUser(int page, double left, double top, double width, double height)
+    {
+        var a = ToUserPoint(page, left, top);
+        var b = ToUserPoint(page, left + width, top + height);
+        return (Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Abs(b.X - a.X), Math.Abs(b.Y - a.Y));
+    }
+
+    /// <summary>A PDF rectangle as a box on the seen page (left, top, width, height from its top-left).</summary>
+    public (double Left, double Top, double Width, double Height) ToView(int page, double left, double bottom, double width, double height)
+    {
+        var (w, h) = PageSize(page);
+        (double X, double Y) P(double ux, double uy) => Rotation(page) switch
+        {
+            90 => (uy, ux),
+            180 => (w - ux, uy),
+            270 => (h - uy, w - ux),
+            _ => (ux, h - uy),
+        };
+        var a = P(left, bottom);
+        var b = P(left + width, bottom + height);
+        return (Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Abs(b.X - a.X), Math.Abs(b.Y - a.Y));
+    }
+
+    /// <summary>Overlay position for a PDF rectangle on the page as it is seen.</summary>
+    public string ViewStyle(int page, double left, double bottom, double width, double height, double fontPts = 0)
+    {
+        var (vw, vh) = ViewSize(page);
+        var v = ToView(page, left, bottom, width, height);
+        return OverlayStyle(v.Left, vh - v.Top - v.Height, v.Width, v.Height, vw, vh, fontPts);
+    }
+
+    /// <summary>
+    /// Overlay position for a form field's input: on a rotated page the field's text runs along the
+    /// field, turned with the page like every PDF reader shows it, so the input is turned too.
+    /// </summary>
+    public string FieldViewStyle(int page, double left, double bottom, double width, double height, double fontPts)
+    {
+        int rot = Rotation(page);
+        if (rot == 0) return ViewStyle(page, left, bottom, width, height, fontPts);
+        var (vw, vh) = ViewSize(page);
+        var v = ToView(page, left, bottom, width, height);
+        double cx = v.Left + v.Width / 2, cy = v.Top + v.Height / 2;
+        return $"left:{Css((cx - width / 2) / vw * 100)}%;top:{Css((cy - height / 2) / vh * 100)}%;" +
+               $"width:{Css(width / vw * 100)}%;height:{Css(height / vh * 100)}%;font-size:{Css(fontPts / vw * 100)}cqw;" +
+               $"transform:rotate({rot}deg)";
+    }
+
+    /// <summary>Where a PDF rectangle's top is on the seen page, in % of its height (for scrolling to it).</summary>
+    public double ViewTopPercent(int page, double left, double bottom, double width, double height) =>
+        ToView(page, left, bottom, width, height).Top / ViewSize(page).H * 100;
+
     private double DisplayWidth(int page) => (Sideways(page) ? PageSize(page).H : PageSize(page).W) * PointsToPx * _zoom;
     private double DisplayHeight(int page) => (Sideways(page) ? PageSize(page).W : PageSize(page).H) * PointsToPx * _zoom;
     private double ThumbWidth(int page) => Math.Min(110, DisplayWidth(page) / _zoom * 0.14);
@@ -700,7 +774,7 @@ public partial class Editor
 
     public static double FieldFontPts(FormFieldInfo f) => f.FontSize > 0 ? f.FontSize : Math.Clamp(f.Height * 0.65, 6, 14);
 
-    private string HitStyle(TextMatch m, double w, double h) => OverlayStyle(m.Left, m.Bottom, m.Width, m.Height, w, h);
+    private string HitStyle(TextMatch m) => ViewStyle(m.PageNumber - 1, m.Left, m.Bottom, m.Width, m.Height);
 
     // ── Misc ─────────────────────────────────────────────────────────────────
 

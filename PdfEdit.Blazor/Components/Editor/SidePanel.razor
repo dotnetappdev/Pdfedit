@@ -158,7 +158,7 @@ else
                 @foreach (var i in Ed.Items)
                 {
                     var item = i;
-                    <li @onclick="() => ActAsync(() => Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.PageSize(item.Page).H * 100))">
+                    <li @onclick="() => ActAsync(() => Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.ViewSize(item.Page).H * 100))">
                         <i class="bi @ItemIcon(i.Kind) pe-type"></i>
                         <span class="text-truncate">@i.Describe()</span>
                         <span class="pe-meta">p.@(i.Page + 1)</span>

@@ -87,10 +87,12 @@ public partial class Editor
             string name = Uri.UnescapeDataString(parts[0]);
             var f = Doc.Info.FormFields.FirstOrDefault(x => x.Name == name && x.WidgetIndex == widget);
             if (f == null) return Task.CompletedTask;
-            var (pw, ph) = PageSize(f.PageNumber - 1);
+            int fp = f.PageNumber - 1;
+            var (pw, ph) = ViewSize(fp);
             double w = Math.Max(4, widthPct / 100 * pw), h = Math.Max(4, heightPct / 100 * ph);
             double left = Math.Clamp(leftPct / 100 * pw, 0, pw - w), top = Math.Clamp(topPct / 100 * ph, 0, ph - h);
-            _bounds[(name, widget)] = new FieldBounds(left, ph - top - h, w, h);
+            var u = ToUser(fp, left, top, w, h);
+            _bounds[(name, widget)] = new FieldBounds(u.Left, u.Bottom, u.Width, u.Height);
             SelectWidget(f);
             Status($"Moved “{name}” — Apply Changes writes it into the PDF");
         }
@@ -98,7 +100,7 @@ public partial class Editor
         {
             var item = _items.FirstOrDefault(i => i.Id == key[2..]);
             if (item == null) return Task.CompletedTask;
-            var (pw, ph) = PageSize(item.Page);
+            var (pw, ph) = ViewSize(item.Page);
             var (oldLeft, oldTop, oldWidth, oldHeight) = (item.Left, item.Top, item.Width, item.Height);
             item.Width = Math.Max(4, widthPct / 100 * pw);
             item.Height = Math.Max(4, heightPct / 100 * ph);
@@ -125,12 +127,12 @@ public partial class Editor
     private async Task AddFieldAsync(int page, double left, double top, double width, double height)
     {
         if (Doc == null) return;
-        var (_, ph) = PageSize(page);
         var tool = _tool;
         bool small = tool is Tool.FieldCheckbox or Tool.FieldRadio;
         if (small) { width = height = 14; left -= 7; top -= 7; }
         else if (width < 8 || height < 8) { width = tool == Tool.FieldSignature ? 180 : 150; height = tool switch { Tool.FieldSignature => 40, Tool.FieldList => 60, _ => 20 }; }
-        float l = (float)left, b = (float)(ph - top - height), w = (float)width, h = (float)height;
+        var u = ToUser(page, left, top, width, height);
+        float l = (float)u.Left, b = (float)u.Bottom, w = (float)u.Width, h = (float)u.Height;
         int pageNo = page + 1;
         var (prefix, kind) = tool switch
         {

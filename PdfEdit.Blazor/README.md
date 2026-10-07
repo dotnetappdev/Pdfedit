@@ -18,7 +18,7 @@ offered on the start page.
 | Area | Features |
 |---|---|
 | File | Open (upload or samples), password-protected PDFs, New blank, Create from images/files, Save (download), Save As flattened / PDF/A / password-protected, Print, Export, Close |
-| Fill & Sign | Fill every kind of form field, Add Text, Date, ticks, crosses and dots, draw or type a signature and place it, sticky notes, highlights, drag anything you've added to move it or its corner to resize it, Apply Changes, Flatten & Download |
+| Fill & Sign | Fill every kind of form field, Add Text, Date, ticks, crosses and dots, draw or type a signature and place it, sticky notes, highlights, drag anything you've added to move it or its corner to resize it, works on rotated pages too (text, stamps and signatures are written upright), Apply Changes, Flatten & Download |
 | Pages | Rotate, delete, insert blank before/after, duplicate, move up/down, extract or delete a range, split, merge PDFs and pictures, insert a PDF, export a page as an image |
 | Document | Properties, watermark (add/remove), page numbers, header/footer, Bates numbers, compress, resize pages, pages per sheet, booklet, greyscale |
 | Security | Password protect, remove hidden information, redaction (mark, then apply) |
@@ -71,4 +71,4 @@ the site works and OCR says it isn't set up.
 ## Not in the web version yet
 
 Scanning straight from a scanner (browsers can't reach TWAIN scanners — use Scan with Camera or
-pictures instead), adding things to rotated pages, cloud storage, batch and bulk fill, translation, Office-to-PDF conversion, and several documents open at once.
+pictures instead), cloud storage, batch and bulk fill, translation, Office-to-PDF conversion, and several documents open at once.
