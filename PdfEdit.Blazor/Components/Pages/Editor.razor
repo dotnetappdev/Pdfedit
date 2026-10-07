@@ -146,6 +146,27 @@
                 <RibbonGroup Title="Comment">
                     <RibbonButton Large Icon="bi-sticky" Label="Sticky Note" Disabled="NoDoc" Active="_tool == Tool.Note" OnClick="() => SetTool(Tool.Note)" />
                     <RibbonButton Large Icon="bi-highlighter" Label="Highlight" Title="Drag over an area to highlight it" Disabled="NoDoc" Active="_tool == Tool.Highlight" OnClick="() => SetTool(Tool.Highlight)" />
+                    <RibbonButton Large Icon="bi-brush" Label="Draw" Title="Draw freehand on the page" Disabled="NoDoc" Active="_tool == Tool.Ink" OnClick="() => SetTool(Tool.Ink)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Stamp">
+                    <RibbonButton Large Icon="bi-postage" Label="Stamp" Title="Click on the page to stamp it" Disabled="NoDoc" Active="_tool == Tool.Stamp" OnClick="() => SetTool(Tool.Stamp)" />
+                    <div class="pe-stack">
+                        <select class="pe-stamp-pick" value="@_stampKey" @onchange="e => PickStamp(e.Value?.ToString() ?? _stampKey)" aria-label="Stamp" disabled="@NoDoc">
+                            @foreach (var g in StampGroups)
+                            {
+                                <optgroup label="@g.Key">
+                                    @foreach (var d in g)
+                                    {
+                                        <option value="@StampCatalog.KeyOf(d)">@d.Title</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                        <div class="pe-field-inline" title="Dynamic stamps add who stamped it and when">
+                            <span>Name</span>
+                            <input type="text" @bind="_stampAuthor" placeholder="Your name" aria-label="Name on dynamic stamps" style="width:110px" />
+                        </div>
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Finish">
                     <RibbonButton Large Icon="bi-check2-circle" Label="Apply Changes" Title="Write everything you've added into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
@@ -203,9 +224,23 @@
                     <RibbonButton Large Icon="bi-square" Label="Rectangle" Disabled="NoDoc" Active="_tool == Tool.Rectangle" OnClick="() => SetTool(Tool.Rectangle)" />
                     <RibbonButton Large Icon="bi-circle" Label="Ellipse" Disabled="NoDoc" Active="_tool == Tool.Ellipse" OnClick="() => SetTool(Tool.Ellipse)" />
                     <div class="pe-stack">
+                        <RibbonButton Icon="bi-slash-lg" Label="Line" Disabled="NoDoc" Active="_tool == Tool.Line" OnClick="() => SetTool(Tool.Line)" />
+                        <RibbonButton Icon="bi-arrow-up-right" Label="Arrow" Disabled="NoDoc" Active="_tool == Tool.Arrow" OnClick="() => SetTool(Tool.Arrow)" />
+                        <RibbonButton Icon="bi-brush" Label="Draw" Title="Draw freehand on the page" Disabled="NoDoc" Active="_tool == Tool.Ink" OnClick="() => SetTool(Tool.Ink)" />
+                    </div>
+                    <div class="pe-stack">
                         <div class="pe-field-inline">
                             <span>Colour</span>
                             <input type="color" @bind="_strokeColor" aria-label="Line colour" />
+                        </div>
+                        <div class="pe-field-inline">
+                            <span>Pen</span>
+                            <select @bind="_inkWidth" aria-label="Pen width">
+                                @foreach (var pw in new[] { 1.0, 2.0, 3.0, 5.0, 8.0 })
+                                {
+                                    <option value="@pw">@pw pt</option>
+                                }
+                            </select>
                         </div>
                     </div>
                 </RibbonGroup>
@@ -284,6 +319,22 @@
                 <RibbonGroup Title="Scan &amp; OCR">
                     <RibbonButton Large Icon="bi-textarea-resize" Label="Recognise Text" Title="OCR: make scanned pages searchable and copyable" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Ocr)" />
                     <RibbonButton Large Icon="bi-camera" Label="Scan with Camera" Title="Take photos of paper pages (or choose pictures) and make a PDF" OnClick="() => ShowDialog(DialogKind.ScanCamera)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Measure">
+                    <RibbonButton Large Icon="bi-rulers" Label="Distance" Title="Drag between two points" Disabled="NoDoc" Active="_tool == Tool.Distance" OnClick="() => SetTool(Tool.Distance)" />
+                    <RibbonButton Large Icon="bi-bezier2" Label="Perimeter" Title="Click each point, double-click to finish" Disabled="NoDoc" Active="_tool == Tool.Perimeter" OnClick="() => SetTool(Tool.Perimeter)" />
+                    <RibbonButton Large Icon="bi-pentagon" Label="Area" Title="Click each corner, double-click to finish" Disabled="NoDoc" Active="_tool == Tool.Area" OnClick="() => SetTool(Tool.Area)" />
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Units</span>
+                            <select @bind="_measureUnit" aria-label="Measurement units">
+                                <option value="in">in</option>
+                                <option value="cm">cm</option>
+                                <option value="mm">mm</option>
+                                <option value="pt">pt</option>
+                            </select>
+                        </div>
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Convert">
                     <RibbonButton Large Icon="bi-archive" Label="PDF/A" Title="Make an archive-friendly copy" Disabled="NoDoc" OnClick="PdfAAsync" />
@@ -500,7 +551,14 @@
                                 <PageItemView Ed="this" Item="item" PageW="w" PageH="h" />
                             }
 
-                            @if (_tool != Tool.Select)
+                            @if (SketchMode is { } sketch)
+                            {
+                                <div class="pe-tool-layer" title="@ToolHint" data-sketch="@sketch" data-page="@pg"
+                                     data-ptw="@Css(w)" data-pth="@Css(h)" data-color="@SketchColor" data-unit="@_measureUnit"
+                                     data-width="@Css(SketchWidth)"
+                                     data-measure="@MeasureMode"></div>
+                            }
+                            else if (_tool != Tool.Select)
                             {
                                 <div class="pe-tool-layer" title="@ToolHint"
                                      @onmousedown="e => ToolDown(pg, e)" @onmouseup="e => ToolUpAsync(pg, e)"></div>

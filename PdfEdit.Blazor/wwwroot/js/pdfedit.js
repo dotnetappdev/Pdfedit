@@ -88,6 +88,140 @@ window.pdfedit = (() => {
             });
         },
 
+        // Ink, lines and the Measure tools: the page's tool layer (data-sketch="ink|line|poly|closed")
+        // draws the stroke live, then hands the points to .NET as percentages of the page.
+        listenSketch(dotnet) {
+            const NS = 'http://www.w3.org/2000/svg';
+            let poly = null;   // perimeter / area being clicked out
+            const at = (layer, e) => {
+                const r = layer.getBoundingClientRect();
+                return [(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100];
+            };
+            const perUnit = u => ({ mm: 72 / 25.4, cm: 72 / 2.54, pt: 1 }[u] ?? 72);
+            const toPts = (layer, p) => [p[0] / 100 * +layer.dataset.ptw, p[1] / 100 * +layer.dataset.pth];
+            const len = (layer, pts) => {
+                let d = 0;
+                for (let i = 1; i < pts.length; i++) {
+                    const a = toPts(layer, pts[i - 1]), b = toPts(layer, pts[i]);
+                    d += Math.hypot(b[0] - a[0], b[1] - a[1]);
+                }
+                return d;
+            };
+            const area = (layer, pts) => {
+                let a = 0;
+                for (let i = 0; i < pts.length; i++) {
+                    const p = toPts(layer, pts[i]), q = toPts(layer, pts[(i + 1) % pts.length]);
+                    a += p[0] * q[1] - q[0] * p[1];
+                }
+                return Math.abs(a) / 2;
+            };
+            const fmt = (v, u) => v.toFixed(u === 'pt' ? 0 : 2);
+            const measureText = (layer, pts) => {
+                const u = layer.dataset.unit, k = perUnit(u);
+                if (layer.dataset.measure === 'area') return pts.length > 2 ? fmt(area(layer, pts) / (k * k), u) + ' sq ' + u : '';
+                return layer.dataset.measure ? fmt(len(layer, pts) / k, u) + ' ' + u : '';
+            };
+            const start = (layer, closed) => {
+                const svg = document.createElementNS(NS, 'svg');
+                svg.setAttribute('class', 'pe-sketch-live');
+                svg.setAttribute('viewBox', '0 0 100 100');
+                svg.setAttribute('preserveAspectRatio', 'none');
+                const line = document.createElementNS(NS, closed ? 'polygon' : 'polyline');
+                const px = Math.max(1, +layer.dataset.width * layer.getBoundingClientRect().width / +layer.dataset.ptw);
+                line.setAttribute('fill', closed ? layer.dataset.color + '22' : 'none');
+                line.setAttribute('stroke', layer.dataset.color);
+                line.setAttribute('stroke-width', px);
+                line.setAttribute('stroke-linecap', 'round');
+                line.setAttribute('stroke-linejoin', 'round');
+                line.setAttribute('vector-effect', 'non-scaling-stroke');
+                svg.appendChild(line);
+                layer.appendChild(svg);
+                const label = document.createElement('div');
+                label.className = 'pe-sketch-label';
+                if (layer.dataset.measure) layer.appendChild(label);
+                return { layer, svg, line, label, pts: [] };
+            };
+            const draw = (s, extra) => {
+                const pts = extra ? [...s.pts, extra] : s.pts;
+                s.line.setAttribute('points', pts.map(p => p[0] + ',' + p[1]).join(' '));
+                const text = measureText(s.layer, pts);
+                s.label.textContent = text;
+                s.label.style.display = text ? '' : 'none';
+                const last = pts[pts.length - 1];
+                if (last) { s.label.style.left = last[0] + '%'; s.label.style.top = last[1] + '%'; }
+            };
+            const finish = (s, pts) => {
+                const send = dotnet.invokeMethodAsync('OnSketch', +s.layer.dataset.page, pts.flat());
+                send.finally(() => { s.svg.remove(); s.label.remove(); });
+            };
+            const cancel = s => { s.svg.remove(); s.label.remove(); };
+            // Drop the repeated point a double-click adds.
+            const tidy = (layer, pts) => pts.filter((p, i) => i === 0 || len(layer, [pts[i - 1], p]) > 1.5);
+            const finishPoly = () => {
+                const s = poly; poly = null;
+                if (!s || !s.layer.isConnected) return;
+                const pts = tidy(s.layer, s.pts);
+                if (pts.length < 2) { cancel(s); return; }
+                finish(s, pts);
+            };
+
+            document.addEventListener('pointerdown', e => {
+                const layer = e.target.closest?.('.pe-tool-layer[data-sketch]');
+                if (!layer || e.button !== 0) return;
+                e.preventDefault();
+                const mode = layer.dataset.sketch;
+                if (mode === 'poly' || mode === 'closed') {
+                    if (poly && poly.layer !== layer) { cancel(poly); poly = null; }
+                    poly ??= start(layer, mode === 'closed');
+                    poly.pts.push(at(layer, e));
+                    draw(poly);
+                    return;
+                }
+                const s = start(layer, false);
+                s.pts.push(at(layer, e));
+                layer.setPointerCapture(e.pointerId);
+                const move = ev => {
+                    const p = at(layer, ev);
+                    if (mode === 'ink') {
+                        const last = s.pts[s.pts.length - 1];
+                        if (Math.hypot((p[0] - last[0]) * layer.clientWidth, (p[1] - last[1]) * layer.clientHeight) < 150) return;   // < 1.5px
+                        s.pts.push(p);
+                        draw(s);
+                    } else {
+                        draw(s, p);
+                    }
+                };
+                const up = ev => {
+                    layer.removeEventListener('pointermove', move);
+                    layer.removeEventListener('pointerup', up);
+                    const p = at(layer, ev);
+                    if (mode === 'ink') {
+                        if (s.pts.length === 1) s.pts.push([p[0] + .1, p[1]]);   // a dot
+                        finish(s, s.pts);
+                    } else if (Math.hypot((p[0] - s.pts[0][0]) * layer.clientWidth, (p[1] - s.pts[0][1]) * layer.clientHeight) < 400) {
+                        cancel(s);   // a click, not a drag
+                    } else {
+                        finish(s, [s.pts[0], p]);
+                    }
+                };
+                layer.addEventListener('pointermove', move);
+                layer.addEventListener('pointerup', up);
+            });
+            document.addEventListener('pointermove', e => {
+                if (!poly) return;
+                if (!poly.layer.isConnected) { poly = null; return; }
+                draw(poly, at(poly.layer, e));
+            });
+            document.addEventListener('dblclick', e => { if (poly && e.target.closest?.('.pe-tool-layer[data-sketch]')) finishPoly(); });
+            document.addEventListener('keydown', e => {
+                if (!poly) return;
+                if (e.key === 'Enter') { e.preventDefault(); finishPoly(); }
+                else if (e.key === 'Escape') { cancel(poly); poly = null; }
+            });
+        },
+
+        timeZone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; },
+
         // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc, Delete).
         listenKeys(dotnet) {
             document.addEventListener('keydown', e => {

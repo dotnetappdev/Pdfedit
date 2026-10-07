@@ -31,6 +31,47 @@
             <button class="pe-x" title="Remove" aria-label="Remove note" @onclick="Remove" @onclick:stopPropagation="true">✕</button>
         </div>
         break;
+    case ItemKind.Stamp:
+        <div class="pe-item stamp" style="@style;color:@i.Color;border-color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id">
+            <div class="pe-stamp-title" style="font-size:@Editor.Css(StampTitleSize() / PageW * 100)cqw">@i.Text</div>
+            @if (!string.IsNullOrEmpty(i.Subtitle))
+            {
+                <div class="pe-stamp-sub" style="font-size:@Editor.Css(StampSubSize() / PageW * 100)cqw">@i.Subtitle</div>
+            }
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+            <button class="pe-x" title="Remove" aria-label="Remove stamp" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area when i.Points != null:
+        var vb = $"{Editor.Css(i.Left)} {Editor.Css(i.Top)} {Editor.Css(i.Width)} {Editor.Css(i.Height)}";
+        var pts = string.Join(" ", i.Points.Select(p => Editor.Css(p.X) + "," + Editor.Css(p.Y)));
+        <div class="pe-item sketch" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
+            <svg viewBox="@vb" preserveAspectRatio="none" aria-hidden="true">
+                @if (i.Kind == ItemKind.Area)
+                {
+                    <polygon class="hit" points="@pts" />
+                    <polygon points="@pts" fill="@(i.Color)22" stroke="@i.Color" stroke-width="@Editor.Css(i.LineWidth)" stroke-linejoin="round" />
+                }
+                else
+                {
+                    <polyline class="hit" points="@pts" />
+                    <polyline points="@pts" fill="none" stroke="@i.Color" stroke-width="@Editor.Css(i.LineWidth)" stroke-linecap="round" stroke-linejoin="round" />
+                }
+                @foreach (var extra in Decorations())
+                {
+                    <polyline points="@extra" fill="none" stroke="@i.Color" stroke-width="@Editor.Css(i.LineWidth)" stroke-linecap="round" stroke-linejoin="round" />
+                }
+                @if (i.Kind is ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area)
+                {
+                    var (lx, ly) = LabelSpot();
+                    @* Razor reserves <text>, so the SVG label is written as markup. *@
+                    @((MarkupString)$"<text x=\"{Editor.Css(lx)}\" y=\"{Editor.Css(ly)}\" fill=\"{i.Color}\" font-size=\"9\" text-anchor=\"middle\" class=\"pe-measure\">{System.Net.WebUtility.HtmlEncode(i.MeasureLabel())}</text>")
+                }
+            </svg>
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+            <button class="pe-x" title="Remove" aria-label="Remove @i.Describe()" @onclick="Remove">✕</button>
+        </div>
+        break;
     default:
         var kind = i.Kind switch { ItemKind.Highlight => "highlight", ItemKind.Redact => "redact", _ => "rect" };
         <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)">
@@ -51,6 +92,57 @@
         ItemKind.Ellipse => $"{style};border-color:{Item.Color};border-width:2px;border-radius:50%",
         _ => style,
     };
+
+    // Title and subtitle text sizes, fitted to the stamp like the PDF appearance is.
+    private double StampTitleSize()
+    {
+        bool sub = !string.IsNullOrEmpty(Item.Subtitle);
+        double size = (sub ? Item.Height * 0.42 : Item.Height * 0.55) / 1.15;
+        double inner = Item.Width * 0.82;
+        double textW = Item.Text.Length * size * 0.68;
+        return textW > inner ? size * inner / textW : size;
+    }
+
+    private double StampSubSize()
+    {
+        double size = Item.Height * 0.2 / 1.15;
+        double inner = Item.Width * 0.82;
+        double textW = (Item.Subtitle?.Length ?? 0) * size * 0.5;
+        return textW > inner ? size * inner / textW : size;
+    }
+
+    // Arrow head (open, like the PDF's OpenArrow) and the end ticks of a distance.
+    private IEnumerable<string> Decorations()
+    {
+        var p = Item.Points!;
+        if (p.Count < 2 || Item.Kind is not (ItemKind.Arrow or ItemKind.Distance)) yield break;
+        var (a, b) = (p[0], p[^1]);
+        double ang = Math.Atan2(b.Y - a.Y, b.X - a.X);
+        string P(double x, double y) => Editor.Css(x) + "," + Editor.Css(y);
+        if (Item.Kind == ItemKind.Arrow)
+        {
+            double len = 9 + Item.LineWidth * 1.5, spread = 0.45;
+            yield return $"{P(b.X - len * Math.Cos(ang - spread), b.Y - len * Math.Sin(ang - spread))} {P(b.X, b.Y)} " +
+                         P(b.X - len * Math.Cos(ang + spread), b.Y - len * Math.Sin(ang + spread));
+        }
+        else
+        {
+            double t = 5, nx = -Math.Sin(ang) * t, ny = Math.Cos(ang) * t;
+            yield return $"{P(a.X - nx, a.Y - ny)} {P(a.X + nx, a.Y + ny)}";
+            yield return $"{P(b.X - nx, b.Y - ny)} {P(b.X + nx, b.Y + ny)}";
+        }
+    }
+
+    private (double X, double Y) LabelSpot()
+    {
+        var p = Item.Points!;
+        return Item.Kind switch
+        {
+            ItemKind.Distance => ((p[0].X + p[^1].X) / 2, (p[0].Y + p[^1].Y) / 2 - 4),
+            ItemKind.Area => (p.Average(q => q.X), p.Average(q => q.Y) + 3),
+            _ => (p[^1].X, p[^1].Y - 5),
+        };
+    }
 
     private void Remove()
     {

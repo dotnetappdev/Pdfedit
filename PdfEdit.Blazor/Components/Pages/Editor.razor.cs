@@ -99,6 +99,7 @@ public partial class Editor
             _self = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("pdfedit.listenKeys", _self);
             await JS.InvokeVoidAsync("pdfedit.listenDrag", _self);
+            await JS.InvokeVoidAsync("pdfedit.listenSketch", _self);
         }
         if (_observePages && Doc != null)
         {
@@ -266,7 +267,7 @@ public partial class Editor
                 PageNumber = i.Page + 1, Left = i.Left, Bottom = H(i.Page) - i.Top - i.Height,
                 Width = i.Width, Height = i.Height, Text = i.Text, FontSize = i.FontSize,
                 FontColor = i.Color, FontFamily = "Helvetica", GrowToFit = true,
-            }).ToList();
+            }).Concat(StampAndInkAnnotations(H)).ToList();
         var signatures = _items.Where(i => i.Kind == ItemKind.Signature && i.Image != null)
             .Select(i => new PlacedSignature
             {
@@ -291,7 +292,7 @@ public partial class Editor
                 PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
                 X1 = i.Left, Y1 = H(i.Page) - i.Top - i.Height, X2 = i.Left + i.Width, Y2 = H(i.Page) - i.Top,
                 StrokeColor = i.Color, FillColor = "", LineWidth = 2,
-            }).ToList();
+            }).Concat(LineAndMeasureShapes(H)).ToList();
         var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
             .Select(i => (i.Page + 1, (float)i.Left, (float)(H(i.Page) - i.Top - i.Height), (float)i.Width, (float)i.Height))
             .ToList();
@@ -466,6 +467,12 @@ public partial class Editor
         Tool.Highlight => "Drag over the area to highlight",
         Tool.Redact => "Drag over what to remove; Apply Redactions removes it for good",
         Tool.Rectangle or Tool.Ellipse => "Drag to draw",
+        Tool.Stamp => $"Click on the page to stamp {SelectedStamp.Title}",
+        Tool.Ink => "Draw with the mouse, pen or finger",
+        Tool.Line or Tool.Arrow => "Drag to draw the line",
+        Tool.Distance => "Drag between two points to measure the distance",
+        Tool.Perimeter => "Click each point, double-click (or Enter) to finish; Esc cancels",
+        Tool.Area => "Click each corner, double-click (or Enter) to finish; Esc cancels",
         Tool.FieldCheckbox or Tool.FieldRadio => "Click where the box should go",
         Tool.FieldText or Tool.FieldCombo or Tool.FieldList or Tool.FieldDate or Tool.FieldSignature => "Drag to draw the field (or click for a standard size)",
         _ => "Ready",
@@ -536,6 +543,9 @@ public partial class Editor
                     Kind = ItemKind.Signature, Page = page, Left = x - sw / 2, Top = y - sh / 2, Width = sw, Height = sh,
                     Image = SignaturePng, ImageUrl = "data:image/png;base64," + Convert.ToBase64String(SignaturePng),
                 };
+                break;
+            case Tool.Stamp:
+                added = await MakeStampAsync(page, x, y);
                 break;
             case Tool.Note:
                 added = new PageItem { Kind = ItemKind.Note, Page = page, Left = x, Top = y, Width = 20, Height = 20 };

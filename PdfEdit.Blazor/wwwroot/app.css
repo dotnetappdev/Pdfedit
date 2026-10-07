@@ -401,6 +401,58 @@ html, body {
     display: grid; place-items: center;
     cursor: pointer;
 }
+.pe-item.stamp {
+    border: 2px solid;
+    border-radius: 6px;
+    background: color-mix(in srgb, currentColor 9%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Helvetica, Arial, sans-serif;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: visible;
+    cursor: move;
+    user-select: none;
+}
+.pe-stamp-title { font-weight: 700; }
+.pe-stamp-sub { font-style: italic; }
+.pe-item.sketch { pointer-events: none; }
+.pe-item.sketch svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.pe-item.sketch .hit { fill: none; stroke: transparent; stroke-width: 10; pointer-events: stroke; cursor: move; }
+.pe-item.sketch polygon.hit { fill: transparent; pointer-events: all; }
+.pe-item.sketch:hover { outline: 1px dashed rgba(10, 132, 255, .7); }
+.pe-item.sketch .pe-x, .pe-item.sketch .pe-item-handle { pointer-events: auto; }
+.pe-measure { font-family: Helvetica, Arial, sans-serif; font-weight: 600; paint-order: stroke; stroke: #fff; stroke-width: 2.5px; }
+.pe-item-handle {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border: 2px solid var(--pe-accent);
+    border-radius: 2px;
+    cursor: nwse-resize;
+    display: none;
+    z-index: 2;
+}
+.pe-item:hover .pe-item-handle { display: block; }
+.pe-sketch-live { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pe-sketch-label {
+    position: absolute;
+    transform: translate(8px, -130%);
+    background: #fff;
+    color: #1F4FB5;
+    border: 1px solid #1F4FB5;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.pe-stamp-pick { max-width: 170px; }
 .pe-item .pe-x {
     position: absolute;
     top: -9px;

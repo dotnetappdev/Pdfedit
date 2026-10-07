@@ -702,7 +702,7 @@ public class PdfFormService
                 double height = Math.Abs(y2 - y1);
 
                 // Acrobat drawing / measuring kinds (line, cloud, polygon, polyline, distance, perimeter, area)
-                if (BuildExtendedShapeAnnotation(shape, strokeColor, lw) is { } extra)
+                if (BuildExtendedShapeAnnotation(doc, shape, strokeColor, lw) is { } extra)
                 {
                     if (shape.Opacity < 0.999) extra.Put(PdfName.CA, new PdfNumber(shape.Opacity));
                     AddTracked(page, extra, shape.Comment);
@@ -731,10 +731,13 @@ public class PdfFormService
                 }
                 else if (shape.Kind == Models.ShapeKind.Arrow)
                 {
-                    var lineRect = new Rectangle((float)left, (float)bottom, (float)Math.Max(width, 1), (float)Math.Max(height, 1));
+                    float pad = lw + 12;
+                    var lineRect = new Rectangle((float)left - pad, (float)bottom - pad, (float)Math.Max(width, 1) + 2 * pad, (float)Math.Max(height, 1) + 2 * pad);
                     var annot = new PdfLineAnnotation(lineRect, new float[] { (float)x1, (float)y1, (float)x2, (float)y2 });
                     annot.SetColor(strokeColor);
                     annot.Put(PdfName.LE, new PdfArray(new[] { new PdfName("None"), new PdfName("OpenArrow") }));
+                    annot.SetNormalAppearance(BuildLineAppearance(doc, lineRect, new List<PointD> { new(x1, y1), new(x2, y2) },
+                        closed: false, null, strokeColor, lw, LineEnd.Arrow, null).GetPdfObject());
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
                     if (shape.Opacity < 0.999) annot.Put(PdfName.CA, new PdfNumber(shape.Opacity));
                     AddTracked(page, annot, shape.Comment);
@@ -1328,6 +1331,71 @@ public class PdfFormService
         }
     }
 
+    private enum LineEnd { None, Arrow, Ticks }
+
+    /// <summary>
+    /// Appearance for line, arrow, polygon, polyline and measure annotations (in page coordinates,
+    /// the form's BBox being the annotation's Rect), so viewers that don't draw these themselves —
+    /// Pdfium, Chrome, many phone apps — still show them. A measurement's caption is drawn too.
+    /// </summary>
+    private static PdfFormXObject BuildLineAppearance(PdfDocument doc, Rectangle rect, IList<PointD> pts, bool closed,
+        float[]? interior, DeviceRgb stroke, float lw, LineEnd end, string? caption)
+    {
+        var xobj = new PdfFormXObject(rect);
+        var canvas = new PdfCanvas(xobj, doc);
+        canvas.SaveState().SetStrokeColor(stroke).SetLineWidth(lw).SetLineCapStyle(1).SetLineJoinStyle(1);
+        canvas.MoveTo(pts[0].X, pts[0].Y);
+        for (int i = 1; i < pts.Count; i++) canvas.LineTo(pts[i].X, pts[i].Y);
+        if (closed && pts.Count > 2)
+        {
+            canvas.ClosePath();
+            if (interior != null)
+            {
+                canvas.SetFillColor(new DeviceRgb(interior[0], interior[1], interior[2]));
+                canvas.FillStroke();
+            }
+            else canvas.Stroke();
+        }
+        else canvas.Stroke();
+
+        if (end != LineEnd.None && pts.Count > 1)
+        {
+            var (a, b) = (pts[0], pts[^1]);
+            double ang = Math.Atan2(b.Y - a.Y, b.X - a.X);
+            if (end == LineEnd.Arrow)
+            {
+                double len = 9 + lw * 1.5, spread = 0.45;
+                canvas.MoveTo(b.X - len * Math.Cos(ang - spread), b.Y - len * Math.Sin(ang - spread))
+                      .LineTo(b.X, b.Y)
+                      .LineTo(b.X - len * Math.Cos(ang + spread), b.Y - len * Math.Sin(ang + spread)).Stroke();
+            }
+            else
+            {
+                double t = 5, nx = -Math.Sin(ang) * t, ny = Math.Cos(ang) * t;
+                canvas.MoveTo(a.X - nx, a.Y - ny).LineTo(a.X + nx, a.Y + ny)
+                      .MoveTo(b.X - nx, b.Y - ny).LineTo(b.X + nx, b.Y + ny).Stroke();
+            }
+        }
+        canvas.RestoreState();
+
+        if (!string.IsNullOrEmpty(caption) && pts.Count > 0)
+        {
+            var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA_BOLD);
+            const float size = 9;
+            float tw = font.GetWidth(caption, size);
+            // Middle of a distance, end of a perimeter, centre of an area.
+            var (cx, cy) = end == LineEnd.Ticks ? ((pts[0].X + pts[^1].X) / 2, (pts[0].Y + pts[^1].Y) / 2 + 4)
+                         : closed ? (pts.Average(p => p.X), pts.Average(p => p.Y) - 3)
+                         : (pts[^1].X, pts[^1].Y + 5);
+            float x = (float)Math.Clamp(cx - tw / 2, rect.GetLeft(), Math.Max(rect.GetLeft(), rect.GetRight() - tw));
+            float y = (float)Math.Clamp(cy, rect.GetBottom() + 2, Math.Max(rect.GetBottom() + 2, rect.GetTop() - size));
+            canvas.SaveState().SetFillColor(ColorConstants.WHITE)
+                  .Rectangle(x - 2, y - 2.5, tw + 4, size + 2).Fill().RestoreState();
+            canvas.BeginText().SetFontAndSize(font, size).SetFillColor(stroke).MoveText(x, y).ShowText(caption).EndText();
+        }
+        return xobj;
+    }
+
     private static PdfDictionary BuildBorderStyle(float lineWidth)
     {
         var bs = new PdfDictionary();
@@ -1433,11 +1501,13 @@ public class PdfFormService
     /// Standard PDF annotations for Acrobat's Line, Cloud, Polygon, Polyline and Measure tools, so
     /// they show (and stay editable) in Acrobat and other readers. Null for the original kinds.
     /// </summary>
-    private static PdfAnnotation? BuildExtendedShapeAnnotation(Models.ShapeAnnotation shape, DeviceRgb stroke, float lw)
+    private static PdfAnnotation? BuildExtendedShapeAnnotation(PdfDocument doc, Models.ShapeAnnotation shape, DeviceRgb stroke, float lw)
     {
         float l = (float)Math.Min(shape.X1, shape.X2), b = (float)Math.Min(shape.Y1, shape.Y2);
         float w = (float)Math.Max(Math.Abs(shape.X2 - shape.X1), 1), h = (float)Math.Max(Math.Abs(shape.Y2 - shape.Y1), 1);
-        var bounds = new Rectangle(l - lw, b - lw, w + 2 * lw, h + 2 * lw);
+        // Room for the line width, end ticks and the measurement caption.
+        float pad = lw + (shape.Kind is Models.ShapeKind.Distance or Models.ShapeKind.Perimeter or Models.ShapeKind.Area ? 16 : 0);
+        var bounds = new Rectangle(l - pad, b - pad, w + 2 * pad, h + 2 * pad);
         float[]? interior = !string.IsNullOrEmpty(shape.FillColor) && ParseHexColor(shape.FillColor, out float fr, out float fg, out float fb)
             ? new[] { fr, fg, fb } : null;
         float[] Vertices() => (shape.Points ?? new()).SelectMany(p => new[] { (float)p.X, (float)p.Y }).ToArray();
@@ -1458,6 +1528,9 @@ public class PdfFormService
                     line.Put(new PdfName("IT"), new PdfName("LineDimension"));
                     line.SetContents(label);
                 }
+                line.SetNormalAppearance(BuildLineAppearance(doc, bounds, new List<PointD> { new(shape.X1, shape.Y1), new(shape.X2, shape.Y2) }, closed: false,
+                    null, stroke, lw, shape.Kind == Models.ShapeKind.Distance ? LineEnd.Ticks : LineEnd.None,
+                    shape.Kind == Models.ShapeKind.Distance ? label : null).GetPdfObject());
                 annot = line;
                 break;
             }
@@ -1482,6 +1555,9 @@ public class PdfFormService
                     poly.Put(new PdfName("IT"), new PdfName("PolygonDimension"));
                     poly.SetContents(label);
                 }
+                if (shape.Points is { Count: > 1 })
+                    poly.SetNormalAppearance(BuildLineAppearance(doc, bounds, shape.Points, closed: true, interior, stroke, lw, LineEnd.None,
+                        shape.Kind == Models.ShapeKind.Area ? label : null).GetPdfObject());
                 annot = poly;
                 break;
             }
@@ -1494,6 +1570,9 @@ public class PdfFormService
                     poly.Put(new PdfName("IT"), new PdfName("PolyLineDimension"));
                     poly.SetContents(label);
                 }
+                if (shape.Points is { Count: > 1 })
+                    poly.SetNormalAppearance(BuildLineAppearance(doc, bounds, shape.Points, closed: false, null, stroke, lw, LineEnd.None,
+                        shape.Kind == Models.ShapeKind.Perimeter ? label : null).GetPdfObject());
                 annot = poly;
                 break;
             }

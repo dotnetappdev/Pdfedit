@@ -99,11 +99,13 @@ public partial class Editor
             var item = _items.FirstOrDefault(i => i.Id == key[2..]);
             if (item == null) return Task.CompletedTask;
             var (pw, ph) = PageSize(item.Page);
+            var (oldLeft, oldTop, oldWidth, oldHeight) = (item.Left, item.Top, item.Width, item.Height);
             item.Width = Math.Max(4, widthPct / 100 * pw);
             item.Height = Math.Max(4, heightPct / 100 * ph);
             item.Left = Math.Clamp(leftPct / 100 * pw, 0, pw - item.Width);
             item.Top = Math.Clamp(topPct / 100 * ph, 0, ph - item.Height);
             if (item.Kind == ItemKind.Mark) item.FontSize = item.Height;
+            MoveSketchPoints(item, oldLeft, oldTop, oldWidth, oldHeight);
         }
         return InvokeAsync(StateHasChanged);
     }

@@ -265,6 +265,7 @@ public partial class Editor
                 {"action":"highlight","text":"<exact words from the document>","page":2}   (page optional)
                 {"action":"redact","text":"<exact words to black out>","page":2}            (page optional)
                 {"action":"add_note","page":1,"text":"<comment>"}
+                {"action":"add_stamp","page":1,"stamp":"APPROVED"}   (APPROVED, DRAFT, CONFIDENTIAL, SIGN HERE, PAID, RECEIVED …)
                 {"action":"rotate_page","page":2,"degrees":90}
                 {"action":"delete_page","page":4}
                 {"action":"add_watermark","text":"DRAFT"}
@@ -312,6 +313,18 @@ public partial class Editor
                 case "add_note":
                     var (w, _) = PageSize(page);
                     _items.Add(new PageItem { Kind = ItemKind.Note, Page = page, Left = w - 40, Top = 30 + 26 * _items.Count(i => i.Page == page && i.Kind == ItemKind.Note), Width = 20, Height = 20, Text = item.Arg("text") });
+                    break;
+                case "add_stamp":
+                    var stampTitle = item.Arg("stamp").Trim().ToUpperInvariant();
+                    if (stampTitle.Length == 0) throw new InvalidOperationException("No stamp was named.");
+                    var def = StampCatalog.BuiltIn.FirstOrDefault(d => d.Title == stampTitle && !d.Dynamic);
+                    var (sw2, sh2) = StampCatalog.SizeFor(stampTitle, null);
+                    var (pw2, _) = PageSize(page);
+                    _items.Add(new PageItem
+                    {
+                        Kind = ItemKind.Stamp, Page = page, Left = Math.Max(0, pw2 - sw2 - 36), Top = 36 + 52 * _items.Count(i => i.Page == page && i.Kind == ItemKind.Stamp),
+                        Width = sw2, Height = sh2, Text = stampTitle, Color = def?.Color ?? StampCatalog.ColorFor(stampTitle),
+                    });
                     break;
                 case "rotate_page":
                     int deg = int.TryParse(item.Arg("degrees"), out var d) ? d : 90;
