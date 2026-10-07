@@ -110,6 +110,7 @@ public partial class Editor
     public async ValueTask DisposeAsync()
     {
         if (Doc != null) Store.Close(Doc);
+        SigningCert?.Dispose();
         _self?.Dispose();
         await Task.CompletedTask;
     }

@@ -139,6 +139,8 @@
                     <RibbonButton Large Icon="bi-pen" Label="Signature" Title="Draw or type your signature, then click to place it" Disabled="NoDoc" Active="_tool == Tool.Signature" OnClick="SignatureToolAsync" />
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-pencil-square" Label="New Signature" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Signature)" />
+                        <RibbonButton Icon="bi-patch-check" Label="Sign with Certificate" Title="Digital signature with a Digital ID (.pfx)" Disabled="NoDoc" OnClick="() => { PrepareCertSign(); ShowDialog(DialogKind.CertSign); }" />
+                        <RibbonButton Icon="bi-shield-check" Label="Check Signatures" Disabled="NoDoc" OnClick="CheckSignaturesAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Comment">
@@ -479,7 +481,7 @@
 
                             @if (rot == 0)
                             {
-                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f)))
+                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f) && !Doc.SignedFields.Contains(f.Name)))
                                 {
                                     var r = FieldRect(f);
                                     if (PrepareMode)

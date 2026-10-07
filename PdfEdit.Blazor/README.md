@@ -29,6 +29,7 @@ offered on the start page.
 | Design | Live View / Design switch like the Windows app: design a form page from text, rectangles, ellipses, lines, arrows, tables, pictures, ticks and crosses, and text, multi-line, checkbox, radio, dropdown and signature fields; drag to move, drag the corner to resize, properties for each element, front/back, duplicate, delete, undo/redo; save and open .pdfdesign files (the same format as the Windows app), export a fillable PDF or open it straight in Live View |
 | Scan & OCR | Recognise Text (OCR) adds an invisible text layer so scanned pages can be searched and copied (Tesseract on the server, any installed language), Scan with Camera turns phone or webcam photos — or pictures — into a PDF, optionally made searchable |
 | Compare & Read Aloud | Compare PDFs: page-by-page difference pictures (red only in the old version, green only in the new, orange changed), the old and new pages, and the text lines that changed; Read Page / Read to End with the browser's voices, pause, stop, speed and voice |
+| Certificate signing | Sign with Certificate using your .pfx / .p12 Digital ID or a new self-signed one (downloaded so you can reuse it): in an empty signature field, a box on the page or invisibly, with reason, location, contact, optional timestamp server, certify, and your drawn signature in the box; Check Signatures shows whether each signature is intact, trusted and what it covers. The Digital ID is only held in memory for the session |
 | AI Assistant | Chat about the open PDF with page links, Summarize, Extract data, Review contract, Find personal info, Translate, Fill form with AI, and the changes the AI proposes (fill fields, highlight, redact, notes, rotate, delete, watermark, bookmarks, commands) applied one by one or all at once |
 
 Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.
@@ -69,6 +70,6 @@ the site works and OCR says it isn't set up.
 ## Not in the web version yet
 
 Scanning straight from a scanner (browsers can't reach TWAIN scanners — use Scan with Camera or
-pictures instead), certificate signing, stamps, ink drawing and measuring,
+pictures instead), stamps, ink drawing and measuring,
 moving or resizing things after placing them, adding things to rotated pages, cloud storage,
 batch and bulk fill, translation, Office-to-PDF conversion, and several documents open at once.

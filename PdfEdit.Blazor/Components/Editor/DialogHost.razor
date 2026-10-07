@@ -575,6 +575,101 @@
         </Modal>
         break;
 
+    case DialogKind.CertSign:
+        <Modal Title="Sign with Certificate" OnClose="Close" Wide>
+            <ChildContent>
+                <h4 style="font-size:13px;font-weight:600">1. Your Digital ID</h4>
+                @if (Ed.SigningCert != null)
+                {
+                    <p class="mb-1"><i class="bi bi-patch-check-fill" style="color:var(--pe-accent)"></i> @Ed.SigningCertDescription</p>
+                    <button class="pe-btn mb-2" @onclick="() => _certChange = true">Use a different one</button>
+                }
+                @if (Ed.SigningCert == null || _certChange)
+                {
+                    <div class="pe-panel-tabs mb-2" style="border:0">
+                        <button class="pe-panel-tab @(_certCreate ? "" : "active")" @onclick="() => _certCreate = false">Use my .pfx / .p12 file</button>
+                        <button class="pe-panel-tab @(_certCreate ? "active" : "")" @onclick="() => _certCreate = true">Create a new Digital ID</button>
+                    </div>
+                    @if (!_certCreate)
+                    {
+                        <div class="row g-2 align-items-end">
+                            <div class="col-6"><InputFile class="form-control" accept=".pfx,.p12" OnChange="e => _files = [e.File]" /></div>
+                            <div class="col-4"><label>Password</label><input class="form-control" type="password" autocomplete="off" @bind="_certPw" /></div>
+                            <div class="col-2"><button class="pe-btn primary w-100" disabled="@(_files.Count == 0)" @onclick="LoadCert">Use</button></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-2">
+                            <div class="col-6"><label>Name</label><input class="form-control" @bind="_idName" /></div>
+                            <div class="col-6"><label>Email</label><input class="form-control" @bind="_idEmail" /></div>
+                            <div class="col-6"><label>Organisation (optional)</label><input class="form-control" @bind="_idOrg" /></div>
+                            <div class="col-6"><label>Password for the ID</label><input class="form-control" type="password" autocomplete="new-password" @bind="_idPw" @bind:event="oninput" /></div>
+                        </div>
+                        <p class="pe-hint mt-1 mb-1">A self-signed ID: fine for your own records and people who know you; it isn't vouched for by a certificate authority. The .pfx file downloads so you can use it again.</p>
+                        <button class="pe-btn primary" disabled="@(string.IsNullOrWhiteSpace(_idName) || _idPw.Length < 4)" @onclick="CreateId">Create and use</button>
+                    }
+                    @if (_certError != null) { <p style="color:#dc3545" class="mt-1 mb-0">@_certError</p> }
+                    <p class="pe-hint mt-1 mb-0">The Digital ID is used only to sign this document and is kept in memory for this session — never saved on the server.</p>
+                }
+
+                <h4 class="mt-3" style="font-size:13px;font-weight:600">2. Where</h4>
+                @foreach (var f in Ed.EmptySignatureFields)
+                {
+                    var name = f.Name;
+                    <label class="d-flex gap-2"><input type="radio" name="where" checked="@(_signWhere == "field:" + name)" @onchange="() => SetWhere(name)" /> In the signature field “@f.Name” (page @f.Page)</label>
+                }
+                <label class="d-flex gap-2"><input type="radio" name="where" checked="@(_signWhere == "box")" @onchange="@(() => SetWhere(null, box: true))" /> A signature box at the bottom right of page @(Ed.CurrentPage + 1)</label>
+                <label class="d-flex gap-2"><input type="radio" name="where" checked="@(_signWhere == "invisible")" @onchange="@(() => SetWhere(null, box: false))" /> Invisible (shown only in the signatures list)</label>
+                @if (Ed.SignaturePng != null)
+                {
+                    <label class="d-flex gap-2 mt-1"><input type="checkbox" @bind="_signImage" /> Show my drawn signature in the box</label>
+                }
+
+                <h4 class="mt-3" style="font-size:13px;font-weight:600">3. Details</h4>
+                <div class="row g-2">
+                    <div class="col-6"><label>Reason</label><input class="form-control" @bind="_signReason" placeholder="I approve this document" /></div>
+                    <div class="col-6"><label>Location</label><input class="form-control" @bind="_signLocation" /></div>
+                    <div class="col-6"><label>Contact</label><input class="form-control" @bind="_signContact" /></div>
+                    <div class="col-6"><label>Timestamp server (optional)</label><input class="form-control" @bind="_signTsa" placeholder="http://timestamp.digicert.com" /></div>
+                </div>
+                <label class="d-flex gap-2 mt-2"><input type="checkbox" @bind="_signCertify" /> Certify: lock the document so no further changes are allowed</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(Ed.SigningCert == null)" @onclick="SignNow">Sign and download</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Signatures:
+        <Modal Title="Signatures" OnClose="Close" Wide>
+            <ChildContent>
+                @if (Ed.SignatureChecks is not { Count: > 0 } checks)
+                {
+                    <p>This PDF has no digital signatures.</p>
+                }
+                else
+                {
+                    @foreach (var c in checks)
+                    {
+                        <div class="pe-action" style="align-items:flex-start">
+                            <i class="bi @(c.IntegrityOk ? (c.Trusted ? "bi-patch-check-fill" : "bi-patch-exclamation-fill") : "bi-x-octagon-fill")"
+                               style="font-size:22px;color:@(c.IntegrityOk ? (c.Trusted ? "#1E7B34" : "#E6A100") : "#C62828")"></i>
+                            <div style="flex:1;font-size:12.5px">
+                                <strong>@c.SignedBy</strong> — @c.SignedAt.ToLocalTime().ToString("g") (@c.FieldName)<br />
+                                @(c.IntegrityOk ? "The document hasn't been changed since it was signed." : "The document has been changed since it was signed, or the signature is damaged.")
+                                @(c.CoversWholeDocument ? "" : $" Signed revision {c.Revision} of {c.TotalRevisions}: later changes aren't covered.")<br />
+                                <span class="pe-hint">@c.TrustNote@(c.Timestamped ? " Timestamped." : "")@(c.Reason.Length > 0 ? $" Reason: {c.Reason}." : "")@(c.Location.Length > 0 ? $" Location: {c.Location}." : "")</span>
+                            </div>
+                        </div>
+                    }
+                }
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>
@@ -624,6 +719,10 @@
     private string _ocrLang = "eng";
     private bool _ocrSkip = true, _scanOcr = true;
     private string _cmpMode = "diff";
+    private bool _certChange, _certCreate, _signCertify, _signImage = true;
+    private string _certPw = "", _idName = "", _idEmail = "", _idOrg = "", _idPw = "";
+    private string? _certError;
+    private string _signWhere = "box", _signReason = "", _signLocation = "", _signContact = "", _signTsa = "";
 
     private ElementReference _sigCanvas;
     private bool _sigTyped, _sigPadReady;
@@ -654,6 +753,10 @@
             case DialogKind.Ocr or DialogKind.ScanCamera:
                 _ocrLanguages = await Ed.Ocr.LanguagesAsync();
                 if (_ocrLanguages.Count > 0 && !_ocrLanguages.Contains(_ocrLang)) _ocrLang = _ocrLanguages.Contains("eng") ? "eng" : _ocrLanguages[0];
+                break;
+            case DialogKind.CertSign:
+                _certChange = false; _certError = null; _certPw = "";
+                _signWhere = Ed.EmptySignatureFields.Count > 0 ? "field:" + Ed.EmptySignatureFields[0].Name : "box";
                 break;
             case DialogKind.AiSettings:
                 _aiProvider = Ed.AiProvider;
@@ -752,6 +855,36 @@
     private async Task PasswordKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await OpenWithPassword();
+    }
+
+    private async Task LoadCert()
+    {
+        _certError = await Ed.LoadCertificateAsync(_files[0], _certPw);
+        if (_certError == null) { _certChange = false; _files = []; }
+        _certPw = "";
+    }
+
+    private async Task CreateId()
+    {
+        _certError = null;
+        try
+        {
+            await Ed.CreateDigitalIdAsync(_idName.Trim(), _idEmail.Trim(), _idOrg.Trim(), _idPw);
+            _certChange = false;
+            _idPw = "";
+        }
+        catch (Exception ex) { _certError = ex.Message; }
+        Ed.Refresh();
+    }
+
+    private void SetWhere(string? field, bool box = false) =>
+        _signWhere = field != null ? "field:" + field : box ? "box" : "invisible";
+
+    private Task SignNow()
+    {
+        string? field = _signWhere.StartsWith("field:") ? _signWhere[6..] : null;
+        bool visible = _signWhere == "box";
+        return Do(() => Ed.SignWithCertificateAsync(field, visible, _signReason, _signLocation, _signContact, _signCertify, _signTsa, _signImage));
     }
 
     private void SaveAiSettings()

@@ -68,6 +68,16 @@ public static class DigitalSignatureService
     /// <summary>Creates a self-signed Digital ID (RSA 2048, 5 years) saved as a password-protected .pfx.</summary>
     public static string CreateDigitalId(string name, string email, string organisation, string password)
     {
+        var pfx = CreateDigitalIdPfx(name, email, organisation, password);
+        Directory.CreateDirectory(DigitalIdFolder);
+        string file = System.IO.Path.Combine(DigitalIdFolder, string.Concat(name.Select(ch => System.IO.Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch)) + ".pfx");
+        File.WriteAllBytes(file, pfx);
+        return file;
+    }
+
+    /// <summary>A self-signed Digital ID (RSA 2048, 5 years) as password-protected .pfx bytes, without saving it anywhere.</summary>
+    public static byte[] CreateDigitalIdPfx(string name, string email, string organisation, string password)
+    {
         using var rsa = RSA.Create(2048);
         string dn = $"CN={Escape(name)}" + (organisation.Length > 0 ? $", O={Escape(organisation)}" : "") + (email.Length > 0 ? $", E={Escape(email)}" : "");
         var req = new CertificateRequest(dn, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -75,11 +85,12 @@ public static class DigitalSignatureService
         req.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
         req.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(req.PublicKey, false));
         using var cert = req.CreateSelfSigned(DateTimeOffset.Now.AddMinutes(-5), DateTimeOffset.Now.AddYears(5));
-        Directory.CreateDirectory(DigitalIdFolder);
-        string file = System.IO.Path.Combine(DigitalIdFolder, string.Concat(name.Select(ch => System.IO.Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch)) + ".pfx");
-        File.WriteAllBytes(file, cert.Export(X509ContentType.Pfx, password));
-        return file;
+        return cert.Export(X509ContentType.Pfx, password);
     }
+
+    /// <summary>A certificate (with its private key) from .pfx / .p12 bytes.</summary>
+    public static X509Certificate2 LoadPfx(byte[] pfx, string password) =>
+        X509CertificateLoader.LoadPkcs12(pfx, password, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
 
     private static string Escape(string s) => s.Replace(",", "\\,").Replace("=", "\\=");
 

@@ -30,6 +30,8 @@ public sealed class PdfSession : IDisposable
     public List<BookmarkItem> Bookmarks { get; set; } = new();
     public List<PdfAnnotationItem> Annotations { get; set; } = new();
     public PdfMetadataInfo Metadata { get; set; } = new();
+    /// <summary>Signature fields that have been signed (their appearance stays on the page).</summary>
+    public HashSet<string> SignedFields { get; set; } = new();
 
     /// <summary>Goes up with every change, so page image URLs change and browsers fetch them again.</summary>
     public int Version { get; set; }
@@ -226,6 +228,15 @@ public sealed class PdfDocumentStore : IDisposable
         session.Bookmarks = await Task.Run(() => { try { return forms.GetBookmarks(path); } catch { return new List<BookmarkItem>(); } });
         session.Annotations = await Task.Run(() => PdfAnnotationReader.Read(path));
         session.Metadata = await Task.Run(() => { try { return forms.GetMetadata(path); } catch { return new PdfMetadataInfo(); } });
+        session.SignedFields = await Task.Run(() =>
+        {
+            try
+            {
+                using var pdf = new PdfDocument(new PdfReader(path));
+                return new iText.Signatures.SignatureUtil(pdf).GetSignatureNames().ToHashSet();
+            }
+            catch { return new HashSet<string>(); }
+        });
         PdfTextExtractorService.InvalidateCache(path);
 
         // Draw the pages without the form's own widgets: the page shows its fields as HTML inputs
@@ -252,9 +263,16 @@ public sealed class PdfDocumentStore : IDisposable
         {
             var page = doc.GetPage(i);
             foreach (var annot in page.GetAnnotations().ToList())
-                if (PdfName.Widget.Equals(annot.GetSubtype()))
+                if (PdfName.Widget.Equals(annot.GetSubtype()) && !IsSignedSignature(annot.GetPdfObject()))
                     page.RemoveAnnotation(annot);
         }
+    }
+
+    /// <summary>A signed signature field's widget: its appearance is the visible signature, so it stays.</summary>
+    private static bool IsSignedSignature(PdfDictionary widget)
+    {
+        var field = widget.ContainsKey(PdfName.FT) ? widget : widget.GetAsDictionary(PdfName.Parent) ?? widget;
+        return PdfName.Sig.Equals(field.GetAsName(PdfName.FT)) && field.Get(PdfName.V) != null;
     }
 
     private static string NewVersionPath(PdfSession session) =>
