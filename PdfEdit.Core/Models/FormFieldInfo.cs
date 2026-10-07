@@ -42,7 +42,7 @@ public class FormFieldInfo
     public string? PendingName { get; set; }
     public string DisplayName => string.IsNullOrEmpty(PendingName) ? Name : PendingName;
 
-    // ── Acrobat "Field Properties" (Appearance / Options tabs) ──────────────────
+    // ── "Field Properties" (Appearance / Options tabs) ──────────────────
     public string? BorderColor { get; set; }        // "#RRGGBB"; null = no border
     public string? FillColor { get; set; }          // "#RRGGBB"; null = transparent
     public string TextColor { get; set; } = "#000000";
@@ -52,14 +52,14 @@ public class FormFieldInfo
     public string? DateFormat { get; set; }         // e.g. "dd/mm/yyyy" → a date field (AFDate_FormatEx)
     public bool IsDateField => !string.IsNullOrEmpty(DateFormat);
 
-    // Acrobat Format tab: Number, Currency, Percent, Zip, Zip+4, Phone, SSN (null = none). The
+    // Format tab: Number, Currency, Percent, Zip, Zip+4, Phone, SSN (null = none). The
     // value is stored as a plain number; the formatted text is only what's shown.
     public string? NumberFormat { get; set; }
     public int Decimals { get; set; } = 2;
     public string CurrencySymbol { get; set; } = "£";
     public bool HasNumberFormat => !string.IsNullOrEmpty(NumberFormat);
 
-    // Acrobat Calculate tab: SUM / PRD / AVG / MIN / MAX of other fields (null = not calculated).
+    // Calculate tab: SUM / PRD / AVG / MIN / MAX of other fields (null = not calculated).
     public string? CalcOp { get; set; }
     public List<string> CalcFields { get; set; } = new();
 }

@@ -83,7 +83,7 @@
             <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource DimForegroundBrush}"/>
             <Button DockPanel.Dock="Right" Content="Close" Padding="16,4" Margin="8,0,0,0" IsCancel="True"/>
             <Button DockPanel.Dock="Right" x:Name="OpenFolderBtn" Content="Open folder" Padding="12,4" Margin="8,0,0,0" Visibility="Collapsed" Click="OpenFolder_Click"/>
-            <Button DockPanel.Dock="Right" x:Name="RunBtn" Content="Create PDFs" Padding="18,4" Style="{StaticResource ModernButton}" Click="Run_Click"/>
+            <Button DockPanel.Dock="Right" x:Name="RunBtn" Content="Make PDFs" Padding="18,4" Style="{StaticResource ModernButton}" Click="Run_Click"/>
         </DockPanel>
     </Grid>
 </Window>

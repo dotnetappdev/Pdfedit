@@ -3,7 +3,7 @@ namespace PdfEdit.Models;
 /// <summary>A stamp you can place: its title, colour, group and whether it adds name + time.</summary>
 public sealed record StampDefinition(string Category, string Title, string Color, bool Dynamic = false, string? PdfName = null)
 {
-    /// <summary>Second line of a dynamic stamp, like Acrobat's "By David at 2:15 pm, 4 Oct 2026".</summary>
+    /// <summary>Second line of a dynamic stamp like other PDF editors' "By David at 2:15 pm, 4 Oct 2026".</summary>
     public string? MakeSubtitle(DateTime now) =>
         Dynamic ? $"By {Environment.UserName} at {now:t}, {now:d}" : null;
 
@@ -11,7 +11,7 @@ public sealed record StampDefinition(string Category, string Title, string Color
 }
 
 /// <summary>
-/// The stamp list: Acrobat's Standard Business, Sign Here and Dynamic stamps, plus more common
+/// The stamp list: Business, Signing and Name & time stamps, plus more common
 /// office stamps. Custom stamps (Stamps… dialog) are added under "Custom".
 /// </summary>
 public static class StampCatalog
@@ -22,44 +22,44 @@ public static class StampCatalog
 
     public static readonly IReadOnlyList<StampDefinition> BuiltIn = new List<StampDefinition>
     {
-        // Acrobat — Standard Business
-        new("Standard Business", "APPROVED", Green, PdfName: "Approved"),
-        new("Standard Business", "AS IS", Blue, PdfName: "AsIs"),
-        new("Standard Business", "COMPLETED", Green),
-        new("Standard Business", "CONFIDENTIAL", Red, PdfName: "Confidential"),
-        new("Standard Business", "DEPARTMENTAL", Blue, PdfName: "Departmental"),
-        new("Standard Business", "DRAFT", Blue, PdfName: "Draft"),
-        new("Standard Business", "EXPERIMENTAL", Blue, PdfName: "Experimental"),
-        new("Standard Business", "EXPIRED", Red, PdfName: "Expired"),
-        new("Standard Business", "FINAL", Green, PdfName: "Final"),
-        new("Standard Business", "FOR COMMENT", Blue, PdfName: "ForComment"),
-        new("Standard Business", "FOR PUBLIC RELEASE", Green, PdfName: "ForPublicRelease"),
-        new("Standard Business", "INFORMATION ONLY", Blue),
-        new("Standard Business", "NOT APPROVED", Red, PdfName: "NotApproved"),
-        new("Standard Business", "NOT FOR PUBLIC RELEASE", Red, PdfName: "NotForPublicRelease"),
-        new("Standard Business", "PRELIMINARY RESULTS", Blue),
-        new("Standard Business", "SOLD", Green, PdfName: "Sold"),
-        new("Standard Business", "TOP SECRET", Red, PdfName: "TopSecret"),
-        new("Standard Business", "VOID", Red),
+        // Business
+        new("Business", "APPROVED", Green, PdfName: "Approved"),
+        new("Business", "AS IS", Blue, PdfName: "AsIs"),
+        new("Business", "COMPLETED", Green),
+        new("Business", "CONFIDENTIAL", Red, PdfName: "Confidential"),
+        new("Business", "DEPARTMENTAL", Blue, PdfName: "Departmental"),
+        new("Business", "DRAFT", Blue, PdfName: "Draft"),
+        new("Business", "EXPERIMENTAL", Blue, PdfName: "Experimental"),
+        new("Business", "EXPIRED", Red, PdfName: "Expired"),
+        new("Business", "FINAL", Green, PdfName: "Final"),
+        new("Business", "FOR COMMENT", Blue, PdfName: "ForComment"),
+        new("Business", "FOR PUBLIC RELEASE", Green, PdfName: "ForPublicRelease"),
+        new("Business", "INFORMATION ONLY", Blue),
+        new("Business", "NOT APPROVED", Red, PdfName: "NotApproved"),
+        new("Business", "NOT FOR PUBLIC RELEASE", Red, PdfName: "NotForPublicRelease"),
+        new("Business", "PRELIMINARY RESULTS", Blue),
+        new("Business", "SOLD", Green, PdfName: "Sold"),
+        new("Business", "TOP SECRET", Red, PdfName: "TopSecret"),
+        new("Business", "VOID", Red),
 
-        // Acrobat — Sign Here
-        new("Sign Here", "SIGN HERE", Red),
-        new("Sign Here", "INITIAL HERE", Red),
-        new("Sign Here", "WITNESS", Red),
-        new("Sign Here", "ACCEPTED", Green),
-        new("Sign Here", "REJECTED", Red),
+        // Signing
+        new("Signing", "SIGN HERE", Red),
+        new("Signing", "INITIAL HERE", Red),
+        new("Signing", "WITNESS", Red),
+        new("Signing", "ACCEPTED", Green),
+        new("Signing", "REJECTED", Red),
 
-        // Acrobat — Dynamic (adds who and when)
-        new("Dynamic", "APPROVED", Green, Dynamic: true, PdfName: "Approved"),
-        new("Dynamic", "CONFIDENTIAL", Red, Dynamic: true, PdfName: "Confidential"),
-        new("Dynamic", "RECEIVED", Blue, Dynamic: true),
-        new("Dynamic", "REVIEWED", Blue, Dynamic: true),
-        new("Dynamic", "REVISED", Purple, Dynamic: true),
-        new("Dynamic", "PAID", Green, Dynamic: true),
-        new("Dynamic", "VERIFIED", Green, Dynamic: true),
-        new("Dynamic", "CHECKED", Green, Dynamic: true),
-        new("Dynamic", "SCANNED", Grey, Dynamic: true),
-        new("Dynamic", "ENTERED", Blue, Dynamic: true),
+        // Name & time (adds who and when)
+        new("Name & time", "APPROVED", Green, Dynamic: true, PdfName: "Approved"),
+        new("Name & time", "CONFIDENTIAL", Red, Dynamic: true, PdfName: "Confidential"),
+        new("Name & time", "RECEIVED", Blue, Dynamic: true),
+        new("Name & time", "REVIEWED", Blue, Dynamic: true),
+        new("Name & time", "REVISED", Purple, Dynamic: true),
+        new("Name & time", "PAID", Green, Dynamic: true),
+        new("Name & time", "VERIFIED", Green, Dynamic: true),
+        new("Name & time", "CHECKED", Green, Dynamic: true),
+        new("Name & time", "SCANNED", Grey, Dynamic: true),
+        new("Name & time", "ENTERED", Blue, Dynamic: true),
 
         // More office stamps
         new("More", "PAID", Green),
@@ -109,7 +109,7 @@ public static class StampCatalog
                              .Select(c => new StampDefinition(CustomCategory, c.Title.Trim(), string.IsNullOrWhiteSpace(c.Color) ? Purple : c.Color, c.Dynamic)))
                .ToList();
 
-    /// <summary>Default size of a placed stamp in points, from its text (like Acrobat's).</summary>
+    /// <summary>Default size of a placed stamp in points, from its text.</summary>
     public static (double Width, double Height) SizeFor(string title, string? subtitle)
     {
         double h = subtitle != null ? 46 : 34;

@@ -6,9 +6,9 @@ Here's a flat form (no fields, just boxes printed on the page) being filled in, 
 
 ![Filling in and signing a flat PDF form in Live View](screenshots/fill-and-sign.gif)
 
-All of the tools below are on the **Fill & Sign** tab:
+All of the tools below are on the **Complete & Sign** tab:
 
-![The Fill & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
+![The Complete & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
 
 ## Forms with fillable fields
 
@@ -16,8 +16,8 @@ Open the PDF (Ctrl+O, or drag it onto the window) and click a field to type in i
 
 When a document has fields, a bar across the top offers two things:
 
-- **Highlight Existing Fields** shades every field light blue so the empty ones are easy to spot. Required fields get a red outline.
-- **Prepare Form** switches to editing the fields themselves (see [Preparing forms](forms.md)).
+- **Show All Fields** shades every field light blue so the empty ones are easy to spot. Required fields get a red outline.
+- **Form Builder** switches to editing the fields themselves (see [Preparing forms](forms.md)).
 
 To check you haven't missed anything, use **Forms → Validate**. It lists the empty required fields and jumps to the first one.
 
@@ -27,7 +27,7 @@ Plenty of forms are just lines and boxes printed on the page. You can still fill
 
 ## Adding text
 
-**Add Text** (Fill & Sign tab, or press T) puts a text box wherever you click. A small toolbar sits above the selected box:
+**Add Text** (Complete & Sign tab, or press T) puts a text box wherever you click. A small toolbar sits above the selected box:
 
 - the grip to drag it around
 - **A / A** to make the text smaller or larger

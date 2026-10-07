@@ -130,7 +130,7 @@ public partial class MainViewModel
         {
             Left = 24, Bottom = size.Height - 48,
             Text = PlainText(msg.Content),
-            Author = "AI Assistant",
+            Author = "AI Helper",
         });
         PageChanged?.Invoke();
         ToastService.Instance.Success($"Added as a note on page {_currentPageIndex + 1}.");
@@ -333,7 +333,7 @@ public partial class MainViewModel
         var note = new StickyNoteAnnotation
         {
             Left = 24 + existing * 28, Bottom = size.Height - 48 - existing * 28,
-            Text = Arg(item, "text", "Note"), Author = "AI Assistant",
+            Text = Arg(item, "text", "Note"), Author = "AI Helper",
         };
         CurrentPageIndex = p - 1;
         AddStickyNote(note);   // puts it on the current page and makes it undoable
@@ -409,7 +409,7 @@ public partial class MainViewModel
         ["save_to_cloud"] = ("Save to cloud", () => SaveToCloudCommand),
         ["print"] = ("Print", () => PrintCommand),
         ["compress"] = ("Compress the PDF", () => CompressPdfCommand),
-        ["ocr"] = ("Recognise text (OCR)", () => OcrMakeSearchableCommand),
+        ["ocr"] = ("Text recognition (OCR)", () => OcrMakeSearchableCommand),
         ["export_word"] = ("Export to Word", () => ExportWordCommand),
         ["export_excel"] = ("Export to Excel", () => ExportExcelCommand),
         ["export_text"] = ("Export text", () => ExportTextCommand),
@@ -429,7 +429,7 @@ public partial class MainViewModel
         ["watermark"] = ("Watermark", () => WatermarkCommand),
         ["remove_watermark"] = ("Remove watermark", () => RemoveWatermarkCommand),
         ["password"] = ("Protect with a password", () => PasswordProtectCommand),
-        ["sanitize"] = ("Remove hidden information", () => SanitizeCommand),
+        ["sanitize"] = ("Strip hidden data", () => SanitizeCommand),
         ["flatten"] = ("Flatten & save", () => FlattenAndSaveCommand),
         ["apply_redactions"] = ("Apply redactions", () => ApplyRedactionsCommand),
         ["accessibility_check"] = ("Accessibility check", () => AccessibilityCheckCommand),

@@ -2,7 +2,7 @@ using System.Windows;
 
 namespace PdfEdit.Services;
 
-/// <summary>Visual Studio / Acrobat style layout commands for a group of controls.</summary>
+/// <summary>Visual Studio style layout commands for a group of controls.</summary>
 public enum ArrangeOperation
 {
     AlignLefts, AlignCenters, AlignRights,

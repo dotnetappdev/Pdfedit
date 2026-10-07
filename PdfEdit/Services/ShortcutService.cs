@@ -132,8 +132,8 @@ public static class ShortcutService
         new("merge", "Pages", "Merge PDFs", "", vm => vm.MergePdfCommand),
         new("watermark", "Pages", "Watermark", "", vm => vm.WatermarkCommand),
         new("page_numbers", "Pages", "Page numbers", "", vm => vm.AddPageNumbersCommand),
-        new("compress", "Pages", "Compress PDF", "", vm => vm.CompressPdfCommand),
-        new("ocr", "Pages", "Recognise text (OCR)", "", vm => vm.OcrMakeSearchableCommand),
+        new("compress", "Pages", "Shrink PDF", "", vm => vm.CompressPdfCommand),
+        new("ocr", "Pages", "Text recognition (OCR)", "", vm => vm.OcrMakeSearchableCommand),
 
         // View
         new("zoom_in", "View", "Zoom in on the page", "Ctrl+Alt+Plus, Ctrl+Alt+Num+", vm => vm.ZoomInCommand),
@@ -174,7 +174,7 @@ public static class ShortcutService
         Tool("tool_eraser", "Eraser", "", "Eraser"),
 
         // AI
-        new("ai_panel", "AI", "AI Assistant panel", "", vm => vm.ToggleAiPanelCommand),
+        new("ai_panel", "AI", "AI Helper panel", "", vm => vm.ToggleAiPanelCommand),
         new("ai_outline", "AI", "Outline", "", vm => vm.GenerateSummaryCommand),
         new("ai_translate", "AI", "Translate PDF", "", vm => vm.TranslatePdfCommand),
         new("ai_ask_across", "AI", "Ask across PDFs", "", vm => vm.AskAcrossPdfsCommand),

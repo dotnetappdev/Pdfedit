@@ -60,7 +60,7 @@
   <text x="66" y="183" class="label" font-weight="bold" fill="#e0e0f0">Custom (Pure C#)</text>
   <rect x="66" y="185" width="58" height="14" rx="3" class="badge-default"/>
   <text x="95" y="196" text-anchor="middle" class="badge">Default</text>
-  <text x="66" y="206" class="desc">Built-in Adobe-spec parser and renderer — zero native dependencies. Full support for</text>
+  <text x="66" y="206" class="desc">Built-in PDF-spec parser and renderer — zero native dependencies. Full support for</text>
   <text x="66" y="220" class="desc">FlateDecode, LZW, all path/text/image operators, Standard-14 fonts, and xref streams.</text>
 
   <!-- Option 2: Pdfium -->

@@ -4,7 +4,7 @@ using iText.Kernel.Pdf.Xobject;
 
 namespace PdfEdit.Services;
 
-/// <summary>Saves every picture in a PDF to a folder (Acrobat's Export all images).</summary>
+/// <summary>Saves every picture in a PDF to a folder (Export all images).</summary>
 public static class ImageExtractService
 {
     /// <returns>How many images were saved, and how many couldn't be decoded.</returns>

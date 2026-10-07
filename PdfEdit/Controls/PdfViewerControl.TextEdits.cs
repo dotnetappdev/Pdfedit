@@ -8,7 +8,7 @@ using PdfEdit.Models;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat's text-edit comments: <b>Insert text</b> (click where text is missing → a blue caret
+/// the usual text-edit comments: <b>Insert text</b> (click where text is missing → a blue caret
 /// with the text to insert) and <b>Replace text</b> (drag over the words to replace → struck
 /// through, with a caret holding the replacement). Both show in the Comments panel.
 /// </summary>

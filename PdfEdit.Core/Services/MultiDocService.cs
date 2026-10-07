@@ -13,7 +13,7 @@ public sealed record DocPage(string Path, int Page, string Text)
 }
 
 /// <summary>
-/// Questions across several PDFs (Acrobat's PDF Spaces): reads every page, and when everything
+/// Questions across several PDFs (PDF Spaces): reads every page, and when everything
 /// won't fit in one request, picks the passages that best match the question. Answers cite
 /// [file.pdf p.N], which the window turns into links.
 /// </summary>

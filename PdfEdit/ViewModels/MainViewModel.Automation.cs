@@ -49,7 +49,7 @@ public partial class MainViewModel
             .Select(p => (p, PdfTextExtractorService.GetPageText(path, p))).ToList());
         if (pages.All(p => string.IsNullOrWhiteSpace(p.Item2)))
         {
-            Dialogs.AppDialog.ShowInfo("There's no text to read on this page. If it's a scan, run Recognise text (OCR) first.", "Read aloud");
+            Dialogs.AppDialog.ShowInfo("There's no text to read on this page. If it's a scan, run Text recognition (OCR) first.", "Read aloud");
             return;
         }
         try
@@ -68,7 +68,7 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// Acrobat Prepare Form's auto-detect: find the boxes, squares and blank lines of a flat form
+    /// Form Builder's auto-detect: find the boxes, squares and blank lines of a flat form
     /// on every page, name them from their printed labels, and add them as fillable fields.
     /// </summary>
     public ICommand DetectFieldsCommand => _detectFieldsCommand ??= new AsyncRelayCommand(DetectFieldsAsync, () => HasDocument);
@@ -117,7 +117,7 @@ public partial class MainViewModel
         if (found.Count == 0)
         {
             StatusText = "No empty boxes or blank lines found.";
-            Dialogs.AppDialog.ShowInfo("No new fields were found. Detection looks for empty ruled boxes, small squares and blank lines; you can still add fields by hand with Prepare Form.", "Detect fields");
+            Dialogs.AppDialog.ShowInfo("No new fields were found. Detection looks for empty ruled boxes, small squares and blank lines; you can still add fields by hand with Form Builder.", "Detect fields");
             return;
         }
         var dlg = new Dialogs.DetectFieldsDialog(found) { Owner = Application.Current.MainWindow };
@@ -133,20 +133,20 @@ public partial class MainViewModel
         if (_currentFilePath == null) return;
         if (AllFields.Count == 0)
         {
-            Dialogs.AppDialog.ShowInfo("This PDF has no fillable fields. Add fields with Prepare Form (or Detect Fields) and save first.", "Bulk fill");
+            Dialogs.AppDialog.ShowInfo("This PDF has no fillable fields. Add fields with Form Builder (or Detect Fields) and save first.", "Bulk fill");
             return;
         }
         new Dialogs.BulkFillDialog(_currentFilePath) { Owner = Application.Current.MainWindow }.ShowDialog();
     }, () => HasDocument);
 
-    /// <summary>Batch processing (Acrobat's Action Wizard) over many PDFs.</summary>
+    /// <summary>Batch processing (Action Wizard) over many PDFs.</summary>
     public ICommand BatchCommand => _batchCommand ??= new RelayCommand(() =>
     {
         var dlg = new Dialogs.BatchDialog(_currentFilePath) { Owner = Application.Current.MainWindow };
         dlg.ShowDialog();
     });
 
-    /// <summary>Remove hidden information from the open PDF (undoable).</summary>
+    /// <summary>Strip hidden data from the open PDF (undoable).</summary>
     public ICommand SanitizeCommand => _sanitizeCommand ??= new AsyncRelayCommand(async () =>
     {
         var dlg = new Dialogs.SanitizeDialog { Owner = Application.Current.MainWindow };

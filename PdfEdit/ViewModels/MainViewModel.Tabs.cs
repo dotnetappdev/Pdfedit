@@ -6,7 +6,7 @@ using PdfEdit.Services;
 namespace PdfEdit.ViewModels;
 
 /// <summary>
-/// Document tabs, like Acrobat's: every PDF you open gets a tab. Switching tabs keeps your
+/// Document tabs like other PDF editors': every PDF you open gets a tab. Switching tabs keeps your
 /// unsaved work (filled fields, text, signatures, comments, page and zoom) for each file, the
 /// same way PdfEdit already keeps it when you close and reopen a file.
 /// Ctrl+Tab / Ctrl+Shift+Tab move between tabs; Ctrl+W closes the current one.

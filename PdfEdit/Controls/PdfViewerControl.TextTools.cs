@@ -12,10 +12,10 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat Fill &amp; Sign behaviour for placed text and marks in the live view:
+/// Complete &amp; Sign behaviour for placed text and marks in the live view:
 /// <list type="bullet">
 /// <item>Add Text creates a real annotation immediately, so the mini toolbar (smaller, larger,
-/// delete, rotate, character spacing, colours) is there while you type, like Acrobat.</item>
+/// delete, rotate, character spacing, colours) is there while you type like other PDF editors.</item>
 /// <item>The box auto-sizes to its text until it is resized by hand.</item>
 /// <item>Character spacing ("VA") spreads the letters, e.g. to line up with comb boxes.</item>
 /// <item>The Properties panel edits the selected text through <c>MainViewModel.AnnotationChanged</c>,
@@ -67,7 +67,7 @@ public partial class PdfViewerControl
         _spacingOverlays.Clear();
     }
 
-    // ── Auto-size (Acrobat grows the box as you type) ─────────────────────────
+    // ── Auto-size (grows the box as you type) ─────────────────────────
 
     /// <summary>Applies the annotation's fit mode: auto-size, or wrap and grow the height.</summary>
     private void FitAnnotationBox(FreeTextAnnotation ann, TextBox tb)

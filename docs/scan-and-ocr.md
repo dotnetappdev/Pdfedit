@@ -20,7 +20,7 @@ No scanner? **Add image file…** builds the PDF from photos or image files inst
 
 ## Making scans searchable (OCR)
 
-Tick **Recognise text** and PdfEdit adds an invisible text layer to each scanned page. You can then search, select and copy the text. You'll find the same thing under **Toolkit → Scan & text recognition → Recognise text** for PDFs you already have.
+Tick **Make searchable** and PdfEdit adds an invisible text layer to each scanned page. You can then search, select and copy the text. You'll find the same thing under **Toolkit → Scan & text recognition → Make scanned pages searchable** for PDFs you already have.
 
 Two OCR engines are available:
 

@@ -62,7 +62,7 @@ public partial class DesignCanvas : UserControl
     private readonly Thumb[] _handles = new Thumb[8];
     private readonly double _handleHalf = 5;
 
-    // Adobe-style mini toolbar shown above a text element while it's being edited
+    // standard mini toolbar shown above a text element while it's being edited
     private Border? _textToolbar;
     private const double TextToolbarH = 26;
 
@@ -194,7 +194,7 @@ public partial class DesignCanvas : UserControl
         // after clicking the page (Canvas itself is not focusable, so focus never moved here).
         Focus();
 
-        // Fill & Sign: type into / tick form fields, place signatures.
+        // Complete & Sign: type into / tick form fields, place signatures.
         if (VM.ActiveTool == DesignTool.Fill)
         {
             if (HitTestField(pos) is { } field) FillField(field);
@@ -236,7 +236,7 @@ public partial class DesignCanvas : UserControl
                         BeginTextEdit(clickedText);
                         return;
                     }
-                    // Like Live View / Acrobat: a click (no drag) in a form field fills it.
+                    // Like Live View / PDF readers: a click (no drag) in a form field fills it.
                     _clickToFill = hit as FormFieldDesignElement;
                     if (!hit.IsLocked)
                     {
@@ -321,7 +321,7 @@ public partial class DesignCanvas : UserControl
             var elem = VM.CreateTextElement(pos.X, pos.Y);
             elem.Text      = isCheck ? "✓" : "✕";
             elem.FontSize  = 24;
-            // Acrobat Fill & Sign defaults: green tick, black cross.
+            // Complete & Sign defaults: green tick, black cross.
             elem.Color     = isCheck ? Color.FromRgb(0x2E, 0x7D, 0x32) : Color.FromRgb(0, 0, 0);
             elem.Alignment = TextAlignment.Center;
             elem.Width     = 40;
@@ -650,7 +650,7 @@ public partial class DesignCanvas : UserControl
         e.Handled = true;
     }
 
-    // ── Text mini toolbar (Adobe-style: font size, delete) ─────────────────────
+    // ── Text mini toolbar (standard: font size, delete) ─────────────────────
 
     private void ShowTextToolbar(TextDesignElement elem)
     {
@@ -844,7 +844,7 @@ public partial class DesignCanvas : UserControl
         InteractionCanvas.Children.Remove(box);
     }
 
-    // ── Fill & Sign ───────────────────────────────────────────────────────────
+    // ── Complete & Sign ───────────────────────────────────────────────────────────
 
     // A mouse-down on a form field with Select: filled on mouse-up unless it became a drag.
     private FormFieldDesignElement? _clickToFill;
@@ -1177,7 +1177,7 @@ public partial class DesignCanvas : UserControl
         if (moveTop)    top    = Math.Min(VM.Snap(Math.Max(0, top + dy)), bottom - min);
         if (moveBottom) bottom = Math.Max(VM.Snap(bottom + dy), top + min);
 
-        // Shift on a corner handle keeps the original aspect ratio (Acrobat / Office behaviour).
+        // Shift on a corner handle keeps the original aspect ratio (/ Office behaviour).
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && idx is 0 or 2 or 5 or 7
             && _resizeOrigin.Width > 0 && _resizeOrigin.Height > 0)
         {

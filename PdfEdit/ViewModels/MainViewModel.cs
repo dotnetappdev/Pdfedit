@@ -69,7 +69,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<Models.RedactRegion> RedactionRegions { get; } = new();
     public ObservableCollection<Models.StickyNoteAnnotation> StickyNotes { get; } = new();
     public ObservableCollection<Models.ShapeAnnotation> ShapeAnnotations { get; } = new();
-    // Acrobat Insert text / Replace text marks
+    // Insert text / Replace text marks
     public ObservableCollection<Models.TextEditMark> TextEditMarks { get; } = new();
     // Temp copy the page renderer reads when PdfEdit's own saved annotations are left out of it
     private string? _renderCopyPath;
@@ -712,7 +712,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         set { _measureUnit = value is "in" or "mm" or "cm" or "pt" ? value : "in"; OnPropertyChanged(); }
     }
 
-    // Colour for Fill & Sign marks picked from the toolbox; null = Acrobat-style defaults
+    // Colour for Complete & Sign marks picked from the toolbox; null = standard defaults
     // (green ✓, black ✕ ● ○ —).
     private string? _markColor;
     public string? MarkColor
@@ -1248,7 +1248,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             ActiveTool? tool = p is ActiveTool t ? t
                              : p is string s && Enum.TryParse<ActiveTool>(s, out var st) ? st : null;
             if (tool is not { } chosen) return;
-            // Fill & Sign tools work on the Design canvas too; anything else needs Live View.
+            // Complete & Sign tools work on the Design canvas too; anything else needs Live View.
             if (IsDesignMode && SelectFillSignToolInDesign(chosen)) return;
             if (IsDesignMode) IsDesignMode = false;
             ActiveTool = chosen;
@@ -1478,7 +1478,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private bool _recalculating;
 
     /// <summary>
-    /// Re-runs every calculated field (Acrobat's AFSimple_Calculate: sum, product, average, min,
+    /// Re-runs every calculated field (the usual AFSimple_Calculate: sum, product, average, min,
     /// max) after a value changes, repeating so totals of totals settle.
     /// </summary>
     public void RecalculateFields()
@@ -2136,7 +2136,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Moves/resizes a form field widget (Acrobat "Prepare Form" style). The new rectangle is in
+    /// Moves/resizes a form field widget ("Form Builder" style). The new rectangle is in
     /// PDF points and is written to the PDF on the next save. Undoable with Ctrl+Z.
     /// </summary>
     public void SetFieldBounds(FormFieldInfo field, FieldBounds bounds, bool recordUndo = true)
@@ -2321,7 +2321,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Dialogs.AppDialog.ShowError("Could not compress PDF.", ex);
+            Dialogs.AppDialog.ShowError("Could not shrink PDF.", ex);
             StatusText = "Compression failed.";
         }
     }
@@ -3260,7 +3260,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (!IsAiConfigured)
         {
             ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
-                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                ? "Local AI has no server address — set it in Settings → AI Helper → Local AI."
                 : $"No {_aiProvider} API key — set it in Settings → AI.");
             return;
         }
@@ -3319,7 +3319,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (!IsAiConfigured)
         {
             ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
-                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                ? "Local AI has no server address — set it in Settings → AI Helper → Local AI."
                 : $"No {_aiProvider} API key — add it in Settings → AI.");
             return;
         }
@@ -3384,7 +3384,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (!IsAiConfigured)
         {
             ToastService.Instance.Warning(_aiProvider == Services.AiProviderService.LocalProvider
-                ? "Local AI has no server address — set it in Settings → AI Assistant → Local AI."
+                ? "Local AI has no server address — set it in Settings → AI Helper → Local AI."
                 : $"No {_aiProvider} API key — add it via the ⚙ icon in the AI panel.");
             return;
         }
@@ -4030,7 +4030,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Picks the Design-canvas equivalent of a Live View Fill &amp; Sign tool. Returns false when
+    /// Picks the Design-canvas equivalent of a Live View Complete &amp; Sign tool. Returns false when
     /// the tool has none (the caller then switches to Live View).
     /// </summary>
     public bool SelectFillSignToolInDesign(ActiveTool tool)
@@ -4107,7 +4107,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 foreach (var w in AllFields.Where(x => x.Name == f.Name)) w.IsRequired = el.Required;
                 ModifiedFieldNames.Add(f.Name);
             }
-            // Filled in on the Design canvas (Fill & Sign).
+            // Filled in on the Design canvas (Complete & Sign).
             if (el.Value != LiveFieldValue(f)
                 && !(f.FieldType is FieldType.Checkbox or FieldType.RadioButton && !el.HasValue && LiveFieldValue(f) is "" or "Off"))
                 UpdateFieldValue(f.Name, el.Value);

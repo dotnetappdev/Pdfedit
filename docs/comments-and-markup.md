@@ -16,11 +16,11 @@ Under **Measure** you'll find distance, perimeter and area tools, in inches, mil
 
 ## Stamps
 
-Choose a stamp from the list on the Tools or Fill & Sign tab, then click the page. The list follows Acrobat's groups and adds a few extras:
+Choose a stamp from the list on the Tools or Complete & Sign tab, then click the page. The stamps come in these groups:
 
-- **Standard Business**: Approved, As Is, Completed, Confidential, Departmental, Draft, Experimental, Expired, Final, For Comment, For Public Release, Information Only, Not Approved, Not For Public Release, Preliminary Results, Sold, Top Secret, Void
-- **Sign Here**: Sign Here, Initial Here, Witness, Accepted, Rejected
-- **Dynamic**: these add "By *your name* at *time, date*" under the title
+- **Business**: Approved, As Is, Completed, Confidential, Departmental, Draft, Experimental, Expired, Final, For Comment, For Public Release, Information Only, Not Approved, Not For Public Release, Preliminary Results, Sold, Top Secret, Void
+- **Signing**: Sign Here, Initial Here, Witness, Accepted, Rejected
+- **Name & time**: these add "By *your name* at *time, date*" under the title
 - **More**: Paid, Urgent, Copy, Original, Do Not Copy, Internal Use Only, Sample, Received, Revise and Resubmit and around 30 others
 
 ![The stamp list open with stamps placed on the page](screenshots/fill-stamps.png)
@@ -44,4 +44,4 @@ With the Link tool selected, existing links are outlined and clicking one lets y
 
 ## Exchanging comments
 
-Comments can be exported to and imported from **XFDF** (Ctrl+Shift+E / Ctrl+Shift+I), the format Acrobat and Foxit use. You can also export a **CSV summary** for a spreadsheet.
+Comments can be exported to and imported from **XFDF** (Ctrl+Shift+E / Ctrl+Shift+I), the standard format other PDF apps can import. You can also export a **CSV summary** for a spreadsheet.

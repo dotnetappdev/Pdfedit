@@ -8,7 +8,7 @@ using PdfEdit.Services;
 namespace PdfEdit.ViewModels;
 
 /// <summary>
-/// Page layout tools (PDFgear / Acrobat): resize pages, pages per sheet and booklets for printing,
+/// Page layout tools (PDFgear / PDF readers): resize pages, pages per sheet and booklets for printing,
 /// and convert to greyscale.
 /// </summary>
 public partial class MainViewModel
@@ -28,7 +28,7 @@ public partial class MainViewModel
     {
         IsDesignMode = false;
         ActiveTool = Models.ActiveTool.SelectText;
-        StatusText = "Snapshot: drag a box round the area, then choose Copy image or Save image.";
+        StatusText = "Capture Area: drag a box round the area, then choose Copy image or Save image.";
     }, () => HasDocument);
 
     private async Task ResizePagesAsync()

@@ -878,7 +878,7 @@
                             Margin="20,40">
                     <TextBlock Text="✦" FontSize="28" HorizontalAlignment="Center"
                                Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,12"/>
-                    <TextBlock Text="AI Assistant" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock Text="AI Helper" FontSize="14" FontWeight="SemiBold"
                                HorizontalAlignment="Center"
                                Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,6"/>
                     <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"

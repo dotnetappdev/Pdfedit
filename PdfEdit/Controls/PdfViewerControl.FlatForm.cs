@@ -7,7 +7,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat Fill &amp; Sign on flat forms: a PDF whose boxes are only drawn on the page (no AcroForm
+/// Complete &amp; Sign on flat forms: a PDF whose boxes are only drawn on the page (no AcroForm
 /// fields) can still be filled — clicking inside a drawn box places text lined up in that box, a
 /// tick in a small square, or a signature fitted to the box.
 /// </summary>
@@ -55,7 +55,7 @@ public partial class PdfViewerControl
 
     /// <summary>
     /// Select / Fill tools on a page area with no form field: fill the drawn box under the click
-    /// like Acrobat does (text box → type; small square → ✓). Returns false if there is no box.
+    /// as PDF editors do (text box → type; small square → ✓). Returns false if there is no box.
     /// </summary>
     private bool TryFillDrawnBox(Point posOnPage)
     {

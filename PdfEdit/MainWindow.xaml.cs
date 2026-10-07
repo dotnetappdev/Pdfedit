@@ -49,7 +49,7 @@ public partial class MainWindow : RibbonWindow
         if (DataContext is MainViewModel vm)
         {
             vm.GoToPageRequested += FocusPageNumberBox;
-            // Prepare Form toolbar → bring the Fields panel to the front.
+            // Form Builder toolbar → bring the Fields panel to the front.
             vm.CommentsPanelRequested += () => ShowDockPane("comments");
             vm.SummaryPanelRequested += () => ShowDockPane("summary");
             vm.PropertyChanged += (_, ev) =>

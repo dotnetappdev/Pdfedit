@@ -31,7 +31,7 @@
                        Margin="7,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource DimForegroundBrush}"/>
         </Grid>
 
-        <!-- Filter / sort (Acrobat's Comments list toolbar) -->
+        <!-- Filter / sort (Comments list toolbar) -->
         <WrapPanel Grid.Row="2" Margin="8,0,8,6">
             <ComboBox x:Name="TypeFilter" Width="118" Margin="2" SelectionChanged="Filter_Changed"
                       AutomationProperties.Name="Filter by type" ToolTip="Show comments of one type">

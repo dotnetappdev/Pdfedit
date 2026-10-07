@@ -14,7 +14,7 @@ public partial class MainViewModel
     private bool RequireAi()
     {
         if (IsAiConfigured) return true;
-        ToastService.Instance.Warning("Set up an AI provider first: Settings → AI Assistant (Claude, OpenAI or a free local model).");
+        ToastService.Instance.Warning("Set up an AI provider first: Settings → AI Helper (Claude, OpenAI or a free local model).");
         return false;
     }
 

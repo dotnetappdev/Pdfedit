@@ -10,7 +10,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat "Prepare Form"-style field layout editing for the live view.
+/// "Form Builder"-style field layout editing for the live view.
 ///
 /// While the Edit Fields tool (or one of the Add Form Field tools) is active, form fields are drawn as
 /// named placeholder boxes instead of live fill-in controls. Click a field to select it — a blue
@@ -437,7 +437,7 @@ public partial class PdfViewerControl
         if (sender is not Border box || box.Tag is not FormFieldInfo field) return;
         Focus();
 
-        // Double-click: Acrobat's Field Properties dialog.
+        // Double-click: the usual Field Properties dialog.
         if (e.ClickCount == 2)
         {
             SelectOnly(box);

@@ -6,9 +6,9 @@ These are rendered mock-ups of the interface rather than captures of the running
 
 ## The ribbon
 
-**Fill & Sign**: everything for filling in and signing a form in one place.
+**Complete & Sign**: everything for filling in and signing a form in one place.
 
-![The Fill & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
+![The Complete & Sign ribbon tab](screenshots/ribbon-fill-sign.png)
 
 **Home**: files, navigation and page tools.
 
@@ -40,7 +40,7 @@ Dates can be switched to another format, or have the day, month and year changed
 
 ![The date format list in the Properties panel](screenshots/fill-date-format.png)
 
-Stamps from Acrobat's standard set and more, including dynamic stamps that add your name and the time.
+Business, signing and office stamps, including dynamic stamps that add your name and the time.
 
 ![The stamp list open with stamps placed on the page](screenshots/fill-stamps.png)
 

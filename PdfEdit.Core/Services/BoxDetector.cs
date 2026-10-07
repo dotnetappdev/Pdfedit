@@ -1,8 +1,8 @@
 namespace PdfEdit.Services;
 
 /// <summary>
-/// Finds the drawn box (rectangle outline) around a point on a rendered page, the way Acrobat
-/// Fill &amp; Sign detects the boxes of a flat (non-fillable) form so you can click in one and type.
+/// Finds the drawn box (rectangle outline) around a point on a rendered page, the way PDF readers
+/// Complete &amp; Sign detects the boxes of a flat (non-fillable) form so you can click in one and type.
 /// Works on a grey-scale copy of the rendered page, so it finds boxes however they were drawn
 /// (rectangles, four lines, table cells).
 /// </summary>

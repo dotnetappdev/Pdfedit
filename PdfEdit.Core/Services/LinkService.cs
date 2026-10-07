@@ -25,7 +25,7 @@ public sealed record PdfLinkInfo(int PageNumber, int AnnotIndex, double Left, do
                                  LinkTarget Target, bool HasBorder);
 
 /// <summary>
-/// Hyperlinks in the PDF itself (/Link annotations), like Acrobat's Edit PDF → Link:
+/// Hyperlinks in the PDF itself (/Link annotations) like other PDF editors' Edit PDF → Link:
 /// list them for the viewer, add, change and remove them. A link is identified by its page and
 /// its position in the page's /Annots array.
 /// </summary>

@@ -7,7 +7,7 @@ using Xunit;
 namespace PdfEdit.Tests;
 
 /// <summary>
-/// Moving / resizing a form field in the live view (Acrobat "Prepare Form" style) must write the
+/// Moving / resizing a form field in the live view ("Form Builder" style) must write the
 /// new widget rectangle back to the PDF on save.
 /// </summary>
 public class FieldLayoutTests : IDisposable
@@ -153,7 +153,7 @@ public class FieldLayoutTests : IDisposable
     }
 
     [Fact]
-    public void SaveFull_WritesAcrobatAppearanceAndOptions()
+    public void SaveFull_WritesAppearanceAndOptions()
     {
         var svc = new PdfFormService();
         string src = MakePdfWithTextField("name");
@@ -184,12 +184,12 @@ public class FieldLayoutTests : IDisposable
     [InlineData("mm/dd/yyyy", "03/05/2026")]
     [InlineData("yyyy-mm-dd", "2026-03-05")]
     [InlineData("d mmm yyyy", "5 Mar 2026")]
-    public void FormatAcrobatDate_UsesAcrobatTokens(string format, string expected)
+    public void FormatAfDate_UsesAfTokens(string format, string expected)
     {
         var date = new DateTime(2026, 3, 5);
         var culture = System.Globalization.CultureInfo.CurrentCulture;
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-        try { Assert.Equal(expected, PdfEdit.Controls.PdfViewerControl.FormatAcrobatDate(date, format)); }
+        try { Assert.Equal(expected, PdfEdit.Controls.PdfViewerControl.FormatAfDate(date, format)); }
         finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
     }
 }

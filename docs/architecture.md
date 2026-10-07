@@ -46,7 +46,7 @@ You can choose between three page renderers in **Settings → Render Engine**:
 | Engine | Notes |
 |--------|-------|
 | Built-in (default) | Pure C#, no native DLLs. Handles xref streams, object streams, the common filters, standard and embedded fonts, and images. |
-| Pdfium | Google's PDF engine through Docnet.Core. The closest match to Chrome and Acrobat. |
+| Pdfium | Google's PDF engine through Docnet.Core. The same engine Chrome uses. |
 | Windows | The `Windows.Data.Pdf` API built into Windows 10 and 11. |
 
 Annotations, fields and signatures are drawn as WPF elements on top of the rendered page. They're only written into the PDF when you save.

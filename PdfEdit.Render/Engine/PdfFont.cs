@@ -116,7 +116,7 @@ internal sealed class PdfFont
         bool hyphen  = baseFont.Contains('-');
         string style = hyphen ? baseFont[(baseFont.LastIndexOf('-') + 1)..] : baseFont;
         bool Has(params string[] keys) => keys.Any(k => style.Contains(k, StringComparison.OrdinalIgnoreCase));
-        // Two-letter abbreviations (Adobe style: "-Lt", "-MdIt") only count as the suffix style
+        // Two-letter abbreviations (style: "-Lt", "-MdIt") only count as the suffix style
         bool Abbr(string key) => hyphen && style.StartsWith(key, StringComparison.Ordinal);
         if (Has("Black", "Heavy"))                            return 900;
         if (Has("ExtraBold", "UltraBold"))                    return 800;
@@ -297,7 +297,7 @@ internal sealed class PdfFont
         return t;
     }
 
-    // ── Glyph name → Unicode (subset of Adobe Glyph List) ────────────────────
+    // ── Glyph name → Unicode (subset of Glyph List) ────────────────────
     private static readonly Dictionary<string, int> GlyphNameToUnicode = new()
     {
         ["space"]       = 0x0020, ["exclam"]    = 0x0021, ["quotedbl"]  = 0x0022,

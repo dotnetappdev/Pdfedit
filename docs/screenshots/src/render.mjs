@@ -9,7 +9,7 @@ import { OUT, ribbonStrip, sceneTextFit, sceneMarks, sceneDate, sceneStamps, sce
 
 // ── Render ──────────────────────────────────────────────────────────────────
 const shots = [
-  ['ribbon-fill-sign.png', ribbonStrip('Fill &amp; Sign', FILL_SIGN)],
+  ['ribbon-fill-sign.png', ribbonStrip('Complete &amp; Sign', FILL_SIGN)],
   ['ribbon-home.png', ribbonStrip('Home', HOME)],
   ['ribbon-tools.png', ribbonStrip('Tools', TOOLS)],
   ['ribbon-edit.png', ribbonStrip('Edit', EDIT)],

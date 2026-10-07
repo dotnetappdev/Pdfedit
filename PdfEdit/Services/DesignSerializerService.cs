@@ -122,7 +122,7 @@ public static class DesignSerializerService
         public string? OptionsCsv       { get; set; }
         public string? Value            { get; set; }
         public string? ExportValue      { get; set; }
-        // Fill & Sign signature image (base64 PNG)
+        // Complete & Sign signature image (base64 PNG)
         public string? Signature        { get; set; }
     }
 

@@ -4,7 +4,7 @@ using PdfEdit.ViewModels;
 
 namespace PdfEdit.Controls;
 
-/// <summary>Acrobat-style generative summary: an outline with key points and page links, beside the document.</summary>
+/// <summary>standard generative summary: an outline with key points and page links, beside the document.</summary>
 public partial class SummaryPanel : UserControl
 {
     public SummaryPanel() => InitializeComponent();

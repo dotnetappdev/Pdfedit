@@ -9,7 +9,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Slide show (PDFgear's slide mode, Acrobat's full screen): the document full screen, one page
+/// Slide show (PDFgear's slide mode, the usual full screen): the document full screen, one page
 /// at a time on black. → Space PgDn Enter or click: next · ← PgUp Backspace: previous ·
 /// Home / End · type a number and Enter to jump · B: black screen · Esc: leave.
 /// </summary>

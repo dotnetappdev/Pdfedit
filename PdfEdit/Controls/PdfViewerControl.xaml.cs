@@ -20,11 +20,11 @@ public partial class PdfViewerControl : UserControl
 
     private double Scale => RendererFactory.PointsToDips * (_vm?.Zoom ?? 1.0);
 
-    // Adobe Acrobat DC-accurate form-field appearance brushes (frozen for reuse).
+    // DC-accurate form-field appearance brushes (frozen for reuse).
     // The fills are OPAQUE on purpose: the rendered page bitmap already contains each field's
     // saved appearance (its old value / check mark). A see-through fill let that show through
     // under the live control, so typed text overlapped the old text and an unticked box still
-    // looked ticked. Acrobat likewise paints over the appearance while a form is being filled.
+    // looked ticked. Other viewers likewise paint over the appearance while a form is being filled.
     private static readonly Brush FieldFillBrush          = Freeze(Color.FromRgb(0xE1, 0xE9, 0xFF));
     private static readonly Brush FieldBorderBrush        = Freeze(Color.FromArgb(170,   0,  80, 200));
     private static readonly Brush FieldFocusBrush         = Freeze(Colors.White);
@@ -104,7 +104,7 @@ public partial class PdfViewerControl : UserControl
     private static readonly string[] StampPresets =
         { "APPROVED", "DRAFT", "CONFIDENTIAL", "RECEIVED", "REVIEWED", "REJECTED", "FOR REVIEW" };
 
-    // Adobe-style field selection chrome (floating mini toolbar shown above a focused text field)
+    // standard field selection chrome (floating mini toolbar shown above a focused text field)
     private Border?    _fieldChromeBorder;
     private Border?    _fieldChromeToday;
     private TextBox?   _activeTb;
@@ -251,7 +251,7 @@ public partial class PdfViewerControl : UserControl
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Switching between a fill tool and the Select / Add-field tools toggles the live view
-        // between filling fields in and moving/resizing them (Acrobat "Prepare Form").
+        // between filling fields in and moving/resizing them ("Form Builder").
         if (e.PropertyName == nameof(MainViewModel.ActiveTool)) { SyncFormBars(); CancelPoly(); UpdateLinkHitTesting(); ClearTextSelection(); BuildImageEditOverlay(LinkCanvas.Width, LinkCanvas.Height); }
         if (e.PropertyName is nameof(MainViewModel.CurrentPageIndex) or nameof(MainViewModel.Zoom)) { ClearTextSelection(); _chunkCache = null; }
         if (e.PropertyName == nameof(MainViewModel.IsAutoScrolling)) SyncAutoScroll();
@@ -343,7 +343,7 @@ public partial class PdfViewerControl : UserControl
         grip.MouseLeftButtonUp += OnDragGripMouseUp;
         panel.Children.Add(grip);
 
-        // Adobe Fill & Sign order: smaller · larger · delete · swap
+        // Complete & Sign order: smaller · larger · delete · swap
         panel.Children.Add(MakeToolbarBtn("A", "Smaller", () =>
         {
             if (ResizeFocusedMark(1 / 1.15)) return;
@@ -359,7 +359,7 @@ public partial class PdfViewerControl : UserControl
         panel.Children.Add(MakeToolbarBtn("", "Delete (Del)", DeleteFocusedAnnotation,
             fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
 
-        // Rotate 90° clockwise and character spacing — the rest of Acrobat's Fill & Sign toolbar
+        // Rotate 90° clockwise and character spacing — the rest of the usual Complete & Sign toolbar
         panel.Children.Add(MakeToolbarBtn("\uE7AD", "Rotate 90°", RotateFocusedAnnotation,
             fontSize: 14, fontFamily: "Segoe MDL2 Assets"));
         panel.Children.Add(MakeToolbarBtn("VA", "Character spacing", ToggleSpacingPopup, fontSize: 11));
@@ -470,7 +470,7 @@ public partial class PdfViewerControl : UserControl
 
     /// <summary>
     /// A mark fills its box, so its font size changes nothing on screen: the toolbar's smaller /
-    /// larger buttons scale the box itself (about its centre, like Acrobat). False if not a mark.
+    /// larger buttons scale the box itself (about its centre like other PDF editors). False if not a mark.
     /// </summary>
     private bool ResizeFocusedMark(double factor)
     {
@@ -624,7 +624,7 @@ public partial class PdfViewerControl : UserControl
         thumb.DragStarted += (_, _) =>
         {
             if (_focusedAnnotation == null) return;
-            // Resizing by hand switches off Acrobat-style auto-size; the text now wraps in the box.
+            // Resizing by hand switches off standard auto-size; the text now wraps in the box.
             _focusedAnnotation.AutoSize = false;
             if (_focusedAnnotationTb != null && !IsDrawn(_focusedAnnotation))
                 _focusedAnnotationTb.TextWrapping = TextWrapping.Wrap;
@@ -886,7 +886,7 @@ public partial class PdfViewerControl : UserControl
         bool verticalMode = _vm.ActiveTool == ActiveTool.VerticalText;
 
         // Tab through fields in reading order (top-to-bottom, then left-to-right),
-        // matching Adobe Acrobat's Tab / Shift+Tab navigation between fields.
+        // matching the usual Tab / Shift+Tab navigation between fields.
         var ordered = fields
             .OrderBy(f => Math.Round((pageHeightPts - f.Bottom - f.Height) / 8))
             .ThenBy(f => f.Left)
@@ -952,7 +952,7 @@ public partial class PdfViewerControl : UserControl
         if (ctrl is Control fieldCtrl)
             fieldCtrl.TabIndex = tabIndex;
 
-        // Right-click context menu — Acrobat-style for text fields, simpler for others.
+        // Right-click context menu — standard for text fields, simpler for others.
         if (ctrl is FrameworkElement fe)
         {
             var menu = new ContextMenu();
@@ -1014,7 +1014,7 @@ public partial class PdfViewerControl : UserControl
         if (ctrl is FrameworkElement movable)
             AttachFieldGrips(field, movable, new Rect(x, y, w, h));
 
-        // Wire up Adobe-style chrome for every focusable field control
+        // Wire up standard chrome for every focusable field control
         if (ctrl is TextBox tb)
         {
             if (field.IsDateField) AddDatePicker(field, tb, x, y, w, h);
@@ -1064,18 +1064,18 @@ public partial class PdfViewerControl : UserControl
         {
             Width = dw, Height = dh,
             Text = FieldFormatting.ToDisplay(_vm!.FieldValues.TryGetValue(field.Name, out var v) ? v : field.Value, field),
-            // Acrobat-style fillable field: faint blue fill + subtle border so the
+            // standard fillable field: faint blue fill + subtle border so the
             // user can clearly see where the fields are and that they are editable.
             Background = FieldFill(field),
             Foreground = FieldText(field),
             CaretBrush = Brushes.Black,
-            // Required fields get a red outline, matching Acrobat's convention.
+            // Required fields get a red outline, matching the usual convention.
             BorderBrush = field.IsRequired ? FieldRequiredBorderBrush : FieldBorder(field),
             BorderThickness = new Thickness(field.IsRequired ? 1.5 : 1),
             Cursor = Cursors.IBeam,
             FontSize = _fieldFontSizes.TryGetValue(field.Name, out var savedSize) ? savedSize
                      : field.FontSize > 0 ? field.FontSize * Scale
-                     // Auto size like Acrobat: 12 pt for multi-line fields (60% of a 90 pt
+                     // Auto size like other PDF editors: 12 pt for multi-line fields (60% of a 90 pt
                      // memo box was unreadably large), 60% of the height for one line.
                      : field.IsMultiline ? 12 * Scale
                      : Math.Max(8, (vertical ? w : h) * 0.6),
@@ -1091,7 +1091,7 @@ public partial class PdfViewerControl : UserControl
         ApplyFieldFont(tb, field);
 
         // Vertical-text fields already use LayoutTransform for their -90° orientation, so the
-        // Adobe-style toolbar's Rotate button (which also targets LayoutTransform) is skipped there.
+        // standard toolbar's Rotate button (which also targets LayoutTransform) is skipped there.
         if (vertical)
             tb.LayoutTransform = new RotateTransform(-90);
         else if (_fieldRotations.TryGetValue(field.Name, out var savedAngle) && savedAngle != 0)
@@ -1142,7 +1142,7 @@ public partial class PdfViewerControl : UserControl
         cb.Unchecked += (_, _) => _vm!.UpdateFieldValue(field.Name, "Off");
         cb.GotFocus  += (_, _) => _vm!.SelectedField = field;
 
-        // Wrap in Acrobat-style highlighted field area so the interactive region is visible.
+        // Wrap in standard highlighted field area so the interactive region is visible.
         var container = new Border
         {
             Width = w, Height = h,
@@ -1151,7 +1151,7 @@ public partial class PdfViewerControl : UserControl
             BorderThickness = new Thickness(1),
             ToolTip = string.IsNullOrEmpty(field.Tooltip) ? field.Name : field.Tooltip,
             Cursor = Cursors.Hand,
-            // Scale the glyph with the field (like Acrobat) instead of a fixed 13px box.
+            // Scale the glyph with the field instead of a fixed 13px box.
             Child = new Viewbox { Child = cb, Margin = new Thickness(Math.Min(2, h * 0.1)) },
         };
         container.GotFocus  += (_, _) => container.Background = FieldFocusBrush;
@@ -1223,7 +1223,7 @@ public partial class PdfViewerControl : UserControl
         return cb;
     }
 
-    // Acrobat: "Highlight Existing Fields" shades every field light blue; with it off, fields show
+    // "Show All Fields" shades every field light blue; with it off, fields show
     // their own appearance (fill / border / text colours from Field Properties).
     private static Brush? HexBrush(string? hex)
     {
@@ -1234,7 +1234,7 @@ public partial class PdfViewerControl : UserControl
     private static readonly HashSet<string> InstalledFonts =
         new(Fonts.SystemFontFamilies.Select(f => f.Source), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Shows a field's value in the PDF's own font (from /DA), like Acrobat does.</summary>
+    /// <summary>Shows a field's value in the PDF's own font (from /DA) as PDF editors do.</summary>
     private static void ApplyFieldFont(Control c, FormFieldInfo f)
     {
         var font = Services.PdfFontMap.Resolve(f.FontName);
@@ -1281,7 +1281,7 @@ public partial class PdfViewerControl : UserControl
 
     private Grid BuildSignatureBox(FormFieldInfo field, double w, double h)
     {
-        // Adobe Acrobat signature field: light blue fill + dashed blue border + pen icon.
+        // Standard signature field: light blue fill + dashed blue border + pen icon.
         var grid = new Grid
         {
             Width = w, Height = h,
@@ -1356,7 +1356,7 @@ public partial class PdfViewerControl : UserControl
         return grid;
     }
 
-    private static readonly SolidColorBrush AdobeBlue = new(Color.FromRgb(0, 120, 215));
+    private static readonly SolidColorBrush SelectionBlue = new(Color.FromRgb(0, 120, 215));
 
     private void ShowFieldChrome(FormFieldInfo field, double x, double y, double w, double h, TextBox tb)
     {
@@ -1365,7 +1365,7 @@ public partial class PdfViewerControl : UserControl
         _activeFieldInfo = field;
 
         // Apply 2px blue border + light blue tint to the TextBox
-        tb.BorderBrush = AdobeBlue;
+        tb.BorderBrush = SelectionBlue;
         tb.BorderThickness = new Thickness(2);
         tb.Background = FieldFocusBrush;
 
@@ -1391,7 +1391,7 @@ public partial class PdfViewerControl : UserControl
     }
 
     /// <summary>
-    /// Adobe-style mini toolbar shown above a focused text form field: decrease/increase font
+    /// standard mini toolbar shown above a focused text form field: decrease/increase font
     /// size, clear the value, rotate the displayed text, and toggle auto-size-to-fit — mirrors
     /// the same interaction the FreeText annotation toolbar already offers.
     /// </summary>
@@ -1689,7 +1689,7 @@ public partial class PdfViewerControl : UserControl
         }
 
         bool isMark = IsDrawn(ann);
-        // Adobe Fill & Sign style: text sits directly on the page (no fill, no box);
+        // Complete & Sign style: text sits directly on the page (no fill, no box);
         // a thin outline only appears while the item is selected.
         var tb = new TextBox
         {
@@ -1741,8 +1741,8 @@ public partial class PdfViewerControl : UserControl
             }
             _focusedAnnotation = ann;
             _focusedAnnotationTb = tb;
-            // Adobe-style thin blue selection outline
-            tb.BorderBrush = AdobeBlue;
+            // standard thin blue selection outline
+            tb.BorderBrush = SelectionBlue;
             ShowAnnotationToolbar(tb);
         };
 
@@ -1836,7 +1836,7 @@ public partial class PdfViewerControl : UserControl
         tb.Foreground = ParseBrush(ann.FontColor);
         tb.TextAlignment = ann.TextAlignment.ToWpf();
 
-        // ✓ ✕ ● ○ — are drawn as shapes like Acrobat (not font glyphs): the box keeps the glyph
+        // ✓ ✕ ● ○ — are drawn as shapes like other PDF editors (not font glyphs): the box keeps the glyph
         // as its text (for select / drag / swap), hidden, and shows the drawing as its background.
         if (ann.IsStamp)
         {
@@ -1859,7 +1859,7 @@ public partial class PdfViewerControl : UserControl
         }
     }
 
-    /// <summary>The vector drawing of a Fill &amp; Sign mark, scaled to whatever box it fills.</summary>
+    /// <summary>The vector drawing of a Complete &amp; Sign mark, scaled to whatever box it fills.</summary>
     private static Brush MarkBrush(MarkShapes.Kind kind, Color color)
     {
         var brush = new SolidColorBrush(color);
@@ -2174,7 +2174,7 @@ public partial class PdfViewerControl : UserControl
         }
 
         // Select / Fill on a flat form (boxes drawn on the page, no fillable fields): clicking in
-        // a box lets you type in it, like Acrobat. Clicks on real fields never reach here.
+        // a box lets you type in it like other PDF editors. Clicks on real fields never reach here.
         if (tool is ActiveTool.Select or ActiveTool.TextFill or ActiveTool.CheckboxToggle)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -2191,7 +2191,7 @@ public partial class PdfViewerControl : UserControl
             if (!IsOnPage(posOnPage)) return;
 
             FinalizeAnnotationBox();
-            // Inside a drawn box the text lines up with the box (Acrobat field detection).
+            // Inside a drawn box the text lines up with the box (field detection).
             var snap = tool == ActiveTool.VerticalText ? null : DetectBoxAt(posOnPage);
             if (snap is { } filled && tool == ActiveTool.AddText && FocusExistingTextIn(filled))
             {
@@ -2227,7 +2227,7 @@ public partial class PdfViewerControl : UserControl
                 ActiveTool.Line => "—",
                 _ => "○", // Circle
             };
-            // Green tick, black cross (Acrobat defaults) unless a colour was picked in the toolbox.
+            // Green tick, black cross (defaults) unless a colour was picked in the toolbox.
             string colour = _vm.MarkColorFor(tool);
             var square = DetectBoxAt(posOnPage) is { } b && IsCheckBoxSized(b) ? b : (Rect?)null;
             PlaceStampAnnotation(posOnPage, glyph, colour, square);
@@ -2344,7 +2344,7 @@ public partial class PdfViewerControl : UserControl
             return;
         }
 
-        // Acrobat text-edit comments
+        // Standard text-edit comments
         if (tool == ActiveTool.InsertText)
         {
             var posOnPage = e.GetPosition(AnnotationCanvas);
@@ -2640,7 +2640,7 @@ public partial class PdfViewerControl : UserControl
                 AnnotationCanvas.Children.Remove(_formFieldRubberBand);
                 _formFieldRubberBand = null;
 
-                // Acrobat: a click places a default-size field, a drag sets the size.
+                // A click places a default-size field, a drag sets the size.
                 CreateFormField(_formFieldTool, new Rect(canvasX, canvasY, rectW, rectH));
             }
             e.Handled = true;
@@ -3236,7 +3236,7 @@ public partial class PdfViewerControl : UserControl
     // ── Free-text TextBox placement ───────────────────────────────────────────
 
     /// <summary>
-    /// Add Text (Acrobat Fill &amp; Sign): creates the annotation straight away and focuses it, so the
+    /// Add Text (Complete &amp; Sign): creates the annotation straight away and focuses it, so the
     /// mini toolbar is available while typing and the text can be re-selected, dragged and resized
     /// immediately. An annotation left empty is removed again when it loses focus.
     /// </summary>
@@ -3247,7 +3247,7 @@ public partial class PdfViewerControl : UserControl
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageHeightPts = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        // Acrobat places the text baseline roughly at the click; start with a one-line box.
+        // Place the text baseline roughly at the click; start with a one-line box.
         double fontSize = _vm.CurrentFontSize;
         double lineH = Math.Max(10, fontSize * 1.4);
         double wPt = vertical ? lineH : 60;
@@ -3255,7 +3255,7 @@ public partial class PdfViewerControl : UserControl
         double leftPt = posOnCanvas.X / Scale;
         double topPt = posOnCanvas.Y / Scale - (vertical ? 0 : lineH / 2);
 
-        // Clicked inside a drawn box (flat form, like Acrobat's detected fields): line the text
+        // Clicked inside a drawn box (flat form like other PDF editors' detected fields): line the text
         // up at the box's left edge, centred vertically, shrinking the font to fit a short box.
         if (snapBox is { } box && !vertical)
         {
@@ -3296,7 +3296,7 @@ public partial class PdfViewerControl : UserControl
             undo: () => { vm.FreeTextAnnotations.Remove(ann); RefreshPage(); },
             redo: () => { vm.FreeTextAnnotations.Add(ann);    RefreshPage(); });
 
-        // Empty text is discarded when the box loses focus (clicking elsewhere), like Acrobat.
+        // Empty text is discarded when the box loses focus (clicking elsewhere) like other PDF editors.
         void RemoveIfEmpty(object? sender, RoutedEventArgs e)
         {
             tb.LostFocus -= RemoveIfEmpty;

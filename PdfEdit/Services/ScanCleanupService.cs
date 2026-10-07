@@ -13,7 +13,7 @@ public sealed record PageScan(int Index, bool Blank, double SkewDegrees, bool Sp
 public sealed record PagePlan(int Index, bool Remove, double RotateDegrees, bool Split);
 
 /// <summary>
-/// Scan clean-up (Acrobat's Enhance Scans, PDFgear's page tools): finds blank pages, pages scanned
+/// Scan clean-up (Enhance Scans, PDFgear's page tools): finds blank pages, pages scanned
 /// crooked, and two-page spreads, then removes, straightens (by rotating the page content about
 /// its centre) and splits them into single pages.
 /// </summary>

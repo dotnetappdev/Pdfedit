@@ -53,7 +53,7 @@ export function titlebar(doc) {
   return `<div class="title"><div class="logo">P</div><b>PdfEdit</b><span class="doc">— ${doc}</span>
   <div class="caps"><span>&#8212;</span><span>&#9744;</span><span>&#10005;</span></div></div>`;
 }
-const TABS = ['File', 'Home', 'Fill &amp; Sign', 'Edit', 'View', 'Tools', 'Forms', 'AI Assistant', 'Design'];
+const TABS = ['File', 'Home', 'Complete &amp; Sign', 'Edit', 'View', 'Tools', 'Forms', 'AI Helper', 'Design'];
 export function tabs(on) {
   return `<div class="tabs">${TABS.map(t => `<div class="tab${t === on ? ' on' : ''}">${t}</div>`).join('')}</div>`;
 }

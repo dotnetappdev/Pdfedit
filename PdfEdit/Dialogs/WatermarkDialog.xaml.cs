@@ -7,7 +7,7 @@ using PdfEdit.Models;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Watermark &amp; background (Acrobat's Edit PDF → Watermark): text or image, diagonal or at an
+/// Watermark &amp; background (Edit PDF → Watermark): text or image, diagonal or at an
 /// angle, centred / top / bottom / tiled, behind the text and fields or on top, on all / the
 /// current / a range of pages — with a live preview on the current page.
 /// </summary>

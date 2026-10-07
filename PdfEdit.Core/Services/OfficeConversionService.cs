@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace PdfEdit.Services;
 
 /// <summary>
-/// Turns Word, Excel, PowerPoint and OpenDocument files into PDFs, Acrobat's "Create PDF from
+/// Turns Word, Excel, PowerPoint and OpenDocument files into PDFs, the usual "Create PDF from
 /// file". Uses Microsoft Office when it's installed (Word exports a tagged PDF with heading
 /// bookmarks), otherwise LibreOffice. Office is driven in the background and closed afterwards.
 /// </summary>

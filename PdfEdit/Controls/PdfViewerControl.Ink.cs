@@ -10,7 +10,7 @@ using PdfEdit.Models;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat-style drawing in the live view:
+/// standard drawing in the live view:
 /// <list type="bullet">
 /// <item>Draw / shape tools work anywhere on the page — also over form fields and placed text,
 /// which used to swallow the mouse so nothing was drawn there.</item>
@@ -271,7 +271,7 @@ public partial class PdfViewerControl
 
     private System.Windows.Shapes.Rectangle? _selectionOutline;
 
-    /// <summary>Dashed box around the selected shape / drawing, like Acrobat's selection.</summary>
+    /// <summary>Dashed box around the selected shape / drawing like other PDF editors' selection.</summary>
     private void ShowSelectionOutline(FrameworkElement visual)
     {
         Rect bounds;

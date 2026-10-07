@@ -10,7 +10,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Edit Images tool (PDFgear / Acrobat "Edit PDF" for pictures): every picture on the page gets a
+/// Edit Images tool (PDFgear / "Edit PDF" for pictures): every picture on the page gets a
 /// dashed outline. Click one to select it, drag it to move, drag a corner to resize (Shift: free
 /// proportions), and use the bar to Replace, Save or Delete it. Del deletes, Esc deselects.
 /// Each change is written into the PDF and can be undone with Ctrl+Z.

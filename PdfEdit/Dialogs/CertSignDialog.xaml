@@ -27,16 +27,16 @@
         </Style>
     </Window.Resources>
     <StackPanel Margin="18">
-        <TextBlock Text="DIGITAL ID" Style="{StaticResource Head}" Margin="0,0,0,6"/>
-        <ComboBox x:Name="CertBox" Height="28" SelectionChanged="CertBox_SelectionChanged" AutomationProperties.Name="Digital ID"/>
+        <TextBlock Text="SIGNING ID" Style="{StaticResource Head}" Margin="0,0,0,6"/>
+        <ComboBox x:Name="CertBox" Height="28" SelectionChanged="CertBox_SelectionChanged" AutomationProperties.Name="Signing ID"/>
         <WrapPanel Margin="0,6,0,0">
             <Button Content="Use a .pfx / .p12 file…" Padding="10,3" Margin="0,0,6,0" Click="BrowsePfx_Click"/>
-            <Button Content="Create a Digital ID…" Padding="10,3" Click="CreateId_Click"/>
+            <Button Content="Create a signing ID…" Padding="10,3" Click="CreateId_Click"/>
         </WrapPanel>
         <DockPanel x:Name="PasswordRow" Margin="0,8,0,0" Visibility="Collapsed">
             <TextBlock Text="Password" Style="{StaticResource Lbl}"/>
             <PasswordBox x:Name="PasswordBox" Height="26" VerticalContentAlignment="Center" Background="{DynamicResource InputBgBrush}"
-                         Foreground="{DynamicResource InputForegroundBrush}" AutomationProperties.Name="Digital ID password"/>
+                         Foreground="{DynamicResource InputForegroundBrush}" AutomationProperties.Name="Signing ID password"/>
         </DockPanel>
         <TextBlock x:Name="CertInfo" Margin="0,6,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource DimForegroundBrush}"/>
 
@@ -65,7 +65,7 @@
             <RadioButton x:Name="PlaceField" Content="In the signature field" GroupName="Place" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <ComboBox x:Name="FieldBox" Height="26" IsEnabled="{Binding IsChecked, ElementName=PlaceField}" AutomationProperties.Name="Signature field"/>
         </DockPanel>
-        <RadioButton x:Name="PlaceNone" Content="Invisible (only in the signature panel)" GroupName="Place" Margin="0,2"/>
+        <RadioButton x:Name="PlaceNone" Content="Invisible (kept in the file, no mark on the page)" GroupName="Place" Margin="0,2"/>
         <DockPanel Margin="0,8,0,0">
             <CheckBox x:Name="UseImageBox" Content="Show my signature" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <ComboBox x:Name="ImageBox" Height="26" DisplayMemberPath="Name" IsEnabled="{Binding IsChecked, ElementName=UseImageBox}" AutomationProperties.Name="Signature image"/>

@@ -124,7 +124,7 @@
         </DataTemplate>
 
         <!-- ── Form field placeholder template ───────────────────────────── -->
-        <!-- Design-time placeholder showing Adobe-accurate field-type visuals:
+        <!-- Design-time placeholder showing accurate field-type visuals:
              Text/Memo → blue tinted box with italic label hint;
              Checkbox → bordered square; Radio → circle;
              ComboBox → label + dropdown arrow; Signature → dashed outline. -->
@@ -143,8 +143,8 @@
                            Margin="{Binding LabelOffset, Converter={StaticResource DoubleToRightMarginConverter}}"
                            Visibility="{Binding LabelPosition, Converter={StaticResource EnumEqualsVisibilityConverter}, ConverterParameter=Left}"/>
 
-                <!-- Field box — default: Acrobat light-blue text field -->
-                <!-- Same look as Live View's fillable fields (Acrobat "Highlight Existing Fields") -->
+                <!-- Field box — default: light-blue text field -->
+                <!-- Same look as Live View's fillable fields ("Show All Fields") -->
                 <Border x:Name="FieldBox" Grid.Column="1"
                         BorderBrush="#AA0050C8" BorderThickness="1"
                         Background="#E1E9FF" MinHeight="8" ClipToBounds="True">
@@ -157,7 +157,7 @@
                                    TextWrapping="{Binding Wrap, Converter={StaticResource BoolToTextWrapConverter}}"
                                    Visibility="Collapsed"/>
 
-                        <!-- Text / Memo / ComboBox: the filled-in value (Fill & Sign) -->
+                        <!-- Text / Memo / ComboBox: the filled-in value (Complete & Sign) -->
                         <TextBlock x:Name="ValueText"
                                    Text="{Binding Value}"
                                    Foreground="Black"
@@ -268,7 +268,7 @@
                     <Setter TargetName="ComboLabel" Property="Text"       Value=""/>
                 </MultiDataTrigger>
 
-                <!-- Filled in (Fill & Sign): show the value instead of the hint -->
+                <!-- Filled in (Complete & Sign): show the value instead of the hint -->
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding HasValue}" Value="True"/>

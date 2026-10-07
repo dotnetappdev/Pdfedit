@@ -6,10 +6,10 @@ using Xunit;
 namespace PdfEdit.Tests;
 
 /// <summary>
-/// Verifies that every field type supported by Adobe Acrobat Fill &amp; Sign
+/// Verifies that every field type supported by Complete &amp; Sign
 /// is correctly modelled, stored, and updated in PdfEdit.
 ///
-/// Field-type coverage matrix (mirrors Adobe Acrobat):
+/// Field-type coverage matrix (mirrors PDF readers):
 ///   ✓ Text          – single-line, multi-line, password, comb
 ///   ✓ Checkbox      – Yes / Off toggle
 ///   ✓ Radio button  – exclusive group selection

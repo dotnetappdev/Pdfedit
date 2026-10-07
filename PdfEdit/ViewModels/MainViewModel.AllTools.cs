@@ -62,7 +62,7 @@ public partial class MainViewModel
 
     private async Task CreatePdfFromImagesAsync()
     {
-        var open = new OpenFileDialog { Title = "Create PDF from images", Filter = ImageFilter, Multiselect = true };
+        var open = new OpenFileDialog { Title = "Make a PDF from images", Filter = ImageFilter, Multiselect = true };
         if (open.ShowDialog() != true || open.FileNames.Length == 0) return;
         var dest = AskSavePath("Save PDF", "PDF Files (*.pdf)|*.pdf",
             System.IO.Path.GetFileNameWithoutExtension(open.FileNames[0]) + ".pdf");
@@ -76,7 +76,7 @@ public partial class MainViewModel
         catch (Exception ex) { Dialogs.AppDialog.ShowError("Could not create the PDF from images.", ex); }
     }
 
-    // ── Combine files ─────────────────────────────────────────────────────────
+    // ── Merge files ───────────────────────────────────────────────────────────
 
     private async Task CombineFilesAsync()
     {
@@ -153,7 +153,7 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// Acrobat "Scan &amp; OCR → Recognise text": OCRs every page that has no text layer and saves a
+    /// "Scan &amp; OCR → Recognise text": OCRs every page that has no text layer and saves a
     /// copy with invisible, searchable text over the scanned image.
     /// </summary>
     private async Task OcrMakeSearchableAsync()
@@ -289,9 +289,9 @@ public partial class MainViewModel
     // ── Send for signature ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Acrobat sends the document through its cloud service; here the document is saved, the
+    /// Hosted e-signature services send the document through its cloud service; here the document is saved, the
     /// signer's email is opened in your mail app with instructions, and the file is shown in
-    /// Explorer so it can be attached. The recipient signs it with Fill &amp; Sign.
+    /// Explorer so it can be attached. The recipient signs it with Complete &amp; Sign.
     /// </summary>
     private async Task RequestSignaturesAsync()
     {
@@ -312,7 +312,7 @@ public partial class MainViewModel
         string subject = Uri.EscapeDataString($"Please sign: {file}");
         string body = Uri.EscapeDataString(
             $"Hello,\n\nPlease review and sign the attached document \"{file}\".\n\n" +
-            "Open it in PdfEdit (or any PDF reader), use Fill & Sign → Sign to add your signature, save, and send it back.\n\nThank you.");
+            "Open it in PdfEdit (or any PDF reader), use Complete & Sign → Sign to add your signature, save, and send it back.\n\nThank you.");
         try
         {
             Process.Start(new ProcessStartInfo($"mailto:{dlg.InputText.Trim()}?subject={subject}&body={body}") { UseShellExecute = true });

@@ -12,7 +12,7 @@ public sealed record SearchHit(string File, int Page, string Snippet)
     public string Folder => Path.GetDirectoryName(File) ?? "";
 }
 
-/// <summary>Acrobat's Advanced Search: finds text in every PDF in a folder (and its subfolders).</summary>
+/// <summary>the usual Advanced Search: finds text in every PDF in a folder (and its subfolders).</summary>
 public static class FolderSearchService
 {
     public static void Search(string folder, bool recursive, string query, bool matchCase, bool wholeWord,

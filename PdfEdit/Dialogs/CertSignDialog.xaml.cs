@@ -7,7 +7,7 @@ using PdfEdit.Services;
 
 namespace PdfEdit.Dialogs;
 
-/// <summary>Choose a Digital ID and how the certificate signature looks, like Acrobat's "Sign with a certificate".</summary>
+/// <summary>Choose a signing ID and how the certificate signature looks like other PDF editors' "Sign with a certificate".</summary>
 public partial class CertSignDialog : Window
 {
     private sealed record IdChoice(string Label, X509Certificate2? Cert, string? PfxPath)
@@ -45,11 +45,11 @@ public partial class CertSignDialog : Window
         foreach (var c in DigitalSignatureService.StoreCertificates())
             CertBox.Items.Add(new IdChoice($"{c.GetNameInfo(X509NameType.SimpleName, false)}  (Windows certificate store)", c, null));
         foreach (var f in DigitalSignatureService.SavedDigitalIds())
-            CertBox.Items.Add(new IdChoice($"{Path.GetFileNameWithoutExtension(f)}  (PdfEdit Digital ID)", null, f));
+            CertBox.Items.Add(new IdChoice($"{Path.GetFileNameWithoutExtension(f)}  (PdfEdit signing ID)", null, f));
         if (select != null)
             CertBox.SelectedItem = CertBox.Items.OfType<IdChoice>().FirstOrDefault(i => i.PfxPath == select);
         if (CertBox.SelectedIndex < 0 && CertBox.Items.Count > 0) CertBox.SelectedIndex = 0;
-        if (CertBox.Items.Count == 0) CertInfo.Text = "No Digital ID yet. Use a .pfx file from your certificate provider, or create a self-signed Digital ID.";
+        if (CertBox.Items.Count == 0) CertInfo.Text = "No signing ID yet. Use a .pfx file from your certificate provider, or create a self-signed signing ID.";
     }
 
     private void CertBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -57,12 +57,12 @@ public partial class CertSignDialog : Window
         var id = CertBox.SelectedItem as IdChoice;
         PasswordRow.Visibility = id?.PfxPath != null ? Visibility.Visible : Visibility.Collapsed;
         CertInfo.Text = id?.Cert != null ? DigitalSignatureService.Describe(id.Cert)
-                      : id?.PfxPath != null ? "Enter the Digital ID's password." : CertInfo.Text;
+                      : id?.PfxPath != null ? "Enter the signing ID's password." : CertInfo.Text;
     }
 
     private void BrowsePfx_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Digital IDs|*.pfx;*.p12|All files|*.*", Title = "Choose a Digital ID file" };
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Signing IDs|*.pfx;*.p12|All files|*.*", Title = "Choose a signing ID file" };
         if (dlg.ShowDialog(this) != true) return;
         var item = new IdChoice($"{Path.GetFileName(dlg.FileName)}  (file)", null, dlg.FileName);
         CertBox.Items.Add(item);
@@ -84,7 +84,7 @@ public partial class CertSignDialog : Window
         var id = CertBox.SelectedItem as IdChoice;
         try
         {
-            if (id == null) throw new InvalidOperationException("Choose a Digital ID first.");
+            if (id == null) throw new InvalidOperationException("Choose a signing ID first.");
             Certificate = id.Cert ?? DigitalSignatureService.LoadPfx(id.PfxPath!, PasswordBox.Password);
             if (!Certificate.HasPrivateKey) throw new InvalidOperationException("This certificate has no private key, so it can't sign.");
             if (PlaceField.IsChecked == true && FieldName == null) throw new InvalidOperationException("Choose the signature field.");
@@ -92,7 +92,7 @@ public partial class CertSignDialog : Window
         }
         catch (System.Security.Cryptography.CryptographicException)
         {
-            ErrorText.Text = "That password doesn't open the Digital ID.";
+            ErrorText.Text = "That password doesn't open the signing ID.";
             ErrorText.Visibility = Visibility.Visible;
         }
         catch (Exception ex)

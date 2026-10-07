@@ -5,7 +5,7 @@ namespace PdfEdit.ViewModels;
 
 /// <summary>
 /// The shape or drawing selected in Live View (click it with Select), edited from the Properties
-/// panel like Acrobat's properties bar: line colour, fill, line width, opacity. Text and ✓ ✕ marks
+/// panel like other PDF editors' properties bar: line colour, fill, line width, opacity. Text and ✓ ✕ marks
 /// use the "Selected text" section (their colour is the text colour). Every change is undoable.
 /// </summary>
 public partial class MainViewModel

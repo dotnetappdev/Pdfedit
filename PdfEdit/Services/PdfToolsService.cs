@@ -183,7 +183,7 @@ public static class PdfToolsService
     // ── Scan & OCR: searchable text layer ─────────────────────────────────────
 
     /// <summary>
-    /// Writes a copy of the PDF with an invisible text layer (rendering mode 3, like Acrobat's
+    /// Writes a copy of the PDF with an invisible text layer (rendering mode 3 like other PDF editors'
     /// "searchable image") so OCR'd pages can be searched, selected and copied.
     /// </summary>
     public static int AddInvisibleTextLayer(string src, string dest, IReadOnlyDictionary<int, List<OcrWord>> wordsByPage)

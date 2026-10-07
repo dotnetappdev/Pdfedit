@@ -4,7 +4,7 @@ using PdfEdit.Services;
 
 namespace PdfEdit.ViewModels;
 
-/// <summary>Accessibility Checker and Create PDF from Office files.</summary>
+/// <summary>Accessibility Checker and Make PDF from Office files.</summary>
 public partial class MainViewModel
 {
     private ICommand? _accessibilityCommand, _createFromOfficeCommand, _exportExcelCommand;
@@ -31,7 +31,7 @@ public partial class MainViewModel
     {
         var open = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Create PDF from Word, Excel or PowerPoint files",
+            Title = "Make a PDF from Word, Excel or PowerPoint files",
             Filter = OfficeConversionService.FileFilter,
             Multiselect = true,
         };
@@ -46,7 +46,7 @@ public partial class MainViewModel
         if (cannot.Count == files.Count)
         {
             Dialogs.AppDialog.ShowInfo("PdfEdit converts Word (.docx) files itself. Excel, PowerPoint and older Word (.doc) files need Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.",
-                "Create PDF");
+                "Make PDF");
             return;
         }
         var made = new List<string>();
@@ -68,7 +68,7 @@ public partial class MainViewModel
         }
         StatusText = made.Count > 0 ? $"Created {made.Count} PDF(s)." : "Ready";
         if (failed.Count > 0)
-            Dialogs.AppDialog.ShowInfo("These files couldn't be converted:\n\n" + string.Join("\n", failed), "Create PDF");
+            Dialogs.AppDialog.ShowInfo("These files couldn't be converted:\n\n" + string.Join("\n", failed), "Make PDF");
         if (made.Count == 0) return;
         if (_currentFilePath != null) SaveDocumentState();
         await LoadDocumentAsync(made[0]);

@@ -8,7 +8,7 @@ namespace PdfEdit.Services;
 public sealed record PageDiff(int Page, BitmapSource? Old, BitmapSource? New, BitmapSource Diff, double ChangedPercent);
 
 /// <summary>
-/// Acrobat's visual Compare Files: renders each page of two PDFs and marks what changed — red
+/// the usual visual Compare Files: renders each page of two PDFs and marks what changed — red
 /// for content only in the old version, green for content only in the new one, unchanged
 /// content faded.
 /// </summary>

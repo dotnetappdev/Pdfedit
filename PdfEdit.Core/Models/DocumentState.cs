@@ -17,7 +17,7 @@ public class DocumentState
     // Persisted field values (filled-in form data)
     public Dictionary<string, string> FieldValues { get; set; } = new();
 
-    // Unsaved form-layout work (Edit Fields / Properties panel / Design), kept like Acrobat keeps an
+    // Unsaved form-layout work (Edit Fields / Properties panel / Design), kept the way PDF editors keep an
     // edited document open: re-applied on reload and when the file is reopened, until it is saved.
     public List<FieldLayoutState> FieldLayouts { get; set; } = new();
     public List<FieldEditState> FieldEdits { get; set; } = new();

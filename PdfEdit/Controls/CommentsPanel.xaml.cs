@@ -10,7 +10,7 @@ using PdfEdit.ViewModels;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat's Comments list: every comment in the document (notes, text, highlights, drawings,
+/// the usual Comments list: every comment in the document (notes, text, highlights, drawings,
 /// text edits, measurements) grouped by page, with search, type / status / author filters and
 /// sorting. Each comment shows its author, date, note and reply thread, and can be replied to,
 /// given a review status, checked off, edited or deleted. Clicking one goes to its page.

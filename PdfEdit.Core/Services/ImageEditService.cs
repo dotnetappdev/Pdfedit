@@ -14,7 +14,7 @@ public sealed record PageImageInfo(int PageNumber, int Index, string Name, doubl
                                    int PixelWidth, int PixelHeight, bool Rotated);
 
 /// <summary>
-/// Edit the pictures already in a PDF, like PDFgear's and Acrobat's Edit PDF: move, resize,
+/// Edit the pictures already in a PDF, like PDFgear's and the usual Edit PDF: move, resize,
 /// replace, delete or save one. Only the one drawing command for that picture is changed, so the
 /// rest of the page is untouched. Pictures inside form XObjects or inline images aren't listed.
 /// </summary>

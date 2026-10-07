@@ -278,8 +278,8 @@
 
                     <Fluent:Button Header="From&#x0a;Office"
                                    Command="{Binding CreatePdfFromOfficeCommand}"
-                                   ToolTip="Create PDFs from Word, Excel, PowerPoint, text, Markdown or HTML files (Excel and PowerPoint use Microsoft Office or LibreOffice)"
-                                   AutomationProperties.Name="Create PDF from Office files">
+                                   ToolTip="Make PDFs from Word, Excel, PowerPoint, text, Markdown or HTML files (Excel and PowerPoint use Microsoft Office or LibreOffice)"
+                                   AutomationProperties.Name="Make PDF from Office files">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
@@ -716,7 +716,7 @@
                                    KeyTip="CZ"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Re-save with maximum compression to reduce file size"
-                                   AutomationProperties.Name="Compress PDF">
+                                   AutomationProperties.Name="Shrink PDF">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8B4;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
@@ -826,7 +826,7 @@
                                    KeyTip="PP"
                                    IsEnabled="{Binding HasDocument}"
                                    ToolTip="Encrypt the PDF with an open password and set permissions (printing, copying)"
-                                   AutomationProperties.Name="Password protect PDF">
+                                   AutomationProperties.Name="Lock with a password">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
@@ -844,7 +844,7 @@
                     <Fluent:Button Header="Remove Hidden&#x0a;Info"
                                    Command="{Binding SanitizeCommand}"
                                    ToolTip="Remove metadata, scripts, attachments and (optionally) comments"
-                                   AutomationProperties.Name="Remove hidden information">
+                                   AutomationProperties.Name="Strip hidden data">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
@@ -872,8 +872,8 @@
 
             </Fluent:RibbonTabItem>
 
-            <!-- ── FILL & SIGN TAB (Adobe-style) ─────────────────────────── -->
-            <Fluent:RibbonTabItem x:Name="FillSignTab" Header="Fill &amp; Sign"
+            <!-- ── FILL & SIGN TAB (standard) ─────────────────────────── -->
+            <Fluent:RibbonTabItem x:Name="FillSignTab" Header="Complete &amp; Sign"
                                    AutomationProperties.Name="Fill and Sign tab">
 
                 <Fluent:RibbonGroupBox Header="Select" AutomationProperties.Name="Select group">
@@ -1062,7 +1062,7 @@
                         <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Certificate…" Size="Middle" Command="{Binding CertSignCommand}"
-                                   ToolTip="Sign with a certificate (Digital ID) — proves who signed and that nothing changed afterwards"
+                                   ToolTip="Sign with a certificate (signing ID) — proves who signed and that nothing changed afterwards"
                                    AutomationProperties.Name="Sign with a certificate">
                         <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEB95;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
@@ -1085,7 +1085,7 @@
                               Width="150" Height="22" FontSize="11" MaxDropDownHeight="420"
                               VerticalAlignment="Center" Margin="0,2,0,0"
                               VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                              ToolTip="Choose a stamp — Standard Business, Sign Here, Dynamic (adds your name and the time), More, Custom"
+                              ToolTip="Choose a stamp — Business, Signing, Name &amp; time (adds your name and the time), More, Custom"
                               AutomationProperties.Name="Stamp selector">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
@@ -1125,7 +1125,7 @@
                                          IsChecked="{Binding HighlightFields, Mode=TwoWay}"
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Show a coloured highlight over all fillable form fields"
-                                         AutomationProperties.Name="Highlight existing fields">
+                                         AutomationProperties.Name="Show all fields">
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:ToggleButton.LargeIcon>
@@ -1526,7 +1526,7 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
-                <!-- Arrange Fields: Visual Studio / Acrobat style alignment for fields selected with Edit Fields -->
+                <!-- Arrange Fields: Visual Studio style alignment for fields selected with Edit Fields -->
                 <Fluent:RibbonGroupBox Header="Arrange Fields"
                                         AutomationProperties.Name="Align and size selected form fields">
                     <Fluent:Button Header="Lefts" Size="Middle" Command="{Binding ArrangeFieldsCommand}" CommandParameter="AlignLefts" ToolTip="Align lefts of the selected fields (Edit Fields, Ctrl+click to multi-select)" AutomationProperties.Name="Align lefts of the selected fields (Edit Fields, Ctrl+click to multi-select)">
@@ -1777,7 +1777,7 @@
                     <Fluent:Button Header="Export&#x0a;XFDF"
                                    Command="{Binding ExportXfdfCommand}"
                                    IsEnabled="{Binding HasDocument}"
-                                   ToolTip="Export all annotations to an XFDF file — compatible with Adobe Acrobat and Foxit PDF"
+                                   ToolTip="Export all annotations to an XFDF file, the standard format other PDF apps can import"
                                    AutomationProperties.Name="Export annotations as XFDF">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
@@ -1919,10 +1919,10 @@
                                          IsEnabled="{Binding HasDocument}"
                                          ToolTip="Edit Images — select a picture in the PDF to move, resize, replace, save or delete it"
                                          AutomationProperties.Name="Edit images tool"/>
-                    <Fluent:Button Header="Snapshot"
+                    <Fluent:Button Header="Capture Area"
                                    Command="{Binding SnapshotCommand}"
-                                   ToolTip="Snapshot — drag a box round any area, then copy it or save it as a picture"
-                                   AutomationProperties.Name="Snapshot tool"/>
+                                   ToolTip="Capture Area — drag a box round any area, then copy it or save it as a picture"
+                                   AutomationProperties.Name="Capture area tool"/>
                     <Fluent:ToggleButton Header="Highlight"
                                          GroupName="ToolGroup"
                                          IsChecked="{Binding ActiveTool, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Highlight, Mode=TwoWay}"
@@ -2170,7 +2170,7 @@
                     </Fluent:ToggleButton>
                 </Fluent:RibbonGroupBox>
 
-                <!-- Measure (Acrobat Pro) -->
+                <!-- Measure (PDF readers) -->
                 <Fluent:RibbonGroupBox Header="Measure"
                                         AutomationProperties.Name="Measure group">
                     <Fluent:ToggleButton Header="Distance"
@@ -2257,7 +2257,7 @@
                               Width="150" Height="22" FontSize="11" MaxDropDownHeight="420"
                               VerticalAlignment="Center" Margin="0,2,0,0"
                               VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                              ToolTip="Choose a stamp — Standard Business, Sign Here, Dynamic (adds your name and the time), More, Custom"
+                              ToolTip="Choose a stamp — Business, Signing, Name &amp; time (adds your name and the time), More, Custom"
                               AutomationProperties.Name="Stamp selector">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
@@ -2677,7 +2677,7 @@
             </Fluent:RibbonTabItem>
 
             <!-- ── AI ASSISTANT TAB ──────────────────────────────────────── -->
-            <Fluent:RibbonTabItem x:Name="AiTab" Header="AI Assistant"
+            <Fluent:RibbonTabItem x:Name="AiTab" Header="AI Helper"
                                    AutomationProperties.Name="AI assistant tab">
                 <Fluent:RibbonGroupBox Header="Assist" AutomationProperties.Name="AI assist group">
                     <Fluent:ToggleButton Header="Select&#x0a;Text" GroupName="ToolGroup"
@@ -2884,7 +2884,7 @@
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Export PDF"
+                    <Fluent:Button Header="Save as PDF"
                                    Command="{Binding ExportDesignCommand}"
                                    ToolTip="Save the design canvas as a PDF file"
                                    IsEnabled="{Binding IsDesignMode}"
@@ -3830,7 +3830,7 @@
                                     </StackPanel>
 
 
-                                    <!-- Selected shape / drawing (Live View): Acrobat's properties bar -->
+                                    <!-- Selected shape / drawing (Live View): the usual properties bar -->
                                     <StackPanel Visibility="{Binding HasSelectedGraphic, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,8">
                                         <TextBlock Text="{Binding SelectedGraphicLabel, StringFormat='SELECTED {0}'}" Style="{StaticResource SectionHeader}"/>
                                         <Border Style="{StaticResource PropGridCategory}"><TextBlock Text="Appearance" Style="{StaticResource PropGridCategoryText}"/></Border>
@@ -4630,7 +4630,7 @@
                                                             FontSize="{DynamicResource PanelFontSize}"
                                                             AutomationProperties.Name="Comments list"/>
                                 </avalonDock:LayoutAnchorable>
-                                <avalonDock:LayoutAnchorable Title="AI Assistant" ContentId="aichat"
+                                <avalonDock:LayoutAnchorable Title="AI Helper" ContentId="aichat"
                                                              CanHide="False" CanClose="False">
                                     <controls:AiChatPanel x:Name="AiChatPane" DataContext="{Binding}"
                                                           FontSize="{DynamicResource ChatFontSize}"

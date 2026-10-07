@@ -163,7 +163,7 @@
             </TabItem>
 
             <!-- ── AI Tab ────────────────────────────────────────────────── -->
-            <TabItem Header="AI Assistant"
+            <TabItem Header="AI Helper"
                      AutomationProperties.Name="AI assistant settings">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                     <StackPanel>
@@ -332,7 +332,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHead}" Text="TEXT RECOGNITION (OCR)"/>
                         <TextBlock Foreground="{DynamicResource ForegroundBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"
-                                   Text="Used by Scan, Recognise text and Make searchable. PdfEdit includes the Tesseract OCR engine with English, so OCR works on any PC — no Windows language pack needed."/>
+                                   Text="Used by Scan and text recognition. PdfEdit includes the Tesseract OCR engine with English, so OCR works on any PC — no Windows language pack needed."/>
 
                         <TextBlock Style="{StaticResource SettingLabel}" Text="Engine:" Margin="0,0,0,4"/>
                         <RadioButton x:Name="OcrAuto" Content="Automatic — Windows OCR when installed, otherwise Tesseract" GroupName="OcrEngine" Margin="0,2"/>

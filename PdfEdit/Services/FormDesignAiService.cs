@@ -269,7 +269,7 @@ public static class FormDesignAiService
                     double boxTop = top + labelH + 2 * s;
                     if (f.Kind == "drawing")
                     {
-                        // An empty framed area (not a field) to draw or mark on once printed or in Fill & Sign.
+                        // An empty framed area (not a field) to draw or mark on once printed or in Complete & Sign.
                         els.Add(new ShapeDesignElement(DesignElementType.Rectangle)
                         {
                             X = x, Y = boxTop, Width = w, Height = boxH,

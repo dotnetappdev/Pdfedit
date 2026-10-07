@@ -26,7 +26,7 @@ The document appears in the Live View tab. Seven text fields glow.
 **Voiceover:**
 > "PdfEdit opens any PDF instantly — no cloud required, no subscription."
 
-**Action:** Click the **AI Assistant** tab. Click **✦ Smart Fill**.
+**Action:** Click the **AI Helper** tab. Click **✦ Smart Fill**.
 A progress bar sweeps across. All seven fields fill with extracted data.
 
 **Voiceover:**

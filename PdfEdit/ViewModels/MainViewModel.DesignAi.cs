@@ -40,7 +40,7 @@ public partial class MainViewModel
         IsDesignMode = true;
 
         string title = string.IsNullOrWhiteSpace(spec.Title) ? "Your form" : spec.Title.Trim();
-        StatusText = $"{title}: {spec.FieldCount} fields in {spec.Sections.Count} sections. Move or resize anything, then Export PDF to save it as a fillable form.";
+        StatusText = $"{title}: {spec.FieldCount} fields in {spec.Sections.Count} sections. Move or resize anything, then Save as PDF to save it as a fillable form.";
         ToastService.Instance.Success(layout.Grew
             ? $"“{title}” is ready. It's longer than one page, so the page was made taller."
             : $"“{title}” is ready on the Design canvas.");

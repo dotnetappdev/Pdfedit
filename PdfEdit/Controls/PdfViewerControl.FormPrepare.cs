@@ -10,10 +10,10 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat Pro "Prepare Form" behaviour for the live view:
+/// "Form Builder" behaviour for the live view:
 /// <list type="bullet">
 /// <item>A field toolbar across the top of the page (Select, Text, Check Box, Radio, List Box,
-/// Dropdown, Signature, Date · Preview · Close) and, while filling, Acrobat's
+/// Dropdown, Signature, Date · Preview · Close) and, while filling, the usual
 /// "This document contains interactive form fields" bar.</item>
 /// <item>Click to drop a default-size field or drag to size it; fields are named automatically
 /// (Text1, Check Box1, Group1/Choice1, Dropdown1, List Box1, Signature1, Date1) and a small
@@ -49,7 +49,7 @@ public partial class PdfViewerControl
         if (pageNum < 1 || pageNum > _vm.Document.PageSizes.Count) return;
         double pageH = _vm.Document.PageSizes[pageNum - 1].Height;
 
-        // Canvas → PDF points; a click (tiny rect) gets Acrobat's default size for the type.
+        // Canvas → PDF points; a click (tiny rect) gets the usual default size for the type.
         double left = canvasRect.X / Scale, top = canvasRect.Y / Scale;
         double width = canvasRect.Width / Scale, height = canvasRect.Height / Scale;
         if (canvasRect.Width < 8 || canvasRect.Height < 8)
@@ -112,7 +112,7 @@ public partial class PdfViewerControl
             _vm.StatusText = tool == ActiveTool.AddRadioButton
                 ? $"Radio button '{radioChoice}' added to group '{name}'. Use \"Add another button\" to add more choices."
                 : $"Field '{name}' added. Drag to move, double-click for properties.";
-            // Like Acrobat: back to the selection tool with the new field selected and its name popup open.
+            // Like PDF readers: back to the selection tool with the new field selected and its name popup open.
             _layoutSelectedKey = (name, widgetIndex);
             _namePopupKey = (name, widgetIndex);
             _vm.ActiveTool = ActiveTool.EditFields;
@@ -136,7 +136,7 @@ public partial class PdfViewerControl
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => ShowFieldNamePopup(box, field));
     }
 
-    /// <summary>Acrobat's popup under a new field: Field Name, Required, All Properties.</summary>
+    /// <summary>the usual popup under a new field: Field Name, Required, All Properties.</summary>
     private void ShowFieldNamePopup(Border box, FormFieldInfo field)
     {
         if (_vm == null) return;
@@ -217,7 +217,7 @@ public partial class PdfViewerControl
         nameBox.SelectAll();
     }
 
-    // ── Prepare Form toolbar / fill-mode notice bar ───────────────────────────
+    // ── Form Builder toolbar / fill-mode notice bar ───────────────────────────
 
     private void InitFormBars()
     {
@@ -240,7 +240,7 @@ public partial class PdfViewerControl
 
     private string? _noticeDismissedFor;
 
-    /// <summary>Shows the Prepare Form toolbar while editing fields, or the fill notice while filling.</summary>
+    /// <summary>Shows the Form Builder toolbar while editing fields, or the fill notice while filling.</summary>
     private void SyncFormBars()
     {
         if (_vm?.Document == null)
@@ -267,7 +267,7 @@ public partial class PdfViewerControl
         else RebuildFieldOverlay();
     }
 
-    // ── Date fields (Acrobat shows a calendar) ────────────────────────────────
+    // ── Date fields (shows a calendar) ────────────────────────────────
 
     private void AddDatePicker(FormFieldInfo field, TextBox tb, double x, double y, double w, double h)
     {
@@ -282,13 +282,13 @@ public partial class PdfViewerControl
         System.Windows.Automation.AutomationProperties.SetName(btn, $"Pick a date for {field.DisplayName}");
 
         var calendar = new Calendar { DisplayDate = DateTime.Today };
-        if (TryParseAcrobatDate(tb.Text, field.DateFormat!, out var current)) { calendar.SelectedDate = current; calendar.DisplayDate = current; }
+        if (TryParseAfDate(tb.Text, field.DateFormat!, out var current)) { calendar.SelectedDate = current; calendar.DisplayDate = current; }
         var popup = new Popup { PlacementTarget = tb, Placement = PlacementMode.Bottom, StaysOpen = false, Child = calendar };
         calendar.SelectedDatesChanged += (_, _) =>
         {
             if (calendar.SelectedDate is { } d)
             {
-                tb.Text = FormatAcrobatDate(d, field.DateFormat!);
+                tb.Text = FormatAfDate(d, field.DateFormat!);
                 popup.IsOpen = false;
             }
         };
@@ -301,12 +301,12 @@ public partial class PdfViewerControl
         tb.Padding = new Thickness(tb.Padding.Left, 0, size + 2, 0);
     }
 
-    private static readonly System.Text.RegularExpressions.Regex AcrobatDateToken =
+    private static readonly System.Text.RegularExpressions.Regex AfDateToken =
         new("yyyy|yy|mmmm|mmm|mm|m|dddd|ddd|dd|d|HH|H|hh|h|MM|ss|tt");
 
-    /// <summary>Formats a date with an Acrobat (AFDate) pattern: m = month, M = minutes.</summary>
-    public static string FormatAcrobatDate(DateTime d, string format) =>
-        AcrobatDateToken.Replace(format, t => t.Value switch
+    /// <summary>Formats a date with an AFDate pattern: m = month, M = minutes.</summary>
+    public static string FormatAfDate(DateTime d, string format) =>
+        AfDateToken.Replace(format, t => t.Value switch
         {
             "yyyy" => d.ToString("yyyy"), "yy" => d.ToString("yy"),
             "mmmm" => d.ToString("MMMM"), "mmm" => d.ToString("MMM"), "mm" => d.ToString("MM"), "m" => d.Month.ToString(),
@@ -316,11 +316,11 @@ public partial class PdfViewerControl
             _ => t.Value,
         });
 
-    private static bool TryParseAcrobatDate(string text, string format, out DateTime date)
+    private static bool TryParseAfDate(string text, string format, out DateTime date)
     {
         date = default;
         if (string.IsNullOrWhiteSpace(text)) return false;
-        string net = AcrobatDateToken.Replace(format, t => t.Value switch
+        string net = AfDateToken.Replace(format, t => t.Value switch
         {
             "mmmm" => "MMMM", "mmm" => "MMM", "mm" => "MM", "m" => "M", "MM" => "mm", _ => t.Value,
         });

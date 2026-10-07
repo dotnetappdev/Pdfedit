@@ -8,7 +8,7 @@ public sealed record DetectedBox(int Left, int Top, int Right, int Bottom, bool 
 }
 
 /// <summary>
-/// Finds where the fields of a flat (printed) form are, like Acrobat's Prepare Form auto-detect:
+/// Finds where the fields of a flat (printed) form are like other PDF editors' Form Builder auto-detect:
 /// ruled boxes become text fields, small squares become check boxes, and long underlines with
 /// blank space above become text fields. Works on a grey-scale render of the page.
 /// </summary>

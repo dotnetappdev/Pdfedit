@@ -93,9 +93,9 @@
 
                 <TextBlock Text="AFTER SCANNING" Style="{StaticResource Head}"/>
                 <StackPanel x:Name="PdfOptions">
-                    <CheckBox x:Name="OcrBox" Content="Recognise text (OCR) — searchable PDF" IsChecked="True" Margin="0,4,0,0"
+                    <CheckBox x:Name="OcrBox" Content="Make searchable (OCR)" IsChecked="True" Margin="0,4,0,0"
                               ToolTip="Adds invisible, searchable text over the scanned pages"
-                              AutomationProperties.Name="Recognise text"/>
+                              AutomationProperties.Name="Make searchable"/>
                     <RadioButton x:Name="OutNew" Content="Save as a new PDF" IsChecked="True" Margin="0,8,0,0" GroupName="Out"/>
                     <RadioButton x:Name="OutAfter" Content="Add after the current page" Margin="0,4,0,0" GroupName="Out"/>
                     <RadioButton x:Name="OutEnd" Content="Add at the end of the open PDF" Margin="0,4,0,0" GroupName="Out"/>

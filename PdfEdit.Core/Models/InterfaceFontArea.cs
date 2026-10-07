@@ -43,7 +43,7 @@ public static class InterfaceFonts
         new("Ribbon",     "Ribbon & Toolbar",  "The main ribbon tabs, buttons and menus.",       "RibbonFontSize",    13),
         new("Menus",      "Menus",             "Right-click menus and the ribbon's drop-down menus.", "MenuFontSize", 13),
         new("Panels",     "Side Panels",       "Toolbox, properties and page thumbnail panels.", "PanelFontSize",     13),
-        new("Chat",       "AI Assistant",      "The AI chat assistant panel.",                   "ChatFontSize",      13),
+        new("Chat",       "AI Helper",      "The AI chat assistant panel.",                   "ChatFontSize",      13),
         new("StatusBar",  "Status Bar",        "The status bar along the bottom of the window.",  "StatusBarFontSize", 12),
         new("Dialogs",    "Dialogs & Settings","Settings and other pop-up dialog windows.",      "DialogFontSize",    13),
     };

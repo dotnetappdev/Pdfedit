@@ -48,7 +48,7 @@ export function carRental(extra = '', w = 560, h = 740) {
 
 export const ribbonStrip = (tab, groups) => `<div class="win" style="display:inline-flex;min-width:900px">${titlebar('car_rental_checklist.pdf')}${tabs(tab)}${ribbon(groups)}</div>`;
 
-export function windowShell({ tab = 'Fill &amp; Sign', groups = FILL_SIGN, page, right, status, overlay = '', pageTop = 18 }) {
+export function windowShell({ tab = 'Complete &amp; Sign', groups = FILL_SIGN, page, right, status, overlay = '', pageTop = 18 }) {
   return `<div class="win" style="width:1560px;height:900px">${titlebar('car_rental_checklist.pdf')}${tabs(tab)}${ribbon(groups)}
   <div style="flex:1;display:flex;min-height:0">
     <div style="width:96px;background:var(--side);border-right:1px solid var(--border)"><div class="pane-h"><span class="on">Pages</span></div>
@@ -120,15 +120,15 @@ export function sceneStamps() {
   extra += stamp(240, 168, 200, 50, 'RECEIVED', '#1F4FB5', 'By jtaylor at 10:42, 04/10/2026', -4);
   extra += stamp(135, 640, 170, 40, 'SIGN HERE', '#C62828');
   extra += stamp(372, 552, 150, 42, 'APPROVED', '#1B7A2E', '', -6);
-  const groups = [['Standard Business', [['APPROVED', '#1B7A2E'], ['AS IS', '#1F4FB5'], ['COMPLETED', '#1B7A2E'], ['CONFIDENTIAL', '#C62828'], ['DRAFT', '#1F4FB5'], ['FINAL', '#1B7A2E']]],
-    ['Sign Here', [['SIGN HERE', '#C62828'], ['INITIAL HERE', '#C62828'], ['WITNESS', '#C62828']]],
+  const groups = [['Business', [['APPROVED', '#1B7A2E'], ['AS IS', '#1F4FB5'], ['COMPLETED', '#1B7A2E'], ['CONFIDENTIAL', '#C62828'], ['DRAFT', '#1F4FB5'], ['FINAL', '#1B7A2E']]],
+    ['Signing', [['SIGN HERE', '#C62828'], ['INITIAL HERE', '#C62828'], ['WITNESS', '#C62828']]],
     ['Dynamic', [['RECEIVED', '#1F4FB5'], ['REVIEWED', '#1F4FB5'], ['PAID', '#1B7A2E']]],
     ['More', [['URGENT', '#C62828'], ['COPY', '#555']]]];
   // ribbon Sign group: Stamp on, picker open
   const g2 = FILL_SIGN.map(g => g.h !== 'Sign' ? g : { ...g, items: [g.items[0], ['M', [['pen', 'New Signature…'], ['initials', 'New Initials…'], ['stamp', 'Stamp', { on: true }]]], g.items[2]] });
   const overlay = `<div class="menu" style="left:874px;top:94px;width:200px;max-height:520px;overflow:hidden">${groups.map(([h, items]) => `<div class="gh">${h}</div>` + items.map(([t, c]) => `<div class="mi${t === 'RECEIVED' && h === 'Dynamic' ? ' hot' : ''}" style="padding-left:14px"><span class="dot" style="background:${c}"></span>&nbsp; ${t}</div>`).join('')).join('')}</div>`;
   const right = head('SELECTED STAMP') + `<div class="cat">Stamp</div>` + props([['Title', 'RECEIVED'], ['Line 2', 'By jtaylor at 10:42, 04/10/2026'], ['Colour', '#1F4FB5'], ['Rotation', '-4']]) + swatches +
-    `<div style="padding:12px 10px;color:#aaa;font-size:12px;line-height:1.5">Dynamic stamps add your name and the time. Stamps are saved as real PDF stamp annotations, so Acrobat and other readers show them too.</div>`;
+    `<div style="padding:12px 10px;color:#aaa;font-size:12px;line-height:1.5">Dynamic stamps add your name and the time. Stamps are saved as real PDF stamp annotations, so other PDF readers show them too.</div>`;
   return windowShell({ groups: g2, page: carRental(extra), right, pageTop: -140, status: "'RECEIVED' stamp placed — drag to move, corner to resize, Del to delete." })
     .replace('</div>\n  <div class="statusbar">', overlay + '</div>\n  <div class="statusbar">');
 }

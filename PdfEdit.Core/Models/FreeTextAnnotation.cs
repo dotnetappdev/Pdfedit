@@ -35,11 +35,11 @@ public class FreeTextAnnotation
     // Locked annotations cannot be moved or deleted via the UI
     public bool IsLocked { get; set; }
 
-    // Extra space between characters, in points (Acrobat Fill & Sign "character spacing" — used to
+    // Extra space between characters, in points (Complete & Sign "character spacing" — used to
     // line typed text up with comb boxes). Written to the PDF as the Tc operator.
     public double CharacterSpacing { get; set; }
 
-    // Acrobat-style auto-size: the box grows / shrinks to fit the text as you type. New text starts
+    // standard auto-size: the box grows / shrinks to fit the text as you type. New text starts
     // with it on (Add Text); it is off by default so annotations saved by older versions keep their
     // wrapped layout, and it turns off once the box is resized by hand.
     public bool AutoSize { get; set; }

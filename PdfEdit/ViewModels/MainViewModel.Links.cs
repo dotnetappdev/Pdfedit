@@ -41,7 +41,7 @@ public partial class MainViewModel
         if (string.IsNullOrWhiteSpace(uri)) return;
         bool web = uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
                    || uri.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) || uri.StartsWith("tel:", StringComparison.OrdinalIgnoreCase);
-        // Like Acrobat's security warning: a link can point anywhere.
+        // Like the usual security warning: a link can point anywhere.
         if (!Dialogs.AppDialog.ShowConfirm($"This document is trying to open:\n\n{uri}\n\nOnly continue if you trust the document.",
                 "Open link", web ? "Open" : "Open anyway", "Cancel", isDanger: !web))
             return;

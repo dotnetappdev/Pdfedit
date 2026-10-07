@@ -5,7 +5,7 @@ using Windows.Media.SpeechSynthesis;
 namespace PdfEdit.Services;
 
 /// <summary>
-/// Read Aloud (Acrobat View → Read Out Loud): speaks page text with Windows' built-in voices.
+/// Read Aloud (View → Read Out Loud): speaks page text with Windows' built-in voices.
 /// Reads page by page so it can stop, and reports which page it's on.
 /// </summary>
 public sealed class ReadAloudService

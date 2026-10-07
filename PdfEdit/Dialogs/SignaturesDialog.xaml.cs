@@ -5,7 +5,7 @@ using PdfEdit.Services;
 
 namespace PdfEdit.Dialogs;
 
-/// <summary>Acrobat's Signature panel: each signature, whether it's intact, trusted and timestamped.</summary>
+/// <summary>the usual Signature panel: each signature, whether it's intact, trusted and timestamped.</summary>
 public partial class SignaturesDialog : Window
 {
     public SignaturesDialog(IReadOnlyList<SignatureCheck> checks)

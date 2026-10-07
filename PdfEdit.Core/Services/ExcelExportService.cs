@@ -9,7 +9,7 @@ using iText.Kernel.Pdf;
 namespace PdfEdit.Services;
 
 /// <summary>
-/// Acrobat's "Export to Excel": rebuilds the rows and columns of each page from where the text
+/// the usual "Export to Excel": rebuilds the rows and columns of each page from where the text
 /// sits (lines become rows; text that lines up vertically becomes a column) and writes an .xlsx
 /// workbook, one sheet per page. Numbers, currency and percentages are stored as numbers so they
 /// can be added up straight away.

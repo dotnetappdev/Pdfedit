@@ -77,7 +77,7 @@ public partial class MainViewModel
         catch { return null; }
     }
 
-    // ── Generative summary panel ────────────────────────────────────────────
+    // ── Summary outline panel ────────────────────────────────────────────
 
     private readonly Dictionary<string, string> _summaries = new(StringComparer.OrdinalIgnoreCase);
     private string _summaryText = "";
@@ -102,7 +102,7 @@ public partial class MainViewModel
     private async Task GenerateSummaryAsync()
     {
         if (_currentFilePath == null) return;
-        if (!IsAiConfigured) { ToastService.Instance.Warning("Set up an AI provider first (Settings → AI Assistant)."); return; }
+        if (!IsAiConfigured) { ToastService.Instance.Warning("Set up an AI provider first (Settings → AI Helper)."); return; }
         if (string.IsNullOrEmpty(_documentText)) { ToastService.Instance.Info("The document's text is still loading — try again in a moment."); return; }
         SummaryPanelRequested?.Invoke();
 
@@ -117,7 +117,7 @@ public partial class MainViewModel
             var msg = new AiChatMessage
             {
                 Role = "user",
-                Content = "Write a generative summary of this document as an outline:\n" +
+                Content = "Write a summary of this document as an outline:\n" +
                           "- Start with a two-sentence overview in bold.\n" +
                           "- Then one '##' heading per section of the document, each followed by (p. N) for the page it starts on, " +
                           "and 2–4 bullet points with the key facts (names, dates, amounts, obligations).\n" +

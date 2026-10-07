@@ -9,7 +9,7 @@ Everything below is free and included. There's no account, no watermark and no d
 ## What's new
 
 - **Edit images**: select any picture already in a PDF to move it, resize it, replace it with another, save it, copy it or delete it.
-- **Snapshot**: drag a box round any area of a page and copy it or save it as a picture.
+- **Capture Area**: drag a box round any area of a page and copy it or save it as a picture.
 - **Resize pages**: change the paper size (A4, Letter, Legal, A3, A5 or your own) or add a margin. Content is scaled to fit, and form fields, links and comments move with it.
 - **Pages per sheet and booklets**: print 2, 4, 6, 9 or 16 pages on a sheet, or make a booklet to print double-sided, fold and staple.
 - **Convert to greyscale**: text, drawings and pictures in shades of grey, with the text still selectable.
@@ -20,11 +20,11 @@ Everything below is free and included. There's no account, no watermark and no d
 - **Accessibility and preferences**: a high-contrast focus ring, reduced motion, how long notifications and tooltips stay, single-letter tool keys on or off, the tour and tips read aloud, and back up, restore or reset all your preferences.
 - **A friendlier tour**: larger, with Next, Back and Close buttons and a read-aloud button.
 
-## Fill & sign
+## Complete & sign
 
 - Type into any form, even a flat PDF or a scan with no fields.
 - Add ticks, crosses, dates, stamps and your signature or initials.
-- Sign with a certificate (a Digital ID) and check other people's signatures.
+- Sign with a certificate (a signing ID) and check other people's signatures.
 - Bulk fill: one filled copy of a form for every row of a spreadsheet.
 
 ## Forms
@@ -38,7 +38,7 @@ Everything below is free and included. There's no account, no watermark and no d
 
 - Highlight, underline, squiggly underline and strikethrough.
 - Sticky notes, text boxes, callouts, drawing, shapes, arrows, clouds and measurements.
-- Stamps: Acrobat's Standard Business, Sign Here and Dynamic sets (which add your name and the time), plus your own. Pick the default from the Stamps window, which previews every stamp.
+- Stamps: Business, Signing and Name & time sets (the last add your name and the time), plus your own. Pick the default from the Stamps window, which previews every stamp.
 - Links to web pages, email, phone numbers or other pages.
 - Redact text for good, compare two versions side by side or visually, and keep track of comments in the Comments list.
 
@@ -48,12 +48,12 @@ Everything below is free and included. There's no account, no watermark and no d
 - Resize pages to another paper size or add a margin, for all pages, the current page or a range.
 - Crop, watermark (behind or on top of the page), header and footer, page numbers and Bates numbers.
 - Convert the whole document to greyscale.
-- Password-protect, remove hidden information, and make PDF/A for archiving.
+- Password-protect, strip hidden data, and make PDF/A for archiving.
 
 ## Pictures
 
 - Edit Images: move, resize (keeping proportions, or Shift for free), replace, save, copy or delete the pictures in a PDF. Every change can be undone with Ctrl+Z.
-- Snapshot any area of a page as a sharp PNG, to copy or save.
+- Capture any area of a page as a sharp PNG, to copy or save.
 - Extract every picture in a PDF to a folder, or save pages as images.
 
 ## Printing
@@ -64,13 +64,13 @@ Everything below is free and included. There's no account, no watermark and no d
 ## Import and export
 
 - Open Word files (with or without Office), Excel, PowerPoint, Google Docs links, text, Markdown and HTML as PDFs.
-- Create a PDF from images, a blank page or the Design canvas.
+- Make a PDF from images, a blank page or the Design canvas.
 - Save as Word, Excel, PowerPoint, plain text, HTML, Markdown, ePub, PNG or JPEG images, PDF/A, form data or comments (XFDF).
 
 ## Scan and OCR
 
 - Scan from a flatbed or feeder (TWAIN or WIA) straight to a PDF.
-- Recognise text so scanned pages can be searched and copied, and clean up scans.
+- Run text recognition so scanned pages can be searched and copied, and clean up scans.
 
 ## Cloud and automation
 

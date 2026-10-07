@@ -141,7 +141,7 @@ public class AppSettings
     public double ToolboxTop  { get; set; } = double.NaN;
 
     // ── Render engine ────────────────────────────────────────────────────────
-    /// <summary>"Pdfium" (default, Chrome/Adobe quality) or "WinRT" (legacy Windows renderer).</summary>
+    /// <summary>"Pdfium" (default, Chrome's engine) or "WinRT" (legacy Windows renderer).</summary>
     public string RenderEngine { get; set; } = "Custom";
 
     // ── Accessibility ────────────────────────────────────────────────────────
@@ -291,6 +291,6 @@ public sealed class CustomStampSetting
 {
     public string Title { get; set; } = string.Empty;
     public string Color { get; set; } = "#6A1B9A";
-    /// <summary>Adds "By … at …" under the title, like Acrobat's dynamic stamps.</summary>
+    /// <summary>Adds "By … at …" under the title like other PDF editors' dynamic stamps.</summary>
     public bool Dynamic { get; set; }
 }

@@ -11,7 +11,7 @@ namespace PdfEdit.Controls;
 
 /// <summary>
 /// Select Text tool (S): drag over text or any area of the page. The text underneath is picked
-/// out and a small bar appears beside it, like PDFgear's and Acrobat's: Copy, Highlight, and AI
+/// out and a small bar appears beside it, like PDFgear's and the usual: Copy, Highlight, and AI
 /// actions (Explain, Summarise, Rewrite, Translate, Ask), plus "Ask about this area", which sends
 /// a picture of the area for charts, scans and photos.
 /// </summary>
@@ -224,7 +224,7 @@ public partial class PdfViewerControl
                 };
                 if (dlg.ShowDialog() != true) return;
                 await System.IO.File.WriteAllBytesAsync(dlg.FileName, png);
-                _vm.StatusText = $"Snapshot saved to {System.IO.Path.GetFileName(dlg.FileName)}.";
+                _vm.StatusText = $"Capture saved to {System.IO.Path.GetFileName(dlg.FileName)}.";
             }
             else
             {
@@ -232,8 +232,8 @@ public partial class PdfViewerControl
                 var bmp = System.Windows.Media.Imaging.BitmapFrame.Create(ms, System.Windows.Media.Imaging.BitmapCreateOptions.None,
                                                                            System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
                 Clipboard.SetImage(bmp);
-                _vm.StatusText = "Snapshot copied: paste it into another app.";
-                ToastService.Instance.Success("Snapshot copied to the clipboard.");
+                _vm.StatusText = "Capture copied: paste it into another app.";
+                ToastService.Instance.Success("Capture copied to the clipboard.");
             }
         }
         catch (Exception ex) { Dialogs.AppDialog.ShowError("The snapshot couldn't be copied or saved.", ex); }

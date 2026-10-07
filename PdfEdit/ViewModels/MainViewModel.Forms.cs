@@ -3,7 +3,7 @@ using PdfEdit.Services;
 
 namespace PdfEdit.ViewModels;
 
-/// <summary>Acrobat Pro "Prepare Form" support: automatic field names, Field Properties, Fields panel.</summary>
+/// <summary>"Form Builder" support: automatic field names, Field Properties, Fields panel.</summary>
 public partial class MainViewModel
 {
     /// <summary>Asks the live view to select a field in Edit Fields mode (from the Fields panel).</summary>
@@ -12,7 +12,7 @@ public partial class MainViewModel
     /// <summary>Asks the main window to bring the Fields panel to the front.</summary>
     public event Action? FieldsPanelRequested;
 
-    /// <summary>Acrobat-style automatic name: "Text1", "Check Box2", "Group1" … (first free number).</summary>
+    /// <summary>standard automatic name: "Text1", "Check Box2", "Group1" … (first free number).</summary>
     public string NextFieldName(string prefix)
     {
         var used = new HashSet<string>(AllFields.Select(f => f.Name).Concat(AllFields.Select(f => f.DisplayName)),
@@ -32,7 +32,7 @@ public partial class MainViewModel
         FieldSelectionRequested?.Invoke(field);
     }
 
-    /// <summary>Opens Acrobat's tabbed Field Properties dialog for <paramref name="field"/>.</summary>
+    /// <summary>Opens the usual tabbed Field Properties dialog for <paramref name="field"/>.</summary>
     public void OpenFieldProperties(FormFieldInfo? field)
     {
         field ??= SelectedField;

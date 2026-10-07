@@ -33,7 +33,7 @@ public partial class MainViewModel
             StatusText = $"Exporting as {kind}…";
             int pages = await Task.Run(() => convert(src, dest));
             StatusText = $"Exported {pages} page(s) to {Path.GetFileName(dest)}.";
-            ToastService.Instance.Success($"Saved as {kind}. Scanned pages need Recognise Text (OCR) first to have text.");
+            ToastService.Instance.Success($"Saved as {kind}. Scanned pages need text recognition (OCR) first to have text.");
         }
         catch (Exception ex)
         {

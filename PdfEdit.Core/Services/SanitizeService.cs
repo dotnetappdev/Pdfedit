@@ -7,7 +7,7 @@ public sealed record SanitizeOptions(bool Metadata = true, bool Scripts = true, 
                                      bool Comments = false, bool Bookmarks = false);
 
 /// <summary>
-/// Acrobat's "Remove Hidden Information" / "Sanitize Document": strips document metadata (Info and
+/// the usual "Strip Hidden Data" / "Sanitize Document": strips document metadata (Info and
 /// XMP), JavaScript and automatic actions, embedded files, and optionally comments and bookmarks.
 /// Visible page content and form fields are left alone.
 /// </summary>

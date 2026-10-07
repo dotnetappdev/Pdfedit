@@ -1,9 +1,9 @@
 namespace PdfEdit.Models;
 
-/// <summary>Acrobat review status ("Set Status" on a comment).</summary>
+/// <summary>Review status ("Set Status" on a comment).</summary>
 public enum CommentStatus { None, Accepted, Rejected, Cancelled, Completed }
 
-/// <summary>A reply in a comment thread (Acrobat's "Reply").</summary>
+/// <summary>A reply in a comment thread ("Reply").</summary>
 public class CommentReply
 {
     public string Author { get; set; } = CommentInfo.DefaultAuthor;
@@ -12,7 +12,7 @@ public class CommentReply
 }
 
 /// <summary>
-/// The comment side of an annotation, as Acrobat's Comments list shows it: who made it, when,
+/// The comment side of an annotation, as the usual Comments list shows it: who made it, when,
 /// its note, the reply thread, review status and the reviewer's checkmark. Saved into the PDF
 /// as /T (author), /M, /Contents, /State replies and /IRT reply annotations.
 /// </summary>

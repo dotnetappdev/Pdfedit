@@ -29,7 +29,7 @@ public class BatchStep
 
     public static string Title(BatchStepKind k) => k switch
     {
-        BatchStepKind.Ocr => "Recognise text (OCR)",
+        BatchStepKind.Ocr => "Text recognition (OCR)",
         BatchStepKind.Compress => "Compress",
         BatchStepKind.Watermark => "Add watermark",
         BatchStepKind.Flatten => "Flatten form fields",
@@ -37,7 +37,7 @@ public class BatchStep
         BatchStepKind.PageNumbers => "Add page numbers",
         BatchStepKind.HeaderFooter => "Add header / footer",
         BatchStepKind.Bates => "Add Bates numbers",
-        BatchStepKind.Sanitize => "Remove hidden information",
+        BatchStepKind.Sanitize => "Strip hidden data",
         BatchStepKind.Password => "Password protect",
         BatchStepKind.PdfA => "Save as PDF/A",
         BatchStepKind.ExportText => "Export text (.txt)",
@@ -97,7 +97,7 @@ public class BatchStep
     };
 }
 
-/// <summary>A saved list of steps (Acrobat calls these Actions).</summary>
+/// <summary>A saved list of steps (calls these Actions).</summary>
 public class BatchAction
 {
     public string Name { get; set; } = "";

@@ -1,7 +1,7 @@
 namespace PdfEdit.Models;
 
 /// <summary>
-/// Vector shapes for the Fill &amp; Sign marks (✓ ✕ ● ○ —), drawn like Acrobat's rather than as
+/// Vector shapes for the Complete &amp; Sign marks (✓ ✕ ● ○ —), drawn like other PDF editors' rather than as
 /// font glyphs: on screen and in the saved PDF they share these strokes. Coordinates are in a
 /// unit square, x right / y down.
 /// </summary>
@@ -22,7 +22,7 @@ public static class MarkShapes
     /// <summary>Open polylines to stroke (empty for the dot / circle).</summary>
     public static PointD[][] Strokes(Kind kind) => kind switch
     {
-        // Acrobat's tick: short down-stroke, long up-stroke
+        // the usual tick: short down-stroke, long up-stroke
         Kind.Check => new[] { new[] { new PointD(0.14, 0.54), new PointD(0.40, 0.80), new PointD(0.88, 0.20) } },
         Kind.Cross => new[]
         {

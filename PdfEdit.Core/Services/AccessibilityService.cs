@@ -42,7 +42,7 @@ public sealed class AccessibilityFixOptions
 }
 
 /// <summary>
-/// Acrobat's Accessibility Checker (the parts that can be checked by reading the file): title,
+/// the usual Accessibility Checker (the parts that can be checked by reading the file): title,
 /// language, tagging, alternative text on figures, fonts, tab order, form field descriptions,
 /// link descriptions, scanned pages without text, bookmarks and screen-reader permission.
 /// <see cref="Fix"/> repairs the document-level ones.
@@ -123,7 +123,7 @@ public static class AccessibilityService
         list.Add(scanned.Count == 0
             ? new(content, "Text is real text", CheckStatus.Passed, "Every page has text that can be read out.")
             : new(content, "Text is real text", CheckStatus.Failed,
-                $"{Pages(scanned)} look scanned (images with no text). Run text recognition: Toolkit → Scan & text recognition → Recognise text."));
+                $"{Pages(scanned)} look scanned (images with no text). Run text recognition: Toolkit → Scan & text recognition → Make scanned pages searchable."));
 
         list.Add(fontsNotEmbedded.Count == 0
             ? new(content, "Fonts", CheckStatus.Passed, "All fonts are embedded.")

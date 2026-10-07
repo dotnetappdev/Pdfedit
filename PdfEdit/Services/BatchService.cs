@@ -13,7 +13,7 @@ public sealed record BatchProgress(int FileIndex, int FileCount, string File, st
 public sealed record BatchOutput(string? Folder, string Suffix, bool Overwrite);
 
 /// <summary>
-/// Acrobat's Action Wizard: runs a list of steps (OCR, compress, watermark, flatten, numbering,
+/// the usual Action Wizard: runs a list of steps (OCR, compress, watermark, flatten, numbering,
 /// password …) over many PDFs. Each file goes through the steps in order via temp files, so a
 /// failure leaves the original untouched; the result is written next to it or to an output folder.
 /// </summary>

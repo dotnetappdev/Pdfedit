@@ -9,7 +9,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Hyperlinks stored in the PDF, like Acrobat: with the Hand / Select tool a link shows a hand
+/// Hyperlinks stored in the PDF like other PDF editors: with the Hand / Select tool a link shows a hand
 /// cursor and its target, and a click follows it (web page, email, phone, or a page here). With
 /// the Link tool every link is outlined and a click edits it. Right-click: open, edit, copy, remove.
 /// </summary>

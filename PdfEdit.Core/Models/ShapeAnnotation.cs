@@ -4,9 +4,9 @@ namespace PdfEdit.Models;
 public enum ShapeKind
 {
     Rectangle, Ellipse, Arrow, Callout,
-    // Acrobat "Drawing" tools
+    // "Drawing" tools
     Line, Cloud, Polygon, Polyline,
-    // Acrobat Pro "Measure" tools — drawn with a live measurement label
+    // "Measure" tools — drawn with a live measurement label
     Distance, Perimeter, Area,
 }
 
@@ -24,7 +24,7 @@ public class ShapeAnnotation
     public string?   FillColor   { get; set; } = null;
     // Callout text (used when Kind == Callout)
     public string    CalloutText { get; set; } = "";
-    // 0–1 (Acrobat's opacity slider)
+    // 0–1 (opacity slider)
     public double    Opacity     { get; set; } = 1.0;
     // Vertices in PDF points for Polygon / Polyline / Perimeter / Area (X1..Y2 hold their bounds)
     public List<PointD>? Points { get; set; }

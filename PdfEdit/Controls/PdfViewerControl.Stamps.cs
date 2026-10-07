@@ -7,7 +7,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Rubber stamps like Acrobat's: a rounded, double-bordered box in the stamp's colour with the
+/// Rubber stamps like other PDF editors': a rounded, double-bordered box in the stamp's colour with the
 /// title (and for dynamic stamps a "By … at …" line). Placed with the Stamp tool, then selected,
 /// moved, resized (corner handle or the toolbar's A / A), rotated and deleted like other marks.
 /// </summary>

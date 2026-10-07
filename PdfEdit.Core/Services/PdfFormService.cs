@@ -98,7 +98,7 @@ public class PdfFormService
                         fieldInfo.FontName = field.GetFont()?.GetFontProgram()?.GetFontNames()?.GetFontName();
                     }
                     catch { /* malformed /DA — keep defaults */ }
-                    try { ReadAcrobatFieldProperties(field, widget, fieldInfo); }
+                    try { ReadFieldExtras(field, widget, fieldInfo); }
                     catch { /* optional appearance/options — keep defaults */ }
 
                     if (field is PdfTextFormField txt)
@@ -199,7 +199,7 @@ public class PdfFormService
         return errors;
     }
 
-    // ── Acrobat field properties: /MK colours, text colour, MaxLen, comb, edit, date format ──
+    // ── Standard field properties: /MK colours, text colour, MaxLen, comb, edit, date format ──
 
     private static string? ToHex(PdfArray? arr)
     {
@@ -217,7 +217,7 @@ public class PdfFormService
     private static readonly System.Text.RegularExpressions.Regex AfDateRx =
         new(@"AFDate_(?:FormatEx|KeystrokeEx)\(\s*""([^""]+)""", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    private static void ReadAcrobatFieldProperties(PdfFormField field, iText.Kernel.Pdf.Annot.PdfWidgetAnnotation widget, Models.FormFieldInfo info)
+    private static void ReadFieldExtras(PdfFormField field, iText.Kernel.Pdf.Annot.PdfWidgetAnnotation widget, Models.FormFieldInfo info)
     {
         var mk = widget.GetPdfObject().GetAsDictionary(PdfName.MK);
         info.BorderColor = ToHex(mk?.GetAsArray(PdfName.BC));
@@ -241,7 +241,7 @@ public class PdfFormService
         FieldFormatting.ReadCalc(calc, info);
     }
 
-    private static void WriteAcrobatFieldProperties(PdfFormField field, Models.FormFieldInfo edit)
+    private static void WriteFieldExtras(PdfFormField field, Models.FormFieldInfo edit)
     {
         foreach (var annot in field.GetChildFormAnnotations())
         {
@@ -273,7 +273,7 @@ public class PdfFormService
         if (!string.IsNullOrEmpty(edit.DefaultValue))
             field.SetDefaultValue(new PdfString(edit.DefaultValue));
 
-        // Date fields use Acrobat's standard format / keystroke scripts, so Acrobat and other
+        // Date fields use the standard AFDate format / keystroke scripts, so other
         // viewers format and validate the date too.
         var aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
         if (edit.IsDateField)
@@ -291,7 +291,7 @@ public class PdfFormService
             }
         }
 
-        // Number / currency / percent / special formats (Acrobat's AF scripts).
+        // Number / currency / percent / special formats (AF scripts).
         aa = field.GetPdfObject().GetAsDictionary(PdfName.AA);
         if (!edit.IsDateField && FieldFormatting.Scripts(edit) is { } sc)
         {
@@ -356,7 +356,7 @@ public class PdfFormService
                 if (edit.FontSize > 0) field.SetFontSize((float)edit.FontSize);
                 else field.SetFontSizeAutoScale();
             }
-            WriteAcrobatFieldProperties(field, edit);
+            WriteFieldExtras(field, edit);
             UpdateCalculationOrder(form, field, FieldFormatting.CalcScript(edit) != null);
             field.RegenerateField();
         }
@@ -487,7 +487,7 @@ public class PdfFormService
                     else
                     {
                         // Formatted number fields keep the plain number as the value and show the
-                        // formatted text (e.g. 1234.5 → £1,234.50), like Acrobat.
+                        // formatted text (e.g. 1234.5 → £1,234.50) like other PDF editors.
                         var fmt = new Models.FormFieldInfo();
                         string fjs = field.GetPdfObject().GetAsDictionary(PdfName.AA)?.GetAsDictionary(PdfName.F)?
                                           .GetAsString(PdfName.JS)?.ToUnicodeString() ?? string.Empty;
@@ -593,7 +593,7 @@ public class PdfFormService
             var pdfAnn = new PdfFreeTextAnnotation(rect, new PdfString(ann.Text));
             pdfAnn.SetContents(ann.Text);
 
-            // ✓ ✕ ● ○ — : give the annotation a drawn (vector) appearance like Acrobat's marks —
+            // ✓ ✕ ● ○ — : give the annotation a drawn (vector) appearance like other PDF editors' marks —
             // the standard fonts have no ✓ / ✕ glyphs, so other viewers showed nothing or a box.
             if (MarkShapes.FromGlyph(ann.Text) is { } markKind)
             {
@@ -701,7 +701,7 @@ public class PdfFormService
                 double width  = Math.Abs(x2 - x1);
                 double height = Math.Abs(y2 - y1);
 
-                // Acrobat drawing / measuring kinds (line, cloud, polygon, polyline, distance, perimeter, area)
+                // Standard drawing / measuring kinds (line, cloud, polygon, polyline, distance, perimeter, area)
                 if (BuildExtendedShapeAnnotation(shape, strokeColor, lw) is { } extra)
                 {
                     if (shape.Opacity < 0.999) extra.Put(PdfName.CA, new PdfNumber(shape.Opacity));
@@ -761,7 +761,7 @@ public class PdfFormService
             }
         }
 
-        // ── 6b. Insert / Replace text (Acrobat text-edit comments) ──────────
+        // ── 6b. Insert / Replace text (text-edit comments) ──────────
         if (textEdits != null)
         {
             foreach (var mark in textEdits)
@@ -780,7 +780,7 @@ public class PdfFormService
                 }
                 else
                 {
-                    // Acrobat's Replace text: a strikeout grouped with a caret holding the new text.
+                    // the usual Replace text: a strikeout grouped with a caret holding the new text.
                     float l = (float)mark.Left, bt = (float)mark.Bottom, r = l + (float)mark.Width, t = bt + (float)mark.Height;
                     var strike = PdfTextMarkupAnnotation.CreateStrikeout(new Rectangle(l, bt, r - l, t - bt),
                         new[] { l, t, r, t, l, bt, r, bt });
@@ -826,7 +826,7 @@ public class PdfFormService
                     }
                     else
                     {
-                        // A stamp annotation showing the signature image (like Acrobat Fill & Sign), so a
+                        // A stamp annotation showing the signature image (as a signed-in-place mark), so a
                         // later save replaces it rather than stacking another copy into the page.
                         float w = (float)sig.Width, h = (float)sig.Height;
                         var ap = new PdfFormXObject(new Rectangle(0, 0, w, h));
@@ -1350,7 +1350,7 @@ public class PdfFormService
         float rad = Math.Min(w, h) * 0.18f;
         float inset = outer * 2.1f;
 
-        // Faint tint inside, like Acrobat's stamps.
+        // Faint tint inside like other PDF editors' stamps.
         canvas.SaveState()
               .SetExtGState(new iText.Kernel.Pdf.Extgstate.PdfExtGState().SetFillOpacity(0.09f))
               .SetFillColor(color)
@@ -1391,7 +1391,7 @@ public class PdfFormService
         return xobj;
     }
 
-    /// <summary>Form XObject drawing a Fill &amp; Sign mark (see <see cref="MarkShapes"/>) in its box.</summary>
+    /// <summary>Form XObject drawing a Complete &amp; Sign mark (see <see cref="MarkShapes"/>) in its box.</summary>
     private static PdfFormXObject BuildMarkAppearance(PdfDocument doc, MarkShapes.Kind kind, FreeTextAnnotation ann)
     {
         float w = (float)ann.Width, h = (float)ann.Height;
@@ -1430,8 +1430,8 @@ public class PdfFormService
     }
 
     /// <summary>
-    /// Standard PDF annotations for Acrobat's Line, Cloud, Polygon, Polyline and Measure tools, so
-    /// they show (and stay editable) in Acrobat and other readers. Null for the original kinds.
+    /// Standard PDF annotations for the usual Line, Cloud, Polygon, Polyline and Measure tools, so
+    /// they show (and stay editable) in other PDF readers. Null for the original kinds.
     /// </summary>
     private static PdfAnnotation? BuildExtendedShapeAnnotation(Models.ShapeAnnotation shape, DeviceRgb stroke, float lw)
     {
@@ -1452,7 +1452,7 @@ public class PdfFormService
                 var line = new PdfLineAnnotation(bounds, new[] { (float)shape.X1, (float)shape.Y1, (float)shape.X2, (float)shape.Y2 });
                 if (shape.Kind == Models.ShapeKind.Distance)
                 {
-                    // Dimension line: butt ends, caption shown on the line (Acrobat "Distance")
+                    // Dimension line: butt ends, caption shown on the line ("Distance")
                     line.Put(PdfName.LE, new PdfArray(new[] { new PdfName("Butt"), new PdfName("Butt") }));
                     line.Put(new PdfName("Cap"), PdfBoolean.TRUE);
                     line.Put(new PdfName("IT"), new PdfName("LineDimension"));
@@ -1567,7 +1567,7 @@ public class PdfFormService
     }
 
     /// <summary>
-    /// Adds an annotation with its comment the way Acrobat stores one: /NM id, author (/T), dates,
+    /// Adds an annotation with its comment the way PDF readers store one: /NM id, author (/T), dates,
     /// note (/Contents), review status and checkmark as /State replies, and the reply thread as
     /// /IRT text annotations.
     /// </summary>
@@ -1861,7 +1861,7 @@ public class PdfFormService
         form.AddField(field, pdf.GetPage(pageNumber));
     }
 
-    /// <summary>Adds an (unsigned) signature field — Acrobat's "Add a signature field".</summary>
+    /// <summary>Adds an (unsigned) signature field — the usual "Add a signature field".</summary>
     public void AddSignatureField(string inputPath, string outputPath,
         int pageNumber, float left, float bottom, float width, float height, string fieldName)
     {
@@ -1874,7 +1874,7 @@ public class PdfFormService
         form.AddField(field, pdf.GetPage(pageNumber));
     }
 
-    /// <summary>Adds a date field: a text field with Acrobat's AFDate format / keystroke scripts.</summary>
+    /// <summary>Adds a date field: a text field with the usual AFDate format / keystroke scripts.</summary>
     public void AddDateField(string inputPath, string outputPath,
         int pageNumber, float left, float bottom, float width, float height,
         string fieldName, string format = "dd/mm/yyyy", float fontSize = 10f)

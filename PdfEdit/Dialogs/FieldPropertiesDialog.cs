@@ -7,7 +7,7 @@ using PdfEdit.ViewModels;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Acrobat Pro's "Text Field Properties" style dialog: General (name, tooltip, read only,
+/// the usual "Text Field Properties" style dialog: General (name, tooltip, read only,
 /// required), Appearance (border, fill, font size, text colour) and Options (alignment, default,
 /// multi-line, character limit, comb, date format, list items, custom text). Works on a copy;
 /// <see cref="Result"/> is applied by the caller.
@@ -223,7 +223,7 @@ public class FieldPropertiesDialog : Window
                 {
                     FieldType.Checkbox => $"Export value when checked: {_field.ExportValue}",
                     FieldType.RadioButton => $"Radio button choice (export value): {_field.ExportValue}\nButtons with the same group name are mutually exclusive.",
-                    FieldType.Signature => "The signer adds their signature here with Fill & Sign → Sign.",
+                    FieldType.Signature => "The signer adds their signature here with Complete & Sign → Sign.",
                     _ => "No options for this field type.",
                 },
             });
@@ -231,7 +231,7 @@ public class FieldPropertiesDialog : Window
         return p;
     }
 
-    // Acrobat's Format tab: None / Number / Currency / Percent / Date / Zip / Phone / SSN.
+    // the usual Format tab: None / Number / Currency / Percent / Date / Zip / Phone / SSN.
     private UIElement BuildFormat()
     {
         var p = Panel();
@@ -271,13 +271,13 @@ public class FieldPropertiesDialog : Window
         p.Children.Add(new TextBlock
         {
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 14, 0, 0), FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
-            Text = "Formatted fields store the plain number and show it formatted. Acrobat and other readers use the same rules.",
+            Text = "Formatted fields store the plain number and show it formatted. Other PDF readers use the same rules.",
         });
         Update();
         return p;
     }
 
-    // Acrobat's Calculate tab (simple calculations).
+    // the usual Calculate tab (simple calculations).
     private UIElement BuildCalculate()
     {
         var p = Panel();

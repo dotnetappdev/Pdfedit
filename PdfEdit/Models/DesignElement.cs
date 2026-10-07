@@ -10,7 +10,7 @@ public enum DesignTool
 {
     Select, Text, Rectangle, Ellipse, Line, Arrow, Pen, Image, Table, Checkmark, XMark,
     TextField, Memo, Checkbox, Radio, ComboBox, Signature,
-    // Fill & Sign on the Design canvas: Fill types into / ticks form fields, Sign places a signature.
+    // Complete & Sign on the Design canvas: Fill types into / ticks form fields, Sign places a signature.
     Fill, Sign
 }
 
@@ -147,7 +147,7 @@ public class FormFieldDesignElement : DesignElement
     public IReadOnlyList<string> Options =>
         _optionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    // ── Filled-in value (Fill & Sign) ─────────────────────────────────────────
+    // ── Filled-in value (Complete & Sign) ─────────────────────────────────────────
     private string _value = string.Empty;
     private string _exportValue = "Yes";
 
@@ -199,8 +199,8 @@ public class FormFieldDesignElement : DesignElement
     public bool ValueItalic { get => _valueItalic; set { _valueItalic = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValueFontStyle)); } }
 
     /// <summary>
-    /// Font size the value is shown and typed in: the field's own size, otherwise auto like
-    /// Acrobat (60% of the box height for one line, 12 pt for multi-line fields).
+    /// Font size the value is shown and typed in: the field's own size, otherwise auto
+    /// (60% of the box height for one line, 12 pt for multi-line fields).
     /// </summary>
     public double ValueFontSize => _fontSizePt > 0 ? _fontSizePt
         : _kind == FormFieldKind.Memo ? 12
@@ -260,7 +260,7 @@ public class ImageDesignElement : DesignElement
     public string FilePath { get => _filePath; set { _filePath = value; OnPropertyChanged(); } }
 
     /// <summary>
-    /// Set when this image is a signature placed with Fill &amp; Sign (PNG bytes). Signatures on a
+    /// Set when this image is a signature placed with Complete &amp; Sign (PNG bytes). Signatures on a
     /// design imported from the open PDF are carried over to Live View as placed signatures.
     /// </summary>
     public byte[]? SignatureBytes { get; set; }

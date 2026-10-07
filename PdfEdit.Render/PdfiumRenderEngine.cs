@@ -6,9 +6,9 @@ namespace PdfEdit.Render;
 
 /// <summary>
 /// High-quality PDF renderer built on Pdfium — the same engine used by Google Chrome and
-/// Microsoft Edge, derived from Adobe's source. Compared to the WinRT fallback it delivers:
+/// Microsoft Edge, derived from Chromium's source. Compared to the WinRT fallback it delivers:
 ///
-///   • Sub-pixel LCD font hinting (OptimizeTextForLcd) — same as Adobe Reader
+///   • Sub-pixel LCD font hinting (OptimizeTextForLcd) — same as other PDF readers
 ///   • PDF annotations rendered into the page (stamps, watermarks, ink, digital-sig appearances)
 ///   • Correct ICC colour profiles and blend-mode transparency
 ///   • High-DPI rendering: accepts dpiScale so the bitmap fills physical pixels without blur
@@ -23,10 +23,10 @@ public sealed class PdfiumRenderEngine : IPageRenderer
     private const double PdfPointDpi  = 72.0;
     public  const double PointsToDips = WpfDpi / PdfPointDpi;  // ≈1.3333
 
-    // Docnet render flags matching Adobe Reader's default screen-view quality
+    // Docnet render flags matching normal screen-view quality
     private const RenderFlags ScreenFlags =
         RenderFlags.RenderAnnotations    // bake stamps, watermarks, ink into bitmap
-        | RenderFlags.OptimizeTextForLcd; // sub-pixel RGB hinting (Adobe Reader default)
+        | RenderFlags.OptimizeTextForLcd; // sub-pixel RGB hinting (default)
 
     private string?  _filePath;
     private byte[]?  _fileBytes;
@@ -128,7 +128,7 @@ public sealed class PdfiumRenderEngine : IPageRenderer
             using var page = doc.GetPageReader(pageIndex);
 
             // Pre-fill white — Pdfium renders transparent backgrounds on pages that don't
-            // specify a background colour (most PDFs). Adobe Reader fills white by default.
+            // specify a background colour (most PDFs). Viewers fill white by default.
             int w = page.GetPageWidth(), h = page.GetPageHeight();
             return (FillWhite(page.GetImage(ScreenFlags), w, h), w, h);
         }

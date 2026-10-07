@@ -8,7 +8,7 @@
              d:DesignHeight="700" d:DesignWidth="900">
 
     <UserControl.Resources>
-        <!-- Flat buttons for the Acrobat-style form bars -->
+        <!-- Flat buttons for the standard form bars -->
         <Style x:Key="FormBarButton" TargetType="ButtonBase">
             <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -48,12 +48,12 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <!-- ── Acrobat Pro "Prepare Form" toolbar (shown while editing fields) ── -->
+            <!-- ── "Form Builder" toolbar (shown while editing fields) ── -->
             <Border x:Name="PrepareFormBar" Visibility="Collapsed"
                     Background="{DynamicResource PanelBgBrush}"
                     BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
                 <DockPanel LastChildFill="False">
-                    <TextBlock DockPanel.Dock="Left" Text="Prepare Form" FontWeight="SemiBold" FontSize="13"
+                    <TextBlock DockPanel.Dock="Left" Text="Form Builder" FontWeight="SemiBold" FontSize="13"
                                VerticalAlignment="Center" Margin="4,0,14,0" Foreground="{DynamicResource ForegroundBrush}"/>
                     <StackPanel x:Name="PrepareFormToolbar" DockPanel.Dock="Left" Orientation="Horizontal">
                         <ToggleButton Style="{StaticResource FormBarToggle}" Tag="EditFields" ToolTip="Select, move, resize and align fields (E)" AutomationProperties.Name="Select">
@@ -106,7 +106,7 @@
                         </ToggleButton>
                     </StackPanel>
                     <Button x:Name="PrepareCloseBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
-                            Content="Close" ToolTip="Close Prepare Form" AutomationProperties.Name="Close Prepare Form"/>
+                            Content="Close" ToolTip="Close Form Builder" AutomationProperties.Name="Close Form Builder"/>
                     <Button x:Name="PreparePreviewBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
                             Content="Preview" ToolTip="Preview — fill in the form" AutomationProperties.Name="Preview form"/>
                     <Button x:Name="PrepareFieldsBtn" DockPanel.Dock="Right" Style="{StaticResource FormBarButton}"
@@ -119,7 +119,7 @@
                 </DockPanel>
             </Border>
 
-            <!-- ── Acrobat fill notice (shown while filling a form) ── -->
+            <!-- ── Standard fill notice (shown while filling a form) ── -->
             <Border x:Name="FormNoticeBar" Visibility="Collapsed" Background="#E6E3F7"
                     BorderBrush="#C9C2EE" BorderThickness="0,0,0,1" Padding="10,5">
                 <DockPanel LastChildFill="False">
@@ -130,13 +130,13 @@
                     <Button x:Name="NoticeCloseBtn" DockPanel.Dock="Right" Content="✕" Padding="6,2" Margin="6,0,0,0"
                             Background="Transparent" BorderThickness="0" Foreground="#444" Cursor="Hand"
                             ToolTip="Hide this message" AutomationProperties.Name="Hide form notice"/>
-                    <Button x:Name="NoticePrepareBtn" DockPanel.Dock="Right" Content="Prepare Form" Padding="10,3" Margin="6,0,0,0"
+                    <Button x:Name="NoticePrepareBtn" DockPanel.Dock="Right" Content="Form Builder" Padding="10,3" Margin="6,0,0,0"
                             Background="White" BorderBrush="#9A90D8" Foreground="#222" Cursor="Hand"
-                            AutomationProperties.Name="Prepare Form"/>
-                    <ToggleButton DockPanel.Dock="Right" Content="Highlight Existing Fields" Padding="10,3"
+                            AutomationProperties.Name="Form Builder"/>
+                    <ToggleButton DockPanel.Dock="Right" Content="Show All Fields" Padding="10,3"
                                   IsChecked="{Binding HighlightFields, Mode=TwoWay}"
                                   Background="White" BorderBrush="#9A90D8" Foreground="#222" Cursor="Hand"
-                                  AutomationProperties.Name="Highlight existing fields"/>
+                                  AutomationProperties.Name="Show all fields"/>
                 </DockPanel>
             </Border>
         </StackPanel>

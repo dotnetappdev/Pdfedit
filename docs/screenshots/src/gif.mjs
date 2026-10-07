@@ -1,6 +1,6 @@
 // Renders docs/screenshots/fill-and-sign.gif: filling in and signing a flat form in Live View.
 //   node docs/screenshots/src/gif.mjs        (needs ffmpeg on PATH)
-// A mock-up animation drawn from the real Fill & Sign ribbon, not a screen recording.
+// A mock-up animation drawn from the real Complete & Sign ribbon, not a screen recording.
 import fs from 'fs';
 import os from 'os';
 import path from 'path';

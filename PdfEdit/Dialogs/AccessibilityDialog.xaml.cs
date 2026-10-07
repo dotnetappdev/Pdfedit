@@ -8,7 +8,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Acrobat's Accessibility Checker: runs <see cref="AccessibilityService.Check"/> on the open PDF,
+/// the usual Accessibility Checker: runs <see cref="AccessibilityService.Check"/> on the open PDF,
 /// lists every rule as passed / failed / warning / check-by-hand, and fixes the document-level
 /// problems (title, language, tab order, field and link descriptions) in one go.
 /// </summary>

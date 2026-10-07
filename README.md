@@ -4,7 +4,7 @@
 
 <h1 align="center">PdfEdit</h1>
 
-<p align="center">A free PDF editor for Windows, built to rival Adobe Acrobat. No ads, no subscriptions, no paywalls.</p>
+<p align="center">A free PDF editor for Windows. No ads, no subscriptions, no paywalls.</p>
 
 <p align="center">
   <a href="https://github.com/dotnetappdev/Pdfedit/releases/latest"><img src="https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release" alt="Latest release"></a>
@@ -15,13 +15,13 @@
 
 ## Why PdfEdit?
 
-You open a form, click to type into it, and get asked to upgrade. You want to merge two files, and that's a paid feature. A "free" editor turns out to watermark every page, or cap you at three documents a day. Acrobat Reader lets you look at a PDF, but doing almost anything with it means a monthly subscription.
+You open a form, click to type into it, and get asked to upgrade. You want to merge two files, and that's a paid feature. A "free" editor turns out to watermark every page, or cap you at three documents a day. The big-name readers let you look at a PDF, but doing almost anything with it means a monthly subscription.
 
 PdfEdit is the PDF editor I wanted instead: everything included, nothing locked, no account, no ads and no watermarks. It works offline and your files stay on your PC.
 
 ## What it can do
 
-Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact, with your own stamps alongside Acrobat's. Move, resize, replace or delete the pictures already in a PDF, or snapshot any area as an image. Rotate, reorder, merge, split and resize pages, convert to greyscale, and print several pages per sheet or as a folded booklet. Scan straight to a searchable PDF and turn Word documents into fillable forms.
+Fill in and sign any form, even a flat scan with no fields, and send it back. Highlight, comment, stamp and redact, with your own stamps alongside the built-in sets. Move, resize, replace or delete the pictures already in a PDF, or capture any area as an image. Rotate, reorder, merge, split and resize pages, convert to greyscale, and print several pages per sheet or as a folded booklet. Scan straight to a searchable PDF and turn Word documents into fillable forms.
 
 Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PDFs as Word, Excel, PowerPoint, HTML, Markdown or ePub. Batch-process a folder, fill a form from every row of a spreadsheet, and save to Google Drive or OneDrive. Read hands-free with read aloud and auto-scroll, and set it up the way you need: text sizes, a high-contrast focus ring, reduced motion and a voice that reads things out. There's an optional AI assistant if you want one, and it can run on a free local model.
 

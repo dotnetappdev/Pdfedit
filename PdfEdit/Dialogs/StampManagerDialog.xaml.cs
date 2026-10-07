@@ -11,7 +11,7 @@ using PdfEdit.ViewModels;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Stamps…: every stamp with a preview, grouped like Acrobat. Pick one to use, set the default the
+/// Stamps…: every stamp with a preview, grouped like other PDF editors. Pick one to use, set the default the
 /// Stamp tool starts with, create / edit / duplicate / delete your own (text, colour, name + time),
 /// or put one behind the page as a background (watermark).
 /// </summary>

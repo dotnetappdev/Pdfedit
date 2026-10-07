@@ -11,13 +11,13 @@ using PdfEdit.Services;
 namespace PdfEdit.Controls;
 
 /// <summary>
-/// Acrobat drawing and Pro measuring tools in the live view:
+/// Drawing and measuring tools in the live view:
 /// <list type="bullet">
 /// <item>Line and Cloud (drag), Polygon and Polyline (click the points; double-click or Enter
 /// finishes, Esc cancels).</item>
 /// <item>Measure: Distance (drag), Perimeter and Area (click the points) with a live label in
 /// in / mm / cm / pt.</item>
-/// <item>Every shape and drawing has Acrobat's properties on right-click — colour, line width,
+/// <item>Every shape and drawing has the usual properties on right-click — colour, line width,
 /// fill, opacity — and boxes get a corner handle to resize them.</item>
 /// </list>
 /// </summary>
@@ -38,7 +38,7 @@ public partial class PdfViewerControl
     /// <summary>The label a measurement shows (also written to the saved annotation).</summary>
     public static string MeasureLabel(ShapeAnnotation s) => Measurement.Label(s);
 
-    // ── Cloud (Acrobat revision cloud): scalloped rectangle ──────────────────
+    // ── Cloud (revision cloud): scalloped rectangle ──────────────────
 
     private static Geometry CloudGeometry(Rect r, double scallop)
     {
@@ -137,7 +137,7 @@ public partial class PdfViewerControl
         {
             var a = ToCanvas(shape.X1, shape.Y1); var b = ToCanvas(shape.X2, shape.Y2);
             host.Children.Add(new Line { X1 = a.X, Y1 = a.Y, X2 = b.X, Y2 = b.Y, Stroke = stroke, StrokeThickness = sw });
-            // Perpendicular end ticks, like Acrobat's dimension line
+            // Perpendicular end ticks like other PDF editors' dimension line
             var dir = b - a; if (dir.Length > 0) dir.Normalize();
             var n = new Vector(-dir.Y, dir.X) * 6;
             foreach (var p in new[] { a, b })
@@ -179,7 +179,7 @@ public partial class PdfViewerControl
         ("#F9A825", "Yellow"), ("#6A1B9A", "Purple"), ("#757575", "Grey"), ("#FFFFFF", "White"),
     };
 
-    /// <summary>Acrobat's shape properties: colour, line width, fill, opacity, delete. All undoable.</summary>
+    /// <summary>the usual shape properties: colour, line width, fill, opacity, delete. All undoable.</summary>
     private ContextMenu BuildShapeMenu(ShapeAnnotation shape, UIElement visual)
     {
         var menu = new ContextMenu();
@@ -468,7 +468,7 @@ public partial class PdfViewerControl
         if (_polyPreview == null) return false;
         if (e.Key == Key.Enter) { FinishPoly(); return true; }
         if (e.Key == Key.Escape) { CancelPoly(); if (_vm != null) _vm.StatusText = "Cancelled."; return true; }
-        if (e.Key == Key.Back && _polyPts.Count > 0)   // remove the last point, like Acrobat
+        if (e.Key == Key.Back && _polyPts.Count > 0)   // remove the last point like other PDF editors
         {
             _polyPts.RemoveAt(_polyPts.Count - 1);
             if (_polyPts.Count == 0) CancelPoly();

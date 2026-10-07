@@ -11,7 +11,7 @@ using PdfEdit.Models;
 namespace PdfEdit.Services;
 
 /// <summary>
-/// Watermarks / backgrounds like Acrobat's Edit PDF → Watermark: text (e.g. a diagonal DRAFT) or an
+/// Watermarks / backgrounds like other PDF editors' Edit PDF → Watermark: text (e.g. a diagonal DRAFT) or an
 /// image, behind the page content (under the text and form fields) or on top, centred, at the top,
 /// at the bottom or tiled, on all / the current / a range of pages. Each watermark goes in its own
 /// content stream, marked as a pagination artifact, so <see cref="Remove"/> can take it out again.

@@ -34,7 +34,7 @@ function miniWindow([name, app, panel, side, content, sbBg, sbFg, fg, dim, borde
       <span style="width:10px;height:10px;border-radius:2px;background:${accent}"></span><b style="font-size:8px">PdfEdit</b>
       <span style="margin-left:auto;color:${dim}">— ☐ ✕</span></div>
     <div style="display:flex;gap:7px;padding:2px 6px 0;background:${app};font-size:7.5px">
-      ${['Home', 'Fill &amp; Sign', 'Edit', 'View'].map((t, i) => `<span style="padding:2px 1px;${i === 1 ? `border-bottom:2px solid ${accent};font-weight:700` : `color:${dim}`}">${t}</span>`).join('')}</div>
+      ${['Home', 'Complete &amp; Sign', 'Edit', 'View'].map((t, i) => `<span style="padding:2px 1px;${i === 1 ? `border-bottom:2px solid ${accent};font-weight:700` : `color:${dim}`}">${t}</span>`).join('')}</div>
     <div style="height:34px;display:flex;align-items:center;gap:9px;padding:0 8px;background:${panel};border-bottom:1px solid ${border}">
       ${ic('fill')}${ic('calendar')}${ic('sign')}${ic('stamp')}<span style="width:1px;height:22px;background:${border}"></span>${ic('highlight')}${ic('note')}${ic('draw')}
       <span style="margin-left:auto;padding:3px 7px;border-radius:3px;background:${accent};color:${sbBg === accent ? '#fff' : (name === 'High contrast' ? '#000' : '#fff')};font-size:7px">Save</span></div>
@@ -78,11 +78,11 @@ const dim = t => `<div style="color:#8a8a8a;font-size:11.5px;line-height:1.45;ma
 const link = t => `<span style="color:#4DA3FF;text-decoration:underline">${t}</span>`;
 
 export function sceneAccessibility() {
-  const areas = ['Ribbon &amp; Toolbar', 'Menus', 'Side Panels', 'AI Assistant', 'Status Bar', 'Dialogs &amp; Settings'];
+  const areas = ['Ribbon &amp; Toolbar', 'Menus', 'Side Panels', 'AI Helper', 'Status Bar', 'Dialogs &amp; Settings'];
   return `<div class="win" style="width:600px;border:1px solid #333">
   <div class="title"><div class="logo">P</div><b>Settings — PdfEdit</b><div class="caps"><span>&#10005;</span></div></div>
   <div style="display:flex;gap:2px;padding:6px 10px 0;border-bottom:1px solid #333;font-size:12.5px">
-    ${['Appearance', 'Editor', 'AI Assistant', 'Keyboard', 'Cloud', 'OCR', 'Accessibility'].map(t => `<span style="padding:6px 10px;${t === 'Accessibility' ? 'background:#2A2A2A;border:1px solid #3a3a3a;border-bottom:none;border-radius:4px 4px 0 0;color:#fff;font-weight:600' : 'color:#bbb'}">${t}</span>`).join('')}</div>
+    ${['Appearance', 'Editor', 'AI Helper', 'Keyboard', 'Cloud', 'OCR', 'Accessibility'].map(t => `<span style="padding:6px 10px;${t === 'Accessibility' ? 'background:#2A2A2A;border:1px solid #3a3a3a;border-bottom:none;border-radius:4px 4px 0 0;color:#fff;font-weight:600' : 'color:#bbb'}">${t}</span>`).join('')}</div>
   <div style="padding:4px 22px 18px;font-size:13px">
     ${sh('SIZE')}
     ${row('Interface scale:', slider(33, '100%'))}

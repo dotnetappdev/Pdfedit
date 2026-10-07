@@ -46,7 +46,7 @@ public static class DesignExportService
             pdfCanvas.RestoreState();
         }
 
-        // Tell Acrobat to regenerate field appearances from their values
+        // Tell PDF readers to regenerate field appearances from their values
         var acroForm = PdfAcroForm.GetAcroForm(pdf, true);
         acroForm.SetNeedAppearances(true);
 
@@ -242,7 +242,7 @@ public static class DesignExportService
         if (!hasFile && img.SignatureBytes == null) return;
         try
         {
-            // Signatures placed with Fill & Sign carry their PNG bytes instead of a file.
+            // Signatures placed with Complete & Sign carry their PNG bytes instead of a file.
             var imageData = hasFile ? iText.IO.Image.ImageDataFactory.Create(img.FilePath)
                                     : iText.IO.Image.ImageDataFactory.Create(img.SignatureBytes!);
             var image     = new iText.Layout.Element.Image(imageData)
@@ -253,7 +253,7 @@ public static class DesignExportService
         catch { /* ignore missing/corrupt images */ }
     }
 
-    // ── Fill & Sign marks ────────────────────────────────────────────────────
+    // ── Complete & Sign marks ────────────────────────────────────────────────────
 
     private static void DrawMark(MarkShapes.Kind kind, System.Windows.Media.Color color, PdfCanvas canvas,
                                  float x, float y, float w, float h)
@@ -372,11 +372,11 @@ public static class DesignExportService
     /// <summary>
     /// Creates a real AcroForm field for the placeholder and, when the label sits to the
     /// left/right of the field, burns the caption in as static (non-editable) text next to it.
-    /// "Placeholder" labels become the field's /TU tooltip entry (shown as hint in Acrobat).
+    /// "Placeholder" labels become the field's /TU tooltip entry (shown as hint in other PDF readers).
     ///
     /// Field-name deduplication: non-radio fields with identical names get a numeric suffix
     /// (_2, _3, …) so each widget maps to a distinct AcroForm field. Radio fields deliberately
-    /// share a name — that is how Acrobat groups them into a mutually-exclusive set.
+    /// share a name — that is how PDF readers group them into a mutually-exclusive set.
     /// </summary>
     private static void DrawFormField(
         FormFieldDesignElement f, Document doc, PdfDocument pdf, PdfPage page,
@@ -411,7 +411,7 @@ public static class DesignExportService
             var rect = new Rectangle(fieldX, y, fieldW, h);
             var form = PdfAcroForm.GetAcroForm(pdf, true);
 
-            // Tooltip: placeholder label text → PDF /TU (shown as hint in Acrobat)
+            // Tooltip: placeholder label text → PDF /TU (shown as hint in other PDF readers)
             string? tooltip = f.LabelPosition == FieldLabelPosition.Placeholder ? f.Label : null;
 
             // ── Raw field name from the element ──
@@ -427,13 +427,13 @@ public static class DesignExportService
                     info = (grp, 0);
                     radioGroups[rawName] = info;
                 }
-                // Each radio button must export a unique value so Acrobat can tell them apart
+                // Each radio button must export a unique value so PDF readers can tell them apart
                 string btnValue = string.IsNullOrWhiteSpace(f.Label) || f.Label == f.FieldName
                     ? $"option{info.ButtonCount + 1}"
                     : f.Label;
                 var btn = new RadioFormFieldBuilder(pdf, rawName).CreateRadioButton(btnValue, rect);
                 info.Group.AddKid(btn);
-                if (f.IsOn) info.Group.SetValue(btnValue);   // selected with Fill & Sign
+                if (f.IsOn) info.Group.SetValue(btnValue);   // selected with Complete & Sign
                 if (tooltip != null) info.Group.Put(PdfName.TU, new PdfString(tooltip));
                 radioGroups[rawName] = (info.Group, info.ButtonCount + 1);
                 return;
@@ -474,13 +474,13 @@ public static class DesignExportService
 
             field.SetRequired(f.Required);
 
-            // Value filled in with Fill & Sign
+            // Value filled in with Complete & Sign
             if (f.FieldKind is FormFieldKind.Text or FormFieldKind.Memo or FormFieldKind.ComboBox && f.HasValue)
                 field.SetValue(f.Value);
             else if (f.FieldKind == FormFieldKind.Checkbox && f.IsOn)
                 field.SetValue("Yes");
 
-            // Tooltip / alternate description (/TU) — shown in Acrobat's tooltip on hover
+            // Tooltip / alternate description (/TU) — shown in the usual tooltip on hover
             if (tooltip != null)
                 field.Put(PdfName.TU, new PdfString(tooltip));
 

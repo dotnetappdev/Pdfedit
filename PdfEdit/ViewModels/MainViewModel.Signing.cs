@@ -7,13 +7,13 @@ using PdfEdit.Services;
 
 namespace PdfEdit.ViewModels;
 
-/// <summary>Certificate (digital) signatures: sign with a Digital ID and check existing signatures.</summary>
+/// <summary>Certificate (digital) signatures: sign with a signing ID and check existing signatures.</summary>
 public partial class MainViewModel
 {
     private ICommand? _certSignCommand, _verifySignaturesCommand;
     private Dialogs.CertSignDialog? _pendingCertSign;
 
-    /// <summary>Sign with a certificate (Digital ID), like Acrobat's "Use a certificate".</summary>
+    /// <summary>Sign with a certificate (signing ID) like other PDF editors' "Use a certificate".</summary>
     public ICommand CertSignCommand => _certSignCommand ??= new AsyncRelayCommand(async () =>
     {
         if (_currentFilePath == null) return;

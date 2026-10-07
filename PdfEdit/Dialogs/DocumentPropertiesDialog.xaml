@@ -37,7 +37,7 @@
 
         <!-- Header -->
         <TextBlock Grid.Row="0"
-                   Text="Edit PDF Metadata"
+                   Text="Document Details"
                    FontSize="14" FontWeight="SemiBold"
                    Foreground="{DynamicResource AccentBrush}"
                    Margin="0,0,0,12"/>

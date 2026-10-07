@@ -22,7 +22,7 @@ public sealed record NUpOptions(int Columns, int Rows, float SheetWidth, float S
                                 bool Borders = false, float Margin = 18f, float Gap = 8f, bool ColumnsFirst = false);
 
 /// <summary>
-/// Page layout tools PDFgear and Acrobat have: resize pages (A4 ↔ Letter, add margins), several
+/// Page layout tools: resize pages (A4 ↔ Letter, add margins), several
 /// pages per sheet, booklets for printing, and convert to greyscale. Pure iText, no UI.
 /// </summary>
 public static class PageLayoutService

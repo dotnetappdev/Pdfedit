@@ -3,7 +3,7 @@ namespace PdfEdit.Services;
 /// <summary>
 /// Maps a PDF font name (from a form field's /DA, e.g. "Helv", "HelveticaLTStd-Bold",
 /// "ABCDEF+TimesNewRomanPS-ItalicMT") to the Windows font the field should be shown in,
-/// so filled-in values look like they do in Acrobat.
+/// so filled-in values look like they do in other PDF readers.
 /// </summary>
 public static class PdfFontMap
 {
@@ -21,7 +21,7 @@ public static class PdfFontMap
                     || lower.Contains("semibold") || lower.Contains("demi") || lower.EndsWith("-bd") || lower.Contains("-bdit");
         bool italic = lower.Contains("italic") || lower.Contains("oblique") || lower.EndsWith("-it") || lower.Contains("bdit");
 
-        // Acrobat's standard short names and the base-14 families
+        // standard short names and the base-14 families
         string family = lower switch
         {
             _ when lower is "helv" || lower.StartsWith("helvetica") || lower.StartsWith("arial") => "Arial",
@@ -29,7 +29,7 @@ public static class PdfFontMap
             _ when lower is "cour" || lower.StartsWith("courier") => "Courier New",
             _ when lower is "zadb" || lower.StartsWith("zapfdingbats") => "Segoe UI Symbol",
             _ when lower is "symb" || lower.StartsWith("symbol") => "Symbol",
-            _ when lower.StartsWith("myriad") => "Segoe UI",       // Acrobat's UI font; closest on Windows
+            _ when lower.StartsWith("myriad") => "Segoe UI",       // Myriad: a common UI font; closest on Windows
             _ when lower.StartsWith("minionpro") => "Times New Roman",
             _ => BaseFamily(name),
         };

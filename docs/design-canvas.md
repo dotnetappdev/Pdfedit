@@ -27,11 +27,11 @@ Form fields can be drawn here too, and they turn into real PDF fields when you e
 
 ## Design a form with AI
 
-**Design → Design Form with AI** (also on the AI Assistant tab) builds a fillable form from a description. Say what it's for and any fields it must have, for example *"a car damage report for a rental company, with a vehicle outline to mark the damage on"*, or pick one of the ideas: job application, car damage report, patient intake, event registration, rental inspection, customer feedback, incident report. Choose A4 or US Letter and a heading colour, then click **Design form**.
+**Design → Design Form with AI** (also on the AI Helper tab) builds a fillable form from a description. Say what it's for and any fields it must have, for example *"a car damage report for a rental company, with a vehicle outline to mark the damage on"*, or pick one of the ideas: job application, car damage report, patient intake, event registration, rental inspection, customer feedback, incident report. Choose A4 or US Letter and a heading colour, then click **Design form**.
 
 The AI plans the sections and fields; PdfEdit lays them out with a title, coloured section headings and labels, using real form fields: text boxes, multi-line boxes, tick boxes, radio groups, drop-downs and signature boxes, plus empty areas to draw or mark on where the form needs one. Short fields sit side by side. If it won't fit on one page, the page is made taller.
 
-Everything can then be moved, resized, renamed or deleted like anything else on the canvas, and **Export PDF** saves it as a fillable PDF. The design replaces what was on the canvas; **Undo** brings the old one back.
+Everything can then be moved, resized, renamed or deleted like anything else on the canvas, and **Save as PDF** saves it as a fillable PDF. The design replaces what was on the canvas; **Undo** brings the old one back.
 
 You can also ask in the AI chat: *"make me a volunteer sign-up form"*. The assistant offers a **Design a form** card; click Apply.
 
@@ -43,4 +43,4 @@ Invoice, Letter, Form, Certificate, Business Card, Résumé and Flyer are all re
 
 ## Getting a PDF out
 
-**Export PDF** saves the canvas as a PDF. **Open as PDF** opens the result straight in Live View so you can fill it in. Changes go both ways: anything you add in Design shows up in Live View, and annotations added in Live View appear on the canvas.
+**Save as PDF** saves the canvas as a PDF. **Open as PDF** opens the result straight in Live View so you can fill it in. Changes go both ways: anything you add in Design shows up in Live View, and annotations added in Live View appear on the canvas.

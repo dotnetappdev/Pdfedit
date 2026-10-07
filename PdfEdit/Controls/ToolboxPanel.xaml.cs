@@ -69,7 +69,7 @@ public partial class ToolboxPanel : UserControl
             SyncChecked(DesignToolsPanel, vm.DesignCanvas.ActiveTool.ToString());
     }
 
-    /// <summary>Shows the Live (Fill &amp; Sign) or the Design tool set to match the active view.</summary>
+    /// <summary>Shows the Live (Complete &amp; Sign) or the Design tool set to match the active view.</summary>
     private void ApplyMode(MainViewModel vm)
     {
         PdfToolsPanel.Visibility    = vm.IsDesignMode ? Visibility.Collapsed : Visibility.Visible;
@@ -79,9 +79,9 @@ public partial class ToolboxPanel : UserControl
         SigPopup.IsOpen = MorePopup.IsOpen = false;
     }
 
-    // ── Acrobat quick-tools rail ──────────────────────────────────────────────
+    // ── Standard quick-tools rail ──────────────────────────────────────────────
     // Each rail button stands for a family of tools; its corner arrow picks one, and the button
-    // then shows (and re-selects) the last tool picked, as in Acrobat.
+    // then shows (and re-selects) the last tool picked, as in other PDF readers.
 
     private static readonly (string Rail, ActiveTool[] Tools)[] RailFamilies =
     {

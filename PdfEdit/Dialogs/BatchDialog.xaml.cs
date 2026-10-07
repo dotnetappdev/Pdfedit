@@ -8,7 +8,7 @@ using PdfEdit.Services;
 namespace PdfEdit.Dialogs;
 
 /// <summary>
-/// Batch processing (Acrobat's Action Wizard): choose files, build a list of steps, run them over
+/// Batch processing (Action Wizard): choose files, build a list of steps, run them over
 /// every file. Step lists can be saved as named actions for next time.
 /// </summary>
 public partial class BatchDialog : Window

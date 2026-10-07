@@ -6,8 +6,8 @@ namespace PdfEdit.Services;
 
 /// <summary>
 /// Number / currency / percent / special formats and simple calculations for form fields, using
-/// the same Acrobat scripts (AFNumber_Format, AFPercent_Format, AFSpecial_Format,
-/// AFSimple_Calculate) so the PDF behaves the same in Acrobat and other readers.
+/// the standard AF scripts (AFNumber_Format, AFPercent_Format, AFSpecial_Format,
+/// AFSimple_Calculate) so the PDF behaves the same in other PDF readers.
 /// </summary>
 public static class FieldFormatting
 {
@@ -40,7 +40,7 @@ public static class FieldFormatting
         if (IsSpecial(f.NumberFormat)) return Regex.Replace(typed, @"\D", "");
         double? n = ParseNumber(typed);
         if (n == null) return typed;
-        // In a percent field "15" means 15 % (Acrobat would read it as 1500 %).
+        // In a percent field "15" means 15 % (would read it as 1500 %).
         if (f.NumberFormat == "Percent" && !typed.Contains('%') && Math.Abs(n.Value) > 1) n /= 100;
         return n.Value.ToString("0.###############", Inv);
     }
@@ -76,7 +76,7 @@ public static class FieldFormatting
         };
     }
 
-    // ── Acrobat scripts ───────────────────────────────────────────────────────
+    // ── Standard scripts ───────────────────────────────────────────────────────
     private static string Js(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
     public static (string Format, string Keystroke)? Scripts(FormFieldInfo f)

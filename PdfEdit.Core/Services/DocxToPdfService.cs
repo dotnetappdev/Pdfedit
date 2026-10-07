@@ -279,7 +279,7 @@ public static class DocxToPdfService
         }
         if (pr.Element(W + "date") is { } date)
         {
-            string fmt = WordDateToAcrobat(date.Element(W + "dateFormat")?.Attribute(W + "val")?.Value);
+            string fmt = WordDateToAf(date.Element(W + "dateFormat")?.Attribute(W + "val")?.Value);
             var spec = new NewField { Name = ctx.FieldName(label, "Date"), DateFormat = fmt, Value = placeholderShown ? null : content, Tooltip = alias ?? fmt, FontSize = size };
             return FieldPlaceholder.Create(spec, Math.Min(width, 110), size * 1.45f, PlaceholderLook.Underline, ctx.Fields);
         }
@@ -321,13 +321,13 @@ public static class DocxToPdfService
         var t = new NewField
         {
             Name = ctx.FieldName(label, isDate ? "Date" : "Text"), Value = def, Tooltip = help, FontSize = 0,
-            DateFormat = isDate ? WordDateToAcrobat(input?.Element(W + "format")?.Attribute(W + "val")?.Value) : null,
+            DateFormat = isDate ? WordDateToAf(input?.Element(W + "format")?.Attribute(W + "val")?.Value) : null,
         };
         return FieldPlaceholder.Create(t, tw, size * 1.45f, PlaceholderLook.Underline, ctx.Fields);
     }
 
-    /// <summary>Word's "dd/MM/yyyy" → Acrobat's "dd/mm/yyyy".</summary>
-    private static string WordDateToAcrobat(string? f)
+    /// <summary>Word's "dd/MM/yyyy" → the usual "dd/mm/yyyy".</summary>
+    private static string WordDateToAf(string? f)
     {
         if (string.IsNullOrWhiteSpace(f)) return "dd/mm/yyyy";
         return f.Replace("MMMM", "mmmm").Replace("MMM", "mmm").Replace("MM", "mm").Replace("M", "m").Replace("dddd", "dddd").Replace("YYYY", "yyyy");

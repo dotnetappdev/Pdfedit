@@ -8,7 +8,7 @@ using PdfEdit.ViewModels;
 
 namespace PdfEdit.Controls;
 
-/// <summary>Acrobat's "Fields" panel: every form field, grouped by page, in reading order.</summary>
+/// <summary>the usual "Fields" panel: every form field, grouped by page, in reading order.</summary>
 public partial class FieldsPanel : UserControl
 {
     private MainViewModel? _vm;

@@ -33,8 +33,8 @@ public sealed record SignatureCheck(string FieldName, string SignedBy, DateTime 
                                     bool IntegrityOk, bool CoversWholeDocument, bool Trusted, string TrustNote, bool Timestamped, int Revision, int TotalRevisions);
 
 /// <summary>
-/// Certificate-based digital signatures (PAdES / CMS), like Acrobat's "Use a certificate":
-/// sign with a certificate from the Windows store, a .pfx / .p12 file or a self-signed Digital ID
+/// Certificate-based digital signatures (PAdES / CMS) like other PDF editors' "Use a certificate":
+/// sign with a certificate from the Windows store, a .pfx / .p12 file or a self-signed signing ID
 /// made here; optional RFC 3161 timestamp; and check the signatures already in a PDF.
 /// </summary>
 public static class DigitalSignatureService
@@ -65,7 +65,7 @@ public static class DigitalSignatureService
     public static string Describe(X509Certificate2 c) =>
         $"{c.GetNameInfo(X509NameType.SimpleName, false)} — issued by {c.GetNameInfo(X509NameType.SimpleName, true)}, valid until {c.NotAfter:d}";
 
-    /// <summary>Creates a self-signed Digital ID (RSA 2048, 5 years) saved as a password-protected .pfx.</summary>
+    /// <summary>Creates a self-signed signing ID (RSA 2048, 5 years) saved as a password-protected .pfx.</summary>
     public static string CreateDigitalId(string name, string email, string organisation, string password)
     {
         using var rsa = RSA.Create(2048);

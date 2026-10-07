@@ -25,7 +25,7 @@ public sealed class NewField
     /// <summary>Option button: the group it belongs to, and this button's value.</summary>
     public string? RadioGroup { get; set; }
     public string? RadioValue { get; set; }
-    /// <summary>Date field with this Acrobat date format (e.g. "dd/mm/yyyy").</summary>
+    /// <summary>Date field with this AFDate format (e.g. "dd/mm/yyyy").</summary>
     public string? DateFormat { get; set; }
     /// <summary>Starting value ("Yes" ticks a check box).</summary>
     public string? Value { get; set; }

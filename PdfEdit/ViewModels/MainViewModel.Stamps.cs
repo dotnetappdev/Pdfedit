@@ -9,7 +9,7 @@ using PdfEdit.Services;
 namespace PdfEdit.ViewModels;
 
 /// <summary>
-/// Stamps (Acrobat's Stamp tool): the catalogue grouped like Acrobat (Standard Business, Sign Here,
+/// Stamps (Stamp tool): the catalogue grouped like other PDF editors (Standard Business, Sign Here,
 /// Dynamic, More, Custom), the one chosen for the Stamp tool, the default, and creating / editing /
 /// removing custom stamps (Stamps… dialog).
 /// </summary>
@@ -78,6 +78,14 @@ public partial class MainViewModel
             s.CustomStamps.Clear();
             s.Save();
         }
+
+        // Older settings name the default stamp by the previous group names.
+        foreach (var (from, to) in new[] { ("Standard Business|", "Business|"), ("Sign Here|", "Signing|"), ("Dynamic|", "Name & time|") })
+            if (s.DefaultStamp.StartsWith(from, StringComparison.Ordinal))
+            {
+                s.DefaultStamp = to + s.DefaultStamp[from.Length..];
+                s.Save();
+            }
 
         string? keepCategory = _selectedStampDefinition?.Category, keepTitle = _selectedStampDefinition?.Title;
         Stamps.Clear();

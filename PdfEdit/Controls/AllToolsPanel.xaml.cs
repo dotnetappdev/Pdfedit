@@ -86,7 +86,7 @@ public partial class AllToolsPanel : UserControl
                     Run("E-book (.epub)", vm.ExportEpubCommand, "One chapter per page, for e-readers"),
                     Run("Images — all pages (PNG)", vm.ExportPagesAsImagesCommand),
                     Run("Image — current page", vm.ExportPageAsImageCommand),
-                    Page("Snapshot of an area (copy / save picture)", vm.SnapshotCommand, "Drag a box round any area, then copy it or save it as PNG"),
+                    Page("Capture an area (copy / save picture)", vm.SnapshotCommand, "Drag a box round any area, then copy it or save it as PNG"),
                     Run("PDF/A (archival)", vm.ExportPdfACommand),
                     Run("Form data", vm.ExportDataCommand),
                     Run("Comments (XFDF)", vm.ExportXfdfCommand),
@@ -167,7 +167,7 @@ public partial class AllToolsPanel : UserControl
                 Description = "Chat about the document, translate, fill forms with AI",
                 Actions = new()
                 {
-                    Run("Open AI Assistant", vm.ToggleAiPanelCommand),
+                    Run("Open AI Helper", vm.ToggleAiPanelCommand),
                     Page("Translate the PDF (keep layout)", vm.TranslatePdfCommand, "A translated copy, paragraph by paragraph in place"),
                     Run("Ask across several PDFs", vm.AskAcrossPdfsCommand, "Answers cite the file and page"),
                     Page("Mind map of this document", vm.MindMapCommand),
@@ -194,7 +194,7 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Send for signature (email)", vm.RequestSignaturesCommand, "Opens an email to the signer and shows the file to attach"),
                     Tool("Sign yourself", "Signature"),
-                    Page("Sign with a certificate (Digital ID)…", vm.CertSignCommand, "A digital signature that proves who signed and that nothing changed"),
+                    Page("Sign with a certificate (signing ID)…", vm.CertSignCommand, "A digital signature that proves who signed and that nothing changed"),
                     Run("Check signatures", vm.VerifySignaturesCommand),
                     Run("Check required fields", vm.ValidateRequiredFieldsCommand),
                 } },
@@ -211,10 +211,10 @@ public partial class AllToolsPanel : UserControl
                 Actions = new()
                 {
                     Run("Scan from scanner (TWAIN / WIA)…", vm.ScanCommand, "Preview, scan from flatbed or feeder, make a searchable PDF"),
-                    Run("Recognise text (make searchable)", vm.OcrMakeSearchableCommand, "OCR every scanned page and save a searchable copy"),
+                    Run("Make scanned pages searchable", vm.OcrMakeSearchableCommand, "OCR every scanned page and save a searchable copy"),
                     Page("Clean up scans", vm.ScanCleanupCommand, "Remove blank pages, straighten crooked pages, split two-page spreads"),
-                    Run("Recognise text on this page (copy)", vm.OcrCurrentPageCommand),
-                    Run("Create PDF from scans / images", vm.CreatePdfFromImagesCommand),
+                    Run("Read text from this page (copy)", vm.OcrCurrentPageCommand),
+                    Run("Make PDF from scans / images", vm.CreatePdfFromImagesCommand),
                 } },
             new() { Id = "security", Section = "Sign & secure", Title = "Lock & clean up", Glyph = "\uE72E",
                 Description = "Passwords, hidden information, accessibility",
@@ -222,7 +222,7 @@ public partial class AllToolsPanel : UserControl
                 {
                     Run("Protect with password", vm.PasswordProtectCommand),
                     Run("Remove password", vm.RemovePasswordCommand),
-                    Page("Remove hidden information", vm.SanitizeCommand, "Metadata, scripts, attachments, comments"),
+                    Page("Strip hidden data", vm.SanitizeCommand, "Metadata, scripts, attachments, comments"),
                     Page("Check accessibility", vm.AccessibilityCheckCommand, "Screen reader and keyboard checks, with fixes"),
                     Run("Flatten form & save", vm.FlattenAndSaveCommand, "Make field values part of the page so they can't be edited"),
                 } },
@@ -236,7 +236,7 @@ public partial class AllToolsPanel : UserControl
                 } },
             new() { Id = "shrink", Section = "Shape", Title = "Shrink file size", Glyph = "\uE73F",
                 Description = "Make the PDF smaller to send or store",
-                Actions = new() { Run("Compress PDF", vm.CompressPdfCommand) } },
+                Actions = new() { Run("Shrink PDF", vm.CompressPdfCommand) } },
             new() { Id = "forms", Section = "Shape", Title = "Form builder", Glyph = "\uE9D5",
                 Description = "Add, move and edit fillable fields",
                 Actions = new()

@@ -809,7 +809,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
         Elements.Add(new TextDesignElement { X = 14, Y = 240, Width = 148, Height = 72, Text = "📧 you@example.com\n📞 +1 555 000 0000\n🌐 linkedin.com/in/you\n📍 City, Country", FontSize = 9, Color = Color.FromArgb(200, 255, 255, 255) });
 
-        var skills = new[] { "Figma", "Adobe XD", "Prototyping", "User Research" };
+        var skills = new[] { "Figma", "Sketch", "Prototyping", "User Research" };
         for (int i = 0; i < skills.Length; i++)
         {
             Elements.Add(new TextDesignElement { X = 14, Y = 360 + i * 24, Width = 100, Height = 18, Text = skills[i], FontSize = 9, Color = Color.FromArgb(220, 255, 255, 255) });
@@ -1075,7 +1075,7 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
         return CreateFormFieldElement(kind, x, y, w, h);
     }
 
-    // ── Fill & Sign ───────────────────────────────────────────────────────────
+    // ── Complete & Sign ───────────────────────────────────────────────────────────
 
     private byte[]? _pendingSignature;
     /// <summary>The signature (PNG bytes) the Sign tool places on the next click.</summary>

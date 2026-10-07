@@ -4,7 +4,7 @@ using PdfEdit.Models;
 
 namespace PdfEdit.ViewModels;
 
-/// <summary>Fill &amp; Sign ribbon commands that the toolbox rail also offers.</summary>
+/// <summary>Complete &amp; Sign ribbon commands that the toolbox rail also offers.</summary>
 public partial class MainViewModel
 {
     private ICommand? _newSignatureCommand, _newInitialsCommand;
