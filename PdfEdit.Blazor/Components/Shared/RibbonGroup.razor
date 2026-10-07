@@ -1,0 +1,10 @@
+@* A ribbon group: buttons, with the group's name underneath. *@
+<div class="pe-group" role="group" aria-label="@Title">
+    <div class="pe-group-body">@ChildContent</div>
+    <div class="pe-group-title">@Title</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

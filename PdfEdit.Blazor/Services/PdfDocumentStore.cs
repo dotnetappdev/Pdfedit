@@ -1,28 +1,49 @@
 using System.Collections.Concurrent;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
-using PdfDocumentInfo = PdfEdit.Models.PdfDocumentInfo;
 using PdfEdit.Models;
 using PdfEdit.Render;
 using PdfEdit.Services;
+using PdfDocumentInfo = PdfEdit.Models.PdfDocumentInfo;
 
 namespace PdfEdit.Blazor.Services;
 
-/// <summary>An uploaded PDF being viewed and filled in on the site.</summary>
+/// <summary>A PDF that needs a password to open.</summary>
+public sealed class PasswordRequiredException(bool wrongPassword)
+    : Exception(wrongPassword ? "That password isn't right." : "This PDF is protected with a password.")
+{
+    public bool WrongPassword { get; } = wrongPassword;
+}
+
+/// <summary>
+/// An uploaded PDF being worked on. Every change writes a new version of the file (v1.pdf,
+/// v2.pdf …), so Undo and Redo just step between versions.
+/// </summary>
 public sealed class PdfSession : IDisposable
 {
     public required string Id { get; init; }
-    public required string FileName { get; init; }
     public required string Folder { get; init; }
-    public required string SourcePath { get; init; }
-    public required PdfDocumentInfo Info { get; init; }
-    public required PdfiumRenderEngine Renderer { get; init; }
+    public string FileName { get; set; } = "document.pdf";
+    public string CurrentPath { get; set; } = "";
+    public PdfDocumentInfo Info { get; set; } = new();
+    public PdfiumRenderEngine Renderer { get; set; } = new();
+    public List<BookmarkItem> Bookmarks { get; set; } = new();
+    public List<PdfAnnotationItem> Annotations { get; set; } = new();
+    public PdfMetadataInfo Metadata { get; set; } = new();
+
+    /// <summary>Goes up with every change, so page image URLs change and browsers fetch them again.</summary>
+    public int Version { get; set; }
+    public bool IsModified { get; set; }
     public DateTime LastUsedUtc { get; set; } = DateTime.UtcNow;
 
-    /// <summary>The last filled-in copy saved for download, if any.</summary>
-    public string? FilledPath { get; set; }
+    public Stack<string> UndoStack { get; } = new();
+    public Stack<string> RedoStack { get; } = new();
+    public SemaphoreSlim Lock { get; } = new(1, 1);
+    public ConcurrentDictionary<(int Page, double Scale, int Version), byte[]> PageCache { get; } = new();
 
-    /// <summary>Rendered page images, keyed by page index and scale.</summary>
-    public ConcurrentDictionary<(int Page, double Scale), byte[]> PageCache { get; } = new();
+    internal int NextFileNumber;
+
+    public string ExportsFolder => Path.Combine(Folder, "exports");
 
     public void Dispose()
     {
@@ -32,19 +53,20 @@ public sealed class PdfSession : IDisposable
 }
 
 /// <summary>
-/// Keeps uploaded PDFs in a temporary folder on the server, one per upload, and uses the shared
-/// PdfEdit libraries on them: PdfEdit.Core reads and fills the form, PdfEdit.Render (Pdfium) draws
-/// the pages. Uploads nobody has used for an hour are deleted.
+/// Keeps uploaded PDFs in a temporary folder on the server, one per upload, and runs the shared
+/// PdfEdit libraries on them: PdfEdit.Core reads, fills and changes them, PdfEdit.Render (Pdfium)
+/// draws the pages. Uploads nobody has used for two hours are deleted.
 /// </summary>
 public sealed class PdfDocumentStore : IDisposable
 {
-    public const long MaxUploadBytes = 50 * 1024 * 1024;
-    private static readonly TimeSpan Idle = TimeSpan.FromHours(1);
+    public const long MaxUploadBytes = 100 * 1024 * 1024;
+    private static readonly TimeSpan Idle = TimeSpan.FromHours(2);
 
     private readonly ConcurrentDictionary<string, PdfSession> _sessions = new();
     private readonly string _root = Path.Combine(Path.GetTempPath(), "PdfEdit.Blazor");
-    private readonly PdfFormService _forms = new();
     private readonly Timer _cleanup;
+
+    public PdfFormService Forms { get; } = new();
 
     public PdfDocumentStore()
     {
@@ -52,43 +74,87 @@ public sealed class PdfDocumentStore : IDisposable
         _cleanup = new Timer(_ => RemoveIdle(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
 
-    /// <summary>Saves <paramref name="pdf"/> and opens it. Throws when it isn't a readable PDF.</summary>
-    public async Task<PdfSession> OpenAsync(Stream pdf, string fileName, CancellationToken ct = default)
+    // ── Opening ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Saves <paramref name="pdf"/> and opens it. A password-protected PDF needs
+    /// <paramref name="password"/>; the working copy has the password removed (Protect adds one back).
+    /// </summary>
+    public async Task<PdfSession> OpenAsync(Stream pdf, string fileName, string? password = null, CancellationToken ct = default)
     {
         var id = Guid.NewGuid().ToString("N");
         var folder = Path.Combine(_root, id);
         Directory.CreateDirectory(folder);
-        var source = Path.Combine(folder, "source.pdf");
+        var session = new PdfSession { Id = id, Folder = folder, FileName = SafeName(fileName) };
         try
         {
-            await using (var file = File.Create(source))
+            var upload = Path.Combine(folder, "upload.pdf");
+            await using (var file = File.Create(upload))
                 await pdf.CopyToAsync(file, ct);
 
-            var info = await Task.Run(() => _forms.LoadDocument(source), ct);
-            // iText also lists a radio group's or checkbox's unnamed child widgets as fields called
-            // "Name." — duplicates of a real widget, which would sit on top of it.
-            var names = info.FormFields.Select(f => f.Name).ToHashSet();
-            info.FormFields.RemoveAll(f => f.Name.EndsWith('.') && names.Contains(f.Name.TrimEnd('.')));
-            // Draw the pages without the form's own widgets: the page shows its fields as HTML
-            // inputs on top, and the PDF's appearances (old values) would show through them.
-            var renderPath = info.FormFields.Count > 0 ? Path.Combine(folder, "render.pdf") : source;
-            if (renderPath != source) await Task.Run(() => CopyWithoutWidgets(source, renderPath), ct);
-            var renderer = new PdfiumRenderEngine();
-            await renderer.LoadAsync(renderPath);
-
-            var session = new PdfSession
-            {
-                Id = id, FileName = Path.GetFileName(fileName), Folder = folder,
-                SourcePath = source, Info = info, Renderer = renderer,
-            };
+            var first = NewVersionPath(session);
+            await Task.Run(() => Unlock(upload, first, password), ct);
+            File.Delete(upload);
+            session.CurrentPath = first;
+            await ReloadAsync(session);
             _sessions[id] = session;
             return session;
         }
         catch
         {
-            try { Directory.Delete(folder, recursive: true); } catch { }
+            session.Dispose();
             throw;
         }
+    }
+
+    /// <summary>Opens a file on the server (the samples), as if it had been uploaded.</summary>
+    public async Task<PdfSession> OpenFileAsync(string path, string? password = null)
+    {
+        await using var stream = File.OpenRead(path);
+        return await OpenAsync(stream, Path.GetFileName(path), password);
+    }
+
+    /// <summary>A new, empty document with <paramref name="pages"/> A4 pages.</summary>
+    public async Task<PdfSession> CreateBlankAsync(int pages = 1)
+    {
+        var temp = Path.Combine(_root, $"blank-{Guid.NewGuid():N}.pdf");
+        PdfToolsService.CreateBlankPdf(temp, pages);
+        try
+        {
+            var s = await OpenFileAsync(temp);
+            s.FileName = "Untitled.pdf";
+            return s;
+        }
+        finally { File.Delete(temp); }
+    }
+
+    private static void Unlock(string source, string dest, string? password)
+    {
+        var props = new ReaderProperties();
+        if (!string.IsNullOrEmpty(password)) props.SetPassword(System.Text.Encoding.UTF8.GetBytes(password));
+        bool encrypted;
+        try
+        {
+            using var reader = new PdfReader(source, props);
+            reader.SetUnethicalReading(true);
+            using var doc = new PdfDocument(reader);
+            encrypted = reader.IsEncrypted();
+        }
+        catch (BadPasswordException)
+        {
+            throw new PasswordRequiredException(wrongPassword: !string.IsNullOrEmpty(password));
+        }
+
+        if (!encrypted) { File.Copy(source, dest); return; }
+
+        // Owner-password-only files open without one; either way the working copy is unlocked.
+        var again = new ReaderProperties();
+        if (!string.IsNullOrEmpty(password)) again.SetPassword(System.Text.Encoding.UTF8.GetBytes(password));
+        using var rd = new PdfReader(source, again);
+        rd.SetUnethicalReading(true);
+        using var src = new PdfDocument(rd);
+        using var outDoc = new PdfDocument(new PdfWriter(dest));
+        src.CopyPagesTo(1, src.GetNumberOfPages(), outDoc, new iText.Forms.PdfPageFormCopier());
     }
 
     public PdfSession? Get(string id)
@@ -98,35 +164,85 @@ public sealed class PdfDocumentStore : IDisposable
         return s;
     }
 
-    /// <summary>A page as a PNG. <paramref name="scale"/> 1 = 96 pixels per inch.</summary>
-    public async Task<byte[]> RenderPageAsync(PdfSession session, int pageIndex, double scale)
+    public void Close(PdfSession session)
     {
-        scale = Math.Clamp(Math.Round(scale, 2), 0.25, 4);
-        if (session.PageCache.TryGetValue((pageIndex, scale), out var png)) return png;
-
-        var page = await session.Renderer.RenderPageAsync(pageIndex, zoom: 1.0, dpiScale: scale);
-        png = PngEncoder.FromBgra(page.Pixels ?? [], page.PixelWidth, page.PixelHeight);
-        session.PageCache[(pageIndex, scale)] = png;
-        return png;
+        if (_sessions.TryRemove(session.Id, out _)) session.Dispose();
     }
 
+    // ── Changing ─────────────────────────────────────────────────────────────
+
     /// <summary>
-    /// Writes <paramref name="values"/> (field name → value) into a copy of the PDF for download.
-    /// Returns any per-field problems PdfEdit.Core reports.
+    /// Runs <paramref name="change"/>(current file, new file) and makes the new file the current
+    /// version. The old version goes on the Undo stack.
     /// </summary>
-    public List<string> SaveFilled(PdfSession session, Dictionary<string, string> values,
-        Dictionary<string, string> checkboxOnValues, bool flatten)
+    public async Task ApplyAsync(PdfSession session, Action<string, string> change)
     {
-        var dest = Path.Combine(session.Folder, $"filled-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
-        var errors = _forms.SaveFull(session.SourcePath, dest, values,
-            pageRotations: new Dictionary<int, int>(),
-            freeTextAnnotations: [],
-            flatten: flatten,
-            fieldExportValues: checkboxOnValues);
-        if (session.FilledPath != null && session.FilledPath != dest)
-            try { File.Delete(session.FilledPath); } catch { }
-        session.FilledPath = dest;
-        return errors;
+        await session.Lock.WaitAsync();
+        try
+        {
+            var dest = NewVersionPath(session);
+            await Task.Run(() => change(session.CurrentPath, dest));
+            if (!File.Exists(dest)) throw new InvalidOperationException("The change didn't produce a file.");
+            session.UndoStack.Push(session.CurrentPath);
+            session.RedoStack.Clear();
+            session.CurrentPath = dest;
+            session.IsModified = true;
+            await ReloadAsync(session);
+        }
+        finally { session.Lock.Release(); }
+    }
+
+    public Task<bool> UndoAsync(PdfSession session) => StepAsync(session, session.UndoStack, session.RedoStack);
+
+    public Task<bool> RedoAsync(PdfSession session) => StepAsync(session, session.RedoStack, session.UndoStack);
+
+    private static async Task<bool> StepAsync(PdfSession session, Stack<string> from, Stack<string> to)
+    {
+        await session.Lock.WaitAsync();
+        try
+        {
+            if (from.Count == 0) return false;
+            to.Push(session.CurrentPath);
+            session.CurrentPath = from.Pop();
+            session.IsModified = true;
+            await ReloadAsync(session);
+            return true;
+        }
+        finally { session.Lock.Release(); }
+    }
+
+    /// <summary>Re-reads the current version: fields, bookmarks, comments, metadata, renderer.</summary>
+    private static async Task ReloadAsync(PdfSession session)
+    {
+        var forms = new PdfFormService();
+        var path = session.CurrentPath;
+        var info = await Task.Run(() => forms.LoadDocument(path));
+        // iText also lists a radio group's or checkbox's unnamed child widgets as fields called
+        // "Name." — duplicates of a real widget, which would sit on top of it.
+        var names = info.FormFields.Select(f => f.Name).ToHashSet();
+        info.FormFields.RemoveAll(f => f.Name.EndsWith('.') && names.Contains(f.Name.TrimEnd('.')));
+
+        session.Info = info;
+        session.Bookmarks = await Task.Run(() => { try { return forms.GetBookmarks(path); } catch { return new List<BookmarkItem>(); } });
+        session.Annotations = await Task.Run(() => PdfAnnotationReader.Read(path));
+        session.Metadata = await Task.Run(() => { try { return forms.GetMetadata(path); } catch { return new PdfMetadataInfo(); } });
+        PdfTextExtractorService.InvalidateCache(path);
+
+        // Draw the pages without the form's own widgets: the page shows its fields as HTML inputs
+        // on top, and the PDF's appearances (old values) would show through them.
+        var renderPath = path;
+        if (info.FormFields.Count > 0)
+        {
+            renderPath = Path.ChangeExtension(path, ".render.pdf");
+            if (!File.Exists(renderPath)) await Task.Run(() => CopyWithoutWidgets(path, renderPath));
+        }
+        var renderer = new PdfiumRenderEngine();
+        await renderer.LoadAsync(renderPath);
+        var old = session.Renderer;
+        session.Renderer = renderer;
+        old.Dispose();
+        session.PageCache.Clear();
+        session.Version++;
     }
 
     private static void CopyWithoutWidgets(string source, string dest)
@@ -139,6 +255,52 @@ public sealed class PdfDocumentStore : IDisposable
                 if (PdfName.Widget.Equals(annot.GetSubtype()))
                     page.RemoveAnnotation(annot);
         }
+    }
+
+    private static string NewVersionPath(PdfSession session) =>
+        Path.Combine(session.Folder, $"v{Interlocked.Increment(ref session.NextFileNumber)}.pdf");
+
+    // ── Pages and exports ────────────────────────────────────────────────────
+
+    /// <summary>A page as a PNG. <paramref name="scale"/> 1 = 96 pixels per inch.</summary>
+    public async Task<byte[]> RenderPageAsync(PdfSession session, int pageIndex, double scale)
+    {
+        scale = Math.Clamp(Math.Round(scale, 2), 0.1, 4);
+        var key = (pageIndex, scale, session.Version);
+        if (session.PageCache.TryGetValue(key, out var png)) return png;
+
+        var page = await session.Renderer.RenderPageAsync(pageIndex, zoom: 1.0, dpiScale: scale);
+        png = PngEncoder.FromBgra(page.Pixels ?? [], page.PixelWidth, page.PixelHeight);
+        session.PageCache[key] = png;
+        return png;
+    }
+
+    /// <summary>
+    /// Makes a file for the user to download: <paramref name="write"/>(path) writes it into the
+    /// session's exports folder. Returns the URL to download it from.
+    /// </summary>
+    public async Task<string> ExportAsync(PdfSession session, string fileName, Action<string> write)
+    {
+        Directory.CreateDirectory(session.ExportsFolder);
+        var name = SafeName(fileName);
+        var path = Path.Combine(session.ExportsFolder, name);
+        if (File.Exists(path)) File.Delete(path);
+        await Task.Run(() => write(path));
+        return $"/documents/{session.Id}/exports/{Uri.EscapeDataString(name)}";
+    }
+
+    public string? ExportPath(PdfSession session, string name)
+    {
+        var path = Path.Combine(session.ExportsFolder, SafeName(name));
+        return File.Exists(path) ? path : null;
+    }
+
+    /// <summary>Keeps just a plain file name (no folders), so it can't point outside the session.</summary>
+    public static string SafeName(string? name)
+    {
+        name = Path.GetFileName(name ?? "");
+        foreach (var c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+        return string.IsNullOrWhiteSpace(name) ? "document.pdf" : name;
     }
 
     private void RemoveIdle()

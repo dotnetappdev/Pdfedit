@@ -234,7 +234,7 @@ public partial class MainViewModel
         {
             IsLoading = true;
             StatusText = $"Making PDF from {pages.Count} scanned page(s)…";
-            PdfToolsService.CreatePdfFromScans(pages, scanPdf, bw);   // WPF encoders: stay on the UI thread
+            ScanPdfTools.CreatePdfFromScans(pages, scanPdf, bw);   // WPF encoders: stay on the UI thread
 
             if (ocr)
             {
@@ -246,7 +246,7 @@ public partial class MainViewModel
                     for (int i = 0; i < pages.Count; i++)
                     {
                         StatusText = $"OCR: page {i + 1} of {pages.Count}…";
-                        var (w, h) = PdfToolsService.ScanPageSize(pages[i]);
+                        var (w, h) = ScanPdfTools.ScanPageSize(pages[i]);
                         var (_, words) = await OcrService.RecognizeAsync(pages[i].Image, w, h);
                         byPage[i + 1] = words;
                     }

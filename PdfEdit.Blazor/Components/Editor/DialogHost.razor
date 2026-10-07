@@ -1,0 +1,588 @@
+@* The editor's dialog boxes. Each keeps its own inputs and calls the editor to do the work. *@
+@inject IJSRuntime JS
+
+@switch (Ed.Dialog)
+{
+    case DialogKind.Password:
+        <Modal Title="Password required" OnClose="Close">
+            <ChildContent>
+                <p><strong>@Ed.PendingPassword?.Name</strong> is protected. Enter its password to open it.</p>
+                @if (Ed.PendingPassword?.Wrong == true) { <p style="color:#dc3545">That password isn't right. Try again.</p> }
+                <input class="form-control" type="password" @bind="_password" @onkeydown="PasswordKey" aria-label="Password" autofocus />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="OpenWithPassword">Open</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Properties:
+        <Modal Title="Document Properties" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2"><label>Title</label><input class="form-control" @bind="_meta.Title" /></div>
+                <div class="mb-2"><label>Author</label><input class="form-control" @bind="_meta.Author" /></div>
+                <div class="mb-2"><label>Subject</label><input class="form-control" @bind="_meta.Subject" /></div>
+                <div class="mb-2"><label>Keywords</label><input class="form-control" @bind="_meta.Keywords" /></div>
+                <p class="pe-hint mb-0">Creator: @_meta.Creator · Producer: @_meta.Producer</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(() => Ed.SetMetadataAsync(_meta))">Save</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Watermark:
+        <Modal Title="Watermark" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="row g-2">
+                    <div class="col-8"><label>Text</label><input class="form-control" @bind="_wm.Text" /></div>
+                    <div class="col-4"><label>Size</label><input class="form-control" type="number" min="8" max="300" @bind="_wm.FontSize" /></div>
+                    <div class="col-4">
+                        <label>Font</label>
+                        <select class="form-select" @bind="_wmFamily">
+                            <option>Helvetica</option><option>Times</option><option>Courier</option>
+                        </select>
+                    </div>
+                    <div class="col-4 d-flex align-items-end gap-3">
+                        <label class="d-flex gap-1 align-items-center"><input type="checkbox" @bind="_wmBold" /> Bold</label>
+                        <label class="d-flex gap-1 align-items-center"><input type="checkbox" @bind="_wmItalic" /> Italic</label>
+                    </div>
+                    <div class="col-4"><label>Colour</label><input class="form-control form-control-color" type="color" @bind="_wmColor" /></div>
+                    <div class="col-6">
+                        <label>Layout</label>
+                        <select class="form-select" @bind="_wm.Layout">
+                            <option value="@WatermarkLayout.DiagonalUp">Diagonal up</option>
+                            <option value="@WatermarkLayout.DiagonalDown">Diagonal down</option>
+                            <option value="@WatermarkLayout.Horizontal">Horizontal</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label>Position</label>
+                        <select class="form-select" @bind="_wm.Position">
+                            <option value="@WatermarkPosition.Center">Centre</option>
+                            <option value="@WatermarkPosition.Top">Top</option>
+                            <option value="@WatermarkPosition.Bottom">Bottom</option>
+                            <option value="@WatermarkPosition.Tiled">Tiled</option>
+                        </select>
+                    </div>
+                    <div class="col-6"><label>Opacity: @((int)(_wm.Opacity * 100))%</label><input class="form-range" type="range" min="0.05" max="1" step="0.05" @bind="_wm.Opacity" @bind:event="oninput" /></div>
+                    <div class="col-6 d-flex align-items-end"><label class="d-flex gap-1 align-items-center"><input type="checkbox" @bind="_wm.Behind" /> Behind the page content</label></div>
+                    <div class="col-6">
+                        <label>Pages</label>
+                        <select class="form-select" @bind="_wm.Pages">
+                            <option value="@WatermarkPages.All">All pages</option>
+                            <option value="@WatermarkPages.Current">This page (@(Ed.CurrentPage + 1))</option>
+                            <option value="@WatermarkPages.Range">Pages…</option>
+                        </select>
+                    </div>
+                    @if (_wm.Pages == WatermarkPages.Range)
+                    {
+                        <div class="col-6"><label>Page range</label><input class="form-control" placeholder="1-3, 5" @bind="_wm.PageRange" /></div>
+                    }
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="ApplyWatermark">Add watermark</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.PageNumbers:
+        <Modal Title="Page Numbers" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2">
+                    <label>Format</label>
+                    <select class="form-select" @bind="_numFormat">
+                        <option value="Page {n} of {total}">Page 1 of 10</option>
+                        <option value="{n}">1</option>
+                        <option value="{n} / {total}">1 / 10</option>
+                        <option value="- {n} -">- 1 -</option>
+                        <option value="Page {n}">Page 1</option>
+                    </select>
+                </div>
+                <div class="mb-2"><label>Position</label>@PositionSelect(_numPosition, v => _numPosition = v)</div>
+                <div class="mb-2"><label>Size</label><input class="form-control" type="number" min="6" max="36" @bind="_numSize" /></div>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(() => Ed.PageNumbersAsync(_numFormat, _numPosition, _numSize))">Add numbers</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.HeaderFooter:
+        <Modal Title="Header and Footer" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2"><label>Header</label><input class="form-control" @bind="_header" placeholder="e.g. Confidential" /></div>
+                <div class="mb-2"><label>Footer</label><input class="form-control" @bind="_footer" placeholder="e.g. Acme Ltd" /></div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label>Alignment</label>
+                        <select class="form-select" @bind="_hfAlign"><option>Left</option><option>Center</option><option>Right</option></select>
+                    </div>
+                    <div class="col-6"><label>Size</label><input class="form-control" type="number" min="6" max="36" @bind="_hfSize" /></div>
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(string.IsNullOrWhiteSpace(_header) && string.IsNullOrWhiteSpace(_footer))"
+                        @onclick="() => Do(() => Ed.HeaderFooterAsync(NullIfEmpty(_header), NullIfEmpty(_footer), _hfSize, _hfAlign))">Add</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Bates:
+        <Modal Title="Bates Numbers" OnClose="Close">
+            <ChildContent>
+                <div class="row g-2">
+                    <div class="col-4"><label>Prefix</label><input class="form-control" @bind="_batesPrefix" placeholder="ABC" /></div>
+                    <div class="col-4"><label>Start at</label><input class="form-control" type="number" min="0" @bind="_batesStart" /></div>
+                    <div class="col-4"><label>Digits</label><input class="form-control" type="number" min="1" max="12" @bind="_batesDigits" /></div>
+                    <div class="col-4"><label>Suffix</label><input class="form-control" @bind="_batesSuffix" /></div>
+                    <div class="col-8"><label>Position</label>@PositionSelect(_batesPosition, v => _batesPosition = v)</div>
+                </div>
+                <p class="pe-hint mt-2 mb-0">First number: @(_batesPrefix + _batesStart.ToString().PadLeft(_batesDigits, '0') + _batesSuffix)</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(() => Ed.BatesAsync(_batesPrefix, _batesStart, _batesDigits, _batesSuffix, _batesPosition))">Add numbers</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Protect:
+        <Modal Title="Password Protect" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Downloads a protected copy. The copy you're editing here stays unlocked.</p>
+                <div class="mb-2"><label>Password to open</label><input class="form-control" type="password" @bind="_userPw" @bind:event="oninput" /></div>
+                <div class="mb-2"><label>Confirm password</label><input class="form-control" type="password" @bind="_userPw2" @bind:event="oninput" /></div>
+                <div class="mb-2"><label>Permissions password (optional)</label><input class="form-control" type="password" @bind="_ownerPw" /></div>
+                <label class="d-flex gap-2 align-items-center"><input type="checkbox" @bind="_allowPrint" /> Allow printing</label>
+                <label class="d-flex gap-2 align-items-center"><input type="checkbox" @bind="_allowCopy" /> Allow copying text</label>
+                @if (_userPw != _userPw2) { <p style="color:#dc3545" class="mb-0 mt-2">The passwords don't match.</p> }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(string.IsNullOrEmpty(_userPw) || _userPw != _userPw2)"
+                        @onclick="() => Do(() => Ed.ProtectAsync(_userPw, NullIfEmpty(_ownerPw) ?? _userPw, _allowPrint, _allowCopy))">Download protected PDF</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Sanitize:
+        <Modal Title="Remove Hidden Information" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Removes things you can't see on the page. The visible content and form fields stay.</p>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_sanMeta" /> Document metadata (author, title, XMP)</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_sanScripts" /> JavaScript and automatic actions</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_sanFiles" /> Attached files</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_sanComments" /> Comments and marks</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_sanBookmarks" /> Bookmarks</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(() => Ed.SanitizeAsync(new SanitizeOptions(_sanMeta, _sanScripts, _sanFiles, _sanComments, _sanBookmarks)))">Remove</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Resize:
+        <Modal Title="Resize Pages" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2">
+                    <label>Paper size</label>
+                    <select class="form-select" @bind="_paper">
+                        @foreach (var p in PageLayoutService.PaperSizes) { <option value="@p.Name">@p.Name (@Math.Round(p.Width / 72 * 25.4) × @Math.Round(p.Height / 72 * 25.4) mm)</option> }
+                    </select>
+                </div>
+                <label class="d-flex gap-2"><input type="radio" name="fit" checked="@(_fit == ResizeFit.Fit)" @onchange="() => _fit = ResizeFit.Fit" /> Scale the content to fit</label>
+                <label class="d-flex gap-2"><input type="radio" name="fit" checked="@(_fit == ResizeFit.Centre)" @onchange="() => _fit = ResizeFit.Centre" /> Keep its size, centred</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Do(() => Ed.ResizeAsync(_paper, _fit))">Resize</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.NUp:
+        <Modal Title="Pages per Sheet" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2">
+                    <label>Pages on each A4 sheet</label>
+                    <select class="form-select" @bind="_nup">
+                        <option value="2">2 (side by side)</option><option value="4">4</option><option value="6">6</option><option value="9">9</option>
+                    </select>
+                </div>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_nupBorders" /> Draw a border round each page</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="ApplyNUp">Arrange</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Signature:
+        <Modal Title="Your Signature" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="pe-panel-tabs mb-2" style="border:0">
+                    <button class="pe-panel-tab @(_sigTyped ? "" : "active")" @onclick="() => SetSigMode(false)">Draw</button>
+                    <button class="pe-panel-tab @(_sigTyped ? "active" : "")" @onclick="() => SetSigMode(true)">Type</button>
+                </div>
+                @if (_sigTyped)
+                {
+                    <div class="row g-2">
+                        <div class="col-7"><label>Your name</label><input class="form-control" @bind="_sigName" @bind:event="oninput" /></div>
+                        <div class="col-5">
+                            <label>Style</label>
+                            <select class="form-select" @bind="_sigFont">
+                                <option value="'Segoe Script','Brush Script MT','Lucida Handwriting',cursive">Script</option>
+                                <option value="'Georgia','Times New Roman',serif">Classic</option>
+                                <option value="'Comic Sans MS','Chalkboard SE',cursive">Casual</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-3" style="background:#fff;border:1px solid var(--pe-input-border);border-radius:4px;min-height:90px;color:@_sigColor;font:40px @_sigFont">@_sigName</div>
+                }
+                else
+                {
+                    <canvas class="pe-sigpad" @ref="_sigCanvas" data-color="@_sigColor" aria-label="Draw your signature"></canvas>
+                    <p class="pe-hint mt-1 mb-0">Draw with the mouse, a pen or your finger.</p>
+                }
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <label class="mb-0">Ink</label>
+                    @foreach (var c in new[] { "#0b2a6f", "#000000", "#1565c0" })
+                    {
+                        var colour = c;
+                        <button class="pe-btn" style="width:28px;height:28px;padding:0;background:@c;@(_sigColor == c ? "outline:2px solid var(--pe-accent)" : "")"
+                                title="@c" aria-label="Ink colour @c" @onclick="() => SetSigColor(colour)"></button>
+                    }
+                </div>
+            </ChildContent>
+            <Footer>
+                @if (!_sigTyped) { <button class="pe-btn me-auto" @onclick="ClearSig">Clear</button> }
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="UseSignature">Use signature</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Note when Ed.EditingNote is { } note:
+        <Modal Title="Sticky Note" OnClose="CloseNote">
+            <ChildContent>
+                <textarea class="form-control" rows="5" @bind="note.Text" @bind:event="oninput" aria-label="Note" autofocus></textarea>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn me-auto" @onclick="() => { Ed.RemoveItem(note); Close(); }">Delete</button>
+                <button class="pe-btn primary" @onclick="CloseNote">Done</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Merge:
+    case DialogKind.Combine:
+        var merging = Ed.Dialog == DialogKind.Merge;
+        <Modal Title="@(merging ? "Merge PDFs" : "Create a PDF from files")" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">@(merging ? "The files are added after the last page, in the order you pick them." : "PDFs and pictures (PNG, JPEG, GIF, BMP, TIFF) are combined in the order you pick them; each picture becomes an A4 page.")</p>
+                <InputFile class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff" OnChange="e => _files = e.GetMultipleFiles(50)" />
+                @if (_files.Count > 0)
+                {
+                    <ol class="mt-2 mb-0">@foreach (var f in _files) { <li>@f.Name</li> }</ol>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)"
+                        @onclick="() => Do(() => merging ? Ed.MergeAsync(_files) : Ed.CombineFilesAsync(_files))">@(merging ? "Merge" : "Create")</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.InsertPdf:
+        <Modal Title="Insert PDF" OnClose="Close">
+            <ChildContent>
+                <InputFile class="form-control" accept=".pdf" OnChange="e => _files = [e.File]" />
+                <label class="d-flex gap-2 mt-2"><input type="radio" name="where" checked="@(!_insertAtStart)" @onchange="() => _insertAtStart = false" /> After page @(Ed.CurrentPage + 1)</label>
+                <label class="d-flex gap-2"><input type="radio" name="where" checked="@_insertAtStart" @onchange="() => _insertAtStart = true" /> Before the first page</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.InsertPdfAsync(_files[0], _insertAtStart))">Insert</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.ImportData:
+        <Modal Title="Import Form Data" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Choose a data file made by Export Data (field name, a tab, then the value, one per line).</p>
+                <InputFile class="form-control" accept=".txt,.tsv" OnChange="e => _files = [e.File]" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.ImportDataAsync(_files[0]))">Import</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.ExtractRange:
+    case DialogKind.DeleteRange:
+        var extracting = Ed.Dialog == DialogKind.ExtractRange;
+        <Modal Title="@(extracting ? "Extract Pages" : "Delete Pages")" OnClose="Close">
+            <ChildContent>
+                <label>Pages (this document has @Ed.PageCount)</label>
+                <input class="form-control" @bind="_range" @bind:event="oninput" placeholder="e.g. 1-3, 5, 8-" autofocus />
+                <p class="pe-hint mt-1 mb-0">@(extracting ? "They're saved as a new PDF and downloaded." : "Undo brings them back.")</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn @(extracting ? "primary" : "danger")" disabled="@string.IsNullOrWhiteSpace(_range)"
+                        @onclick="() => Do(() => extracting ? Ed.ExtractRangeAsync(_range) : Ed.DeleteRangeAsync(_range))">@(extracting ? "Extract" : "Delete")</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Statistics:
+        <Modal Title="Document Statistics" OnClose="Close">
+            <ChildContent>
+                @if (_stats == null)
+                {
+                    <p class="pe-hint">Counting…</p>
+                }
+                else
+                {
+                    <table class="table table-sm" style="color:inherit">
+                        <tbody>@foreach (var (k, v) in _stats) { <tr><th>@k</th><td>@v</td></tr> }</tbody>
+                    </table>
+                }
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Shortcuts:
+        <Modal Title="Keyboard Shortcuts" OnClose="Close">
+            <ChildContent>
+                <table class="table table-sm" style="color:inherit">
+                    <tbody>
+                        @foreach (var (k, v) in Shortcuts) { <tr><td><kbd>@k</kbd></td><td>@v</td></tr> }
+                    </tbody>
+                </table>
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+
+    case DialogKind.About:
+        <Modal Title="About PdfEdit" OnClose="Close">
+            <ChildContent>
+                <div class="text-center">
+                    <div class="pe-logo mx-auto mb-2" style="width:56px;height:56px;font-size:30px;border-radius:12px">P</div>
+                    <h4 style="font-weight:700">PdfEdit for the web</h4>
+                    <p class="pe-hint">Version @Version · the PdfEdit Windows app in your browser, built on the same PdfEdit.Core and PdfEdit.Render libraries.</p>
+                    <p class="mb-1"><a href="@Editor.GitHubUrl" target="_blank" rel="noopener">GitHub</a> · <a href="@(Editor.GitHubUrl + "/releases/latest")" target="_blank" rel="noopener">Windows app</a> · <a href="@(Editor.GitHubUrl + "/blob/main/LICENSE")" target="_blank" rel="noopener">MIT licence</a></p>
+                    <p class="pe-hint mb-0">Built with .NET 10, Blazor, iText 8 and Pdfium.</p>
+                </div>
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private DialogKind _shown;
+
+    // Inputs (reset each time a dialog opens)
+    private string _password = "", _range = "";
+    private PdfMetadataInfo _meta = new();
+    private WatermarkOptions _wm = new();
+    private string _wmFamily = "Helvetica", _wmColor = "#808080";
+    private bool _wmBold = true, _wmItalic;
+    private string _numFormat = "Page {n} of {total}", _numPosition = "BottomCenter";
+    private float _numSize = 9;
+    private string? _header, _footer;
+    private string _hfAlign = "Center";
+    private float _hfSize = 10;
+    private string _batesPrefix = "", _batesSuffix = "", _batesPosition = "BottomRight";
+    private int _batesStart = 1, _batesDigits = 6;
+    private string _userPw = "", _userPw2 = "", _ownerPw = "";
+    private bool _allowPrint = true, _allowCopy;
+    private bool _sanMeta = true, _sanScripts = true, _sanFiles = true, _sanComments, _sanBookmarks;
+    private string _paper = "A4";
+    private ResizeFit _fit = ResizeFit.Fit;
+    private int _nup = 2;
+    private bool _nupBorders;
+    private IReadOnlyList<IBrowserFile> _files = [];
+    private bool _insertAtStart;
+    private List<(string, string)>? _stats;
+
+    private ElementReference _sigCanvas;
+    private bool _sigTyped, _sigPadReady;
+    private string _sigName = "", _sigColor = "#0b2a6f";
+    private string _sigFont = "'Segoe Script','Brush Script MT','Lucida Handwriting',cursive";
+
+    private static readonly (string, string)[] Shortcuts =
+    [
+        ("Ctrl+O", "Open"), ("Ctrl+S", "Save (download)"), ("Ctrl+P", "Print"), ("Ctrl+Z", "Undo"), ("Ctrl+Y", "Redo"),
+        ("Ctrl+F", "Find"), ("Ctrl++ / Ctrl+-", "Zoom in / out"), ("Ctrl+0", "Actual size"), ("Esc", "Back to Select / close"),
+    ];
+
+    private static string Version =>
+        typeof(PdfFormService).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Ed.Dialog == _shown) return;
+        _shown = Ed.Dialog;
+        _files = [];
+        _range = "";
+        _sigPadReady = false;
+        switch (_shown)
+        {
+            case DialogKind.Password:
+                _password = "";
+                break;
+            case DialogKind.Properties when Ed.Doc != null:
+                var m = Ed.Doc.Metadata;
+                _meta = new PdfMetadataInfo { Title = m.Title, Author = m.Author, Subject = m.Subject, Keywords = m.Keywords, Creator = m.Creator, Producer = m.Producer };
+                break;
+            case DialogKind.Statistics when Ed.Doc != null:
+                _stats = null;
+                var doc = Ed.Doc;
+                _stats = await Task.Run(() =>
+                {
+                    int words = 0, chars = 0;
+                    for (int p = 1; p <= doc.Info.PageCount; p++)
+                    {
+                        var text = PdfTextExtractorService.GetPageText(doc.CurrentPath, p);
+                        chars += text.Length;
+                        words += text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+                    }
+                    long size = new FileInfo(doc.CurrentPath).Length;
+                    return new List<(string, string)>
+                    {
+                        ("Pages", doc.Info.PageCount.ToString()),
+                        ("Words", words.ToString("N0")),
+                        ("Characters", chars.ToString("N0")),
+                        ("Form fields", doc.Info.FormFields.Select(f => f.Name).Distinct().Count().ToString()),
+                        ("Comments and marks", doc.Annotations.Count.ToString()),
+                        ("Bookmarks", doc.Bookmarks.Count.ToString()),
+                        ("File size", size >= 1024 * 1024 ? $"{size / 1024d / 1024:0.0} MB" : $"{size / 1024d:0} KB"),
+                    };
+                });
+                break;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Ed.Dialog == DialogKind.Signature && !_sigTyped && !_sigPadReady)
+        {
+            _sigPadReady = true;
+            await JS.InvokeVoidAsync("pdfedit.sigPad.init", _sigCanvas);
+        }
+    }
+
+    private RenderFragment PositionSelect(string value, Action<string> set) => __builder =>
+    {
+        <select class="form-select" value="@value" @onchange="e => set(e.Value?.ToString() ?? value)">
+            @foreach (var (v, name) in new[] { ("BottomCenter", "Bottom centre"), ("BottomRight", "Bottom right"), ("BottomLeft", "Bottom left"), ("TopCenter", "Top centre"), ("TopRight", "Top right"), ("TopLeft", "Top left") })
+            {
+                <option value="@v" selected="@(v == value)">@name</option>
+            }
+        </select>
+    };
+
+    private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private void Close()
+    {
+        Ed.CloseDialog();
+        _shown = DialogKind.None;
+        Ed.Refresh();
+    }
+
+    /// <summary>Closes the dialog and runs the editor command.</summary>
+    private async Task Do(Func<Task> action)
+    {
+        Ed.CloseDialog();
+        _shown = DialogKind.None;
+        Ed.Refresh();
+        await action();
+        Ed.Refresh();
+    }
+
+    private async Task OpenWithPassword()
+    {
+        if (Ed.PendingPassword is not { } pending) return;
+        var pw = _password;
+        Ed.CloseDialog();
+        _shown = DialogKind.None;
+        await pending.Retry(pw);
+        Ed.Refresh();
+    }
+
+    private async Task PasswordKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OpenWithPassword();
+    }
+
+    private Task ApplyWatermark()
+    {
+        _wm.FontName = WatermarkOptions.FontNameFor(_wmFamily, _wmBold, _wmItalic);
+        _wm.Color = _wmColor;
+        var options = _wm;
+        return Do(() => Ed.WatermarkAsync(options));
+    }
+
+    private Task ApplyNUp()
+    {
+        var (c, r) = _nup switch { 4 => (2, 2), 6 => (2, 3), 9 => (3, 3), _ => (2, 1) };
+        return Do(() => Ed.NUpAsync(c, r, _nupBorders));
+    }
+
+    private void CloseNote()
+    {
+        Ed.EditingNote = null;
+        Close();
+    }
+
+    // ── Signature ────────────────────────────────────────────────────────────
+
+    private void SetSigMode(bool typed)
+    {
+        _sigTyped = typed;
+        _sigPadReady = false;
+    }
+
+    private async Task SetSigColor(string colour)
+    {
+        _sigColor = colour;
+        if (!_sigTyped && _sigPadReady) await JS.InvokeVoidAsync("pdfedit.sigPad.setColor", _sigCanvas, colour);
+    }
+
+    private async Task ClearSig() => await JS.InvokeVoidAsync("pdfedit.sigPad.clear", _sigCanvas);
+
+    private async Task UseSignature()
+    {
+        string dataUrl = _sigTyped
+            ? (string.IsNullOrWhiteSpace(_sigName) ? "" : await JS.InvokeAsync<string>("pdfedit.sigPad.typed", _sigName, _sigFont, _sigColor))
+            : await JS.InvokeAsync<string>("pdfedit.sigPad.toPng", _sigCanvas);
+        if (string.IsNullOrEmpty(dataUrl))
+        {
+            Ed.Toast(_sigTyped ? "Type your name first." : "Draw your signature first.", "error");
+            Ed.Refresh();
+            return;
+        }
+        Ed.SignaturePng = Convert.FromBase64String(dataUrl[(dataUrl.IndexOf(',') + 1)..]);
+        Ed.SetTool(Tool.Signature);
+        Close();
+    }
+}

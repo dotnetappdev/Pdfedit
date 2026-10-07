@@ -1,0 +1,249 @@
+@* The right-hand panel: Properties, Fields, Comments, Bookmarks and Search, like the Windows app's docked panes. *@
+@if (Ed.Doc is not { } doc)
+{
+    <p class="pe-hint">Open a PDF to see its @Ed.RightPanelTab.ToString().ToLowerInvariant() here.</p>
+    return;
+}
+@switch (Ed.RightPanelTab)
+{
+    case RightTab.Properties:
+        var meta = doc.Metadata;
+        <h3>Document</h3>
+        <table class="table table-sm" style="font-size:12px;color:inherit">
+            <tbody>
+                <tr><th>File</th><td>@doc.FileName</td></tr>
+                <tr><th>Pages</th><td>@doc.Info.PageCount</td></tr>
+                <tr><th>Size</th><td>@FileSize(doc)</td></tr>
+                <tr><th>Title</th><td>@meta.Title</td></tr>
+                <tr><th>Author</th><td>@meta.Author</td></tr>
+                <tr><th>Subject</th><td>@meta.Subject</td></tr>
+                <tr><th>Keywords</th><td>@meta.Keywords</td></tr>
+                <tr><th>Creator</th><td title="@meta.Creator">@Clip(meta.Creator)</td></tr>
+                <tr><th>Producer</th><td title="@meta.Producer">@Clip(meta.Producer)</td></tr>
+                <tr><th>Form</th><td>@(doc.Info.HasAcroForm ? $"{Ed.FieldCount} fields" : "No form")</td></tr>
+            </tbody>
+        </table>
+        <button class="pe-btn" @onclick="() => Act(() => Ed.ShowDialog(DialogKind.Properties))">Edit properties…</button>
+
+        @if (SelectedField is { } sf)
+        {
+            <h3 class="mt-3">Field</h3>
+            <table class="table table-sm" style="font-size:12px;color:inherit">
+                <tbody>
+                    <tr><th>Name</th><td>@sf.Name</td></tr>
+                    <tr><th>Type</th><td>@sf.FieldType@(sf.IsDateField ? " (date)" : "")</td></tr>
+                    <tr><th>Page</th><td>@sf.PageNumber</td></tr>
+                    @if (!string.IsNullOrWhiteSpace(sf.Tooltip)) { <tr><th>Tooltip</th><td>@sf.Tooltip</td></tr> }
+                    <tr><th>Required</th><td>@(sf.IsRequired ? "Yes" : "No")</td></tr>
+                    <tr><th>Read only</th><td>@(sf.IsReadOnly ? "Yes" : "No")</td></tr>
+                    @if (sf.MaxLength > 0) { <tr><th>Max length</th><td>@sf.MaxLength</td></tr> }
+                    @if (sf.Options.Count > 0) { <tr><th>Options</th><td>@string.Join(", ", sf.Options)</td></tr> }
+                    <tr><th>Value</th><td>@Ed.Values.GetValueOrDefault(sf.Name)</td></tr>
+                </tbody>
+            </table>
+        }
+        break;
+
+    case RightTab.Fields:
+        <div class="d-flex align-items-baseline">
+            <h3>Fields</h3>
+            <span class="pe-hint ms-auto">@Ed.FieldCount field@(Ed.FieldCount == 1 ? "" : "s")</span>
+        </div>
+        @if (doc.Info.FormFields.Count == 0)
+        {
+            <p class="pe-hint">This PDF has no form fields. Use Fill &amp; Sign → Add Text to type on it anyway.</p>
+        }
+        @foreach (var group in doc.Info.FormFields.GroupBy(f => f.PageNumber).OrderBy(g => g.Key))
+        {
+            <h4>Page @group.Key</h4>
+            <ul class="pe-list">
+                @foreach (var f in group.DistinctBy(f => f.FieldType == FieldType.RadioButton ? f.Name + "#" + f.ExportValue : f.Name))
+                {
+                    var field = f;
+                    var value = Ed.Values.GetValueOrDefault(f.Name) ?? "";
+                    <li class="@(Ed.SelectedField == f.Name ? "selected" : "")" @onclick="() => ActAsync(() => Ed.SelectFieldAsync(field))"
+                        title="@(string.IsNullOrWhiteSpace(f.Tooltip) ? f.Name : f.Tooltip)">
+                        <span class="pe-type">@TypeGlyph(f)</span>
+                        <span>@(f.FieldType == FieldType.RadioButton ? $"{f.Name} ({f.ExportValue})" : f.Name)</span>
+                        @if (f.IsRequired) { <span style="color:#dc3545">*</span> }
+                        <span class="pe-meta">@Short(f, value)</span>
+                    </li>
+                }
+            </ul>
+        }
+        @if (doc.Info.FormFields.Count > 0)
+        {
+            <p class="pe-hint mt-2">Click a field to go to it. Changes are written into the PDF when you Apply Changes or Download.</p>
+        }
+        break;
+
+    case RightTab.Comments:
+        <h3>Comments</h3>
+        @if (Ed.Items.Count > 0)
+        {
+            <h4>Not applied yet</h4>
+            <ul class="pe-list">
+                @foreach (var i in Ed.Items)
+                {
+                    var item = i;
+                    <li @onclick="() => ActAsync(() => Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.PageSize(item.Page).H * 100))">
+                        <i class="bi @ItemIcon(i.Kind) pe-type"></i>
+                        <span class="text-truncate">@i.Describe()</span>
+                        <span class="pe-meta">p.@(i.Page + 1)</span>
+                        <button class="pe-icon-btn" title="Remove" aria-label="Remove" @onclick="() => Act(() => Ed.RemoveItem(item))" @onclick:stopPropagation="true"><i class="bi bi-x"></i></button>
+                    </li>
+                }
+            </ul>
+            <div class="d-flex gap-2 mt-2">
+                <button class="pe-btn primary" @onclick="() => ActAsync(Ed.CommitAsync)">Apply changes</button>
+                <button class="pe-btn" @onclick="() => Act(Ed.DiscardPending)">Discard</button>
+            </div>
+        }
+        <h4>In the PDF</h4>
+        @if (doc.Annotations.Count == 0)
+        {
+            <p class="pe-hint">No comments or marks yet.</p>
+        }
+        <ul class="pe-list">
+            @foreach (var a in doc.Annotations)
+            {
+                var ann = a;
+                <li @onclick="() => ActAsync(() => Ed.GoToPageAsync(ann.PageNumber - 1))" title="@a.Text">
+                    <i class="bi bi-chat-left-text pe-type"></i>
+                    <span class="text-truncate">@a.Kind@(string.IsNullOrWhiteSpace(a.Text) ? "" : ": " + a.Text)</span>
+                    <span class="pe-meta">p.@a.PageNumber</span>
+                </li>
+            }
+        </ul>
+        break;
+
+    case RightTab.Bookmarks:
+        <h3>Bookmarks</h3>
+        @if (doc.Bookmarks.Count == 0)
+        {
+            <p class="pe-hint">This PDF has no bookmarks.</p>
+        }
+        @BookmarkList(doc.Bookmarks, 0)
+        break;
+
+    case RightTab.Search:
+        <h3>Search</h3>
+        <div class="d-flex gap-1 mb-2">
+            <input class="form-control form-control-sm" type="search" placeholder="Find text" aria-label="Find text"
+                   @bind="_query" @onkeydown="SearchKey" />
+            <button class="pe-btn" @onclick="() => ActAsync(() => Ed.SearchForAsync(_query))"><i class="bi bi-search"></i></button>
+        </div>
+        @if (Ed.SearchHits.Count > 0)
+        {
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="pe-hint">@(Ed.HitIndex + 1) of @Ed.SearchHits.Count</span>
+                <button class="pe-btn ms-auto" disabled="@(Ed.HitIndex <= 0)" @onclick="() => ActAsync(() => Ed.ShowHitAsync(Ed.HitIndex - 1))"><i class="bi bi-chevron-up"></i></button>
+                <button class="pe-btn" disabled="@(Ed.HitIndex >= Ed.SearchHits.Count - 1)" @onclick="() => ActAsync(() => Ed.ShowHitAsync(Ed.HitIndex + 1))"><i class="bi bi-chevron-down"></i></button>
+            </div>
+            <ul class="pe-list">
+                @for (int n = 0; n < Ed.SearchHits.Count; n++)
+                {
+                    int index = n;
+                    <li class="@(index == Ed.HitIndex ? "selected" : "")" @onclick="() => ActAsync(() => Ed.ShowHitAsync(index))">
+                        <i class="bi bi-search pe-type"></i> Match @(index + 1)
+                        <span class="pe-meta">page @Ed.SearchHits[index].PageNumber</span>
+                    </li>
+                }
+            </ul>
+        }
+        else if (!string.IsNullOrWhiteSpace(Ed.SearchText))
+        {
+            <p class="pe-hint">No matches for “@Ed.SearchText”. Scanned pages need OCR (in the Windows app) before they can be searched.</p>
+        }
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private string _query = "";
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrEmpty(_query)) _query = Ed.SearchText;
+    }
+
+    private FormFieldInfo? SelectedField =>
+        Ed.SelectedField == null ? null : Ed.Doc?.Info.FormFields.FirstOrDefault(f => f.Name == Ed.SelectedField);
+
+    private async Task SearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await ActAsync(() => Ed.SearchForAsync(_query));
+    }
+
+    private RenderFragment BookmarkList(IEnumerable<BookmarkItem> items, int depth) => __builder =>
+    {
+        <ul class="pe-list" style="padding-left:@(depth * 12)px">
+            @foreach (var b in items)
+            {
+                var bm = b;
+                <li @onclick="() => ActAsync(() => Ed.GoToPageAsync(bm.PageNumber - 1))" title="@b.Title">
+                    <i class="bi bi-bookmark pe-type"></i>
+                    <span class="text-truncate">@b.Title</span>
+                    @if (b.PageNumber > 0) { <span class="pe-meta">@b.PageNumber</span> }
+                </li>
+                @if (b.Children.Count > 0) { @BookmarkList(b.Children, depth + 1) }
+            }
+        </ul>
+    };
+
+    private static string TypeGlyph(FormFieldInfo f) => f.FieldType switch
+    {
+        FieldType.Text when f.IsDateField => "📅",
+        FieldType.Text => "T",
+        FieldType.Checkbox => "☑",
+        FieldType.RadioButton => "◉",
+        FieldType.ComboBox => "▾",
+        FieldType.ListBox => "☰",
+        FieldType.Signature => "✍",
+        _ => "•",
+    };
+
+    private static string Short(FormFieldInfo f, string value) => f.FieldType switch
+    {
+        FieldType.Checkbox => value is "" or "Off" ? "" : "✓",
+        FieldType.RadioButton => value == f.ExportValue ? "●" : "",
+        _ => value.Length > 14 ? value[..14] + "…" : value,
+    };
+
+    private static string ItemIcon(ItemKind k) => k switch
+    {
+        ItemKind.Text => "bi-fonts",
+        ItemKind.Mark => "bi-check-lg",
+        ItemKind.Signature => "bi-pen",
+        ItemKind.Note => "bi-sticky",
+        ItemKind.Highlight => "bi-highlighter",
+        ItemKind.Redact => "bi-eraser-fill",
+        ItemKind.Ellipse => "bi-circle",
+        _ => "bi-square",
+    };
+
+    private static string Clip(string s) => s.Length > 60 ? s[..57] + "…" : s;
+
+    private static string FileSize(PdfSession doc)
+    {
+        try
+        {
+            long b = new FileInfo(doc.CurrentPath).Length;
+            return b >= 1024 * 1024 ? $"{b / 1024d / 1024:0.0} MB" : $"{b / 1024d:0} KB";
+        }
+        catch { return ""; }
+    }
+
+    private void Act(Action action)
+    {
+        action();
+        Ed.Refresh();
+    }
+
+    private async Task ActAsync(Func<Task> action)
+    {
+        await action();
+        Ed.Refresh();
+    }
+}

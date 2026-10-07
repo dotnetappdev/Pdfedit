@@ -1,0 +1,380 @@
+@page "/"
+@page "/fill"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+
+<PageTitle>@(Doc == null ? "PdfEdit" : $"{Doc.FileName} — PdfEdit")</PageTitle>
+
+<div class="pe-app @(_dark ? "pe-theme-dark" : "pe-theme-light")" data-bs-theme="@(_dark ? "dark" : "light")">
+
+    @* ── Title bar ─────────────────────────────────────────────────────── *@
+    <div class="pe-titlebar">
+        <div class="pe-logo" aria-hidden="true">P</div>
+        <span class="pe-app-name">PdfEdit</span>
+        @if (Doc != null)
+        {
+            <span class="pe-doc-name">— @Doc.FileName@(Doc.IsModified || HasPending ? " •" : "")</span>
+        }
+        <span class="pe-spacer"></span>
+        <button class="pe-icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled="@(!CanUndo)" @onclick="UndoAsync"><i class="bi bi-arrow-counterclockwise"></i></button>
+        <button class="pe-icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled="@(!CanRedo)" @onclick="RedoAsync"><i class="bi bi-arrow-clockwise"></i></button>
+        <button class="pe-icon-btn" title="@(_dark ? "Light theme" : "Dark theme")" aria-label="Switch theme" @onclick="() => _dark = !_dark">
+            <i class="bi @(_dark ? "bi-sun" : "bi-moon")"></i>
+        </button>
+    </div>
+
+    @* ── Ribbon tabs ───────────────────────────────────────────────────── *@
+    <div class="pe-tabs" role="tablist">
+        <button class="pe-tab file" role="tab" @onclick="() => OpenBackstage(Doc == null ? Backstage.Open : Backstage.Info)">File</button>
+        @foreach (var t in Enum.GetValues<RibbonTab>())
+        {
+            var tab = t;
+            <button class="pe-tab @(_tab == tab ? "active" : "")" role="tab" aria-selected="@(_tab == tab)" @onclick="() => _tab = tab">@TabName(tab)</button>
+        }
+    </div>
+
+    @* ── Ribbon ────────────────────────────────────────────────────────── *@
+    <div class="pe-ribbon" role="toolbar" aria-label="@TabName(_tab)">
+        @switch (_tab)
+        {
+            case RibbonTab.Home:
+                <RibbonGroup Title="File">
+                    <RibbonButton Large Icon="bi-folder2-open" Label="Open" Title="Open a PDF (Ctrl+O)" OnClick="() => OpenBackstage(Backstage.Open)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
+                        <RibbonButton Icon="bi-download" Label="Save" Title="Download the PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
+                        <RibbonButton Icon="bi-printer" Label="Print" Title="Open the PDF to print it (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Search">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <input type="search" placeholder="Find text" aria-label="Find text" @bind="_searchText" @bind:event="oninput"
+                                   @onkeydown="SearchKeyAsync" disabled="@NoDoc" style="width:120px" />
+                        </div>
+                        <RibbonButton Icon="bi-search" Label="Find" Disabled="NoDoc" OnClick="SearchAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Pages">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Rotate Left" Disabled="NoDoc" OnClick="() => RotateAsync(-90)" />
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="Rotate Right" Disabled="NoDoc" OnClick="() => RotateAsync(90)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-trash" Label="Delete Page" Disabled="@(NoDoc || PageCount < 2)" OnClick="DeletePageAsync" />
+                        <RibbonButton Icon="bi-file-earmark-arrow-up" Label="Insert Before" Title="Insert a blank page before this one" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: true)" />
+                        <RibbonButton Icon="bi-file-earmark-arrow-down" Label="Insert After" Title="Insert a blank page after this one" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: false)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-copy" Label="Duplicate Page" Disabled="NoDoc" OnClick="DuplicatePageAsync" />
+                        <RibbonButton Icon="bi-arrow-up" Label="Move Up" Disabled="@(NoDoc || _page == 0)" OnClick="() => MovePageAsync(-1)" />
+                        <RibbonButton Icon="bi-arrow-down" Label="Move Down" Disabled="@(NoDoc || _page >= PageCount - 1)" OnClick="() => MovePageAsync(1)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-box-arrow-up-right" Label="Extract Pages" Title="Save some pages as a new PDF" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.ExtractRange)" />
+                        <RibbonButton Icon="bi-scissors" Label="Delete Pages" Title="Delete a range of pages" Disabled="@(NoDoc || PageCount < 2)" OnClick="() => ShowDialog(DialogKind.DeleteRange)" />
+                        <RibbonButton Icon="bi-image" Label="Export as Image" Title="Download this page as a PNG" Disabled="NoDoc" OnClick="ExportPageImageAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-layout-split" Label="Split PDF" Title="One PDF per page, in a ZIP" Disabled="NoDoc" OnClick="SplitAsync" />
+                        <RibbonButton Icon="bi-files" Label="Merge PDFs" Title="Add other PDFs or images to the end" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Merge)" />
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="Insert PDF" Title="Insert another PDF after this page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.InsertPdf)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Document">
+                    <RibbonButton Large Icon="bi-info-circle" Label="Properties" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Properties)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-droplet-half" Label="Watermark" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Watermark)" />
+                        <RibbonButton Icon="bi-droplet" Label="Remove Watermark" Disabled="NoDoc" OnClick="RemoveWatermarkAsync" />
+                        <RibbonButton Icon="bi-123" Label="Page Numbers" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.PageNumbers)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-layout-text-window" Label="Header / Footer" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.HeaderFooter)" />
+                        <RibbonButton Icon="bi-hash" Label="Bates Numbers" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Bates)" />
+                        <RibbonButton Icon="bi-file-zip" Label="Compress" Disabled="NoDoc" OnClick="CompressAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-aspect-ratio" Label="Resize Pages" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Resize)" />
+                        <RibbonButton Icon="bi-grid" Label="Pages per Sheet" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.NUp)" />
+                        <RibbonButton Icon="bi-circle-half" Label="Greyscale" Disabled="NoDoc" OnClick="GreyscaleAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Security">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-lock" Label="Password Protect" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Protect)" />
+                        <RibbonButton Icon="bi-eraser" Label="Remove Hidden Info" Title="Remove metadata, scripts, attachments and other hidden data" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Sanitize)" />
+                    </div>
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.FillSign:
+                <RibbonGroup Title="Select">
+                    <RibbonButton Large Icon="bi-cursor" Label="Select" Title="Fill in fields and select things (Esc)" Active="_tool == Tool.Select" OnClick="() => SetTool(Tool.Select)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Add Content">
+                    <RibbonButton Large Icon="bi-fonts" Label="Add Text" Title="Click on the page to type" Disabled="NoDoc" Active="_tool == Tool.Text" OnClick="() => SetTool(Tool.Text)" />
+                    <RibbonButton Large Icon="bi-calendar-event" Label="Date" Title="Click to add today's date" Disabled="NoDoc" Active="_tool == Tool.Date" OnClick="() => SetTool(Tool.Date)" />
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Size</span>
+                            <select @bind="_fontSize" aria-label="Text size">
+                                @foreach (var s in new[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36 })
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="pe-field-inline">
+                            <span>Colour</span>
+                            <input type="color" @bind="_textColor" aria-label="Text colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Marks">
+                    <RibbonButton Large Icon="bi-check-lg" Label="Tick" Disabled="NoDoc" Active="_tool == Tool.Check" OnClick="() => SetTool(Tool.Check)" />
+                    <RibbonButton Large Icon="bi-x-lg" Label="Cross" Disabled="NoDoc" Active="_tool == Tool.Cross" OnClick="() => SetTool(Tool.Cross)" />
+                    <RibbonButton Large Icon="bi-circle-fill" Label="Dot" Disabled="NoDoc" Active="_tool == Tool.Dot" OnClick="() => SetTool(Tool.Dot)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Sign">
+                    <RibbonButton Large Icon="bi-pen" Label="Signature" Title="Draw or type your signature, then click to place it" Disabled="NoDoc" Active="_tool == Tool.Signature" OnClick="SignatureToolAsync" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-pencil-square" Label="New Signature" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Signature)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Comment">
+                    <RibbonButton Large Icon="bi-sticky" Label="Sticky Note" Disabled="NoDoc" Active="_tool == Tool.Note" OnClick="() => SetTool(Tool.Note)" />
+                    <RibbonButton Large Icon="bi-highlighter" Label="Highlight" Title="Drag over an area to highlight it" Disabled="NoDoc" Active="_tool == Tool.Highlight" OnClick="() => SetTool(Tool.Highlight)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Finish">
+                    <RibbonButton Large Icon="bi-check2-circle" Label="Apply Changes" Title="Write everything you've added into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-download" Label="Download" Disabled="NoDoc" OnClick="SaveAsync" />
+                        <RibbonButton Icon="bi-layers" Label="Flatten &amp; Download" Title="Download with the fields turned into plain page content" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
+                        <RibbonButton Icon="bi-x-circle" Label="Discard Changes" Title="Remove what you've added since the last Apply" Disabled="@(NoDoc || !HasPending)" OnClick="DiscardPending" />
+                    </div>
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.Edit:
+                <RibbonGroup Title="History">
+                    <RibbonButton Large Icon="bi-arrow-counterclockwise" Label="Undo" Disabled="!CanUndo" OnClick="UndoAsync" />
+                    <RibbonButton Large Icon="bi-arrow-clockwise" Label="Redo" Disabled="!CanRedo" OnClick="RedoAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Form Data">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-box-arrow-up" Label="Export Data" Title="Download the field values as a tab-separated file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ExportDataAsync" />
+                        <RibbonButton Icon="bi-box-arrow-in-down" Label="Import Data" Title="Fill the fields from an exported data file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="() => ShowDialog(DialogKind.ImportData)" />
+                        <RibbonButton Icon="bi-arrow-repeat" Label="Reset Form" Title="Put every field back as it was when last applied" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ResetForm" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-ui-checks" Label="Fields Panel" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
+                        <RibbonButton Icon="bi-asterisk" Label="Check Required" Title="Find required fields that are still empty" Disabled="@(NoDoc || FieldCount == 0)" OnClick="CheckRequired" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Redact">
+                    <RibbonButton Large Icon="bi-eraser-fill" Label="Mark for Redaction" Title="Drag over what to remove for good" Disabled="NoDoc" Active="_tool == Tool.Redact" OnClick="() => SetTool(Tool.Redact)" />
+                    <RibbonButton Large Icon="bi-shield-check" Label="Apply Redactions" Title="Remove the marked areas from the PDF" Disabled="@(NoDoc || !_items.Any(i => i.Kind == ItemKind.Redact))" OnClick="CommitAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Drawing">
+                    <RibbonButton Large Icon="bi-square" Label="Rectangle" Disabled="NoDoc" Active="_tool == Tool.Rectangle" OnClick="() => SetTool(Tool.Rectangle)" />
+                    <RibbonButton Large Icon="bi-circle" Label="Ellipse" Disabled="NoDoc" Active="_tool == Tool.Ellipse" OnClick="() => SetTool(Tool.Ellipse)" />
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Colour</span>
+                            <input type="color" @bind="_strokeColor" aria-label="Line colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.View:
+                <RibbonGroup Title="Zoom">
+                    <RibbonButton Large Icon="bi-zoom-in" Label="Zoom In" Disabled="NoDoc" OnClick="() => Zoom(1.25)" />
+                    <RibbonButton Large Icon="bi-zoom-out" Label="Zoom Out" Disabled="NoDoc" OnClick="() => Zoom(0.8)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-1-square" Label="Actual Size" Disabled="NoDoc" OnClick="() => SetZoom(1)" />
+                        <RibbonButton Icon="bi-arrows-expand-vertical" Label="Fit Width" Disabled="NoDoc" OnClick="FitWidthAsync" />
+                        <RibbonButton Icon="bi-fullscreen" Label="Fit Page" Disabled="NoDoc" OnClick="FitPageAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Panels">
+                    <RibbonButton Large Icon="bi-layout-sidebar" Label="Thumbnails" Active="_showLeft" OnClick="() => _showLeft = !_showLeft" />
+                    <RibbonButton Large Icon="bi-layout-sidebar-reverse" Label="Side Panel" Active="_showRight" OnClick="() => _showRight = !_showRight" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-bookmark" Label="Bookmarks" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Bookmarks)" />
+                        <RibbonButton Icon="bi-chat-left-text" Label="Comments" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Comments)" />
+                        <RibbonButton Icon="bi-ui-checks" Label="Fields" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Theme">
+                    <RibbonButton Large Icon="bi-sun" Label="Light" Active="!_dark" OnClick="() => _dark = false" />
+                    <RibbonButton Large Icon="bi-moon" Label="Dark" Active="_dark" OnClick="() => _dark = true" />
+                </RibbonGroup>
+                <RibbonGroup Title="Document">
+                    <RibbonButton Large Icon="bi-bar-chart-line" Label="Statistics" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Statistics)" />
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.Tools:
+                <RibbonGroup Title="Export">
+                    <RibbonButton Large Icon="bi-file-earmark-word" Label="Word" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Word)" />
+                    <RibbonButton Large Icon="bi-file-earmark-excel" Label="Excel" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Excel)" />
+                    <RibbonButton Large Icon="bi-file-earmark-slides" Label="PowerPoint" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.PowerPoint)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-filetype-html" Label="HTML" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Html)" />
+                        <RibbonButton Icon="bi-markdown" Label="Markdown" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Markdown)" />
+                        <RibbonButton Icon="bi-book" Label="ePub" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Epub)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-text" Label="Text" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Text)" />
+                        <RibbonButton Icon="bi-images" Label="Page Images" Title="Every page as a PNG, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Images)" />
+                        <RibbonButton Icon="bi-file-image" Label="Pictures" Title="The pictures inside the PDF, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Pictures)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Convert">
+                    <RibbonButton Large Icon="bi-archive" Label="PDF/A" Title="Make an archive-friendly copy" Disabled="NoDoc" OnClick="PdfAAsync" />
+                    <RibbonButton Large Icon="bi-book-half" Label="Booklet" Title="Two pages per sheet, in folding order" Disabled="NoDoc" OnClick="BookletAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Create">
+                    <RibbonButton Large Icon="bi-file-earmark-plus" Label="Blank PDF" OnClick="NewBlankAsync" />
+                    <RibbonButton Large Icon="bi-file-earmark-image" Label="From Images" Title="Make a PDF from pictures or other files" OnClick="() => ShowDialog(DialogKind.Combine)" />
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.Help:
+                <RibbonGroup Title="Learn">
+                    <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Support">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-bug" Label="Report a Problem" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/issues/new"))" />
+                        <RibbonButton Icon="bi-github" Label="PdfEdit on GitHub" OnClick="() => OpenUrlAsync(GitHubUrl)" />
+                        <RibbonButton Icon="bi-windows" Label="Windows App" Title="Download the full Windows app" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases/latest"))" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="About">
+                    <RibbonButton Large Icon="bi-info-square" Label="About PdfEdit" OnClick="() => ShowDialog(DialogKind.About)" />
+                </RibbonGroup>
+                break;
+        }
+    </div>
+
+    @* ── Workspace ─────────────────────────────────────────────────────── *@
+    <div class="pe-workspace">
+        @if (_showLeft)
+        {
+            <aside class="pe-panel left" aria-label="Thumbnails">
+                <div class="pe-panel-tabs"><span class="pe-panel-tab active">Thumbnails</span></div>
+                <div class="pe-panel-body" style="padding:0">
+                    @if (Doc != null)
+                    {
+                        <div class="pe-thumbs">
+                            @for (int p = 0; p < PageCount; p++)
+                            {
+                                int pg = p;
+                                <button class="pe-thumb @(pg == _page ? "current" : "")" @onclick="() => GoToPageAsync(pg)" aria-label="Page @(pg + 1)">
+                                    <img src="@PageUrl(pg, 0.3)" loading="lazy" alt="" style="width:@Css(ThumbWidth(pg))px" />
+                                    <div>@(pg + 1)</div>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            </aside>
+        }
+        else
+        {
+            <div></div>
+        }
+
+        <main class="pe-viewer" @ref="_viewer" aria-label="Document">
+            @if (_busy) { <div class="pe-busy" role="progressbar" aria-label="Working"></div> }
+            @if (Doc == null)
+            {
+                <WelcomeView Ed="this" />
+            }
+            else
+            {
+                <div class="pe-pages">
+                    @for (int p = 0; p < PageCount; p++)
+                    {
+                        int pg = p;
+                        var (w, h) = PageSize(pg);
+                        int rot = Rotation(pg);
+                        <div class="pe-page" id="@($"page-{pg}")" data-page="@pg" style="width:@Css(DisplayWidth(pg))px;height:@Css(DisplayHeight(pg))px">
+                            <img class="pe-page-img" src="@PageUrl(pg, ImageScale)" alt="Page @(pg + 1)" loading="lazy" />
+
+                            @foreach (var hit in _searchHits.Where(x => x.PageNumber == pg + 1))
+                            {
+                                <div class="pe-search-hit @(hit == CurrentHit ? "current" : "")" style="@HitStyle(hit, w, h)"></div>
+                            }
+
+                            @if (rot == 0)
+                            {
+                                @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1))
+                                {
+                                    <FieldInput Ed="this" Field="f" Overlay="true" Style="@OverlayStyle(f.Left, f.Bottom, f.Width, f.Height, w, h, FieldFontPts(f))" />
+                                }
+                            }
+
+                            @foreach (var item in _items.Where(i => i.Page == pg))
+                            {
+                                <PageItemView Ed="this" Item="item" PageW="w" PageH="h" />
+                            }
+
+                            @if (_tool != Tool.Select)
+                            {
+                                <div class="pe-tool-layer" title="@ToolHint"
+                                     @onmousedown="e => ToolDown(pg, e)" @onmouseup="e => ToolUpAsync(pg, e)"></div>
+                            }
+                            <div class="pe-page-label">@(pg + 1)</div>
+                        </div>
+                    }
+                </div>
+            }
+        </main>
+
+        @if (_showRight)
+        {
+            <aside class="pe-panel right" aria-label="Side panel">
+                <div class="pe-panel-tabs" role="tablist">
+                    @foreach (var t in Enum.GetValues<RightTab>())
+                    {
+                        var tab = t;
+                        <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@tab</button>
+                    }
+                </div>
+                <div class="pe-panel-body"><SidePanel Ed="this" /></div>
+            </aside>
+        }
+        else
+        {
+            <div></div>
+        }
+    </div>
+
+    @* ── Status bar ────────────────────────────────────────────────────── *@
+    <div class="pe-status" role="status">
+        <span>@_status</span>
+        <span class="pe-spacer"></span>
+        @if (Doc != null)
+        {
+            <button title="Previous page" aria-label="Previous page" disabled="@(_page == 0)" @onclick="() => GoToPageAsync(_page - 1)"><i class="bi bi-chevron-left"></i></button>
+            <span>Page</span>
+            <input aria-label="Page number" value="@(_page + 1)" @onchange="PageBoxChangedAsync" />
+            <span>of @PageCount</span>
+            <button title="Next page" aria-label="Next page" disabled="@(_page >= PageCount - 1)" @onclick="() => GoToPageAsync(_page + 1)"><i class="bi bi-chevron-right"></i></button>
+            <span>·</span>
+            <button title="Zoom out" aria-label="Zoom out" @onclick="() => Zoom(0.8)"><i class="bi bi-dash"></i></button>
+            <span>@((int)Math.Round(_zoom * 100))%</span>
+            <button title="Zoom in" aria-label="Zoom in" @onclick="() => Zoom(1.25)"><i class="bi bi-plus"></i></button>
+        }
+    </div>
+
+    @if (_backstage != null) { <BackstageView Ed="this" /> }
+    @if (_dialog != DialogKind.None) { <DialogHost Ed="this" /> }
+    @if (_toast != null)
+    {
+        <div class="pe-toast @_toastKind" role="alert" @onclick="() => _toast = null">@_toast</div>
+    }
+</div>

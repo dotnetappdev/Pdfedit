@@ -1,0 +1,136 @@
+@* File menu: the Windows app's backstage view (Info, New, Open, Save As, Export, Close). *@
+<div class="pe-backstage" role="dialog" aria-label="File">
+    <nav>
+        <button @onclick="() => Act(Ed.CloseBackstage)"><i class="bi bi-arrow-left-circle"></i> Back</button>
+        <hr />
+        <button class="@Active(Backstage.Info)" disabled="@Ed.NoDoc" @onclick="() => Go(Backstage.Info)">Info</button>
+        <button class="@Active(Backstage.New)" @onclick="() => Go(Backstage.New)">New</button>
+        <button class="@Active(Backstage.Open)" @onclick="() => Go(Backstage.Open)">Open</button>
+        <button disabled="@Ed.NoDoc" @onclick="() => ActAsync(Ed.SaveAsync, close: true)">Save</button>
+        <button class="@Active(Backstage.SaveAs)" disabled="@Ed.NoDoc" @onclick="() => Go(Backstage.SaveAs)">Save As</button>
+        <button class="@Active(Backstage.Export)" disabled="@Ed.NoDoc" @onclick="() => Go(Backstage.Export)">Export</button>
+        <button disabled="@Ed.NoDoc" @onclick="() => ActAsync(Ed.PrintAsync, close: true)">Print</button>
+        <hr />
+        <button disabled="@Ed.NoDoc" @onclick="() => Act(Ed.CloseDocument)">Close</button>
+    </nav>
+    <section>
+        @switch (Ed.BackstagePage)
+        {
+            case Backstage.Info when Ed.Doc is { } doc:
+                <h2>Info</h2>
+                <h4 style="font-size:16px">@doc.FileName</h4>
+                <p class="pe-hint">@doc.Info.PageCount page@(doc.Info.PageCount == 1 ? "" : "s") · @(doc.Info.HasAcroForm ? $"{Ed.FieldCount} form fields" : "no form") · @doc.Annotations.Count comments</p>
+                <div class="pe-option-list">
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Properties)"><i class="bi bi-info-circle"></i><span>Properties<small>Title, author, subject and keywords</small></span></button>
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Protect)"><i class="bi bi-lock"></i><span>Protect Document<small>Download a copy that needs a password to open</small></span></button>
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Sanitize)"><i class="bi bi-eraser"></i><span>Remove Hidden Information<small>Metadata, scripts, attachments</small></span></button>
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Statistics)"><i class="bi bi-bar-chart-line"></i><span>Statistics<small>Pages, words, fields and comments</small></span></button>
+                </div>
+                break;
+
+            case Backstage.New:
+                <h2>New</h2>
+                <div class="pe-option-list">
+                    <button class="pe-option" @onclick="() => ActAsync(Ed.NewBlankAsync, close: true)"><i class="bi bi-file-earmark"></i><span>Blank PDF<small>One empty A4 page</small></span></button>
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Combine)"><i class="bi bi-file-earmark-image"></i><span>From images or files<small>Pictures and PDFs, combined in order</small></span></button>
+                </div>
+                break;
+
+            case Backstage.Open:
+                <h2>Open</h2>
+                <div class="pe-drop" style="max-width:560px">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <strong>Drop a PDF here</strong> or click to choose one
+                    <InputFile accept=".pdf,application/pdf" OnChange="OnFile" aria-label="Open a PDF" />
+                </div>
+                @if (Ed.Samples.Count > 0)
+                {
+                    <h4 class="pe-hint" style="font-weight:600">Sample documents</h4>
+                    <div class="pe-cards" style="max-width:760px">
+                        @foreach (var s in Ed.Samples)
+                        {
+                            var path = s;
+                            <button class="pe-card" @onclick="() => ActAsync(() => Ed.OpenSampleAsync(path), close: true)">
+                                <i class="bi bi-file-earmark-pdf-fill"></i><span>@Path.GetFileNameWithoutExtension(path)</span>
+                            </button>
+                        }
+                    </div>
+                }
+                break;
+
+            case Backstage.SaveAs when Ed.Doc != null:
+                <h2>Save As</h2>
+                <div class="pe-option-list">
+                    <button class="pe-option" @onclick="() => ActAsync(Ed.SaveAsync, close: true)"><i class="bi bi-file-earmark-pdf"></i><span>PDF<small>The document with your changes</small></span></button>
+                    <button class="pe-option" @onclick="() => ActAsync(Ed.SaveFlattenedAsync, close: true)"><i class="bi bi-layers"></i><span>Flattened PDF<small>Fields and comments become part of the page</small></span></button>
+                    <button class="pe-option" @onclick="() => ActAsync(Ed.SaveAsPdfAAsync, close: true)"><i class="bi bi-archive"></i><span>PDF/A<small>For long-term archiving</small></span></button>
+                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Protect)"><i class="bi bi-lock"></i><span>Password-protected PDF<small>Needs a password to open</small></span></button>
+                </div>
+                break;
+
+            case Backstage.Export when Ed.Doc != null:
+                <h2>Export</h2>
+                <p class="pe-hint">The same exports as Tools → Export.</p>
+                <div class="pe-option-list">
+                    @foreach (var (format, icon, name, hint) in Exports)
+                    {
+                        var f = format;
+                        <button class="pe-option" @onclick="() => ActAsync(() => Ed.ExportFromMenuAsync(f), close: true)"><i class="bi @icon"></i><span>@name<small>@hint</small></span></button>
+                    }
+                </div>
+                break;
+
+            default:
+                <h2>PdfEdit</h2>
+                <p class="pe-hint">Open a PDF to get started.</p>
+                break;
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private static readonly (ExportFormat, string, string, string)[] Exports =
+    [
+        (ExportFormat.Word, "bi-file-earmark-word", "Word document", "The text, one paragraph per line"),
+        (ExportFormat.Excel, "bi-file-earmark-excel", "Excel workbook", "Tables found on the pages"),
+        (ExportFormat.PowerPoint, "bi-file-earmark-slides", "PowerPoint", "One slide per page"),
+        (ExportFormat.Html, "bi-filetype-html", "Web page (HTML)", "Headings and paragraphs"),
+        (ExportFormat.Markdown, "bi-markdown", "Markdown", "Plain text with headings"),
+        (ExportFormat.Epub, "bi-book", "ePub e-book", "For e-readers"),
+        (ExportFormat.Text, "bi-file-text", "Plain text", "Just the words"),
+        (ExportFormat.Images, "bi-images", "Page images", "Every page as a PNG, in a ZIP"),
+        (ExportFormat.Pictures, "bi-file-image", "Pictures", "The pictures inside the PDF, in a ZIP"),
+    ];
+
+    private string Active(Backstage page) => Ed.BackstagePage == page ? "active" : "";
+
+    private void Go(Backstage page)
+    {
+        Ed.OpenBackstage(page);
+        Ed.Refresh();
+    }
+
+    private void Dialog(DialogKind kind)
+    {
+        Ed.CloseBackstage();
+        Ed.ShowDialog(kind);
+        Ed.Refresh();
+    }
+
+    private Task OnFile(InputFileChangeEventArgs e) => ActAsync(() => Ed.OpenUploadAsync(e.File), close: true);
+
+    private void Act(Action action)
+    {
+        action();
+        Ed.Refresh();
+    }
+
+    private async Task ActAsync(Func<Task> action, bool close)
+    {
+        if (close) Ed.CloseBackstage();
+        await action();
+        Ed.Refresh();
+    }
+}

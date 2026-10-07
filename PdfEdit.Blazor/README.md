@@ -1,0 +1,44 @@
+# PdfEdit for the web (Blazor)
+
+The PdfEdit Windows app's window in the browser: a ribbon (File, Home, Fill & Sign, Edit, View,
+Tools, Help), page thumbnails on the left, the pages in the middle, a side panel (Properties,
+Fields, Comments, Bookmarks, Search) on the right and a blue status bar — in the same light and
+dark colours. The PDF work runs on the server with the same libraries as the Windows app:
+**PdfEdit.Core** (forms, annotations, page tools, export) and **PdfEdit.Render** (Pdfium).
+
+```bash
+dotnet run --project PdfEdit.Blazor
+```
+
+Then open the address it prints. With a checkout of the repository, the files in `Samples/` are
+offered on the start page.
+
+## What it can do
+
+| Area | Features |
+|---|---|
+| File | Open (upload or samples), password-protected PDFs, New blank, Create from images/files, Save (download), Save As flattened / PDF/A / password-protected, Print, Export, Close |
+| Fill & Sign | Fill every kind of form field, Add Text, Date, ticks, crosses and dots, draw or type a signature and place it, sticky notes, highlights, Apply Changes, Flatten & Download |
+| Pages | Rotate, delete, insert blank before/after, duplicate, move up/down, extract or delete a range, split, merge PDFs and pictures, insert a PDF, export a page as an image |
+| Document | Properties, watermark (add/remove), page numbers, header/footer, Bates numbers, compress, resize pages, pages per sheet, booklet, greyscale |
+| Security | Password protect, remove hidden information, redaction (mark, then apply) |
+| Edit | Undo/Redo for everything, export/import form data, reset form, check required fields, rectangles and ellipses |
+| View | Zoom, fit width/page, thumbnails, side panel, bookmarks, comments, search with highlights, light/dark theme, statistics |
+| Export | Word, Excel, PowerPoint, HTML, Markdown, ePub, text, page images, pictures |
+
+Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.
+
+## How it works
+
+- Each upload gets a temporary folder on the server; every change writes a new version of the
+  file, so Undo and Redo step between versions. Uploads unused for two hours are deleted.
+- Pages are drawn by Pdfium and served as PNGs (`/documents/{id}/pages/{n}.png`). Form fields are
+  HTML inputs laid over the page; things you add stay editable until Apply Changes, Save or a
+  page tool writes them into the PDF.
+
+## Not in the web version yet
+
+The AI assistant, the design canvas, creating and editing form fields (Prepare Form), OCR,
+scanning, compare, read aloud, certificate signing, stamps, ink drawing and measuring, moving or
+resizing things after placing them, adding things to rotated pages, cloud storage, batch and bulk
+fill, translation, Office-to-PDF conversion, and several documents open at once.

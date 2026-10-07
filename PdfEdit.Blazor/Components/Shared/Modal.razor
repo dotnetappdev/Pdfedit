@@ -1,0 +1,24 @@
+@* A dialog box over the editor, like the Windows app's themed dialogs. *@
+<div class="pe-modal-backdrop" @onclick="OnBackdrop">
+    <div class="pe-modal @(Wide ? "wide" : "")" role="dialog" aria-modal="true" aria-label="@Title" @onclick:stopPropagation="true">
+        <header>
+            <span>@Title</span>
+            <button type="button" class="pe-icon-btn" aria-label="Close" @onclick="OnClose"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <div class="pe-modal-body">@ChildContent</div>
+        @if (Footer != null)
+        {
+            <footer>@Footer</footer>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public bool Wide { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private Task OnBackdrop() => OnClose.InvokeAsync();
+}

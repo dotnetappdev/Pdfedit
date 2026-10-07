@@ -1,0 +1,81 @@
+@* One PDF form field as an HTML input, over the page (Overlay) or in the Fields panel. *@
+@{
+    var f = Field;
+    var title = string.IsNullOrWhiteSpace(f.Tooltip) ? f.Name : f.Tooltip;
+    var align = f.Alignment switch { FieldAlignment.Center => "center", FieldAlignment.Right => "right", _ => "left" };
+    var id = Overlay ? Editor.FieldElementId(f) : null;
+    var css = (Overlay ? "pe-field" : "form-control form-control-sm") + (f.IsRequired ? " required" : "") + (Ed.SelectedField == f.Name && Overlay ? " selected" : "");
+}
+@switch (f.FieldType)
+{
+    case FieldType.Text when f.IsMultiline:
+        <textarea id="@id" class="@css" style="@Style;text-align:@align" title="@title" aria-label="@title"
+                  readonly="@f.IsReadOnly" maxlength="@(f.MaxLength > 0 ? f.MaxLength : null)"
+                  value="@Value" @onchange="e => Set(e.Value?.ToString())" @onfocus="Focused"></textarea>
+        break;
+    case FieldType.Text:
+        <input id="@id" class="@css" style="@Style;text-align:@align" title="@title" aria-label="@title"
+               type="@(f.IsPassword ? "password" : "text")" readonly="@f.IsReadOnly"
+               maxlength="@(f.MaxLength > 0 ? f.MaxLength : null)"
+               value="@Value" @onchange="e => Set(e.Value?.ToString())" @onfocus="Focused" />
+        break;
+    case FieldType.Checkbox:
+        <input id="@id" class="@(Overlay ? css + " pe-check" : "form-check-input")" style="@Style" type="checkbox"
+               title="@title" aria-label="@title" disabled="@f.IsReadOnly"
+               checked="@IsOn" @onchange="Toggle" @onfocus="Focused" />
+        break;
+    case FieldType.RadioButton:
+        <input id="@id" class="@(Overlay ? css + " pe-check" : "form-check-input")" style="@Style" type="radio"
+               name="@($"{(Overlay ? "o" : "l")}-{f.Name}")" title="@($"{title}: {f.ExportValue}")"
+               aria-label="@($"{title}: {f.ExportValue}")" disabled="@f.IsReadOnly"
+               checked="@(Value == f.ExportValue)" @onchange="() => Set(f.ExportValue)" @onfocus="Focused" />
+        break;
+    case FieldType.ComboBox:
+    case FieldType.ListBox:
+        <select id="@id" class="@(Overlay ? css : "form-select form-select-sm")" style="@Style" title="@title" aria-label="@title"
+                disabled="@f.IsReadOnly" size="@(f.FieldType == FieldType.ListBox && Overlay ? Math.Max(2, f.Options.Count) : (int?)null)"
+                @onchange="e => Set(e.Value?.ToString())" @onfocus="Focused">
+            @if (f.FieldType == FieldType.ComboBox) { <option value=""></option> }
+            @foreach (var o in f.Options)
+            {
+                <option value="@o" selected="@(o == Value)">@o</option>
+            }
+        </select>
+        break;
+    default:
+        @* Signatures and push buttons: shown, not filled here. *@
+        if (Overlay)
+        {
+            <div id="@id" class="pe-field pe-unsupported" style="@Style" title="@($"{title} ({f.FieldType} field — use Fill & Sign → Signature to sign)")"></div>
+        }
+        else
+        {
+            <span class="pe-hint">@f.FieldType field</span>
+        }
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public FormFieldInfo Field { get; set; } = default!;
+    [Parameter] public string Style { get; set; } = "";
+    [Parameter] public bool Overlay { get; set; }
+
+    private string Value => Ed.Values.TryGetValue(Field.Name, out var v) ? v : "";
+    private bool IsOn => !string.IsNullOrEmpty(Value) && Value != "Off";
+
+    private void Set(string? value)
+    {
+        Ed.Values[Field.Name] = value ?? "";
+        Ed.Refresh();
+    }
+
+    private void Toggle(ChangeEventArgs e) => Set(e.Value is true ? Field.ExportValue : "Off");
+
+    private void Focused()
+    {
+        if (Ed.SelectedField == Field.Name) return;
+        Ed.SelectedField = Field.Name;
+        Ed.Refresh();
+    }
+}

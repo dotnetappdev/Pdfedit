@@ -55,14 +55,15 @@ public static class PdfTextExtractorService
     }
 
     // Returns all bounding-box matches for the given query across all pages (or a specific page).
-    public static List<TextMatch> FindTextPositions(string pdfPath, string query, int specificPage = 0)
+    // ignoreCase: "agreement" also finds "Agreement" and "AGREEMENT" (Acrobat's default).
+    public static List<TextMatch> FindTextPositions(string pdfPath, string query, int specificPage = 0, bool ignoreCase = false)
     {
         var results = new List<TextMatch>();
         if (string.IsNullOrWhiteSpace(query)) return results;
 
         try
         {
-            string pattern = Regex.Escape(query);
+            string pattern = (ignoreCase ? "(?i)" : "") + Regex.Escape(query);
             using var reader = new PdfReader(pdfPath);
             using var doc    = new PdfDocument(reader);
 

@@ -1,0 +1,76 @@
+@* Something added on the page that isn't written into the PDF yet. *@
+@{
+    var i = Item;
+    var style = Editor.OverlayStyle(i.Left, PageH - i.Top - i.Height, i.Width, i.Height, PageW, PageH);
+}
+@switch (i.Kind)
+{
+    case ItemKind.Text:
+        <div class="pe-item text" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw">
+            <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here"
+                      @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
+            <button class="pe-x" title="Remove" aria-label="Remove text" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Mark:
+        <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()">
+            @i.Text
+            <button class="pe-x" title="Remove" aria-label="Remove mark" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Signature:
+        <div class="pe-item signature" style="@style" title="Signature">
+            <img src="@i.ImageUrl" alt="Signature" />
+            <button class="pe-x" title="Remove" aria-label="Remove signature" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Note:
+        <div class="pe-item note" style="left:@Editor.Css(i.Left / PageW * 100)%;top:@Editor.Css(i.Top / PageH * 100)%" title="@i.Text"
+             @onclick="Edit" role="button" aria-label="Sticky note: @i.Text">
+            <i class="bi bi-sticky-fill"></i>
+            <button class="pe-x" title="Remove" aria-label="Remove note" @onclick="Remove" @onclick:stopPropagation="true">✕</button>
+        </div>
+        break;
+    default:
+        var kind = i.Kind switch { ItemKind.Highlight => "highlight", ItemKind.Redact => "redact", _ => "rect" };
+        <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)">
+            <button class="pe-x" title="Remove" aria-label="Remove" @onclick="Remove">✕</button>
+        </div>
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public PageItem Item { get; set; } = default!;
+    [Parameter] public double PageW { get; set; }
+    [Parameter] public double PageH { get; set; }
+
+    private string BoxStyle(string style) => Item.Kind switch
+    {
+        ItemKind.Rectangle => $"{style};border-color:{Item.Color};border-width:2px",
+        ItemKind.Ellipse => $"{style};border-color:{Item.Color};border-width:2px;border-radius:50%",
+        _ => style,
+    };
+
+    private void Remove()
+    {
+        Ed.RemoveItem(Item);
+        Ed.Refresh();
+    }
+
+    private void Edit()
+    {
+        Ed.EditingNote = Item;
+        Ed.ShowDialog(DialogKind.Note);
+        Ed.Refresh();
+    }
+
+    // Grow the box to fit the lines typed (like the Windows app's auto-size text).
+    private void Grow()
+    {
+        var lines = Math.Max(1, Item.Text.Split('\n').Length);
+        var longest = Item.Text.Split('\n').Max(l => l.Length);
+        Item.Height = Math.Max(Item.Height, lines * Item.FontSize * 1.3 + 2);
+        Item.Width = Math.Clamp(Math.Max(Item.Width, longest * Item.FontSize * 0.55 + 6), 20, PageW - Item.Left);
+    }
+}
