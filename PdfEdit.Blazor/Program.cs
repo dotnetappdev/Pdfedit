@@ -1,10 +1,14 @@
 using PdfEdit.Blazor.Components;
+using PdfEdit.Blazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Uploaded PDFs, read and filled with PdfEdit.Core and drawn with PdfEdit.Render (Pdfium).
+builder.Services.AddSingleton<PdfDocumentStore>();
 
 var app = builder.Build();
 
@@ -21,6 +25,7 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapPdfEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

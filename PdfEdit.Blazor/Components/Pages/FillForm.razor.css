@@ -1,0 +1,65 @@
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: .5rem 0;
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+/* One PDF page: the rendered image with the form's fields laid over it. */
+.pdf-page {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    container-type: inline-size;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+    background: #fff;
+}
+
+.pdf-page img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.page-number {
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: .8rem;
+    margin: .4rem 0 1.5rem;
+}
+
+::deep .pdf-field {
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 .3cqw;
+    border: 1px solid rgba(13, 110, 253, .35);
+    background: rgba(13, 110, 253, .07);
+    color: #000;
+    font-family: Helvetica, Arial, sans-serif;
+    line-height: 1.1;
+    resize: none;
+    border-radius: 0;
+}
+
+::deep .pdf-field:focus {
+    outline: 2px solid #0d6efd;
+    background: rgba(255, 255, 255, .9);
+}
+
+::deep .pdf-field[readonly], ::deep .pdf-field:disabled {
+    background: rgba(0, 0, 0, .04);
+}
+
+::deep .pdf-check {
+    accent-color: #0d6efd;
+    cursor: pointer;
+}
+
+::deep .pdf-unsupported {
+    border-style: dashed;
+    background: transparent;
+    pointer-events: auto;
+}
