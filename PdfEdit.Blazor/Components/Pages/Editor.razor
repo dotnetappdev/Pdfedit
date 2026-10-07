@@ -523,7 +523,7 @@
                         var (w, h) = PageSize(pg);
                         int rot = Rotation(pg);
                         <div class="pe-page" id="@($"page-{pg}")" data-page="@pg" style="width:@Css(DisplayWidth(pg))px;height:@Css(DisplayHeight(pg))px">
-                            <img class="pe-page-img" src="@PageUrl(pg, ImageScale)" alt="Page @(pg + 1)" loading="lazy" />
+                            <img class="pe-page-img" src="@PageUrl(pg, ImageScale)" alt="Page @(pg + 1)" loading="lazy" draggable="false" />
 
                             @foreach (var hit in _searchHits.Where(x => x.PageNumber == pg + 1))
                             {

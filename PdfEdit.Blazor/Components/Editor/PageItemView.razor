@@ -6,27 +6,31 @@
 @switch (i.Kind)
 {
     case ItemKind.Text:
-        <div class="pe-item text" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw">
+        <div class="pe-item text" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
+            <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
             <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here"
                       @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove text" @onclick="Remove">✕</button>
         </div>
         break;
     case ItemKind.Mark:
-        <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()">
+        <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()" data-drag="i:@i.Id">
             @i.Text
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove mark" @onclick="Remove">✕</button>
         </div>
         break;
     case ItemKind.Signature:
-        <div class="pe-item signature" style="@style" title="Signature">
-            <img src="@i.ImageUrl" alt="Signature" />
+        <div class="pe-item signature" style="@style" title="Signature" data-drag="i:@i.Id">
+            <img src="@i.ImageUrl" alt="Signature" draggable="false" />
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove signature" @onclick="Remove">✕</button>
         </div>
         break;
     case ItemKind.Note:
         <div class="pe-item note" style="left:@Editor.Css(i.Left / PageW * 100)%;top:@Editor.Css(i.Top / PageH * 100)%" title="@i.Text"
-             @onclick="Edit" role="button" aria-label="Sticky note: @i.Text">
+             @onclick="Edit" role="button" data-drag="i:@i.Id" aria-label="Sticky note: @i.Text">
             <i class="bi bi-sticky-fill"></i>
             <button class="pe-x" title="Remove" aria-label="Remove note" @onclick="Remove" @onclick:stopPropagation="true">✕</button>
         </div>
@@ -74,7 +78,8 @@
         break;
     default:
         var kind = i.Kind switch { ItemKind.Highlight => "highlight", ItemKind.Redact => "redact", _ => "rect" };
-        <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)">
+        <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)" data-drag="i:@i.Id">
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove" @onclick="Remove">✕</button>
         </div>
         break;

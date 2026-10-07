@@ -53,6 +53,7 @@ window.pdfedit = (() => {
                 if (!box || e.button !== 0) return;
                 const page = box.closest('.pe-page');
                 if (!page || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)) return;
+                e.preventDefault();   // no text selection or native image drag (which cancels the pointer)
                 const resize = !!e.target.closest('[data-resize]');
                 const pr = page.getBoundingClientRect();
                 const br = box.getBoundingClientRect();
@@ -74,6 +75,7 @@ window.pdfedit = (() => {
                 const up = () => {
                     document.removeEventListener('pointermove', move);
                     document.removeEventListener('pointerup', up);
+                    document.removeEventListener('pointercancel', up);
                     box.classList.remove('pe-dragging');
                     if (!moved) return;
                     const r = box.getBoundingClientRect();
@@ -85,6 +87,7 @@ window.pdfedit = (() => {
                 };
                 document.addEventListener('pointermove', move);
                 document.addEventListener('pointerup', up);
+                document.addEventListener('pointercancel', up);
             });
         },
 

@@ -377,7 +377,7 @@ html, body {
     height: 100%;
     border: 1px dashed rgba(10, 132, 255, .7);
     background: rgba(255, 255, 255, .25);
-    resize: both;
+    resize: none;
     overflow: hidden;
     padding: 0;
     font-family: Helvetica, Arial, sans-serif;
@@ -427,8 +427,8 @@ html, body {
 .pe-measure { font-family: Helvetica, Arial, sans-serif; font-weight: 600; paint-order: stroke; stroke: #fff; stroke-width: 2.5px; }
 .pe-item-handle {
     position: absolute;
-    right: -5px;
-    bottom: -5px;
+    right: -8px;
+    bottom: -8px;
     width: 10px;
     height: 10px;
     background: #fff;
@@ -438,7 +438,24 @@ html, body {
     display: none;
     z-index: 2;
 }
-.pe-item:hover .pe-item-handle { display: block; }
+.pe-item:hover .pe-item-handle, .pe-item:focus-within .pe-item-handle { display: block; }
+.pe-item[data-drag]:not(.text) { cursor: move; }
+.pe-item-grip {
+    position: absolute;
+    left: -16px;
+    top: -1px;
+    width: 15px;
+    height: 15px;
+    display: none;
+    place-items: center;
+    font-size: 10px;
+    color: #fff;
+    background: var(--pe-accent);
+    border-radius: 3px;
+    cursor: move;
+    z-index: 2;
+}
+.pe-item:hover .pe-item-grip, .pe-item:focus-within .pe-item-grip { display: grid; }
 .pe-sketch-live { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .pe-sketch-label {
     position: absolute;
@@ -455,8 +472,8 @@ html, body {
 .pe-stamp-pick { max-width: 170px; }
 .pe-item .pe-x {
     position: absolute;
-    top: -9px;
-    right: -9px;
+    top: -21px;
+    right: -3px;
     width: 18px;
     height: 18px;
     border-radius: 50%;
