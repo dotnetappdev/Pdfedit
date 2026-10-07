@@ -71,6 +71,8 @@ public class AppSettings
     public string ToolkitView { get; set; } = "List";
     /// <summary>Show the Create / Shape / Sign &amp; secure / Smart headings.</summary>
     public bool ToolkitShowSections { get; set; } = true;
+    /// <summary>Give each Toolkit tool its own colour (off = the theme's accent colour).</summary>
+    public bool ToolkitColourful { get; set; } = true;
     /// <summary>Actions pinned to the top of the Toolkit, as "toolId|action label".</summary>
     public List<string> ToolkitPinned { get; set; } = new();
     /// <summary>Tool ids the user has hidden from the Toolkit.</summary>

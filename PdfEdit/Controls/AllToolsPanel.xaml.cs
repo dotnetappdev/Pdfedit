@@ -26,9 +26,19 @@ public partial class AllToolsPanel : UserControl
         public required string Glyph { get; init; }
         public required string Description { get; init; }
         public required List<ToolAction> Actions { get; init; }
+        /// <summary>The tool's own colour (used unless "Colourful icons" is off).</summary>
+        public string Color => ToolColours.TryGetValue(Id, out var c) ? c : "#3B82F6";
     }
 
     private static readonly string[] Sections = { "Create", "Shape", "Sign & secure", "Smart" };
+
+    private static readonly Dictionary<string, string> ToolColours = new()
+    {
+        ["convert"] = "#F59E0B", ["create"] = "#10B981", ["cloud"] = "#0EA5E9", ["merge"] = "#8B5CF6",
+        ["edit"] = "#3B82F6", ["pages"] = "#14B8A6", ["forms"] = "#EC4899", ["shrink"] = "#F97316",
+        ["sign"] = "#6366F1", ["security"] = "#22C55E", ["redact"] = "#EF4444",
+        ["ai"] = "#A855F7", ["summary"] = "#06B6D4", ["scan"] = "#65A30D", ["batch"] = "#CA8A04",
+    };
 
     private List<ToolCategory> _categories = new();
 
@@ -393,17 +403,28 @@ public partial class AllToolsPanel : UserControl
         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
     };
 
-    /// <summary>The tool's symbol on a softly tinted rounded square in the theme's accent colour.</summary>
-    private static Grid IconTile(string glyph, double box, double size)
+    /// <summary>
+    /// The tool's symbol on a softly tinted rounded square, in the tool's own colour or, with
+    /// "Colourful icons" off, the theme's accent colour.
+    /// </summary>
+    private static Grid IconTile(ToolCategory c, double box, double size)
     {
-        var tint = new Border { CornerRadius = new CornerRadius(box / 4), Opacity = 0.16 };
-        tint.SetResourceReference(Border.BackgroundProperty, "AccentBrush");
-        var symbol = Symbol(glyph, size);
-        symbol.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        var tint = new Border { CornerRadius = new CornerRadius(box / 4), Opacity = 0.18 };
+        Paint(tint, Border.BackgroundProperty, c);
+        var symbol = Symbol(c.Glyph, size);
+        Paint(symbol, TextBlock.ForegroundProperty, c);
         var icon = new Grid { Width = box, Height = box, VerticalAlignment = VerticalAlignment.Center };
         icon.Children.Add(tint);
         icon.Children.Add(symbol);
         return icon;
+    }
+
+    private static void Paint(FrameworkElement e, DependencyProperty property, ToolCategory c)
+    {
+        if (Settings.ToolkitColourful)
+            e.SetValue(property, new SolidColorBrush((Color)ColorConverter.ConvertFromString(c.Color)));
+        else
+            e.SetResourceReference(property, "AccentBrush");
     }
 
     private FrameworkElement BuildCategoryView(ToolCategory c, bool expanded, List<ToolAction>? only)
@@ -419,9 +440,9 @@ public partial class AllToolsPanel : UserControl
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        FrameworkElement icon = compact ? Symbol(c.Glyph, 13) : IconTile(c.Glyph, 30, 15);
+        FrameworkElement icon = compact ? Symbol(c.Glyph, 13) : IconTile(c, 30, 15);
         icon.HorizontalAlignment = HorizontalAlignment.Left;
-        if (compact) icon.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        if (compact) Paint(icon, TextBlock.ForegroundProperty, c);
         var title = new TextBlock { Text = c.Title, FontSize = compact ? 12.5 : 14, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
         Grid.SetColumn(title, 1);
         Grid.SetColumn(chevron, 2);
@@ -524,7 +545,7 @@ public partial class AllToolsPanel : UserControl
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var content = new StackPanel { Orientation = Orientation.Horizontal };
-        var icon = IconTile(c.Glyph, 22, 11);
+        var icon = IconTile(c, 22, 11);
         icon.Margin = new Thickness(0, 0, 10, 0);
         content.Children.Add(icon);
         content.Children.Add(new TextBlock { Text = a.Label, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
@@ -548,7 +569,7 @@ public partial class AllToolsPanel : UserControl
     private FrameworkElement BuildTile(ToolCategory c)
     {
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
-        var icon = IconTile(c.Glyph, 34, 17);
+        var icon = IconTile(c, 34, 17);
         icon.HorizontalAlignment = HorizontalAlignment.Center;
         stack.Children.Add(icon);
         stack.Children.Add(new TextBlock
@@ -614,6 +635,10 @@ public partial class AllToolsPanel : UserControl
         }
         menu.Items.Add(new Separator());
 
+        var colourful = new MenuItem { Header = "Colourful icons", IsCheckable = true, IsChecked = Settings.ToolkitColourful };
+        colourful.Click += (_, _) => { Settings.ToolkitColourful = !Settings.ToolkitColourful; SaveAndRender(); };
+        menu.Items.Add(colourful);
+
         var sections = new MenuItem { Header = "Show section headings", IsCheckable = true, IsChecked = Settings.ToolkitShowSections };
         sections.Click += (_, _) => { Settings.ToolkitShowSections = !Settings.ToolkitShowSections; SaveAndRender(); };
         menu.Items.Add(sections);
@@ -641,6 +666,7 @@ public partial class AllToolsPanel : UserControl
         {
             Settings.ToolkitView = "List";
             Settings.ToolkitShowSections = true;
+            Settings.ToolkitColourful = true;
             Settings.ToolkitHidden.Clear();
             Settings.ToolkitOrder.Clear();
             Settings.ToolkitExpanded.Clear();
