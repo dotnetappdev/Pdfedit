@@ -517,6 +517,21 @@
         <Setter Property="Margin"     Value="0"/>
     </Style>
 
+    <!-- Menus apply MenuItem.SeparatorStyleKey to their separators instead of the implicit
+         style above; the stock one indents past an icon gutter this template doesn't have. -->
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+        <Setter Property="Background" Value="{DynamicResource AppBorderBrush}"/>
+        <Setter Property="Height"     Value="1"/>
+        <Setter Property="Margin"     Value="6,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ── ContextMenu ───────────────────────────────────────────────────────── -->
     <!-- Unstyled ContextMenu/MenuItem fall back to the OS default template, which
          on Windows dark mode can render dark-popup-chrome behind text that our
@@ -529,6 +544,13 @@
         <Setter Property="BorderBrush"   Value="{DynamicResource AppBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontSize" Value="{DynamicResource MenuFontSize}"/>
+        <!-- A context menu inherits text properties from the element it opens on, so a
+             centred or bold annotation box would centre/bolden the menu. Pin them back. -->
+        <Setter Property="TextBlock.TextAlignment" Value="Left"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="FontStyle"  Value="Normal"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
+        <Setter Property="MinWidth" Value="200"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
@@ -576,10 +598,12 @@
                                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
                                 <ContentPresenter Grid.Column="1" ContentSource="Header"
                                                    RecognizesAccessKey="True"
+                                                   HorizontalAlignment="Left"
                                                    VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}"
                                            Foreground="{DynamicResource DimForegroundBrush}"
-                                           Margin="16,0,0,0" VerticalAlignment="Center"/>
+                                           TextAlignment="Right"
+                                           Margin="24,0,0,0" VerticalAlignment="Center"/>
                                 <Path x:Name="SubmenuArrow" Grid.Column="3"
                                       Data="M0,0 L4,4 L0,8 Z"
                                       Fill="{DynamicResource ForegroundBrush}"

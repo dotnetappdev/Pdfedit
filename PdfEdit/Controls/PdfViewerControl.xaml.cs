@@ -1797,7 +1797,7 @@ public partial class PdfViewerControl : UserControl
         cm.Items.Add(new Separator());
 
         var lockItem = new MenuItem();
-        lockItem.Header = ann.IsLocked ? "🔓 Unlock Annotation" : "🔒 Lock Annotation";
+        lockItem.Header = ann.IsLocked ? "Unlock Annotation" : "Lock Annotation";
         lockItem.Click += (_, _) =>
         {
             ann.IsLocked = !ann.IsLocked;
