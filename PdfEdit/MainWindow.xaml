@@ -124,18 +124,46 @@
 
                     <Separator/>
 
-                    <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
-                                                KeyTip="K"
-                                                Command="{Binding ShowShortcutsCommand}"
-                                                AutomationProperties.Name="Keyboard shortcuts reference"/>
-                    <Fluent:MenuItem Header="Tip of the Day…"
-                                                KeyTip="T"
-                                                Click="TipOfTheDay_Click"
-                                                AutomationProperties.Name="Tip of the Day"/>
-                    <Fluent:MenuItem Header="Take the Tour"
-                                                KeyTip="U"
-                                                Click="TakeTour_Click"
-                                                AutomationProperties.Name="Take the tour of PdfEdit"/>
+                    <!-- Help: everything on the Help tab, from the File menu -->
+                    <Fluent:MenuItem Header="Help"
+                                                KeyTip="H"
+                                                AutomationProperties.Name="Help">
+                        <Fluent:MenuItem Header="Check for Updates…"
+                                                    KeyTip="U"
+                                                    Click="CheckForUpdates_Click"
+                                                    AutomationProperties.Name="Check for updates"/>
+                        <Fluent:MenuItem Header="What's New"
+                                                    KeyTip="W"
+                                                    Click="WhatsNew_Click"
+                                                    AutomationProperties.Name="What's new"/>
+                        <Separator/>
+                        <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
+                                                    KeyTip="K"
+                                                    Command="{Binding ShowShortcutsCommand}"
+                                                    AutomationProperties.Name="Keyboard shortcuts reference"/>
+                        <Fluent:MenuItem Header="Tip of the Day…"
+                                                    KeyTip="T"
+                                                    Click="TipOfTheDay_Click"
+                                                    AutomationProperties.Name="Tip of the Day"/>
+                        <Fluent:MenuItem Header="Take the Tour"
+                                                    KeyTip="O"
+                                                    Click="TakeTour_Click"
+                                                    AutomationProperties.Name="Take the tour of PdfEdit"/>
+                        <Separator/>
+                        <Fluent:MenuItem Header="Report a Problem…"
+                                                    KeyTip="R"
+                                                    Click="ReportProblem_Click"
+                                                    AutomationProperties.Name="Report a problem"/>
+                        <Fluent:MenuItem Header="PdfEdit on GitHub"
+                                                    KeyTip="G"
+                                                    Click="GitHubPage_Click"
+                                                    AutomationProperties.Name="PdfEdit on GitHub"/>
+                        <Separator/>
+                        <Fluent:MenuItem Header="About PdfEdit…"
+                                                    KeyTip="A"
+                                                    Command="{Binding ShowAboutCommand}"
+                                                    AutomationProperties.Name="About PdfEdit"/>
+                    </Fluent:MenuItem>
 
                     <Fluent:ApplicationMenu.RightPaneContent>
                         <StackPanel Margin="4,8" Width="240">

@@ -145,6 +145,6 @@ public static class TipsCatalog
         new("Find the right tool fast",
             "The All tools panel on the left lists everything PdfEdit can do, grouped by what you want to do. Start typing in its search box to filter."),
         new("Take the tour again",
-            "Missed something? Help → Take the Tour walks you through the main parts of the window, and this dialog lives under Help → Tip of the Day. Check for Updates and About PdfEdit are on the Help tab too."),
+            "Missed something? Help → Take the Tour walks you through the main parts of the window, and this dialog lives under Help → Tip of the Day. Check for Updates and About PdfEdit are on the Help tab and under File → Help."),
     };
 }
