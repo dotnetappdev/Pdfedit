@@ -10,6 +10,12 @@ public partial class App : Application
 {
     private static ResourceDictionary? _themeDict;
 
+    /// <summary>
+    /// Held while PdfEdit runs, so Setup (installer\PdfEditSetup.iss) can wait for it to close
+    /// before uninstalling the previous version. "Global\" covers other signed-in users too.
+    /// </summary>
+    private static readonly List<Mutex> _runningMutexes = new();
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // Install global exception handlers first so any later failure (including
@@ -20,6 +26,12 @@ public partial class App : Application
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         base.OnStartup(e);
+
+        foreach (var name in new[] { "PdfEditRunning", @"Global\PdfEditRunning" })
+        {
+            try { _runningMutexes.Add(new Mutex(false, name)); }
+            catch { /* not allowed here: Setup simply can't see this copy */ }
+        }
 
         try
         {

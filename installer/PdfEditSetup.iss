@@ -148,6 +148,115 @@ begin
 end;
 #endif
 
+// ── Previous version: found, then uninstalled before the new one goes in ─────────────────────
+// PdfEdit's uninstall entry (written by any earlier PdfEdit setup with the same AppId).
+const
+  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppId}_is1';
+  RunningMutex = 'PdfEditRunning,Global\PdfEditRunning';   // created by PdfEdit while it runs
+
+var
+  PreviousVersion: String;
+  PreviousUninstaller: String;
+
+// True when an earlier PdfEdit is installed; fills PreviousVersion and PreviousUninstaller.
+function FindPreviousVersion: Boolean;
+var
+  Root: Integer;
+begin
+  Result := False;
+  PreviousVersion := '';
+  PreviousUninstaller := '';
+  if RegQueryStringValue(HKLM, UninstallKey, 'UninstallString', PreviousUninstaller) then
+    Root := HKLM
+  else if RegQueryStringValue(HKCU, UninstallKey, 'UninstallString', PreviousUninstaller) then
+    Root := HKCU
+  else
+    Exit;
+  PreviousUninstaller := RemoveQuotes(PreviousUninstaller);
+  if not FileExists(PreviousUninstaller) then
+    Exit;   // a leftover entry with nothing behind it: just install over it
+  RegQueryStringValue(Root, UninstallKey, 'DisplayVersion', PreviousVersion);
+  Result := True;
+end;
+
+function PreviousVersionText: String;
+begin
+  if PreviousVersion <> '' then
+    Result := 'PdfEdit ' + PreviousVersion
+  else
+    Result := 'the installed version of PdfEdit';
+end;
+
+// Waits for PdfEdit to close (it may be closing itself for an update). In the wizard, asks the
+// user to close it; silent setups wait up to two minutes. False when it's still running.
+function WaitForPdfEditToClose: Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := 1 to 240 do
+  begin
+    if not CheckForMutexes(RunningMutex) then
+      Exit;
+    if (not WizardSilent) and (I mod 10 = 0) then
+      if MsgBox('PdfEdit is running. Close every PdfEdit window, then click Retry.' + #13#10#13#10 +
+                'Your unsaved work is kept for next time, as on any normal close.',
+                mbError, MB_RETRYCANCEL) = IDCANCEL then
+        Break;
+    Sleep(500);
+  end;
+  Result := not CheckForMutexes(RunningMutex);
+end;
+
+// Shown on the "Ready to Install" page.
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,
+  MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+begin
+  Result := '';
+  if FindPreviousVersion then
+    Result := 'Previous version:' + NewLine + Space + PreviousVersionText +
+              ' will be uninstalled first (your settings, signatures and stamps are kept)' + NewLine + NewLine;
+  if MemoDirInfo <> '' then Result := Result + MemoDirInfo + NewLine + NewLine;
+  if MemoGroupInfo <> '' then Result := Result + MemoGroupInfo + NewLine + NewLine;
+  if MemoTasksInfo <> '' then Result := Result + MemoTasksInfo + NewLine + NewLine;
+end;
+
+// Before installing: uninstall the previous version with its own uninstaller (silently).
+// Settings in %AppData%\PdfEdit aren't part of the install, so they stay.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode, I: Integer;
+begin
+  Result := '';
+  if not FindPreviousVersion then
+    Exit;
+
+  if not WaitForPdfEditToClose then
+  begin
+    Result := 'PdfEdit is still running. Close it, then run this setup again.';
+    Exit;
+  end;
+
+  Log('Uninstalling ' + PreviousVersionText + ' with ' + PreviousUninstaller);
+  if not Exec(PreviousUninstaller, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
+              ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := 'Could not uninstall ' + PreviousVersionText + ': ' + SysErrorMessage(ResultCode);
+    Exit;
+  end;
+
+  // The uninstaller finishes from a copy in TEMP and removes itself last: wait for that.
+  for I := 1 to 240 do
+  begin
+    if not FileExists(PreviousUninstaller) then
+      Break;
+    Sleep(500);
+  end;
+  if FileExists(PreviousUninstaller) then
+    Result := 'Could not uninstall ' + PreviousVersionText + ' (code ' + IntToStr(ResultCode) + '). ' +
+              'Uninstall it from Settings > Apps, then run this setup again.';
+end;
+
 // True when PdfEdit's updater asked for PdfEdit to be started again after a silent update.
 function ShouldRelaunch: Boolean;
 begin

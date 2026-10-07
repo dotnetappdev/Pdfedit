@@ -31,9 +31,6 @@ public partial class UpdateDialog : Window
         AtStartupBox.IsChecked = s.CheckForUpdatesAtStartup;
         PrereleaseBox.IsChecked = s.IncludePrereleaseUpdates;
         CloseFirstBox.IsChecked = s.CloseBeforeUpdate;
-        UninstallFirstBox.IsChecked = s.UninstallBeforeUpdate;
-        if (_kind == InstallKind.Installer)
-            UninstallFirstBox.Visibility = UninstallHintText.Visibility = Visibility.Visible;
         _loading = false;
         FolderBox.Text = UpdateInstaller.DownloadFolder;
         CurrentText.Text = $"You have PdfEdit {UpdateInstaller.CurrentVersion} ({UpdateInstaller.Describe(_kind)}).";
@@ -212,18 +209,11 @@ public partial class UpdateDialog : Window
     {
         if (_downloaded == null || !File.Exists(_downloaded)) return;
         bool closeFirst = CloseFirstBox.IsChecked == true;
-        bool uninstallFirst = _kind == InstallKind.Installer && UninstallFirstBox.IsChecked == true;
         SavePreferences();
 
-        if (uninstallFirst && !AppDialog.ShowConfirm(
-                $"PdfEdit {UpdateInstaller.CurrentVersion} will be uninstalled, then PdfEdit {_release?.Version} installed in the same folder:\n{UpdateInstaller.AppDir}\n\n" +
-                "Your settings, signatures, stamps and recent files are kept." +
-                (closeFirst ? "" : "\n\nThis starts once you close PdfEdit."),
-                "Clean install", "Uninstall and install", "Cancel"))
-            return;
 
         bool started;
-        try { started = UpdateInstaller.Start(_downloaded, _kind, closeFirst, uninstallFirst); }
+        try { started = UpdateInstaller.Start(_downloaded, _kind, closeFirst); }
         catch (Exception ex)
         {
             AppDialog.ShowError("The update could not be started.", ex, "Software Update");
@@ -248,7 +238,6 @@ public partial class UpdateDialog : Window
 
         AppDialog.ShowInfo(_kind switch
         {
-            InstallKind.Installer when uninstallFirst => "When you close PdfEdit, the current version is uninstalled and the new one installed.",
             InstallKind.Installer => "The setup program has started. Follow its steps to finish the update.",
             InstallKind.Msix => "Windows App Installer has opened. Click Update there to finish.",
             _ => "The update is ready. It will be installed as soon as you close PdfEdit; the next time you start PdfEdit you'll have the new version.",
@@ -325,7 +314,6 @@ public partial class UpdateDialog : Window
         s.CheckForUpdatesAtStartup = AtStartupBox.IsChecked == true;
         s.IncludePrereleaseUpdates = PrereleaseBox.IsChecked == true;
         s.CloseBeforeUpdate = CloseFirstBox.IsChecked == true;
-        s.UninstallBeforeUpdate = UninstallFirstBox.IsChecked == true;
         s.Save();
     }
 
@@ -338,7 +326,7 @@ public partial class UpdateDialog : Window
         ProgressPanel.Visibility = Visibility.Visible;
         PrimaryBtn.IsEnabled = DownloadOnlyBtn.IsEnabled = SkipBtn.IsEnabled = !downloading;
         FolderBox.IsEnabled = BrowseBtn.IsEnabled = PrereleaseBox.IsEnabled = !downloading;
-        CloseFirstBox.IsEnabled = UninstallFirstBox.IsEnabled = !downloading;
+        CloseFirstBox.IsEnabled = !downloading;
         CloseBtn.Content = downloading ? "Cancel" : "Close";
     }
 

@@ -81,16 +81,6 @@
                 <TextBlock x:Name="CloseHintText" FontSize="11" Margin="20,3,0,0" TextWrapping="Wrap"
                            Foreground="{DynamicResource DimForegroundBrush}"/>
 
-                <!-- Clean install: setup installs only -->
-                <CheckBox x:Name="UninstallFirstBox" Margin="0,10,0,0" Visibility="Collapsed"
-                          Foreground="{DynamicResource ForegroundBrush}"
-                          AutomationProperties.Name="Uninstall the current version before installing the new one">
-                    <TextBlock TextWrapping="Wrap"
-                               Text="Uninstall the current version first, then install the new one (clean install)"/>
-                </CheckBox>
-                <TextBlock x:Name="UninstallHintText" FontSize="11" Margin="20,3,0,0" TextWrapping="Wrap"
-                           Visibility="Collapsed" Foreground="{DynamicResource DimForegroundBrush}"
-                           Text="Uses PdfEdit's own uninstaller, then installs into the same folder. Your settings, signatures, stamps and recent files are kept."/>
 
                 <!-- Download progress -->
                 <StackPanel x:Name="ProgressPanel" Margin="0,14,0,0" Visibility="Collapsed">

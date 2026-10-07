@@ -54,20 +54,15 @@ public static class UpdateInstaller
     /// Starts installing <paramref name="package"/>. With <paramref name="closeFirst"/> the update
     /// runs unattended and PdfEdit restarts when it's done (the caller then closes PdfEdit);
     /// otherwise the setup wizard is shown (installer), or the files are replaced once PdfEdit is
-    /// closed (ZIP). With <paramref name="uninstallFirst"/> (setup installs only) the current version
-    /// is uninstalled before the new one is installed. Returns false when the user declined the
-    /// Windows administrator prompt.
+    /// closed (ZIP). The new setup itself uninstalls the previous version before installing.
+    /// Returns false when the user declined the Windows administrator prompt.
     /// </summary>
-    public static bool Start(string package, InstallKind kind, bool closeFirst, bool uninstallFirst = false)
+    public static bool Start(string package, InstallKind kind, bool closeFirst)
     {
         try
         {
             switch (kind)
             {
-                case InstallKind.Installer when uninstallFirst:
-                    StartCleanInstall(package, relaunch: closeFirst);
-                    break;
-
                 case InstallKind.Installer:
                     // Inno Setup: /CLOSEAPPLICATIONS closes any PdfEdit still open and /RELAUNCH=1
                     // (read by PdfEditSetup.iss) starts it again after a silent install — once, so Setup's own
@@ -119,21 +114,13 @@ public static class UpdateInstaller
         }
     }
 
-    // ── Scripts (ZIP, and uninstall-then-install) ───────────────────────────
+    // ── ZIP ──────────────────────────────────────────────────────────────────
 
     private static void StartZipUpdate(string zip, bool relaunch)
     {
         bool elevate = !CanWriteTo(AppDir);   // e.g. the portable copy lives under Program Files
         RunScript(BuildZipScript(zip, AppDir, ExePath, relaunch, elevate, LogPath), elevate);
     }
-
-    /// <summary>
-    /// Uninstalls the installed version with its own uninstaller, then installs the new one into
-    /// the same folder. Both need administrator rights, so the script runs elevated (one prompt).
-    /// Settings, signatures and other data in %AppData%\PdfEdit are not touched by the uninstaller.
-    /// </summary>
-    private static void StartCleanInstall(string setup, bool relaunch) =>
-        RunScript(BuildCleanInstallScript(setup, AppDir, ExePath, relaunch, LogPath), elevate: true);
 
     private static string WorkDir
     {
@@ -190,26 +177,6 @@ public static class UpdateInstaller
                 # robocopy retries files that are briefly locked; exit codes below 8 mean success.
                 & robocopy $src $dest /E /R:10 /W:2 /NP /NFL /NDL /NJH /NJS | Out-Null
                 if ($LASTEXITCODE -ge 8) { throw "Copying the new files failed (robocopy exit code $LASTEXITCODE). Is PdfEdit still open?" }
-            """);
-
-    /// <summary>The PowerShell that waits for PdfEdit to close, uninstalls it, then runs the new setup into the same folder.</summary>
-    public static string BuildCleanInstallScript(string setup, string dest, string exe, bool relaunch, string log) =>
-        BuildScript("uninstalls the current version, then installs the new one in the same folder.",
-            setup, dest, exe, relaunch, elevated: true, log, """
-                $uninstaller = Join-Path $dest 'unins000.exe'
-                if (Test-Path -LiteralPath $uninstaller) {
-                    Log "Uninstalling the previous version"
-                    $u = Start-Process -FilePath $uninstaller -ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART' -PassThru -Wait
-                    # The uninstaller carries on from a copy in TEMP and deletes itself last: wait for that.
-                    $until = (Get-Date).AddMinutes(5)
-                    while ((Test-Path -LiteralPath $uninstaller) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
-                    if (Test-Path -LiteralPath $uninstaller) { throw "The previous version could not be uninstalled (exit code $($u.ExitCode))." }
-                    Start-Sleep -Seconds 2
-                }
-
-                Log "Installing $package"
-                $s = Start-Process -FilePath $package -ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $dest + '"') -PassThru -Wait
-                if ($s.ExitCode -ne 0) { throw "Setup did not finish (exit code $($s.ExitCode)). Run it again from:`n$package" }
             """);
 
     private static string BuildScript(string purpose, string package, string dest, string exe,

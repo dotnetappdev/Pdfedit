@@ -79,8 +79,6 @@ public class AppSettings
     public string UpdateDownloadFolder { get; set; } = string.Empty;
     /// <summary>Close PdfEdit before installing a downloaded update.</summary>
     public bool CloseBeforeUpdate { get; set; } = true;
-    /// <summary>Uninstall the installed version before running the new setup (clean install).</summary>
-    public bool UninstallBeforeUpdate { get; set; }
 
     // ── Window geometry ──────────────────────────────────────────────────────
     public double WindowLeft { get; set; } = double.NaN;
