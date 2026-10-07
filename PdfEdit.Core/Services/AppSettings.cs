@@ -66,6 +66,20 @@ public class AppSettings
     /// <summary>The next tip to show (index into the tips list).</summary>
     public int NextTipIndex { get; set; }
 
+    // ── Updates ──────────────────────────────────────────────────────────────
+    /// <summary>Look for a new release on GitHub when PdfEdit starts (at most once a day).</summary>
+    public bool CheckForUpdatesAtStartup { get; set; } = true;
+    /// <summary>Offer pre-release (beta) versions too.</summary>
+    public bool IncludePrereleaseUpdates { get; set; }
+    /// <summary>When the startup check last ran (UTC).</summary>
+    public DateTime LastUpdateCheckUtc { get; set; }
+    /// <summary>A version the user chose to skip; the startup check stays quiet about it.</summary>
+    public string SkippedUpdateVersion { get; set; } = string.Empty;
+    /// <summary>Folder updates are downloaded to; empty = Downloads\PdfEdit Updates.</summary>
+    public string UpdateDownloadFolder { get; set; } = string.Empty;
+    /// <summary>Close PdfEdit before installing a downloaded update.</summary>
+    public bool CloseBeforeUpdate { get; set; } = true;
+
     // ── Window geometry ──────────────────────────────────────────────────────
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;
@@ -192,6 +206,7 @@ public class AppSettings
     {
         nameof(ClaudeApiKey), nameof(OpenAiApiKey), nameof(GitHubToken), nameof(LocalAiApiKey),
         nameof(GoogleClientSecret), nameof(CloudTokens), nameof(CloudAccounts), nameof(CloudLinks), nameof(RecentFiles),
+        nameof(UpdateDownloadFolder), nameof(LastUpdateCheckUtc),
     };
 
     private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };

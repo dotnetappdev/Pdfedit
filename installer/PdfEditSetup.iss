@@ -92,6 +92,8 @@ Name: "{commondesktop}\{#MyAppName}";          Filename: "{app}\{#MyAppExeName}"
 [Run]
 ; Launch the app after install
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+; PdfEdit's own updater runs setup with /SILENT /RELAUNCH=1: start PdfEdit again when it's done
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait runasoriginaluser; Check: ShouldRelaunch
 
 [Registry]
 ; App path so "PdfEdit" works from Run dialog
@@ -145,3 +147,9 @@ begin
       ShellExec('open', DotNetDownloadUrl, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
 end;
 #endif
+
+// True when PdfEdit's updater asked for PdfEdit to be started again after a silent update.
+function ShouldRelaunch: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:RELAUNCH|0}') = '1');
+end;

@@ -24,6 +24,7 @@ public partial class MainWindow
             var s = AppSettings.Current;
             if (!s.TourCompleted) StartTour();
             else if (s.ShowTipsAtStartup) ShowTipOfTheDay();
+            _ = CheckForUpdatesAtStartupAsync();
         }, DispatcherPriority.ApplicationIdle);
     }
 

@@ -136,6 +136,10 @@
                                                 KeyTip="U"
                                                 Click="TakeTour_Click"
                                                 AutomationProperties.Name="Take the tour of PdfEdit"/>
+                    <Fluent:MenuItem Header="Check for Updates…"
+                                                KeyTip="Y"
+                                                Click="CheckForUpdates_Click"
+                                                AutomationProperties.Name="Check for updates"/>
                     <Fluent:MenuItem Header="About PdfEdit…"
                                                 KeyTip="B"
                                                 Command="{Binding ShowAboutCommand}"

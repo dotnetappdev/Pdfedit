@@ -1,0 +1,123 @@
+<Window x:Class="PdfEdit.Dialogs.UpdateDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Software Update"
+        Width="560" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource PanelBgBrush}"
+        Foreground="{DynamicResource ForegroundBrush}"
+        AutomationProperties.Name="Software Update">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="24,20,24,16">
+
+            <!-- Heading: icon, title, status line -->
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Width="44" Height="44" CornerRadius="10" Margin="0,0,14,0"
+                        Background="{DynamicResource AccentBrush}" VerticalAlignment="Top">
+                    <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="22" Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1">
+                    <TextBlock x:Name="HeadingText" Text="Checking for updates…" FontSize="17" FontWeight="SemiBold"
+                               TextWrapping="Wrap" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBlock x:Name="CurrentText" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                    <TextBlock x:Name="ReleaseLinkText" FontSize="12" Margin="0,3,0,0" Visibility="Collapsed">
+                        <Hyperlink x:Name="ReleaseLink" Click="ReleaseLink_Click"
+                                   AutomationProperties.Name="View this release on GitHub">View release on GitHub</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <!-- What's new -->
+            <StackPanel x:Name="DetailsPanel" Visibility="Collapsed">
+                <TextBlock Text="What's new" FontWeight="SemiBold" Margin="0,0,0,4"
+                           Foreground="{DynamicResource ForegroundBrush}"/>
+                <TextBox x:Name="NotesBox" IsReadOnly="True" TextWrapping="Wrap" Height="150"
+                         VerticalScrollBarVisibility="Auto" FontSize="12" Padding="6"
+                         Background="{DynamicResource InputBgBrush}"
+                         Foreground="{DynamicResource ForegroundBrush}"
+                         BorderBrush="{DynamicResource AppBorderBrush}"
+                         AutomationProperties.Name="Release notes"/>
+
+                <TextBlock x:Name="PackageText" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
+                           Foreground="{DynamicResource DimForegroundBrush}"/>
+
+                <!-- Where to save the download -->
+                <TextBlock Text="Save the download to" FontWeight="SemiBold" Margin="0,12,0,4"
+                           Foreground="{DynamicResource ForegroundBrush}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="FolderBox" Padding="4,3" VerticalContentAlignment="Center"
+                             Background="{DynamicResource InputBgBrush}"
+                             Foreground="{DynamicResource ForegroundBrush}"
+                             BorderBrush="{DynamicResource AppBorderBrush}"
+                             AutomationProperties.Name="Folder to save the update in"/>
+                    <Button x:Name="BrowseBtn" Grid.Column="1" Content="_Browse…" MinWidth="80" Margin="6,0,0,0"
+                            Padding="10,3" Click="Browse_Click"
+                            AutomationProperties.Name="Choose the folder to save the update in"/>
+                </Grid>
+
+                <CheckBox x:Name="CloseFirstBox" Margin="0,12,0,0"
+                          Foreground="{DynamicResource ForegroundBrush}"
+                          AutomationProperties.Name="Close PdfEdit before installing the update">
+                    <TextBlock TextWrapping="Wrap"
+                               Text="Close PdfEdit (and any other PdfEdit windows) before installing, then start it again — recommended"/>
+                </CheckBox>
+                <TextBlock x:Name="CloseHintText" FontSize="11" Margin="20,3,0,0" TextWrapping="Wrap"
+                           Foreground="{DynamicResource DimForegroundBrush}"/>
+
+                <!-- Download progress -->
+                <StackPanel x:Name="ProgressPanel" Margin="0,14,0,0" Visibility="Collapsed">
+                    <ProgressBar x:Name="Progress" Height="8" Minimum="0" Maximum="1"
+                                 AutomationProperties.Name="Download progress"/>
+                    <TextBlock x:Name="ProgressText" FontSize="12" Margin="0,4,0,0"
+                               Foreground="{DynamicResource DimForegroundBrush}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <ProgressBar x:Name="CheckingBar" IsIndeterminate="True" Height="4" Margin="0,4,0,0"
+                         AutomationProperties.Name="Checking for updates"/>
+
+            <!-- Preferences -->
+            <Border Height="1" Background="{DynamicResource AppBorderBrush}" Margin="0,16,0,10"/>
+            <CheckBox x:Name="AtStartupBox" Content="Check for updates when PdfEdit _starts"
+                      Foreground="{DynamicResource ForegroundBrush}"/>
+            <CheckBox x:Name="PrereleaseBox" Content="Include _pre-release (beta) versions" Margin="0,6,0,0"
+                      Foreground="{DynamicResource ForegroundBrush}"
+                      Checked="Prerelease_Changed" Unchecked="Prerelease_Changed"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="16,12">
+            <Grid>
+                <Button x:Name="SkipBtn" Content="S_kip this version" HorizontalAlignment="Left" Padding="12,5"
+                        Visibility="Collapsed" Click="Skip_Click"
+                        AutomationProperties.Name="Skip this version"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="DownloadOnlyBtn" Content="_Download only" Padding="12,5" Margin="0,0,6,0"
+                            Visibility="Collapsed" Click="DownloadOnly_Click"
+                            AutomationProperties.Name="Download the update without installing it"/>
+                    <Button x:Name="PrimaryBtn" Content="Check _again" Padding="14,5" Margin="0,0,6,0" MinWidth="90"
+                            FontWeight="SemiBold" IsDefault="True" Click="Primary_Click"/>
+                    <Button x:Name="CloseBtn" Content="Close" MinWidth="90" Padding="12,5" IsCancel="True"
+                            Click="Close_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
