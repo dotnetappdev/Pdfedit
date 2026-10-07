@@ -253,6 +253,10 @@
                         <RibbonButton Icon="bi-file-image" Label="Pictures" Title="The pictures inside the PDF, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Pictures)" />
                     </div>
                 </RibbonGroup>
+                <RibbonGroup Title="Scan &amp; OCR">
+                    <RibbonButton Large Icon="bi-textarea-resize" Label="Recognise Text" Title="OCR: make scanned pages searchable and copyable" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Ocr)" />
+                    <RibbonButton Large Icon="bi-camera" Label="Scan with Camera" Title="Take photos of paper pages (or choose pictures) and make a PDF" OnClick="() => ShowDialog(DialogKind.ScanCamera)" />
+                </RibbonGroup>
                 <RibbonGroup Title="Convert">
                     <RibbonButton Large Icon="bi-archive" Label="PDF/A" Title="Make an archive-friendly copy" Disabled="NoDoc" OnClick="PdfAAsync" />
                     <RibbonButton Large Icon="bi-book-half" Label="Booklet" Title="Two pages per sheet, in folding order" Disabled="NoDoc" OnClick="BookletAsync" />

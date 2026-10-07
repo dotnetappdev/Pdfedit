@@ -9,6 +9,8 @@ builder.Services.AddRazorComponents()
 
 // Uploaded PDFs, read and filled with PdfEdit.Core and drawn with PdfEdit.Render (Pdfium).
 builder.Services.AddSingleton<PdfDocumentStore>();
+// OCR with the Tesseract program on the server (see Services/OcrEngine.cs).
+builder.Services.AddSingleton<OcrEngine>();
 
 var app = builder.Build();
 

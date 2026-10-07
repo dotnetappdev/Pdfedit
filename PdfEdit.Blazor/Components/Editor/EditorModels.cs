@@ -18,7 +18,7 @@ public enum DialogKind
 {
     None, Password, Properties, Watermark, PageNumbers, HeaderFooter, Bates, Protect, Sanitize,
     Resize, NUp, Signature, Note, Merge, InsertPdf, Combine, ExtractRange, DeleteRange, ImportData,
-    Statistics, Shortcuts, About, AiSettings, DetectFields, OpenDesign, DesignPicture,
+    Statistics, Shortcuts, About, AiSettings, DetectFields, OpenDesign, DesignPicture, Ocr, ScanCamera,
 }
 
 /// <summary>What a click (or drag) on the design page does.</summary>

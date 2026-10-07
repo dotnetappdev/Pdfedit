@@ -466,6 +466,58 @@
         </Modal>
         break;
 
+    case DialogKind.Ocr:
+        <Modal Title="Recognise Text (OCR)" OnClose="Close">
+            <ChildContent>
+                @if (_ocrLanguages == null)
+                {
+                    <p class="pe-hint">Checking the OCR engine…</p>
+                }
+                else if (_ocrLanguages.Count == 0)
+                {
+                    <p>@Editor.OcrMissing</p>
+                }
+                else
+                {
+                    <p class="pe-hint">Reads the text on scanned pages and adds it invisibly, so you can search, select and copy it. The pages look the same.</p>
+                    <label>Language</label>
+                    <select class="form-select" @bind="_ocrLang">
+                        @foreach (var l in _ocrLanguages) { <option value="@l">@LanguageName(l)</option> }
+                    </select>
+                    <label class="d-flex gap-2 mt-2"><input type="checkbox" @bind="_ocrSkip" /> Skip pages that already have text</label>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_ocrLanguages is not { Count: > 0 })" @onclick="() => Do(() => Ed.RunOcrAsync(_ocrLang, _ocrSkip))">Recognise text</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.ScanCamera:
+        <Modal Title="Scan with Camera" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">On a phone or tablet this opens the camera: take a photo of each page. On a computer, choose pictures of the pages. They become a PDF in the order you pick them.</p>
+                <InputFile class="form-control" accept="image/*" capture="environment" multiple OnChange="e => _files = e.GetMultipleFiles(50)" />
+                @if (_files.Count > 0) { <p class="mt-2 mb-1">@_files.Count page@(_files.Count == 1 ? "" : "s")</p> }
+                @if (_ocrLanguages is { Count: > 0 })
+                {
+                    <label class="d-flex gap-2 mt-2"><input type="checkbox" @bind="_scanOcr" /> Make it searchable (OCR)</label>
+                    @if (_scanOcr)
+                    {
+                        <select class="form-select mt-1" @bind="_ocrLang">
+                            @foreach (var l in _ocrLanguages) { <option value="@l">@LanguageName(l)</option> }
+                        </select>
+                    }
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.ScanImagesAsync(_files, _scanOcr && _ocrLanguages is { Count: > 0 }, _ocrLang))">Make PDF</button>
+            </Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>
@@ -511,6 +563,9 @@
     private bool _insertAtStart;
     private List<(string, string)>? _stats;
     private string _aiProvider = "", _aiKey = "";
+    private IReadOnlyList<string>? _ocrLanguages;
+    private string _ocrLang = "eng";
+    private bool _ocrSkip = true, _scanOcr = true;
 
     private ElementReference _sigCanvas;
     private bool _sigTyped, _sigPadReady;
@@ -537,6 +592,10 @@
         {
             case DialogKind.Password:
                 _password = "";
+                break;
+            case DialogKind.Ocr or DialogKind.ScanCamera:
+                _ocrLanguages = await Ed.Ocr.LanguagesAsync();
+                if (_ocrLanguages.Count > 0 && !_ocrLanguages.Contains(_ocrLang)) _ocrLang = _ocrLanguages.Contains("eng") ? "eng" : _ocrLanguages[0];
                 break;
             case DialogKind.AiSettings:
                 _aiProvider = Ed.AiProvider;
@@ -591,6 +650,16 @@
                 <option value="@v" selected="@(v == value)">@name</option>
             }
         </select>
+    };
+
+    private static string LanguageName(string code) => code switch
+    {
+        "eng" => "English", "deu" => "German", "fra" => "French", "spa" => "Spanish", "ita" => "Italian",
+        "por" => "Portuguese", "nld" => "Dutch", "pol" => "Polish", "swe" => "Swedish", "dan" => "Danish",
+        "nor" => "Norwegian", "fin" => "Finnish", "ces" => "Czech", "tur" => "Turkish", "rus" => "Russian",
+        "ukr" => "Ukrainian", "ell" => "Greek", "ara" => "Arabic", "heb" => "Hebrew", "hin" => "Hindi",
+        "jpn" => "Japanese", "kor" => "Korean", "chi_sim" => "Chinese (simplified)", "chi_tra" => "Chinese (traditional)",
+        _ => code,
     };
 
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;

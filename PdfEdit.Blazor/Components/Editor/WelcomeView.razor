@@ -15,6 +15,7 @@
         <button class="pe-btn" @onclick="() => ActAsync(Ed.NewBlankAsync)"><i class="bi bi-file-earmark-plus"></i> New blank PDF</button>
         <button class="pe-btn" @onclick="() => { Ed.ShowDialog(DialogKind.Combine); Ed.Refresh(); }"><i class="bi bi-file-earmark-image"></i> Create from images or files</button>
         <button class="pe-btn" @onclick="() => { Ed.NewDesignPage(); Ed.Refresh(); }"><i class="bi bi-pencil-square"></i> Design a form</button>
+        <button class="pe-btn" @onclick="() => { Ed.ShowDialog(DialogKind.ScanCamera); Ed.Refresh(); }"><i class="bi bi-camera"></i> Scan with camera</button>
     </div>
 
     @if (Ed.Samples.Count > 0)

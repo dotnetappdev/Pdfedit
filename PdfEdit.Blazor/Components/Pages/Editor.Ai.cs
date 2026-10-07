@@ -271,7 +271,7 @@ public partial class Editor
                 {"action":"add_bookmark","page":5,"title":"<title>"}
                 {"action":"zoom","percent":150}   or {"action":"zoom","mode":"fit_width"}
                 {"action":"command","name":"<command>"}
-                Commands: compress, export_word, export_excel, export_text, export_images, export_pdfa, flatten, greyscale, page_numbers, split, save, print.
+                Commands: ocr, compress, export_word, export_excel, export_text, export_images, export_pdfa, flatten, greyscale, page_numbers, split, save, print.
                 Example:
                 ```actions
                 [{"action":"fill_field","field":"FirstName","value":"Jane"}]
@@ -366,6 +366,7 @@ public partial class Editor
         "split" => SplitAsync(),
         "save" => SaveAsync(),
         "print" => PrintAsync(),
+        "ocr" => RunOcrAsync("eng", skipPagesWithText: true),
         _ => throw new InvalidOperationException($"“{name}” isn't available in the web version."),
     };
 
