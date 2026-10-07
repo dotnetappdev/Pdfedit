@@ -54,14 +54,20 @@ public static class UpdateInstaller
     /// Starts installing <paramref name="package"/>. With <paramref name="closeFirst"/> the update
     /// runs unattended and PdfEdit restarts when it's done (the caller then closes PdfEdit);
     /// otherwise the setup wizard is shown (installer), or the files are replaced once PdfEdit is
-    /// closed (ZIP). Returns false when the user declined the Windows administrator prompt.
+    /// closed (ZIP). With <paramref name="uninstallFirst"/> (setup installs only) the current version
+    /// is uninstalled before the new one is installed. Returns false when the user declined the
+    /// Windows administrator prompt.
     /// </summary>
-    public static bool Start(string package, InstallKind kind, bool closeFirst)
+    public static bool Start(string package, InstallKind kind, bool closeFirst, bool uninstallFirst = false)
     {
         try
         {
             switch (kind)
             {
+                case InstallKind.Installer when uninstallFirst:
+                    StartCleanInstall(package, relaunch: closeFirst);
+                    break;
+
                 case InstallKind.Installer:
                     // Inno Setup: /CLOSEAPPLICATIONS closes any PdfEdit still open and /RELAUNCH=1
                     // (read by PdfEditSetup.iss) starts it again after a silent install — once, so Setup's own
@@ -113,16 +119,38 @@ public static class UpdateInstaller
         }
     }
 
-    // ── ZIP ──────────────────────────────────────────────────────────────────
+    // ── Scripts (ZIP, and uninstall-then-install) ───────────────────────────
 
     private static void StartZipUpdate(string zip, bool relaunch)
     {
-        var work = Path.Combine(Path.GetTempPath(), "PdfEditUpdate");
-        Directory.CreateDirectory(work);
-        var script = Path.Combine(work, "apply-update.ps1");
-        bool elevate = !CanWriteTo(AppDir);
-        File.WriteAllText(script, BuildZipScript(zip, AppDir, ExePath, relaunch, elevate,
-            Path.Combine(work, "apply-update.log")), new UTF8Encoding(true));   // BOM: Windows PowerShell 5 reads UTF-8 only with one
+        bool elevate = !CanWriteTo(AppDir);   // e.g. the portable copy lives under Program Files
+        RunScript(BuildZipScript(zip, AppDir, ExePath, relaunch, elevate, LogPath), elevate);
+    }
+
+    /// <summary>
+    /// Uninstalls the installed version with its own uninstaller, then installs the new one into
+    /// the same folder. Both need administrator rights, so the script runs elevated (one prompt).
+    /// Settings, signatures and other data in %AppData%\PdfEdit are not touched by the uninstaller.
+    /// </summary>
+    private static void StartCleanInstall(string setup, bool relaunch) =>
+        RunScript(BuildCleanInstallScript(setup, AppDir, ExePath, relaunch, LogPath), elevate: true);
+
+    private static string WorkDir
+    {
+        get
+        {
+            var work = Path.Combine(Path.GetTempPath(), "PdfEditUpdate");
+            Directory.CreateDirectory(work);
+            return work;
+        }
+    }
+
+    private static string LogPath => Path.Combine(WorkDir, "apply-update.log");
+
+    private static void RunScript(string content, bool elevate)
+    {
+        var script = Path.Combine(WorkDir, "apply-update.ps1");
+        File.WriteAllText(script, content, new UTF8Encoding(true));   // BOM: Windows PowerShell 5 reads UTF-8 only with one
 
         var psi = new ProcessStartInfo("powershell.exe",
             $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"")
@@ -130,7 +158,7 @@ public static class UpdateInstaller
             UseShellExecute = true,
             WindowStyle = ProcessWindowStyle.Hidden,
         };
-        if (elevate) psi.Verb = "runas";   // e.g. the portable copy lives under Program Files
+        if (elevate) psi.Verb = "runas";
         Process.Start(psi);
     }
 
@@ -147,13 +175,51 @@ public static class UpdateInstaller
     }
 
     /// <summary>The PowerShell (5.1 compatible) that waits for PdfEdit to close and unpacks the ZIP over <paramref name="dest"/>.</summary>
-    public static string BuildZipScript(string zip, string dest, string exe, bool relaunch, bool elevated, string log)
+    public static string BuildZipScript(string zip, string dest, string exe, bool relaunch, bool elevated, string log) =>
+        BuildScript("unpacks the new version over the old one once PdfEdit has closed.",
+            zip, dest, exe, relaunch, elevated, log, """
+                $tmp = Join-Path ([IO.Path]::GetTempPath()) ('PdfEditUpdate\unpacked-' + [guid]::NewGuid().ToString('N'))
+                Log "Unpacking to $tmp"
+                Expand-Archive -LiteralPath $package -DestinationPath $tmp -Force
+                $src = $tmp
+                $items = @(Get-ChildItem -LiteralPath $tmp)
+                if ($items.Count -eq 1 -and $items[0].PSIsContainer) { $src = $items[0].FullName }
+                if (-not (Test-Path -LiteralPath (Join-Path $src 'PdfEdit.exe'))) { throw 'The update package does not contain PdfEdit.exe.' }
+
+                Log "Copying files"
+                # robocopy retries files that are briefly locked; exit codes below 8 mean success.
+                & robocopy $src $dest /E /R:10 /W:2 /NP /NFL /NDL /NJH /NJS | Out-Null
+                if ($LASTEXITCODE -ge 8) { throw "Copying the new files failed (robocopy exit code $LASTEXITCODE). Is PdfEdit still open?" }
+            """);
+
+    /// <summary>The PowerShell that waits for PdfEdit to close, uninstalls it, then runs the new setup into the same folder.</summary>
+    public static string BuildCleanInstallScript(string setup, string dest, string exe, bool relaunch, string log) =>
+        BuildScript("uninstalls the current version, then installs the new one in the same folder.",
+            setup, dest, exe, relaunch, elevated: true, log, """
+                $uninstaller = Join-Path $dest 'unins000.exe'
+                if (Test-Path -LiteralPath $uninstaller) {
+                    Log "Uninstalling the previous version"
+                    $u = Start-Process -FilePath $uninstaller -ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART' -PassThru -Wait
+                    # The uninstaller carries on from a copy in TEMP and deletes itself last: wait for that.
+                    $until = (Get-Date).AddMinutes(5)
+                    while ((Test-Path -LiteralPath $uninstaller) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 1 }
+                    if (Test-Path -LiteralPath $uninstaller) { throw "The previous version could not be uninstalled (exit code $($u.ExitCode))." }
+                    Start-Sleep -Seconds 2
+                }
+
+                Log "Installing $package"
+                $s = Start-Process -FilePath $package -ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $dest + '"') -PassThru -Wait
+                if ($s.ExitCode -ne 0) { throw "Setup did not finish (exit code $($s.ExitCode)). Run it again from:`n$package" }
+            """);
+
+    private static string BuildScript(string purpose, string package, string dest, string exe,
+        bool relaunch, bool elevated, string log, string steps)
     {
         static string Q(string s) => "'" + s.Replace("'", "''") + "'";
         var sb = new StringBuilder();
-        sb.AppendLine("# PdfEdit updater: unpacks the new version over the old one once PdfEdit has closed.");
+        sb.AppendLine("# PdfEdit updater: " + purpose);
         sb.AppendLine("$ErrorActionPreference = 'Stop'");
-        sb.AppendLine($"$zip = {Q(zip)}");
+        sb.AppendLine($"$package = {Q(package)}");
         sb.AppendLine($"$dest = {Q(dest)}");
         sb.AppendLine($"$exe = {Q(exe)}");
         sb.AppendLine($"$log = {Q(log)}");
@@ -170,7 +236,7 @@ public static class UpdateInstaller
             }
             $tmp = $null
             try {
-                Log "Update from $zip to $dest"
+                Log "Update from $package to $dest"
                 # Wait for PdfEdit to close. When it was asked to close for the update, give it two
                 # minutes; otherwise wait for the user to close it whenever they're ready.
                 $deadline = (Get-Date).AddMinutes(2)
@@ -180,20 +246,11 @@ public static class UpdateInstaller
                 }
                 Start-Sleep -Seconds 1
 
-                $tmp = Join-Path ([IO.Path]::GetTempPath()) ('PdfEditUpdate\unpacked-' + [guid]::NewGuid().ToString('N'))
-                Log "Unpacking to $tmp"
-                Expand-Archive -LiteralPath $zip -DestinationPath $tmp -Force
-                $src = $tmp
-                $items = @(Get-ChildItem -LiteralPath $tmp)
-                if ($items.Count -eq 1 -and $items[0].PSIsContainer) { $src = $items[0].FullName }
-                if (-not (Test-Path -LiteralPath (Join-Path $src 'PdfEdit.exe'))) { throw 'The update package does not contain PdfEdit.exe.' }
+            """);
+        sb.Append(steps);
+        sb.Append("""
 
-                Log "Copying files"
-                # robocopy retries files that are briefly locked; exit codes below 8 mean success.
-                & robocopy $src $dest /E /R:10 /W:2 /NP /NFL /NDL /NJH /NJS | Out-Null
-                if ($LASTEXITCODE -ge 8) { throw "Copying the new files failed (robocopy exit code $LASTEXITCODE). Is PdfEdit still open?" }
                 Log "Update installed"
-
                 if ($relaunch) {
                     # From an elevated script, start PdfEdit through Explorer so it runs as the normal user.
                     if ($elevated) { Start-Process explorer.exe -ArgumentList ('"' + $exe + '"') } else { Start-Process -FilePath $exe }
@@ -202,7 +259,7 @@ public static class UpdateInstaller
             catch {
                 Log "Failed: $($_.Exception.Message)"
                 Add-Type -AssemblyName PresentationFramework
-                [void][System.Windows.MessageBox]::Show("PdfEdit could not install the update.`n`n$($_.Exception.Message)`n`nThe downloaded file is still at:`n$zip", 'PdfEdit update', 'OK', 'Error')
+                [void][System.Windows.MessageBox]::Show("PdfEdit could not install the update.`n`n$($_.Exception.Message)`n`nThe downloaded file is still at:`n$package", 'PdfEdit update', 'OK', 'Error')
             }
             finally {
                 if ($tmp -and (Test-Path -LiteralPath $tmp)) { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }

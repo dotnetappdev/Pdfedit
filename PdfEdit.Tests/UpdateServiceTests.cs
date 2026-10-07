@@ -121,4 +121,15 @@ public class UpdateServiceTests
         var later = UpdateInstaller.BuildZipScript("z", "d", "e", relaunch: false, elevated: false, "l");
         Assert.Contains("$relaunch = $false", later);
     }
+
+    [Fact]
+    public void Clean_install_script_uninstalls_then_installs_into_the_same_folder()
+    {
+        var script = UpdateInstaller.BuildCleanInstallScript(@"C:\Dl\PdfEditSetup-1.3.0.exe", @"C:\Program Files\PdfEdit",
+            @"C:\Program Files\PdfEdit\PdfEdit.exe", relaunch: true, @"C:\Temp\log.txt");
+        int uninstall = script.IndexOf("unins000.exe", StringComparison.Ordinal);
+        int install = script.IndexOf("'/DIR=\"' + $dest + '\"'", StringComparison.Ordinal);
+        Assert.True(uninstall > 0 && install > uninstall);
+        Assert.Contains("$elevated = $true", script);   // relaunched through Explorer, as the normal user
+    }
 }
