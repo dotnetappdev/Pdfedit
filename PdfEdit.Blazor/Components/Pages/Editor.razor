@@ -297,6 +297,66 @@
                 </RibbonGroup>
                 break;
 
+            case RibbonTab.Design:
+                <RibbonGroup Title="View Mode">
+                    <RibbonButton Large Icon="bi-file-earmark-text" Label="Live View" Active="!DesignMode" OnClick="() => SetDesignMode(false)" />
+                    <RibbonButton Large Icon="bi-pencil-square" Label="Design" Active="DesignMode" OnClick="() => SetDesignMode(true)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Design File">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="New Design" OnClick="NewDesignPage" />
+                        <RibbonButton Icon="bi-download" Label="Save Design" Title="Download the design (.pdfdesign) to open later here or in the Windows app" OnClick="SaveDesignAsync" />
+                        <RibbonButton Icon="bi-folder2-open" Label="Open Design" OnClick="() => ShowDialog(DialogKind.OpenDesign)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-pdf" Label="Export PDF" Title="Download the design as a fillable PDF" OnClick="ExportDesignAsync" />
+                        <RibbonButton Icon="bi-box-arrow-in-right" Label="Open as PDF" Title="Make the PDF and open it in Live View to fill in or sign" OnClick="OpenDesignAsPdfAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Insert">
+                    <RibbonButton Large Icon="bi-cursor" Label="Select" Active="_designTool == DesignTool.Select" OnClick="() => { SetDesignMode(true); SetDesignTool(DesignTool.Select); }" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-fonts" Label="Text" Active="_designTool == DesignTool.Text" OnClick="() => StartDesignTool(DesignTool.Text)" />
+                        <RibbonButton Icon="bi-square" Label="Rectangle" Active="_designTool == DesignTool.Rectangle" OnClick="() => StartDesignTool(DesignTool.Rectangle)" />
+                        <RibbonButton Icon="bi-circle" Label="Ellipse" Active="_designTool == DesignTool.Ellipse" OnClick="() => StartDesignTool(DesignTool.Ellipse)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-slash-lg" Label="Line" Active="_designTool == DesignTool.Line" OnClick="() => StartDesignTool(DesignTool.Line)" />
+                        <RibbonButton Icon="bi-arrow-up-right" Label="Arrow" Active="_designTool == DesignTool.Arrow" OnClick="() => StartDesignTool(DesignTool.Arrow)" />
+                        <RibbonButton Icon="bi-table" Label="Table" Active="_designTool == DesignTool.Table" OnClick="() => StartDesignTool(DesignTool.Table)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-image" Label="Picture" OnClick="() => { SetDesignMode(true); ShowDialog(DialogKind.DesignPicture); }" />
+                        <RibbonButton Icon="bi-check-lg" Label="Tick" Active="_designTool == DesignTool.Check" OnClick="() => StartDesignTool(DesignTool.Check)" />
+                        <RibbonButton Icon="bi-x-lg" Label="Cross" Active="_designTool == DesignTool.Cross" OnClick="() => StartDesignTool(DesignTool.Cross)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Form Fields">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-input-cursor-text" Label="Text Field" Active="_designTool == DesignTool.TextField" OnClick="() => StartDesignTool(DesignTool.TextField)" />
+                        <RibbonButton Icon="bi-textarea-t" Label="Multi-line" Active="_designTool == DesignTool.Memo" OnClick="() => StartDesignTool(DesignTool.Memo)" />
+                        <RibbonButton Icon="bi-check2-square" Label="Checkbox" Active="_designTool == DesignTool.Checkbox" OnClick="() => StartDesignTool(DesignTool.Checkbox)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-record-circle" Label="Radio" Active="_designTool == DesignTool.Radio" OnClick="() => StartDesignTool(DesignTool.Radio)" />
+                        <RibbonButton Icon="bi-menu-button-wide" Label="Dropdown" Active="_designTool == DesignTool.ComboBox" OnClick="() => StartDesignTool(DesignTool.ComboBox)" />
+                        <RibbonButton Icon="bi-pen" Label="Signature" Active="_designTool == DesignTool.Signature" OnClick="() => StartDesignTool(DesignTool.Signature)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Arrange">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-front" Label="Bring to Front" Disabled="@(SelectedDesignItem == null)" OnClick="BringToFront" />
+                        <RibbonButton Icon="bi-back" Label="Send to Back" Disabled="@(SelectedDesignItem == null)" OnClick="SendToBack" />
+                        <RibbonButton Icon="bi-copy" Label="Duplicate" Disabled="@(SelectedDesignItem == null)" OnClick="DuplicateDesignItem" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-trash" Label="Delete" Disabled="@(SelectedDesignItem == null)" OnClick="DeleteDesignItem" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Disabled="!CanUndoDesign" OnClick="UndoDesign" />
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="Redo" Disabled="!CanRedoDesign" OnClick="RedoDesign" />
+                    </div>
+                </RibbonGroup>
+                break;
+
             case RibbonTab.Help:
                 <RibbonGroup Title="Learn">
                     <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
@@ -345,7 +405,29 @@
 
         <main class="pe-viewer" @ref="_viewer" aria-label="Document">
             @if (_busy) { <div class="pe-busy" role="progressbar" aria-label="Working"></div> }
-            @if (Doc == null)
+            <div class="pe-viewswitch" role="tablist" aria-label="View">
+                <button class="@(DesignMode ? "" : "active")" role="tab" aria-selected="@(!DesignMode)" @onclick="() => SetDesignMode(false)"><i class="bi bi-file-earmark-text"></i> Live View</button>
+                <button class="@(DesignMode ? "active" : "")" role="tab" aria-selected="@DesignMode" @onclick="() => SetDesignMode(true)"><i class="bi bi-pencil-square"></i> Design</button>
+            </div>
+            @if (DesignMode)
+            {
+                var (dw, dh) = DesignSize;
+                <div class="pe-pages" @onclick="() => SelectedDesignId = null">
+                    <div class="pe-page pe-design-page" style="width:@Css(DesignWidthPx)px;height:@Css(DesignHeightPx)px;background:@DesignColor.ToCss(Design.BgColor, "#fff")">
+                        @foreach (var item in Design.Elements ?? [])
+                        {
+                            <DesignItemView @key="item.Id" Ed="this" Item="item" PageW="dw" PageH="dh" />
+                        }
+                        @if (_designTool != DesignTool.Select)
+                        {
+                            <div class="pe-tool-layer" title="Click to add, or drag to draw at a size" @onclick:stopPropagation="true"
+                                 @onmousedown="DesignDown" @onmouseup="DesignUp"></div>
+                        }
+                        <div class="pe-page-label">@_designName</div>
+                    </div>
+                </div>
+            }
+            else if (Doc == null)
             {
                 <WelcomeView Ed="this" />
             }

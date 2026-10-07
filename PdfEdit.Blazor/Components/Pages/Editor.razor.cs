@@ -601,8 +601,8 @@ public partial class Editor
             case "Ctrl+o": OpenBackstage(Backstage.Open); break;
             case "Ctrl+s": await SaveAsync(); break;
             case "Ctrl+p": await PrintAsync(); break;
-            case "Ctrl+z": await UndoAsync(); break;
-            case "Ctrl+y" or "Shift+Ctrl+z": await RedoAsync(); break;
+            case "Ctrl+z": if (DesignMode) UndoDesign(); else await UndoAsync(); break;
+            case "Ctrl+y" or "Shift+Ctrl+z": if (DesignMode) RedoDesign(); else await RedoAsync(); break;
             case "Ctrl+f": _tab = RibbonTab.Home; ShowRight(RightTab.Search); break;
             case "Ctrl+=" or "Ctrl++": Zoom(1.25); break;
             case "Ctrl+-": Zoom(0.8); break;
@@ -610,6 +610,8 @@ public partial class Editor
             case "Escape":
                 if (_dialog != DialogKind.None) CloseDialog();
                 else if (_backstage != null) _backstage = null;
+                else if (DesignMode && _designTool != DesignTool.Select) SetDesignTool(DesignTool.Select);
+                else if (DesignMode) SelectedDesignId = null;
                 else if (_tool != Tool.Select) SetTool(Tool.Select);
                 else SelectedWidget = null;
                 break;

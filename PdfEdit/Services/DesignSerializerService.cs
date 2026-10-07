@@ -10,12 +10,6 @@ namespace PdfEdit.Services;
 /// <summary>Serializes/deserializes a design canvas to/from a .pdfdesign JSON file.</summary>
 public static class DesignSerializerService
 {
-    private static readonly JsonSerializerOptions _opts = new()
-    {
-        WriteIndented  = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
-
     // ── Public API ────────────────────────────────────────────────────────────
 
     public static void Save(
@@ -25,7 +19,7 @@ public static class DesignSerializerService
         Color bgColor,
         string path)
     {
-        var doc = new DesignDoc
+        var doc = new DesignDocument
         {
             PageSize      = pageSize.ToString(),
             CustomWidth   = customW,
@@ -33,14 +27,12 @@ public static class DesignSerializerService
             BgColor       = ColorToHex(bgColor),
             Elements      = elements.OrderBy(e => e.ZOrder).Select(ToDto).ToList()
         };
-        File.WriteAllText(path, JsonSerializer.Serialize(doc, _opts));
+        File.WriteAllText(path, doc.ToJson());
     }
 
     public static (List<DesignElement> Elements, DesignPageSize PageSize, double CustomW, double CustomH, Color BgColor) Load(string path)
     {
-        var json = File.ReadAllText(path);
-        var doc  = JsonSerializer.Deserialize<DesignDoc>(json, _opts)
-                   ?? throw new InvalidDataException("Invalid design file.");
+        var doc = DesignDocument.FromJson(File.ReadAllText(path));
 
         var pageSize = Enum.TryParse<DesignPageSize>(doc.PageSize, out var ps) ? ps : DesignPageSize.A4;
         var bgColor  = ParseColor(doc.BgColor);
@@ -58,81 +50,14 @@ public static class DesignSerializerService
         return (elements, pageSize, doc.CustomWidth, doc.CustomHeight, bgColor);
     }
 
-    // ── DTO ───────────────────────────────────────────────────────────────────
-
-    private class DesignDoc
-    {
-        public string  PageSize     { get; set; } = "A4";
-        public double  CustomWidth  { get; set; } = 595;
-        public double  CustomHeight { get; set; } = 842;
-        public string? BgColor      { get; set; }
-        public List<ElementDto>? Elements { get; set; }
-    }
-
-    private class ElementDto
-    {
-        public string   Type         { get; set; } = "";
-        // base
-        public double   X            { get; set; }
-        public double   Y            { get; set; }
-        public double   W            { get; set; }
-        public double   H            { get; set; }
-        public double   Opacity      { get; set; } = 1.0;
-        public bool     IsLocked     { get; set; }
-        // text
-        public string?  Text         { get; set; }
-        public string?  FontFamily   { get; set; }
-        public double   FontSize     { get; set; }
-        public bool     Bold         { get; set; }
-        public bool     Italic       { get; set; }
-        public bool     Underline    { get; set; }
-        public string?  Color        { get; set; }
-        public string?  BgColor      { get; set; }
-        public string?  Alignment    { get; set; }
-        // shape
-        public string?  ShapeType    { get; set; }
-        public string?  FillColor    { get; set; }
-        public string?  StrokeColor  { get; set; }
-        public double   StrokeThick  { get; set; }
-        public double   CornerRadius { get; set; }
-        // image
-        public string?  FilePath     { get; set; }
-        // freehand
-        public double   Thickness    { get; set; }
-        public List<List<PointDto>>? Strokes { get; set; }
-        // line / arrow direction
-        public bool FlipX { get; set; }
-        public bool FlipY { get; set; }
-        // table
-        public int     Rows          { get; set; }
-        public int     Columns       { get; set; }
-        public string? BorderColor   { get; set; }
-        public string? HeaderBgColor { get; set; }
-        public string? CellBgColor   { get; set; }
-        public double  BorderThick   { get; set; }
-        public List<List<string>>? Cells { get; set; }
-        // form field
-        public string? FieldKind        { get; set; }
-        public string? FieldName        { get; set; }
-        public string? Label            { get; set; }
-        public string? LabelPosition    { get; set; }
-        public double  LabelOffset      { get; set; }
-        public bool    Required         { get; set; }
-        public bool    Wrap             { get; set; } = true;
-        public string? OptionsCsv       { get; set; }
-        public string? Value            { get; set; }
-        public string? ExportValue      { get; set; }
-        // Fill & Sign signature image (base64 PNG)
-        public string? Signature        { get; set; }
-    }
-
-    private class PointDto { public double X { get; set; } public double Y { get; set; } }
+    // ── File format ──────────────────────────────────────────────────────────
+    // The JSON shape lives in PdfEdit.Core (DesignDocument / DesignItem), shared with the web version.
 
     // ── Serialization helpers ─────────────────────────────────────────────────
 
-    private static ElementDto ToDto(DesignElement e)
+    private static DesignItem ToDto(DesignElement e)
     {
-        var dto = new ElementDto
+        var dto = new DesignItem
         {
             X = e.X, Y = e.Y, W = e.Width, H = e.Height,
             Opacity = e.Opacity, IsLocked = e.IsLocked
@@ -191,7 +116,7 @@ public static class DesignSerializerService
                 dto.Type      = "freehand";
                 dto.Color     = ColorToHex(fh.Color);
                 dto.Thickness = fh.Thickness;
-                dto.Strokes   = fh.Strokes.Select(s => s.Select(p => new PointDto { X = p.X, Y = p.Y }).ToList()).ToList();
+                dto.Strokes   = fh.Strokes.Select(s => s.Select(p => new DesignPoint { X = p.X, Y = p.Y }).ToList()).ToList();
                 break;
 
             case TableDesignElement tb:
@@ -209,7 +134,7 @@ public static class DesignSerializerService
         return dto;
     }
 
-    private static DesignElement? FromDto(ElementDto dto) => dto.Type switch
+    private static DesignElement? FromDto(DesignItem dto) => dto.Type switch
     {
         "text"     => new TextDesignElement
         {
@@ -280,7 +205,7 @@ public static class DesignSerializerService
         _ => null
     };
 
-    private static TableDesignElement BuildTable(ElementDto dto)
+    private static TableDesignElement BuildTable(DesignItem dto)
     {
         var tb = new TableDesignElement
         {
@@ -298,7 +223,7 @@ public static class DesignSerializerService
         return tb;
     }
 
-    private static DesignElement LoadSignature(ElementDto dto)
+    private static DesignElement LoadSignature(DesignItem dto)
     {
         var png = Convert.FromBase64String(dto.Signature!);
         System.Windows.Media.Imaging.BitmapImage? bmp = null;

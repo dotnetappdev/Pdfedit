@@ -3,6 +3,10 @@
 {
     <AiPanel Ed="Ed" />
 }
+else if (Ed.DesignMode && Ed.RightPanelTab == RightTab.Properties)
+{
+    <DesignProps Ed="Ed" />
+}
 else if (Ed.Doc is not { } doc)
 {
     <p class="pe-hint">Open a PDF to see its @Ed.RightPanelTab.ToString().ToLowerInvariant() here.</p>

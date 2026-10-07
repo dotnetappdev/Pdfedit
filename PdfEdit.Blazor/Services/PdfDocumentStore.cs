@@ -295,6 +295,27 @@ public sealed class PdfDocumentStore : IDisposable
         return File.Exists(path) ? path : null;
     }
 
+    /// <summary>
+    /// A file to download that doesn't belong to an open document (a design, for instance).
+    /// <paramref name="write"/>(path) writes it; returns its URL. Removed after two hours.
+    /// </summary>
+    public async Task<string> StageDownloadAsync(string fileName, Action<string> write)
+    {
+        var id = Guid.NewGuid().ToString("N");
+        var folder = Path.Combine(_root, "downloads", id);
+        Directory.CreateDirectory(folder);
+        var name = SafeName(fileName);
+        await Task.Run(() => write(Path.Combine(folder, name)));
+        return $"/downloads/{id}/{Uri.EscapeDataString(name)}";
+    }
+
+    public string? DownloadPath(string id, string name)
+    {
+        if (!Guid.TryParseExact(id, "N", out _)) return null;
+        var path = Path.Combine(_root, "downloads", id, SafeName(name));
+        return File.Exists(path) ? path : null;
+    }
+
     /// <summary>Keeps just a plain file name (no folders), so it can't point outside the session.</summary>
     public static string SafeName(string? name)
     {
@@ -308,6 +329,14 @@ public sealed class PdfDocumentStore : IDisposable
         foreach (var (id, s) in _sessions)
             if (DateTime.UtcNow - s.LastUsedUtc > Idle && _sessions.TryRemove(id, out _))
                 s.Dispose();
+        try
+        {
+            var downloads = new DirectoryInfo(Path.Combine(_root, "downloads"));
+            if (downloads.Exists)
+                foreach (var d in downloads.GetDirectories())
+                    if (DateTime.UtcNow - d.CreationTimeUtc > Idle) d.Delete(true);
+        }
+        catch { /* best effort */ }
     }
 
     public void Dispose()

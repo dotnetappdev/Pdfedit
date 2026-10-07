@@ -74,6 +74,11 @@ public partial class Editor
     [JSInvokable]
     public Task OnBoxMoved(string key, double leftPct, double topPct, double widthPct, double heightPct)
     {
+        if (key.StartsWith("d:"))
+        {
+            DesignBoxMoved(key[2..], leftPct, topPct, widthPct, heightPct);
+            return InvokeAsync(StateHasChanged);
+        }
         if (Doc == null) return Task.CompletedTask;
         if (key.StartsWith("f:"))
         {
@@ -243,6 +248,7 @@ public partial class Editor
     [JSInvokable]
     public Task OnDeleteKey()
     {
+        if (DesignMode && SelectedDesignItem != null) { DeleteDesignItem(); return InvokeAsync(StateHasChanged); }
         if (PrepareMode && SelectedWidget != null) { DeleteSelectedField(); return InvokeAsync(StateHasChanged); }
         return Task.CompletedTask;
     }

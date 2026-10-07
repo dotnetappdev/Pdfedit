@@ -440,6 +440,32 @@
         </Modal>
         break;
 
+    case DialogKind.OpenDesign:
+        <Modal Title="Open Design" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Choose a .pdfdesign file saved here or in the PdfEdit Windows app.</p>
+                <InputFile class="form-control" accept=".pdfdesign,.json" OnChange="e => _files = [e.File]" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.OpenDesignAsync(_files[0]))">Open</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.DesignPicture:
+        <Modal Title="Insert Picture" OnClose="Close">
+            <ChildContent>
+                <InputFile class="form-control" accept=".png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff" OnChange="e => _files = [e.File]" />
+                <p class="pe-hint mt-1 mb-0">The picture is kept inside the design.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.AddDesignPictureAsync(_files[0]))">Insert</button>
+            </Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>

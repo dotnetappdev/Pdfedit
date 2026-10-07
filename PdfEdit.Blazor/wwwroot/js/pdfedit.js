@@ -13,7 +13,7 @@ window.pdfedit = (() => {
                 for (const [p, r] of visible) if (r > ratio) { ratio = r; best = p; }
                 if (best >= 0) dotnet.invokeMethodAsync('OnPageInView', best);
             }, { root: viewer, threshold: [0, .25, .5, .75, 1] });
-            viewer.querySelectorAll('.pe-page').forEach(p => pageObserver.observe(p));
+            viewer.querySelectorAll('.pe-page[data-page]').forEach(p => pageObserver.observe(p));
         },
 
         scrollToPage(index, smooth) {

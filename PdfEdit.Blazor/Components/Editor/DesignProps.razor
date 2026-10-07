@@ -1,0 +1,195 @@
+@* Properties of the selected design element (or of the page when nothing is selected). *@
+@if (Ed.SelectedDesignItem is not { } e)
+{
+    <h3>Design page</h3>
+    <div class="pe-props">
+        <label>Page size</label>
+        <select class="form-select form-select-sm" value="@Ed.Design.PageSize" @onchange="PageSizeChanged">
+            <option>A4</option><option>Letter</option><option>A3</option>
+        </select>
+        <label>Background</label>
+        <input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(Ed.Design.BgColor, "#ffffff")" @onchange="BackgroundChanged" />
+        <p class="pe-hint mt-2">@(Ed.Design.Elements?.Count ?? 0) element@((Ed.Design.Elements?.Count ?? 0) == 1 ? "" : "s"). Click one to change it; use the Design tab to add more.</p>
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-baseline">
+        <h3>@Capital(Editor.DesignItemName(e))</h3>
+        <button class="pe-icon-btn ms-auto" title="Delete (Del)" aria-label="Delete" @onclick="() => Act(Ed.DeleteDesignItem)"><i class="bi bi-trash"></i></button>
+    </div>
+    <div class="pe-props">
+        @switch (e.Type)
+        {
+            case "text":
+                <label>Text</label>
+                <textarea class="form-control form-control-sm" rows="3" @bind="e.Text" @bind:event="oninput" @bind:after="Ed.Refresh" @onfocus="Ed.DesignCheckpoint"></textarea>
+                <div class="row g-2 mt-1">
+                    <div class="col-6"><label>Size</label><input class="form-control form-control-sm" type="number" min="4" max="200" @bind="e.FontSize" @bind:after="Ed.Refresh" /></div>
+                    <div class="col-6"><label>Colour</label><input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(e.Color)" @onchange="ev => SetColor(c => e.Color = c, ev)" /></div>
+                </div>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    <label class="pe-check-label"><input type="checkbox" @bind="e.Bold" @bind:after="Ed.Refresh" /> Bold</label>
+                    <label class="pe-check-label"><input type="checkbox" @bind="e.Italic" @bind:after="Ed.Refresh" /> Italic</label>
+                    <label class="pe-check-label"><input type="checkbox" @bind="e.Underline" @bind:after="Ed.Refresh" /> Underline</label>
+                    <label class="pe-check-label"><input type="checkbox" @bind="e.Wrap" @bind:after="Ed.Refresh" /> Wrap</label>
+                </div>
+                <label>Alignment</label>
+                <select class="form-select form-select-sm" @bind="e.Alignment" @bind:after="Ed.Refresh">
+                    <option value="Left">Left</option><option value="Center">Centre</option><option value="Right">Right</option><option value="Justify">Justify</option>
+                </select>
+                <label>Background</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="color" class="form-control form-control-color" value="@(DesignColor.IsVisible(e.BgColor) ? DesignColor.ToRgb(e.BgColor) : "#ffffff")" @onchange="ev => SetColor(c => e.BgColor = c, ev)" />
+                    <button class="pe-btn" @onclick="() => Clear(c => e.BgColor = c)">None</button>
+                </div>
+                break;
+
+            case "shape":
+                @if (e.ShapeType is "Rectangle" or "Ellipse")
+                {
+                    <label>Fill</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="color" class="form-control form-control-color" value="@(DesignColor.IsVisible(e.FillColor) ? DesignColor.ToRgb(e.FillColor) : "#ffffff")" @onchange="ev => SetColor(c => e.FillColor = c, ev)" />
+                        <button class="pe-btn" @onclick="() => Clear(c => e.FillColor = c)">None</button>
+                    </div>
+                }
+                <label>Line colour</label>
+                <input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(e.StrokeColor)" @onchange="ev => SetColor(c => e.StrokeColor = c, ev)" />
+                <div class="row g-2 mt-1">
+                    <div class="col-6"><label>Line width</label><input class="form-control form-control-sm" type="number" min="0" max="40" step="0.5" @bind="e.StrokeThick" @bind:after="Ed.Refresh" /></div>
+                    @if (e.ShapeType == "Rectangle")
+                    {
+                        <div class="col-6"><label>Corner radius</label><input class="form-control form-control-sm" type="number" min="0" max="200" @bind="e.CornerRadius" @bind:after="Ed.Refresh" /></div>
+                    }
+                </div>
+                @if (e.ShapeType is "Line" or "Arrow")
+                {
+                    <div class="d-flex gap-3 mt-2">
+                        <label class="pe-check-label"><input type="checkbox" @bind="e.FlipX" @bind:after="Ed.Refresh" /> Flip across</label>
+                        <label class="pe-check-label"><input type="checkbox" @bind="e.FlipY" @bind:after="Ed.Refresh" /> Flip up/down</label>
+                    </div>
+                }
+                break;
+
+            case "table":
+                <div class="row g-2">
+                    <div class="col-6"><label>Rows</label><input class="form-control form-control-sm" type="number" min="1" max="40" value="@e.Rows" @onchange="ev => Change(() => { e.Rows = Math.Clamp(int.TryParse(ev.Value?.ToString(), out var r) ? r : e.Rows, 1, 40); e.FitCells(); })" /></div>
+                    <div class="col-6"><label>Columns</label><input class="form-control form-control-sm" type="number" min="1" max="12" value="@e.Columns" @onchange="ev => Change(() => { e.Columns = Math.Clamp(int.TryParse(ev.Value?.ToString(), out var c) ? c : e.Columns, 1, 12); e.FitCells(); })" /></div>
+                </div>
+                <label>Cells</label>
+                <div class="pe-cellgrid" style="grid-template-columns:repeat(@e.Columns, 1fr)">
+                    @{ e.FitCells(); }
+                    @for (int r = 0; r < e.Rows; r++)
+                    {
+                        for (int c = 0; c < e.Columns; c++)
+                        {
+                            int row = r, col = c;
+                            <input class="form-control form-control-sm" value="@e.Cell(r, c)" aria-label="Row @(r + 1) column @(c + 1)" @onchange="ev => SetCell(e, row, col, ev)" />
+                        }
+                    }
+                </div>
+                <div class="row g-2 mt-1">
+                    <div class="col-4"><label>Header</label><input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(e.HeaderBgColor, "#dce6f5")" @onchange="ev => SetColor(x => e.HeaderBgColor = x, ev)" /></div>
+                    <div class="col-4"><label>Cells</label><input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(e.CellBgColor, "#ffffff")" @onchange="ev => SetColor(x => e.CellBgColor = x, ev)" /></div>
+                    <div class="col-4"><label>Border</label><input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(e.BorderColor)" @onchange="ev => SetColor(x => e.BorderColor = x, ev)" /></div>
+                </div>
+                break;
+
+            case "field":
+                <label>Field name</label>
+                <input class="form-control form-control-sm" @bind="e.FieldName" @bind:after="Ed.Refresh" />
+                <label>Label</label>
+                <input class="form-control form-control-sm" @bind="e.Label" @bind:after="Ed.Refresh" />
+                <div class="row g-2 mt-1">
+                    <div class="col-7">
+                        <label>Label position</label>
+                        <select class="form-select form-select-sm" @bind="e.LabelPosition" @bind:after="Ed.Refresh">
+                            <option value="Left">Left of the box</option><option value="Right">Right of the box</option>
+                            <option value="Placeholder">Inside (tooltip)</option><option value="None">None</option>
+                        </select>
+                    </div>
+                    <div class="col-5"><label>Gap</label><input class="form-control form-control-sm" type="number" min="0" max="60" @bind="e.LabelOffset" @bind:after="Ed.Refresh" /></div>
+                </div>
+                @if (e.FieldKind == "ComboBox")
+                {
+                    <label>Choices (separated by commas)</label>
+                    <input class="form-control form-control-sm" @bind="e.OptionsCsv" @bind:after="Ed.Refresh" />
+                }
+                @if (e.FieldKind is "Text" or "Memo" or "ComboBox")
+                {
+                    <label>Starting value</label>
+                    <input class="form-control form-control-sm" @bind="e.Value" @bind:after="Ed.Refresh" />
+                }
+                @if (e.FieldKind == "Radio")
+                {
+                    <p class="pe-hint mt-1 mb-0">Option buttons with the same field name form one group; each one's label is its value.</p>
+                }
+                <label class="pe-check-label mt-2"><input type="checkbox" @bind="e.Required" @bind:after="Ed.Refresh" /> Required</label>
+                break;
+
+            case "image":
+                <p class="pe-hint mb-0">Drag the corner to resize; the picture keeps its proportions in the PDF.</p>
+                break;
+        }
+
+        <label>Opacity: @((int)(e.Opacity * 100))%</label>
+        <input type="range" class="form-range" min="0.1" max="1" step="0.05" @bind="e.Opacity" @bind:event="oninput" @bind:after="Ed.Refresh" />
+        <div class="row g-2">
+            <div class="col-3"><label>X</label><input class="form-control form-control-sm" type="number" value="@Math.Round(e.X)" @onchange="ev => Num(v => e.X = v, ev)" /></div>
+            <div class="col-3"><label>Y</label><input class="form-control form-control-sm" type="number" value="@Math.Round(e.Y)" @onchange="ev => Num(v => e.Y = v, ev)" /></div>
+            <div class="col-3"><label>Width</label><input class="form-control form-control-sm" type="number" value="@Math.Round(e.W)" @onchange="ev => Num(v => e.W = Math.Max(1, v), ev)" /></div>
+            <div class="col-3"><label>Height</label><input class="form-control form-control-sm" type="number" value="@Math.Round(e.H)" @onchange="ev => Num(v => e.H = Math.Max(1, v), ev)" /></div>
+        </div>
+        <label class="pe-check-label mt-2"><input type="checkbox" @bind="e.IsLocked" @bind:after="Ed.Refresh" /> Locked (can't be moved)</label>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            <button class="pe-btn" @onclick="() => Act(Ed.DuplicateDesignItem)"><i class="bi bi-copy"></i> Duplicate</button>
+            <button class="pe-btn" @onclick="() => Act(Ed.BringToFront)"><i class="bi bi-front"></i> Front</button>
+            <button class="pe-btn" @onclick="() => Act(Ed.SendToBack)"><i class="bi bi-back"></i> Back</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private static string Capital(string s) => s.Length == 0 ? s : char.ToUpper(s[0]) + s[1..];
+
+    private void PageSizeChanged(ChangeEventArgs e)
+    {
+        Ed.SetDesignPage(e.Value?.ToString() ?? "A4");
+        Ed.Refresh();
+    }
+
+    private void BackgroundChanged(ChangeEventArgs e)
+    {
+        Ed.SetDesignBackground(e.Value?.ToString() ?? "#ffffff");
+        Ed.Refresh();
+    }
+
+    private void Clear(Action<string> set) => Change(() => set("#00000000"));
+
+    private void SetCell(DesignItem e, int row, int col, ChangeEventArgs ev) => Change(() => e.Cells![row][col] = ev.Value?.ToString() ?? "");
+
+    private void Change(Action change)
+    {
+        Ed.DesignCheckpoint();
+        change();
+        Ed.Refresh();
+    }
+
+    private void SetColor(Action<string> set, ChangeEventArgs e) =>
+        Change(() => set("#FF" + (e.Value?.ToString() ?? "#000000").TrimStart('#').ToUpperInvariant()));
+
+    private void Num(Action<double> set, ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+            Change(() => set(v));
+    }
+
+    private void Act(Action action)
+    {
+        action();
+        Ed.Refresh();
+    }
+}

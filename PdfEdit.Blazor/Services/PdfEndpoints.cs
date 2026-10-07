@@ -28,6 +28,20 @@ public static class PdfEndpoints
                 : Results.File(bytes, "application/pdf", session.FileName);
         });
 
+        // Downloads that don't belong to a document (designs).
+        app.MapGet("/downloads/{id}/{name}", (string id, string name, PdfDocumentStore store) =>
+        {
+            var path = store.DownloadPath(id, name);
+            if (path == null) return Results.NotFound();
+            var type = Path.GetExtension(path).ToLowerInvariant() switch
+            {
+                ".pdf" => "application/pdf",
+                ".pdfdesign" or ".json" => "application/json",
+                _ => "application/octet-stream",
+            };
+            return Results.File(File.ReadAllBytes(path), type, Path.GetFileName(path));
+        });
+
         // Files made by Save As, Export, Split, Extract and so on.
         app.MapGet("/documents/{id}/exports/{name}", (string id, string name, PdfDocumentStore store) =>
         {

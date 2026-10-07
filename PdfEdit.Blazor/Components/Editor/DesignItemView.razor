@@ -1,0 +1,118 @@
+@* One element on the design page, drawn with HTML/SVG to look like the exported PDF. *@
+@{
+    var e = Item;
+    var (pw, ph) = (PageW, PageH);
+    var selected = Ed.SelectedDesignId == e.Id;
+    string Pct(double v, double of) => Editor.Css(v / of * 100);
+    string Cqw(double pt) => Editor.Css(pt / pw * 100) + "cqw";
+    var box = $"left:{Pct(e.X, pw)}%;top:{Pct(e.Y, ph)}%;width:{Pct(e.W, pw)}%;height:{Pct(e.H, ph)}%;opacity:{Editor.Css(e.Opacity)}";
+}
+<div class="pe-ditem @(selected ? "selected" : "")" style="@box" data-drag="@(e.IsLocked ? null : $"d:{e.Id}")"
+     @onclick="Select" @onclick:stopPropagation="true" title="@Editor.DesignItemName(e)">
+    @switch (e.Type)
+    {
+        case "text":
+            <div class="pe-dtext" style="@TextStyle(e, Cqw)">@e.Text</div>
+            break;
+        case "shape" when e.ShapeType is "Line" or "Arrow":
+            var x1 = e.FlipX ? 100 : 0; var y1 = e.FlipY ? 100 : 0;
+            var x2 = e.FlipX ? 0 : 100; var y2 = e.FlipY ? 0 : 100;
+            <svg class="pe-dsvg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="@x1" y1="@y1" x2="@x2" y2="@y2" stroke="@DesignColor.ToCss(e.StrokeColor, "#000")" stroke-width="@Editor.Css(Math.Max(1, e.StrokeThick))" vector-effect="non-scaling-stroke" />
+            </svg>
+            @if (e.ShapeType == "Arrow")
+            {
+                <svg class="pe-dsvg" viewBox="0 0 @Editor.Css(Math.Max(1, e.W)) @Editor.Css(Math.Max(1, e.H))">
+                    @{
+                        double ax2 = e.FlipX ? 0 : e.W, ay2 = e.FlipY ? 0 : e.H, ax1 = e.FlipX ? e.W : 0, ay1 = e.FlipY ? e.H : 0;
+                        double ang = Math.Atan2(ay2 - ay1, ax2 - ax1), al = Math.Max(10, e.StrokeThick * 4);
+                        var p1 = $"{Editor.Css(ax2 - al * Math.Cos(ang - 0.4))},{Editor.Css(ay2 - al * Math.Sin(ang - 0.4))}";
+                        var p2 = $"{Editor.Css(ax2 - al * Math.Cos(ang + 0.4))},{Editor.Css(ay2 - al * Math.Sin(ang + 0.4))}";
+                    }
+                    <polyline points="@p1 @Editor.Css(ax2),@Editor.Css(ay2) @p2" fill="none" stroke="@DesignColor.ToCss(e.StrokeColor, "#000")" stroke-width="@Editor.Css(Math.Max(1, e.StrokeThick))" stroke-linecap="round" />
+                </svg>
+            }
+            break;
+        case "shape":
+            <div class="pe-dshape" style="@ShapeStyle(e, Cqw)"></div>
+            break;
+        case "image":
+            @if (!string.IsNullOrEmpty(e.Signature))
+            {
+                <img class="pe-dimg" src="data:image/png;base64,@e.Signature" alt="Picture" />
+            }
+            else
+            {
+                <div class="pe-dmissing">Picture (@Path.GetFileName(e.FilePath ?? "missing"))</div>
+            }
+            break;
+        case "freehand":
+            <svg class="pe-dsvg" viewBox="@Editor.Css(e.X) @Editor.Css(e.Y) @Editor.Css(Math.Max(1, e.W)) @Editor.Css(Math.Max(1, e.H))" preserveAspectRatio="none">
+                @foreach (var s in DesignPdfExporter.StrokesInBox(e))
+                {
+                    <polyline points="@string.Join(" ", s.Select(p => $"{Editor.Css(p.X)},{Editor.Css(p.Y)}"))" fill="none" stroke="@DesignColor.ToCss(e.Color, "#000")" stroke-width="@Editor.Css(e.Thickness > 0 ? e.Thickness : 2)" stroke-linecap="round" stroke-linejoin="round" />
+                }
+            </svg>
+            break;
+        case "table":
+            <div class="pe-dtable" style="grid-template-columns:repeat(@Math.Max(1, e.Columns),1fr);grid-template-rows:repeat(@Math.Max(1, e.Rows),1fr);font-size:@Cqw(8)">
+                @for (int r = 0; r < e.Rows; r++)
+                {
+                    for (int c = 0; c < e.Columns; c++)
+                    {
+                        <div style="background:@DesignColor.ToCss(r == 0 ? e.HeaderBgColor : e.CellBgColor, r == 0 ? "#dce6f5" : "#fff");border:@Editor.Css(Math.Max(0.5, e.BorderThick))px solid @DesignColor.ToCss(e.BorderColor, "#000");font-weight:@(r == 0 ? "600" : "400")">@e.Cell(r, c)</div>
+                    }
+                }
+            </div>
+            break;
+        case "field":
+            var pos = e.LabelPosition ?? "Left";
+            <div class="pe-dfield @pos.ToLowerInvariant()" style="font-size:@Cqw(10);gap:@Cqw(e.LabelOffset)">
+                @if (pos is "Left" or "Right")
+                {
+                    <span class="pe-dlabel">@e.Label</span>
+                }
+                <span class="pe-dbox @(e.FieldKind is "Checkbox" or "Radio" ? "small" : "") @(e.FieldKind == "Radio" ? "round" : "")">
+                    @switch (e.FieldKind)
+                    {
+                        case "Checkbox" or "Radio": break;
+                        case "ComboBox": <span class="pe-dhint">@(pos == "Placeholder" ? e.Label : e.Options.FirstOrDefault()) ▾</span> break;
+                        case "Signature": <span class="pe-dhint">✍ @(pos == "Placeholder" ? e.Label : "Sign here")</span> break;
+                        default: <span class="pe-dhint">@(pos == "Placeholder" ? e.Label : e.FieldName)</span> break;
+                    }
+                </span>
+            </div>
+            break;
+    }
+    @if (selected && !e.IsLocked) { <span class="pe-fbox-handle" data-resize="1" aria-hidden="true"></span> }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public DesignItem Item { get; set; } = default!;
+    [Parameter] public double PageW { get; set; }
+    [Parameter] public double PageH { get; set; }
+
+    private void Select()
+    {
+        if (Ed.SelectedDesignId == Item.Id) return;
+        Ed.SelectedDesignId = Item.Id;
+        Ed.ShowRight(RightTab.Properties);
+        Ed.Refresh();
+    }
+
+    private static string TextStyle(DesignItem e, Func<double, string> cqw)
+    {
+        var align = (e.Alignment ?? "Left").ToLowerInvariant() is "center" or "right" or "justify" ? e.Alignment!.ToLowerInvariant() : "left";
+        return $"color:{DesignColor.ToCss(e.Color, "#000")};background:{DesignColor.ToCss(e.BgColor)};font-size:{cqw(e.FontSize > 0 ? e.FontSize : 14)};"
+             + $"font-weight:{(e.Bold ? 700 : 400)};font-style:{(e.Italic ? "italic" : "normal")};text-decoration:{(e.Underline ? "underline" : "none")};"
+             + $"text-align:{align};white-space:{(e.Wrap ? "pre-wrap" : "pre")}";
+    }
+
+    private static string ShapeStyle(DesignItem e, Func<double, string> cqw)
+    {
+        var stroke = DesignColor.IsVisible(e.StrokeColor) ? $"{Editor.Css(Math.Max(0.5, e.StrokeThick))}px solid {DesignColor.ToCss(e.StrokeColor)}" : "none";
+        var radius = e.ShapeType == "Ellipse" ? "50%" : cqw(e.CornerRadius);
+        return $"background:{DesignColor.ToCss(e.FillColor)};border:{stroke};border-radius:{radius}";
+    }
+}

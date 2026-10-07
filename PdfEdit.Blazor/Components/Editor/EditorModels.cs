@@ -1,6 +1,6 @@
 namespace PdfEdit.Blazor.Components.Editor;
 
-public enum RibbonTab { Home, FillSign, Edit, View, Tools, AI, Help }
+public enum RibbonTab { Home, FillSign, Edit, View, Tools, AI, Design, Help }
 
 public enum RightTab { Properties, Fields, Comments, Bookmarks, Search, AI }
 
@@ -18,7 +18,14 @@ public enum DialogKind
 {
     None, Password, Properties, Watermark, PageNumbers, HeaderFooter, Bates, Protect, Sanitize,
     Resize, NUp, Signature, Note, Merge, InsertPdf, Combine, ExtractRange, DeleteRange, ImportData,
-    Statistics, Shortcuts, About, AiSettings, DetectFields,
+    Statistics, Shortcuts, About, AiSettings, DetectFields, OpenDesign, DesignPicture,
+}
+
+/// <summary>What a click (or drag) on the design page does.</summary>
+public enum DesignTool
+{
+    Select, Text, Rectangle, Ellipse, Line, Arrow, Table, Check, Cross,
+    TextField, Memo, Checkbox, Radio, ComboBox, Signature,
 }
 
 public enum ExportFormat { Word, Excel, PowerPoint, Html, Markdown, Epub, Text, Images, Pictures }
