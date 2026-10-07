@@ -36,6 +36,8 @@ bld/
 
 ## Installer build outputs
 dist/
+# …but not Bootstrap's files in the Blazor sample
+!PdfEdit.Blazor/wwwroot/lib/**/dist/
 publish/
 publish_smoke/
 _msix_stage/
