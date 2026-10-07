@@ -37,6 +37,7 @@ public static class PdfEndpoints
             {
                 ".pdf" => "application/pdf",
                 ".pdfdesign" or ".json" => "application/json",
+                ".png" => "image/png",
                 _ => "application/octet-stream",
             };
             return Results.File(File.ReadAllBytes(path), type, Path.GetFileName(path));

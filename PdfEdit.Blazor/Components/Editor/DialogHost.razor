@@ -518,6 +518,63 @@
         </Modal>
         break;
 
+    case DialogKind.CompareUpload:
+        <Modal Title="Compare PDFs" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Choose the other version. The open PDF is treated as the older one: red is only in it, green only in the version you choose, orange changed in both.</p>
+                <InputFile class="form-control" accept=".pdf" OnChange="e => _files = [e.File]" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.CompareWithAsync(_files[0]))">Compare</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Compare when Ed.Comparison is { } cmp:
+        <Modal Title="@($"Compare: {Ed.Doc?.FileName} → {Ed.CompareName}")" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+                    <div class="pe-panel-tabs" style="border:0">
+                        @foreach (var (mode, name) in new[] { ("diff", "Differences"), ("old", "Old"), ("new", "New"), ("text", "Text changes") })
+                        {
+                            var m = mode;
+                            <button class="pe-panel-tab @(_cmpMode == m ? "active" : "")" @onclick="() => _cmpMode = m">@name</button>
+                        }
+                    </div>
+                    <span class="pe-hint ms-auto">@cmp.Count(p => p.ChangedPercent > 0 || p.Text?.HasDifferences == true) of @cmp.Count page@(cmp.Count == 1 ? "" : "s") changed</span>
+                </div>
+                <div class="pe-compare">
+                    @foreach (var p in cmp)
+                    {
+                        <div class="pe-compare-page">
+                            <div class="pe-compare-head">
+                                <strong>Page @p.Page</strong>
+                                <span class="@(p.ChangedPercent > 0 ? "pe-changed" : "pe-same")">@(p.Text is { ExistsInA: false } ? "added" : p.Text is { ExistsInB: false } ? "removed" : p.ChangedPercent > 0 ? $"{p.ChangedPercent}% changed" : "no visible change")</span>
+                            </div>
+                            @if (_cmpMode == "text")
+                            {
+                                @if (p.Text is { HasDifferences: true } t)
+                                {
+                                    @foreach (var l in t.OnlyInA) { <div class="pe-diff-del">− @l</div> }
+                                    @foreach (var l in t.OnlyInB) { <div class="pe-diff-add">+ @l</div> }
+                                }
+                                else { <div class="pe-hint">Same text.</div> }
+                            }
+                            else
+                            {
+                                var url = _cmpMode == "old" ? p.OldUrl : _cmpMode == "new" ? p.NewUrl : p.DiffUrl;
+                                @if (url != null) { <img src="@url" alt="Page @p.Page (@_cmpMode)" loading="lazy" /> }
+                                else { <div class="pe-hint">This page isn't in that version.</div> }
+                            }
+                        </div>
+                    }
+                </div>
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+
     case DialogKind.About:
         <Modal Title="About PdfEdit" OnClose="Close">
             <ChildContent>
@@ -566,6 +623,7 @@
     private IReadOnlyList<string>? _ocrLanguages;
     private string _ocrLang = "eng";
     private bool _ocrSkip = true, _scanOcr = true;
+    private string _cmpMode = "diff";
 
     private ElementReference _sigCanvas;
     private bool _sigTyped, _sigPadReady;

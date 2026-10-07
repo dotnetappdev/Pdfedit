@@ -792,3 +792,13 @@ html, body {
 .pe-dhint { color: #5c6c9a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pe-cellgrid { display: grid; gap: 2px; max-height: 220px; overflow: auto; }
 .pe-cellgrid input { font-size: 11px; padding: 1px 4px; }
+
+/* ── Compare ─────────────────────────────────────────────────────────────── */
+.pe-compare { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; max-height: 66vh; overflow: auto; }
+.pe-compare-page { border: 1px solid var(--pe-border); border-radius: 6px; padding: 8px; background: var(--pe-input-bg); font-size: 12px; }
+.pe-compare-page img { width: 100%; box-shadow: var(--pe-shadow); background: #fff; }
+.pe-compare-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.pe-changed { color: #C62828; font-weight: 600; }
+.pe-same { color: var(--pe-dim); }
+.pe-diff-del { color: #B71C1C; background: rgba(229, 59, 59, .1); padding: 1px 4px; overflow-wrap: anywhere; }
+.pe-diff-add { color: #1B5E20; background: rgba(46, 176, 78, .12); padding: 1px 4px; overflow-wrap: anywhere; }

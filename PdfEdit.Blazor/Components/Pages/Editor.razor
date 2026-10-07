@@ -228,6 +228,32 @@
                         <RibbonButton Icon="bi-ui-checks" Label="Fields" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
                     </div>
                 </RibbonGroup>
+                <RibbonGroup Title="Read Aloud">
+                    <RibbonButton Large Icon="bi-volume-up" Label="Read Page" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(false)" />
+                    <RibbonButton Large Icon="bi-soundwave" Label="Read to End" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(true)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="@(ReadingPaused ? "bi-play-fill" : "bi-pause-fill")" Label="@(ReadingPaused ? "Resume" : "Pause")" Disabled="!Reading" OnClick="PauseReadingAsync" />
+                        <RibbonButton Icon="bi-stop-fill" Label="Stop" Disabled="!Reading" OnClick="StopReadingAsync" />
+                        <div class="pe-field-inline">
+                            <span>Speed</span>
+                            <select @bind="ReadRate" aria-label="Reading speed">
+                                <option value="0.75">Slow</option><option value="1">Normal</option><option value="1.25">Fast</option><option value="1.5">Faster</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Voice</span>
+                            <select @bind="ReadVoice" @onfocus="LoadVoicesAsync" aria-label="Voice" style="max-width:150px">
+                                <option value="">Default voice</option>
+                                @foreach (var v in Voices) { <option value="@v">@v</option> }
+                            </select>
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Find &amp; Compare">
+                    <RibbonButton Large Icon="bi-layout-split" Label="Compare PDFs" Title="Compare this PDF with another version: text and pictures" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.CompareUpload)" />
+                </RibbonGroup>
                 <RibbonGroup Title="Theme">
                     <RibbonButton Large Icon="bi-sun" Label="Light" Active="!_dark" OnClick="() => _dark = false" />
                     <RibbonButton Large Icon="bi-moon" Label="Dark" Active="_dark" OnClick="() => _dark = true" />

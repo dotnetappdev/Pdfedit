@@ -106,6 +106,35 @@ window.pdfedit = (() => {
             });
         },
 
+        // ── Read Aloud: the browser's speech synthesis ──────────────────────
+        speech: {
+            voices() {
+                return new Promise(resolve => {
+                    const list = () => speechSynthesis.getVoices().map(v => `${v.name} (${v.lang})`);
+                    const now = list();
+                    if (now.length) { resolve(now); return; }
+                    speechSynthesis.onvoiceschanged = () => resolve(list());
+                    setTimeout(() => resolve(list()), 1500);
+                });
+            },
+            // items: [{ page, text }]; tells .NET which page is being read, and when it's done.
+            speak(dotnet, items, voiceName, rate) {
+                speechSynthesis.cancel();
+                const voice = speechSynthesis.getVoices().find(v => `${v.name} (${v.lang})` === voiceName);
+                items.forEach((item, i) => {
+                    const u = new SpeechSynthesisUtterance(item.text);
+                    if (voice) u.voice = voice;
+                    u.rate = rate || 1;
+                    u.onstart = () => dotnet.invokeMethodAsync('OnReadingPage', item.page);
+                    if (i === items.length - 1) { u.onend = () => dotnet.invokeMethodAsync('OnReadingDone'); u.onerror = u.onend; }
+                    speechSynthesis.speak(u);
+                });
+            },
+            pause() { speechSynthesis.pause(); },
+            resume() { speechSynthesis.resume(); },
+            stop() { speechSynthesis.cancel(); },
+        },
+
         // ── Signature pad ────────────────────────────────────────────────────
         sigPad: {
             init(canvas) {
