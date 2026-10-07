@@ -912,7 +912,7 @@
                                          Command="{Binding SetToolCommand}"
                                          CommandParameter="AddText"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Add Text — click anywhere on the page to type, then use the floating toolbar to resize, recolour or move it (Adobe Fill &amp; Sign style)"
+                                         ToolTip="Add Text — click anywhere on the page to type, then use the floating toolbar to resize, recolour or move it"
                                          AutomationProperties.Name="Add text anywhere">
                         <Fluent:ToggleButton.LargeIcon>
                             <TextBlock Text="Ab" FontWeight="Bold" FontSize="18"/>
@@ -1124,7 +1124,7 @@
                     <Fluent:ToggleButton Header="Highlight Fields"
                                          IsChecked="{Binding HighlightFields, Mode=TwoWay}"
                                          IsEnabled="{Binding HasDocument}"
-                                         ToolTip="Show a coloured highlight over all fillable form fields (Adobe 'Highlight Existing Fields')"
+                                         ToolTip="Show a coloured highlight over all fillable form fields"
                                          AutomationProperties.Name="Highlight existing fields">
                         <Fluent:ToggleButton.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7E6;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
@@ -2690,7 +2690,7 @@
                     </Fluent:ToggleButton>
                     <Fluent:Button Header="Outline" Command="{Binding GenerateSummaryCommand}"
                                    ToolTip="A summary outline with key points and page links, in its own panel"
-                                   AutomationProperties.Name="Generative summary outline">
+                                   AutomationProperties.Name="Summary outline">
                         <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
                     </Fluent:Button>
                     <Fluent:DropDownButton Header="Write" ToolTip="Write something from this document"

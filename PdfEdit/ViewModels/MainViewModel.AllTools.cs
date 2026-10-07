@@ -82,7 +82,7 @@ public partial class MainViewModel
     {
         var open = new OpenFileDialog
         {
-            Title = _currentFilePath != null ? "Combine with the open PDF — choose PDFs or images to add" : "Combine files — choose PDFs or images",
+            Title = _currentFilePath != null ? "Combine with the open PDF — choose PDFs or images to add" : "Merge files — choose PDFs or images",
             Filter = "PDFs and images|*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|PDF Files (*.pdf)|*.pdf|" + ImageFilter,
             Multiselect = true,
         };
@@ -286,7 +286,7 @@ public partial class MainViewModel
         }
     }
 
-    // ── Request e-signatures ──────────────────────────────────────────────────
+    // ── Send for signature ───────────────────────────────────────────────────
 
     /// <summary>
     /// Acrobat sends the document through its cloud service; here the document is saved, the
@@ -299,12 +299,12 @@ public partial class MainViewModel
 
         if (ModifiedFieldNames.Count > 0 || ModifiedFieldBounds.Count > 0 || DeletedFieldNames.Count > 0)
         {
-            if (!Dialogs.AppDialog.ShowConfirm("Save your changes before sending the document for signature?", "Request e-signatures"))
+            if (!Dialogs.AppDialog.ShowConfirm("Save your changes before sending the document for signature?", "Send for signature"))
                 return;
             SaveCommand.Execute(null);
         }
 
-        var dlg = new Dialogs.InputDialog("Request e-signatures",
+        var dlg = new Dialogs.InputDialog("Send for signature",
             "Signer's email address (separate several with ';'):", string.Empty);
         if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
 

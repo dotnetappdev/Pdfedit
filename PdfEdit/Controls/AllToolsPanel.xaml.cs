@@ -128,7 +128,7 @@ public partial class AllToolsPanel : UserControl
                 Description = "Merge PDFs and images into one PDF",
                 Actions = new()
                 {
-                    Run("Combine files (PDFs & images)", vm.CombineFilesCommand),
+                    Run("Merge files (PDFs & images)", vm.CombineFilesCommand),
                     Page("Merge PDFs into this one", vm.MergePdfCommand),
                     Page("Insert pages from a PDF", vm.InsertPdfCommand),
                     Run("Compare two PDFs (text)", vm.ComparePdfsCommand),

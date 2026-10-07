@@ -75,7 +75,7 @@
                                          AutomationProperties.Name="Custom built-in render engine"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <RadioButton x:Name="RbEnginePdfium" Content="Pdfium  (Chrome/Adobe quality, requires native DLL)"
+                            <RadioButton x:Name="RbEnginePdfium" Content="Pdfium  (Chrome's engine, requires native DLL)"
                                          GroupName="RenderEngine" Tag="Pdfium"
                                          Foreground="{DynamicResource ForegroundBrush}"
                                          Checked="RenderEngine_Checked"
@@ -90,7 +90,7 @@
                         </StackPanel>
                         <TextBlock Foreground="{DynamicResource SubtleForegroundBrush}"
                                    FontSize="11" TextWrapping="Wrap" Margin="0,0,0,16"
-                                   Text="Custom: pure C# engine — zero native dependencies, handles FlateDecode/JPEG/PNG streams and the 14 standard fonts. Pdfium: Chrome/Adobe quality with sub-pixel hinting (requires Docnet.Core). Restart not required; takes effect on next file open."/>
+                                   Text="Custom: pure C# engine — zero native dependencies, handles FlateDecode/JPEG/PNG streams and the 14 standard fonts. Pdfium: Chrome's engine with sub-pixel hinting (requires Docnet.Core). Restart not required; takes effect on next file open."/>
 
                     </StackPanel>
                 </ScrollViewer>

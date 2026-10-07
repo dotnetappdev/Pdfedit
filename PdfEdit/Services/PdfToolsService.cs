@@ -107,8 +107,7 @@ public static class PdfToolsService
     // ── Combine ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Combines PDFs and images (in the given order) into one PDF — images become A4 pages,
-    /// like Acrobat's Combine files.
+    /// Combines PDFs and images (in the given order) into one PDF — images become A4 pages.
     /// </summary>
     public static int CombineFiles(IEnumerable<string> files, string dest)
     {
