@@ -100,7 +100,7 @@ public partial class MainViewModel
             StatusText = $"Exported {rows} row(s) to {System.IO.Path.GetFileName(dest)}.";
             if (rows == 0)
             {
-                Dialogs.AppDialog.ShowInfo("No text was found to export. If this is a scan, run text recognition first (All tools → Scan & OCR).", "Export to Excel");
+                Dialogs.AppDialog.ShowInfo("No text was found to export. If this is a scan, run text recognition first (Toolkit → Scan & text recognition).", "Export to Excel");
                 return;
             }
             if (Dialogs.AppDialog.ShowConfirm($"Exported {rows} rows. Open the workbook now?", "Export to Excel", "Open", "Close"))

@@ -46,7 +46,7 @@ public partial class TranslateDialog : Window
             var blocks = await Task.Run(() => TranslateService.GetBlocks(_source, only), ct);
             if (blocks.Count == 0)
             {
-                StatusLine.Text = "There's no text to translate. If the pages are scans, run text recognition first (All tools → Scan & OCR).";
+                StatusLine.Text = "There's no text to translate. If the pages are scans, run text recognition first (Toolkit → Scan & text recognition).";
                 Reset();
                 return;
             }

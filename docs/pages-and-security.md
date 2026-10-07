@@ -4,7 +4,7 @@
 
 ## Organising pages
 
-Most of these are on the **Home** ribbon, in **All tools → Organize pages**, and on the right-click menu of the page thumbnails:
+Most of these are on the **Home** ribbon, in **Toolkit → Arrange pages**, and on the right-click menu of the page thumbnails:
 
 - rotate one page or all of them
 - move pages up and down, or drag thumbnails into a new order

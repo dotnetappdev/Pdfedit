@@ -3491,13 +3491,13 @@
                 <avalonDock:LayoutRoot>
                     <avalonDock:LayoutPanel Orientation="Horizontal">
 
-                        <!-- ── All tools (Acrobat-style list; dockable / floatable) ──────── -->
+                        <!-- ── Toolkit (dockable / floatable) ──────────────────────────────── -->
                         <avalonDock:LayoutAnchorablePaneGroup DockWidth="250">
                             <avalonDock:LayoutAnchorablePane>
-                                <avalonDock:LayoutAnchorable Title="All tools" ContentId="alltools" CanClose="False" CanHide="False">
+                                <avalonDock:LayoutAnchorable Title="Toolkit" ContentId="alltools" CanClose="False" CanHide="False">
                                     <controls:AllToolsPanel x:Name="AllToolsPane" DataContext="{Binding}"
                                                             FontSize="{DynamicResource PanelFontSize}"
-                                                            AutomationProperties.Name="All tools"/>
+                                                            AutomationProperties.Name="Toolkit"/>
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>

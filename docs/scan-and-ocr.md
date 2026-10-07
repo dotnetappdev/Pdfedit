@@ -4,7 +4,7 @@
 
 ## Scanning
 
-Open **Scan** from the File menu, the Home ribbon, or All tools → Scan & OCR.
+Open **Scan** from the File menu, the Home ribbon, or Toolkit → Scan & text recognition.
 
 The scanner list matches what the Windows Scan app shows. That includes USB scanners and network scanners (WSD and eSCL, such as most HP, Canon and Epson all-in-ones), plus TWAIN drivers. Once you pick a scanner, the other options only show what it supports:
 
@@ -20,7 +20,7 @@ No scanner? **Add image file…** builds the PDF from photos or image files inst
 
 ## Making scans searchable (OCR)
 
-Tick **Recognise text** and PdfEdit adds an invisible text layer to each scanned page. You can then search, select and copy the text. You'll find the same thing under **All tools → Scan & OCR → Recognise text** for PDFs you already have.
+Tick **Recognise text** and PdfEdit adds an invisible text layer to each scanned page. You can then search, select and copy the text. You'll find the same thing under **Toolkit → Scan & text recognition → Recognise text** for PDFs you already have.
 
 Two OCR engines are available:
 

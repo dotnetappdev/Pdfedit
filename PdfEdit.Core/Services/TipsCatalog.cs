@@ -61,7 +61,7 @@ public static class TipsCatalog
         new("Scan straight to PDF",
             "File → Scan works with any Windows or TWAIN scanner. Turn on OCR and the result becomes searchable, so you can find and copy its text."),
         new("Make scans searchable later",
-            "Already have a scanned PDF? Run OCR from the Scan & OCR section of All tools. PdfEdit uses Windows' own OCR when the language is installed, or Tesseract otherwise (Settings → OCR)."),
+            "Already have a scanned PDF? Run OCR from Scan & text recognition in the Toolkit. PdfEdit uses Windows' own OCR when the language is installed, or Tesseract otherwise (Settings → OCR)."),
         new("Measure on the page",
             "Tools → Measure has distance, perimeter and area tools. Useful for plans and drawings."),
         new("Sticky notes and comments",
@@ -143,7 +143,7 @@ public static class TipsCatalog
         new("Your own shortcuts",
             "Settings → Keyboard lists every command. Pick one, press the keys you want and click Assign. Give your favourite tools single keys, or put Ctrl+ shortcuts on the commands you use most."),
         new("Find the right tool fast",
-            "The All tools panel on the left lists everything PdfEdit can do, grouped by what you want to do. Start typing in its search box to filter."),
+            "The Toolkit on the left lists everything PdfEdit can do. Pin the actions you use most with the pin beside them, right-click a tool to move or hide it, and use the gear for compact or tile view."),
         new("Take the tour again",
             "Missed something? File → Take the Tour walks you through the main parts of the window, and this dialog lives under File → Tip of the Day."),
     };

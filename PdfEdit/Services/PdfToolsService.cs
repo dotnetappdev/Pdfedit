@@ -16,7 +16,7 @@ namespace PdfEdit.Services;
 public readonly record struct OcrWord(string Text, double Left, double Bottom, double Width, double Height);
 
 /// <summary>
-/// File-level tools behind the "All tools" panel (Acrobat-style): create, combine, export to Word
+/// File-level tools behind the Toolkit panel: create, combine, export to Word
 /// and make scanned pages searchable. Pure iText / .NET — no UI.
 /// </summary>
 public static class PdfToolsService

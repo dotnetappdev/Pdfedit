@@ -66,6 +66,20 @@ public class AppSettings
     /// <summary>The next tip to show (index into the tips list).</summary>
     public int NextTipIndex { get; set; }
 
+    // ── Toolkit panel ────────────────────────────────────────────────────────
+    /// <summary>How the Toolkit panel lays out its tools: "List", "Compact" or "Tiles".</summary>
+    public string ToolkitView { get; set; } = "List";
+    /// <summary>Show the Create / Shape / Sign &amp; secure / Smart headings.</summary>
+    public bool ToolkitShowSections { get; set; } = true;
+    /// <summary>Actions pinned to the top of the Toolkit, as "toolId|action label".</summary>
+    public List<string> ToolkitPinned { get; set; } = new();
+    /// <summary>Tool ids the user has hidden from the Toolkit.</summary>
+    public List<string> ToolkitHidden { get; set; } = new();
+    /// <summary>Tool ids in the user's order (tools not listed keep their default place).</summary>
+    public List<string> ToolkitOrder { get; set; } = new();
+    /// <summary>Tool ids that were left open.</summary>
+    public List<string> ToolkitExpanded { get; set; } = new();
+
     // ── Window geometry ──────────────────────────────────────────────────────
     public double WindowLeft { get; set; } = double.NaN;
     public double WindowTop { get; set; } = double.NaN;

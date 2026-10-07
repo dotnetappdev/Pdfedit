@@ -7,7 +7,7 @@ using PdfEdit.Services;
 namespace PdfEdit.ViewModels;
 
 /// <summary>
-/// Commands behind the "All tools" panel (Acrobat's All tools list) that did not already exist:
+/// Commands behind the Toolkit panel that did not already exist:
 /// create a PDF, combine files, export to Word, Scan &amp; OCR and request e-signatures.
 /// Everything else in the panel reuses the existing commands.
 /// </summary>

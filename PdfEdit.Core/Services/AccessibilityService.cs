@@ -123,7 +123,7 @@ public static class AccessibilityService
         list.Add(scanned.Count == 0
             ? new(content, "Text is real text", CheckStatus.Passed, "Every page has text that can be read out.")
             : new(content, "Text is real text", CheckStatus.Failed,
-                $"{Pages(scanned)} look scanned (images with no text). Run text recognition: All tools → Scan & OCR → Recognise text."));
+                $"{Pages(scanned)} look scanned (images with no text). Run text recognition: Toolkit → Scan & text recognition → Recognise text."));
 
         list.Add(fontsNotEmbedded.Count == 0
             ? new(content, "Fonts", CheckStatus.Passed, "All fonts are embedded.")

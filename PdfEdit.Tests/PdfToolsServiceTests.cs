@@ -9,7 +9,7 @@ using Xunit;
 
 namespace PdfEdit.Tests;
 
-/// <summary>"All tools" file operations: create, combine, export to Word, OCR text layer.</summary>
+/// <summary>Toolkit file operations: create, combine, export to Word, OCR text layer.</summary>
 public class PdfToolsServiceTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("pdfedit-tools-").FullName;
