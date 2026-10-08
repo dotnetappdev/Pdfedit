@@ -1,6 +1,6 @@
 {
  "repo": "dotnetappdev/pdfedit",
- "updated": "2026-10-08T20:54:57.158Z",
+ "updated": "2026-10-08T21:50:03.547Z",
  "releases": [
   {
    "version": "1.4.0",
@@ -243,7 +243,7 @@
      "commit": "741b606"
     },
     {
-     "text": "PdfEdit.Blazor: Scan & OCR — searchable scans with Tesseract, scan with camera",
+     "text": "PdfEdit.Blazor: Scan & OCR, searchable scans with Tesseract, scan with camera",
      "commit": "d2687a5"
     },
     {
@@ -251,7 +251,7 @@
      "commit": "8921562"
     },
     {
-     "text": "PdfEdit.Blazor: Prepare Form — add, detect, move, resize, edit and delete form fields",
+     "text": "PdfEdit.Blazor: Prepare Form, add, detect, move, resize, edit and delete form fields",
      "commit": "3085ed5"
     },
     {
@@ -884,31 +884,31 @@
      "commit": "2485096"
     },
     {
-     "text": "feat: watermarks & backgrounds — diagonal behind text and fields, image, tiled, removable",
+     "text": "feat: watermarks & backgrounds, diagonal behind text and fields, image, tiled, removable",
      "commit": "3c20497"
     },
     {
-     "text": "feat: Acrobat-style stamps — full catalogue, drawn stamps, add / remove",
+     "text": "feat: Acrobat-style stamps, full catalogue, drawn stamps, add / remove",
      "commit": "3197987"
     },
     {
-     "text": "feat: fuller Fill & Sign ribbon — the toolbox's tools on the ribbon too",
+     "text": "feat: fuller Fill & Sign ribbon, the toolbox's tools on the ribbon too",
      "commit": "75a21ce"
     },
     {
-     "text": "ci: automatic GitHub Releases on every push to main — EXE, MSIX and ZIP",
+     "text": "ci: automatic GitHub Releases on every push to main, EXE, MSIX and ZIP",
      "commit": "9b78bce"
     },
     {
-     "text": "feat: text boxes never cut off big text — Fit menu (auto-size / wrap & grow / fixed)",
+     "text": "feat: text boxes never cut off big text, Fit menu (auto-size / wrap & grow / fixed)",
      "commit": "aa44e54"
     },
     {
-     "text": "feat: hyperlinks — follow, add, edit and remove links in the PDF",
+     "text": "feat: hyperlinks, follow, add, edit and remove links in the PDF",
      "commit": "4ef058e"
     },
     {
-     "text": "feat: edit dates in Properties — Windows-style format list and day / month / year",
+     "text": "feat: edit dates in Properties, Windows-style format list and day / month / year",
      "commit": "9a97a97"
     },
     {
@@ -924,7 +924,7 @@
      "commit": "f4b5d5c"
     },
     {
-     "text": "feat: OCR works without a Windows OCR language — bundled Tesseract + Settings → OCR",
+     "text": "feat: OCR works without a Windows OCR language, bundled Tesseract + Settings → OCR",
      "commit": "f372c41"
     },
     {
@@ -932,7 +932,7 @@
      "commit": "7fb634a"
     },
     {
-     "text": "feat: Local AI provider — free, private, offline AI form filling (Ollama, LM Studio, llama.cpp…)",
+     "text": "feat: Local AI provider, free, private, offline AI form filling (Ollama, LM Studio, llama.cpp…)",
      "commit": "20e21cb"
     },
     {

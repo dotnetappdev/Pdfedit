@@ -20,7 +20,8 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 - Cite the excerpts you used with their numbers in square brackets, like [1] or [2][4], right after the sentence they support.
 - If the Windows app and the Mac/web versions differ, say how for each.
 - If the excerpts don't cover the question, say you couldn't find it in the guide and suggest searching the guide or reporting it on GitHub. Never invent buttons, menus or features.
-- Only help with PdfEdit and PDFs. Politely decline anything unrelated.`;
+- Only help with PdfEdit and PDFs. Politely decline anything unrelated.
+- Write plainly: no em dashes, no emoji, no exclamation marks.`;
 
 const LIMITS = { body: 24_000, question: 1000, turns: 8, turn: 4000, passages: 8 };
 let cache = { at: 0, chunks: null };
@@ -62,7 +63,7 @@ export default {
     if (env.LIMITER) {
       const who = request.headers.get('cf-connecting-ip') ?? 'anyone';
       const { success } = await env.LIMITER.limit({ key: who });
-      if (!success) return json(429, { error: 'Too many questions — wait a minute and try again.' }, headers);
+      if (!success) return json(429, { error: 'Too many questions. Wait a minute and try again.' }, headers);
     }
 
     // ── Check what was sent ──
@@ -96,7 +97,7 @@ export default {
     });
     if (!upstream.ok) {
       console.log('Claude answered', upstream.status, await upstream.text());
-      return json(502, { error: upstream.status === 429 ? 'The assistant is busy — try again in a minute.' : 'The assistant couldn\'t answer just now.' }, headers);
+      return json(502, { error: upstream.status === 429 ? 'The assistant is busy. Try again in a minute.' : 'The assistant couldn\'t answer just now.' }, headers);
     }
 
     const encoder = new TextEncoder(), decoder = new TextDecoder();

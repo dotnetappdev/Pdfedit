@@ -12,7 +12,7 @@ order: 2
 
 1. Click **Watermark** (Home tab, Pages group).
 2. Type the text, such as **DRAFT**, **CONFIDENTIAL** or **COPY**. On Windows you can also pick these from a list, or use a picture such as a logo.
-3. Set the font, size, colour and **opacity**. Around 20–30% is subtle enough to read through.
+3. Set the font, size, colour and **opacity**. Around 20 to 30% is light enough to read through.
 4. Choose the **layout** (diagonal or horizontal) and **position** (centre, top, bottom, or **tiled** across the page).
 5. Tick **Behind the page content** to put it behind the text, like a background.
 6. Choose **All pages**, **This page** or a range such as `1-3, 5`.

@@ -158,7 +158,7 @@ function renderMarkdown(md, src) {
 const shell = ({ title, description, page, body }) => withRoot(include(`<!doctype html>
 <html lang="en">
 <head>
-<title>${esc(title)} — PdfEdit</title>
+<title>${esc(title)} | PdfEdit</title>
 <meta name="description" content="${esc(description)}">
 <!-- @include head -->
 </head>
@@ -277,7 +277,7 @@ await writeFile(join(out, 'docs', 'index.html'), shell({
       <section class="docs-hero">
         <h1>PdfEdit user guide</h1>
         <p class="lead">How everything works in PdfEdit for Windows, PdfEdit for Mac and PdfEdit for the web. Search, or start with a section below.</p>
-        ${searchBox('Search the guide and tutorials — e.g. “signature”, “merge”, “OCR”')}
+        ${searchBox('Search the guide and tutorials, e.g. signature, merge, OCR')}
         <p class="quick"><button type="button" class="btn small" data-ask-open>Ask a question</button> Popular: <a href="filling-and-signing.html">Fill and sign</a> · <a href="forms.html">Make a form fillable</a> · <a href="pages-and-security.html#passwords-and-redaction">Redact</a> · <a href="scan-and-ocr.html">Scan and OCR</a> · <a href="keyboard-shortcuts.html">Shortcuts</a></p>
       </section>
       <div class="doc-cards">

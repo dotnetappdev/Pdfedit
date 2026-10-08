@@ -36,7 +36,7 @@ Font, bold, italic and alignment are in the **Properties** panel.
 
 Click inside a small square box with **Add Text** or **Select** and PdfEdit puts a tick there.
 
-For other marks, use the **Marks** group on the Fill & Sign tab: ✓ tick, ✕ cross, ● dot, ○ circle and — line. Click to place, then resize with the corner handle.
+For other marks, use the **Marks** group on the Fill & Sign tab: tick (✓), cross (✕), dot (●), circle (○) and a short line. Click to place, then resize with the corner handle.
 
 ![Ticks and crosses on a printed checklist](../../../docs/screenshots/fill-marks.png)
 

@@ -59,10 +59,12 @@
     [/\.cer$/i, 'windows', 'windows', 'Test certificate for the MSIX', 'cert'],
   ];
   const classify = name => { for (const [re, product, platform, label, kind] of RULES) if (re.test(name)) return product ? { product, platform, label, kind } : null; return null; };
+  // Plain punctuation for the release notes (they come from commit messages).
+  const plain = t => t.replace(/\s+[—–]\s+/g, ', ').replace(/[—–]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
   const changesOf = body => {
     const m = (body || '').match(/###\s*What's new\s*\n([\s\S]*?)(\n---|\n#{1,3}\s|$)/i);
     return m ? m[1].split('\n').map(l => l.trim()).filter(l => l.startsWith('- ')).map(l => ({
-      text: l.slice(2).replace(/\s*\([0-9a-f]{7,40}\)\s*$/, '').trim(),
+      text: plain(l.slice(2).replace(/\s*\([0-9a-f]{7,40}\)\s*$/, '').trim()),
       commit: l.match(/\(([0-9a-f]{7,40})\)\s*$/)?.[1] ?? null,
     })).filter(c => c.text && !/^version \d/i.test(c.text)) : [];
   };
@@ -101,11 +103,11 @@
   }
 
   function table(assets, repoUrl) {
-    if (!assets.length) return `<p class="muted">No files for this yet — see <a href="${esc(repoUrl)}">the release on GitHub</a>.</p>`;
+    if (!assets.length) return `<p class="muted">No files for this yet. See <a href="${esc(repoUrl)}">the release on GitHub</a>.</p>`;
     const order = ['installer', 'arm64', 'x64', 'portable', 'zip', 'msix', 'cert'];
     const rows = [...assets].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)).map(a => `
       <tr>
-        <td><strong>${a.platform === 'mac' ? 'Mac — ' : 'Windows — '}${esc(a.label)}</strong><span class="file">${esc(a.name)}</span></td>
+        <td><strong>${a.platform === 'mac' ? 'Mac: ' : 'Windows: '}${esc(a.label)}</strong><span class="file">${esc(a.name)}</span></td>
         <td class="size">${fmtSize(a.size)}</td>
         <td class="go"><a class="btn ${a.kind === 'cert' ? 'small' : 'go small'}" href="${esc(a.url)}">Download</a></td>
       </tr>`).join('');
@@ -120,11 +122,12 @@
 
   function render(data) {
     const releases = data.releases;
+    releases.forEach(r => r.changes.forEach(c => { c.text = plain(c.text); }));
     const latest = releases.find(r => !r.prerelease) ?? releases[0];
     if (!latest) return;
     $$('[data-latest-version]').forEach(el => el.textContent = latest.version);
     $$('[data-latest-date]').forEach(el => el.textContent = fmtDate(latest.date));
-    $$('[data-strip]').forEach(el => el.innerHTML = `<strong>PdfEdit ${esc(latest.version)}</strong> is out (${esc(fmtDate(latest.date))})${latest.changes[0] ? ' — ' + esc(latest.changes[0].text) : ''}`);
+    $$('[data-strip]').forEach(el => el.innerHTML = `<strong>PdfEdit ${esc(latest.version)}</strong> is out (${esc(fmtDate(latest.date))})${latest.changes[0] ? '. New: ' + esc(latest.changes[0].text) : ''}`);
     $$('[data-updated]').forEach(el => el.textContent = `Downloads updated ${fmtDate(data.updated)}`);
 
     const best = bestFor(latest);
@@ -143,12 +146,12 @@
       const product = el.dataset.downloads;
       const rel = releases.find(r => !r.prerelease && r.assets.some(a => a.product === product));
       el.innerHTML = rel
-        ? (rel !== latest ? `<p class="muted">From version ${esc(rel.version)} — the newest with these files.</p>` : '') + table(rel.assets.filter(a => a.product === product), rel.url)
+        ? (rel !== latest ? `<p class="muted">From version ${esc(rel.version)}, the newest with these files.</p>` : '') + table(rel.assets.filter(a => a.product === product), rel.url)
         : '<p class="muted">Coming with the next release.</p>';
     });
     $$('[data-older]').forEach(el => {
       el.innerHTML = releases.filter(r => r !== latest).map(r => `
-        <details class="older"><summary>PdfEdit ${esc(r.version)} <span class="muted">— ${esc(fmtDate(r.date))}</span>${r.prerelease ? '<span class="badge">Pre-release</span>' : ''}</summary>
+        <details class="older"><summary>PdfEdit ${esc(r.version)} <span class="muted">· ${esc(fmtDate(r.date))}</span>${r.prerelease ? '<span class="badge">Pre-release</span>' : ''}</summary>
           <div class="body">${table(r.assets, r.url)}</div></details>`).join('') || '<p class="muted">None yet.</p>';
     });
 
@@ -216,7 +219,7 @@
       const hits = find(await loadIndex(), q);
       list.innerHTML = hits.length
         ? hits.map(h => `<a href="${ROOT}${h.e.u}${h.heading ? '#' + h.heading[1] : ''}"><span class="where">${esc(h.e.s)}</span><b>${mark(h.e.t, q)}${h.heading ? ` › ${mark(h.heading[0], q)}` : ''}</b><span class="snip">${mark(h.snippet, q)}</span></a>`).join('')
-        : `<p class="none">Nothing found for “${esc(q)}”. Try fewer words, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>`;
+        : `<p class="none">Nothing found for "${esc(q)}". Try fewer words, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>`;
       list.hidden = false;
       active = -1;
     };

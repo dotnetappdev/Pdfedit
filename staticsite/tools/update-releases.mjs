@@ -39,6 +39,9 @@ function classify(name) {
   return null;
 }
 
+// Plain punctuation for the site: no long dashes or curly quotes.
+const plain = t => t.replace(/\s+[—–]\s+/g, ', ').replace(/[—–]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+
 // The "What's new" list from the release text: one line per change, without the commit hash.
 function whatsNew(body = '') {
   const m = body.match(/###\s*What's new\s*\n([\s\S]*?)(\n---|\n#{1,3}\s|$)/i);
@@ -46,7 +49,7 @@ function whatsNew(body = '') {
   return m[1].split('\n').map(l => l.trim()).filter(l => l.startsWith('- '))
     .map(l => {
       const hash = l.match(/\(([0-9a-f]{7,40})\)\s*$/)?.[1] ?? null;
-      const text = l.slice(2).replace(/\s*\([0-9a-f]{7,40}\)\s*$/, '').trim();
+      const text = plain(l.slice(2).replace(/\s*\([0-9a-f]{7,40}\)\s*$/, '').trim());
       return { text, commit: hash };
     })
     .filter(c => c.text && !/^version \d/i.test(c.text) && !/^merge /i.test(c.text));

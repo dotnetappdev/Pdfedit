@@ -2,7 +2,7 @@
 
 The project's website: home, downloads, what's new, screenshots, the **user guide** and
 **tutorials**, in the style of classic software sites, with light and dark themes. Plain HTML, CSS
-and a little JavaScript — no framework. Help → User Guide / Tutorials in the Windows app, the web
+and a little JavaScript, with no framework. Help → User Guide / Tutorials in the Windows app, the web
 version and the Mac app open it (the addresses are in `PdfEdit.Core/Services/HelpLinks.cs`).
 
 ```
@@ -28,7 +28,7 @@ The **Website** workflow (`.github/workflows/website.yml`) fetches the releases,
 publishes it after every release, daily, and whenever the site changes. It works either way GitHub
 Pages is set up:
 
-- **Settings → Pages → Source: GitHub Actions** — deployed directly (the workflow also asks GitHub to
+- **Settings → Pages → Source: GitHub Actions**: deployed directly (the workflow also asks GitHub to
   turn this on);
 - otherwise the site is pushed to the **gh-pages** branch: choose **Source: Deploy from a branch →
   gh-pages / (root)**.

@@ -1,116 +1,99 @@
-# PdfEdit — Product Demo Video Script & Storyboard
+# PdfEdit demo video: script and shot list
 
-> **Production note:** Record on Windows with OBS Studio or Camtasia.
-> Voiceover can be recorded live or generated with ElevenLabs / Azure Neural TTS.
-> Target runtime: **90 seconds**. Export as MP4 (H.264, 1920×1080, 30fps).
-
----
-
-## Scene 1 — Hook (0:00–0:08)
-
-**Visual:** Fade in on a blurred stack of PDF contracts.
-Zoom into one — fields are empty, messy, unsigned.
-
-**Voiceover:**
-> "Still filling PDF forms by hand? There's a better way."
-
-**Cut to:** PdfEdit splash screen animating in (dark theme, blue accent).
+> **Production note:** record on Windows with OBS Studio or Camtasia. Record the voiceover yourself
+> or use a text-to-speech voice. Aim for **90 seconds**. Export as MP4 (H.264, 1920×1080, 30 fps).
 
 ---
 
-## Scene 2 — Open & Instant Fill (0:08–0:28)
+## Scene 1: Opening (0:00-0:08)
 
-**Visual:** Drag a multi-page contract PDF onto the app window.
-The document appears in the Live View tab. Seven text fields glow.
-
-**Voiceover:**
-> "PdfEdit opens any PDF instantly — no cloud required, no subscription."
-
-**Action:** Click the **AI Assistant** tab. Click **✦ Smart Fill**.
-A progress bar sweeps across. All seven fields fill with extracted data.
+**Shot:** a pile of printed forms, then one of them close up: empty boxes, no signature.
 
 **Voiceover:**
-> "One click and our AI reads your document, then fills every field automatically."
+> "Still filling in PDF forms by hand?"
 
-**Toast:** `✦  AI filled 7 fields automatically!`
+**Cut to:** PdfEdit opening, in the dark theme.
 
 ---
 
-## Scene 3 — Annotations (0:28–0:50)
+## Scene 2: Open and fill (0:08-0:28)
 
-**Visual:** Switch to the Annotations ribbon tab.
-Select the **Highlight** tool — click a colour swatch (yellow).
-Drag across a paragraph. Bright yellow highlight appears.
+**Shot:** drag a contract PDF onto the window. It opens in Live View with its fields highlighted.
 
 **Voiceover:**
-> "Highlight key clauses, add sticky notes, draw attention with callout annotations…"
+> "PdfEdit opens any PDF on your own computer. No account and no subscription."
 
-**Action:** Select **Callout** tool. Click somewhere on the page.
-Type *"⚠ Review clause 3.2 with legal team"*. A speech-bubble pops into place.
-
-**Action:** Select **Signature** tool → click **Add Signature**.
-Draw a signature on the canvas. Click **Save**. Place on the signature line.
+**Action:** on the **AI Assistant** tab, click **Smart Fill**. The fields it can work out
+from the document fill in.
 
 **Voiceover:**
-> "…and sign anywhere with a hand-drawn or typed signature."
+> "Smart Fill reads the document and fills in the fields for you. You check each one."
 
 ---
 
-## Scene 4 — Design Canvas (0:50–1:10)
+## Scene 3: Comments and signing (0:28-0:50)
 
-**Visual:** Click the **Design Canvas** tab. An Invoice template loads on a grid background.
-
-**Voiceover:**
-> "Need to design a PDF from scratch? Switch to the Design Canvas."
-
-**Action:** Click the Invoice table element. Drag a corner handle to resize.
-Open the Properties panel — change fill colour to light blue.
+**Shot:** on the **Tools** tab, pick **Highlight**, choose yellow and drag over a paragraph.
 
 **Voiceover:**
-> "Create custom templates: invoices, contracts, proposals — with pixel-perfect control."
+> "Highlight clauses, add sticky notes and callouts..."
 
-**Visual:** Add a logo image element. Drag it to the header area.
-The page snaps to grid alignment guides.
+**Action:** pick **Callout**, click the page and type *"Check clause 3.2 with legal"*.
+
+**Action:** on the **Fill & Sign** tab, click **New Signature...**, draw a signature, then click
+**Sign** and place it on the signature line.
+
+**Voiceover:**
+> "...and sign with a drawn, typed or photographed signature."
 
 ---
 
-## Scene 5 — Export & Themes (1:10–1:25)
+## Scene 4: Design (0:50-1:10)
 
-**Visual:** Press **Ctrl+S** — Save dialog appears.
-File saves as `contract_signed.pdf` in 0.3 s.
-
-**Voiceover:**
-> "Save in seconds, preserving every annotation and form value."
-
-**Visual:** Open Settings → switch to **High Contrast** theme.
-App instantly repaints — black background, vivid yellow accents.
+**Shot:** open the **Design** tab and pick the Invoice template.
 
 **Voiceover:**
-> "Three themes — dark, light, and high contrast — so you can work comfortably all day."
+> "Need a new document? Start from one of 70 templates."
+
+**Action:** select the invoice table and drag a corner to resize it. In the Properties panel,
+change the fill colour to light blue. Add a logo and drag it into the header; it snaps to the grid.
+
+**Voiceover:**
+> "Invoices, forms, letters and certificates, laid out the way you want."
 
 ---
 
-## Scene 6 — Call to Action (1:25–1:30)
+## Scene 5: Save and themes (1:10-1:25)
 
-**Visual:** Desktop with PdfEdit open, clean and polished.
-Fade to the GitHub URL on screen.
+**Shot:** press **Ctrl+S** and save as `contract_signed.pdf`.
 
 **Voiceover:**
-> "PdfEdit — open source, built on .NET 10 and iText7.
-> Download it free on GitHub."
+> "Save, and everything you added stays editable."
 
-**Text overlay:** `github.com/dotnetappdev/pdfedit`
+**Shot:** open Settings and switch to the **High contrast** theme.
+
+**Voiceover:**
+> "Twelve themes, including high contrast, and it follows your Windows setting."
 
 ---
 
-## Production Checklist
+## Scene 6: Where to get it (1:25-1:30)
+
+**Shot:** PdfEdit on the desktop, then the website address.
+
+**Voiceover:**
+> "PdfEdit is free and open source. Download it from the website."
+
+**On screen:** `dotnetappdev.github.io/Pdfedit`
+
+---
+
+## Checklist
 
 - [ ] Record at 1920×1080, 30 fps
-- [ ] Use the **Dark** theme for the main recording
-- [ ] Switch to High Contrast in Scene 5 only
-- [ ] Voiceover: neutral accent, ~140 wpm, warm and confident
-- [ ] Background music: subtle lo-fi / ambient, fade out in Scene 6
-- [ ] Colour grade: slight warm tint, slight vignette
-- [ ] Captions: auto-generate then proof-read
-- [ ] Export: H.264 MP4 + WebM fallback
-- [ ] Upload to YouTube → paste link in README `## Demo Video` section
+- [ ] Use the **Dark** theme, except High contrast in scene 5
+- [ ] Voiceover at about 140 words a minute
+- [ ] Quiet background music, faded out in scene 6
+- [ ] Captions: generate, then check them by hand
+- [ ] Export H.264 MP4, plus WebM
+- [ ] Upload to YouTube and link it from the README

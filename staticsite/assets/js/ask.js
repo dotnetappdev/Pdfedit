@@ -1,7 +1,7 @@
 // "Ask the guide": a chat that answers questions about PdfEdit from the user guide and tutorials.
 // Each question picks the few best-matching passages from data/chunks.json (made by the build) and an
 // LLM answers from those alone, citing them. The LLM can be:
-//   • the site's own assistant — data/site.json "chatEndpoint", a small proxy (worker/ask-worker.js)
+//   • the site's own assistant: data/site.json "chatEndpoint", a small proxy (worker/ask-worker.js)
 //     that holds the key; visitors need nothing;
 //   • the visitor's own Claude or OpenAI key, sent straight from their browser to that provider and
 //     kept only in this browser;
@@ -21,7 +21,7 @@
     claude: { name: 'Claude (your key)', needs: ['key', 'model'], models: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'], keyHint: 'sk-ant-…  from console.anthropic.com' },
     openai: { name: 'OpenAI (your key)', needs: ['key', 'model'], models: ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o'], keyHint: 'sk-…  from platform.openai.com' },
     local: { name: 'Local model (Ollama, LM Studio…)', needs: ['endpoint', 'model'], models: [], endpoint: 'http://localhost:11434/v1', model: 'llama3.2' },
-    none: { name: 'No AI — show the matching sections', needs: [] },
+    none: { name: 'No AI, just show the matching sections', needs: [] },
   };
 
   // ── Settings (this browser only) ───────────────────────────────────────────
@@ -39,9 +39,9 @@
   // ── The free AI in the browser (WebLLM) ────────────────────────────────────
   const WEBLLM = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm';
   const BROWSER_MODELS = [
-    { id: 'Qwen2.5-1.5B-Instruct', label: 'Standard — Qwen 2.5 1.5B', size: 'about 1 GB' },
-    { id: 'Llama-3.2-1B-Instruct', label: 'Quick — Llama 3.2 1B', size: 'about 700 MB' },
-    { id: 'Qwen2.5-3B-Instruct', label: 'Best answers — Qwen 2.5 3B', size: 'about 1.8 GB' },
+    { id: 'Qwen2.5-1.5B-Instruct', label: 'Standard: Qwen 2.5 1.5B', size: 'about 1 GB' },
+    { id: 'Llama-3.2-1B-Instruct', label: 'Quick: Llama 3.2 1B', size: 'about 700 MB' },
+    { id: 'Qwen2.5-3B-Instruct', label: 'Best answers: Qwen 2.5 3B', size: 'about 1.8 GB' },
   ];
   let gpu = { ok: false, f16: false };
   const checkGpu = async () => {
@@ -126,10 +126,11 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 - Cite the excerpts you used with their numbers in square brackets, like [1] or [2][4], right after the sentence they support.
 - If the Windows app and the Mac/web versions differ, say how for each.
 - If the excerpts don't cover the question, say you couldn't find it in the guide and suggest searching the guide or reporting it on GitHub. Never invent buttons, menus or features.
-- Only help with PdfEdit and PDFs. Politely decline anything unrelated.`;
+- Only help with PdfEdit and PDFs. Politely decline anything unrelated.
+- Write plainly: no em dashes, no emoji, no exclamation marks.`;
 
   // A shorter brief for the small in-browser models, which have less room.
-  const SYSTEM_SMALL = `You answer questions about PdfEdit, a free PDF editor for Windows, Mac and the web, using ONLY the numbered excerpts from its user guide. Give short numbered steps with button names in bold. After each step or sentence, cite the excerpt it came from like [1]. If the excerpts don't answer the question, say "I couldn't find that in the guide." Never make up buttons or features.`;
+  const SYSTEM_SMALL = `You answer questions about PdfEdit, a free PDF editor for Windows, Mac and the web, using ONLY the numbered excerpts from its user guide. Give short numbered steps with button names in bold. After each step or sentence, cite the excerpt it came from like [1]. If the excerpts don't answer the question, say "I couldn't find that in the guide." Never make up buttons or features. Don't use em dashes or emoji.`;
 
   const contextBlock = passages => passages.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' › ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
 
@@ -155,7 +156,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
     let detail = '';
     try { const j = await response.json(); detail = j.error?.message ?? j.error ?? j.message ?? ''; } catch { /* not JSON */ }
     if (response.status === 401 || response.status === 403) return `The ${PROVIDERS[p].name.replace(' (your key)', '')} key was refused. Check it in ⚙ Settings.`;
-    if (response.status === 429) return 'Too many questions at once — wait a moment and try again.';
+    if (response.status === 429) return 'Too many questions at once. Wait a moment and try again.';
     return `The AI service answered ${response.status}${detail ? ': ' + detail : ''}.`;
   }
 
@@ -227,6 +228,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 
   // ── Showing answers: a small, safe Markdown subset with [n] citations ──────
   function render(md, passages) {
+    md = md.replace(/\s*—\s*/g, ', ').replace(/–/g, '-');   // plain punctuation
     const inline = s => esc(s)
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -291,7 +293,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </form>
-    <p class="ask-foot">Answers come from the PdfEdit guide and can be wrong — check the linked pages.</p>`;
+    <p class="ask-foot">Answers come from the PdfEdit guide and can be wrong, so check the linked pages.</p>`;
 
   const $ = s => panel.querySelector(s);
   const log = $('[data-ask-log]'), input = $('[data-ask-input]'), form = $('[data-ask-form]'), sendBtn = $('[data-ask-send]');
@@ -301,15 +303,15 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   function showVia() {
     const p = provider();
     $('[data-ask-via]').textContent = p === 'browser'
-      ? (engine ? `Free AI in your browser · ${browserModel().label.split(' — ')[1]}` : 'Free AI in your browser · no key needed')
+      ? (engine ? `Free AI in your browser · ${browserModel().label.split(': ')[1]}` : 'Free AI in your browser · no key needed')
       : p === 'none' ? 'Showing matching sections · ⚙ to add an AI'
       : configured(p) ? `Answered by ${PROVIDERS[p].name.replace(' (your key)', '')}` : `${PROVIDERS[p].name}: add your key in ⚙`;
   }
 
   function welcome() {
     log.innerHTML = `
-      <div class="ask-msg bot"><p>Hi! Ask me how to do something in PdfEdit, and I'll answer from the user guide and tutorials with links to the pages.</p>
-      ${provider() === 'browser' && !engine ? `<p class="muted">Answers are written by a free AI that runs in your browser — nothing you ask leaves your computer. The first time, it downloads ${browserModel().size} (once). Prefer something else? Open ⚙.</p>` : ''}
+      <div class="ask-msg bot"><p>Ask how to do something in PdfEdit. Answers come from the user guide and tutorials, with links to the pages.</p>
+      ${provider() === 'browser' && !engine ? `<p class="muted">Answers are written by a free AI that runs in your browser, so nothing you ask leaves your computer. The first time, it downloads ${browserModel().size} (once). Prefer something else? Open ⚙.</p>` : ''}
       ${provider() === 'none' ? '<p class="muted">No AI is connected, so I\'ll show the sections that match your question. Open ⚙ to use the site\'s assistant, your own Claude or OpenAI key, or a model on your computer.</p>' : ''}
       <div class="ask-suggest">${SUGGESTIONS.map(s => `<button type="button">${esc(s)}</button>`).join('')}</div></div>`;
     log.querySelectorAll('.ask-suggest button').forEach(b => b.addEventListener('click', () => { input.value = b.textContent; submit(); }));
@@ -338,7 +340,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       <h3>Who answers</h3>
       ${Object.keys(PROVIDERS).map(option).join('')}
       <div data-ask-fields></div>
-      <p class="ask-note">Keys and settings are kept only in this browser and sent only to the provider you choose — never to the PdfEdit site. With a local model, nothing leaves your computer.</p>
+      <p class="ask-note">Keys and settings are kept only in this browser and sent only to the provider you choose, never to the PdfEdit site. With a local model, nothing leaves your computer.</p>
       <div class="ask-row"><button type="button" class="btn small" data-ask-forget>Forget my keys</button><button type="button" class="btn go small" data-ask-done>Done</button></div>`;
     const fields = settingsView.querySelector('[data-ask-fields]');
     const drawFields = () => {

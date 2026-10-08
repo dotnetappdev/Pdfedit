@@ -17,7 +17,7 @@ dotnet run --project PdfEdit
 
 `PdfEdit.Avalonia` is PdfEdit in an [Avalonia](https://avaloniaui.net) window: it runs the web
 version (PdfEdit.Blazor) inside its own process, on a private address on `127.0.0.1` that only its
-window can use, and shows it in the system's own web view — WebView2 on Windows, WebKit on macOS,
+window can use, and shows it in the system's own web view: WebView2 on Windows, WebKit on macOS,
 WebKitGTK on Linux. The program is called **PdfEdit**, like the WPF app. It builds on any of the three:
 
 ```bash
@@ -27,7 +27,7 @@ dotnet publish PdfEdit.Avalonia -c Release -r win-x64     # or osx-arm64, osx-x6
 ```
 
 Publishing puts the web app's page files (`wwwroot`) next to the program. What it needs on each
-system: Windows — the WebView2 runtime (part of Windows 10 and 11); macOS — nothing extra; Linux —
+system: on Windows, the WebView2 runtime (part of Windows 10 and 11); on macOS, nothing extra; on Linux,
 WebKitGTK (`sudo apt install libwebkit2gtk-4.1-0` on Ubuntu and Debian). Save and Save As use the
 system's Save dialog, Print opens the PDF in your PDF viewer, and links open in your browser.
 Signatures, stamps and settings are kept in your app data folder (`PdfEdit/pdfedit-desktop.db`).

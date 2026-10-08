@@ -41,7 +41,7 @@ Everything else, including font, bold and italic, alignment and exact position, 
 
 ## Ticks, crosses and dates
 
-The **Marks** group places ✓, ✕, ●, ○ and — marks. They're drawn as shapes rather than font characters, so they look the same in every PDF reader. Resize them with the corner handle or the A / A buttons.
+The **Marks** group places ticks (✓), crosses (✕), dots (●), circles (○) and short lines. They're drawn as shapes rather than font characters, so they look the same in every PDF reader. Resize them with the corner handle or the A / A buttons.
 
 ![Ticks and crosses on a printed checklist](screenshots/fill-marks.png)
 

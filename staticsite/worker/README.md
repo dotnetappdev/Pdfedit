@@ -9,7 +9,7 @@ in three ways, and visitors can choose in its ⚙ settings:
 | **Free AI in the browser** (WebLLM) | free | nothing: a small open model runs on the visitor's GPU after a one-time download |
 | **The visitor's own key** (Claude or OpenAI) | the visitor | nothing: they paste their key; it stays in their browser |
 | **A local model** (Ollama, LM Studio) | free | the visitor runs it with `OLLAMA_ORIGINS=<site origin>` |
-| **No AI** | — | the chat shows the matching guide sections |
+| **No AI** | free | the chat shows the matching guide sections |
 
 Until a Worker address is set, the chat uses the free in-browser AI where the browser supports WebGPU, and the matching sections elsewhere.
 
@@ -37,7 +37,7 @@ Check `SITE_URL` and `ALLOWED_ORIGINS` in `wrangler.toml` first (the published s
 Or deploy from GitHub: add the repository secrets `CLOUDFLARE_API_TOKEN` (a token with *Edit
 Cloudflare Workers*) and `ANTHROPIC_API_KEY`, then run **Actions → Ask assistant → Run workflow**.
 
-Then tell the site where it is — either:
+Then tell the site where it is, either:
 
 - set the repository **variable** `ASK_ENDPOINT` (Settings → Secrets and variables → Actions →
   Variables) to the Worker's address; the Website workflow puts it in at build time; or
@@ -45,7 +45,7 @@ Then tell the site where it is — either:
 
 ## Costs and limits
 
-Each answer sends about 6 passages (2–3k tokens) and the last few turns. With the default
+Each answer sends about 6 passages (2,000 to 3,000 tokens) and the last few turns. With the default
 `claude-haiku-5-5` that's a fraction of a cent a question. The Worker allows 10 questions a minute
 per visitor (the `LIMITER` binding), questions up to 1000 characters and answers up to 1000 tokens.
 Set a monthly spend limit on the Anthropic key as well.
