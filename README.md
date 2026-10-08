@@ -35,13 +35,56 @@ Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PD
 
 ### Blazor web version
 
-**PdfEdit.Blazor** is PdfEdit in the browser: a Blazor Web App (.NET 10) with the same ribbon,
-panels and three themes as the Windows app, running PdfEdit.Core and the Pdfium renderer on the
+**PdfEdit.Blazor** is PdfEdit in the browser: a Blazor Web App (.NET 10) with the same ribbon
+(the same nine tabs, groups and commands — everything that can work in a browser), panels, All tools
+pane and themes as the Windows app, running PdfEdit.Core and the Pdfium renderer on the
 server. Fill and sign forms, prepare and design forms, stamps, drawing and measuring, OCR,
 compare, certificate signing, the AI assistant and Translate PDF, batch processing and bulk fill,
 Google Drive and OneDrive, Office files to PDF, several documents open at once, and the
 floating toolbox beside the pages.
 How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
+
+**The ribbon, tab by tab, as in the Windows app**
+
+![Home tab](docs/screenshots/blazor/ribbon-home.png)
+![Fill & Sign tab](docs/screenshots/blazor/ribbon-fill-sign.png)
+![Edit tab](docs/screenshots/blazor/ribbon-edit.png)
+![View tab](docs/screenshots/blazor/ribbon-view.png)
+![Tools tab](docs/screenshots/blazor/ribbon-tools.png)
+![AI Assistant tab](docs/screenshots/blazor/ribbon-ai.png)
+![Design tab](docs/screenshots/blazor/ribbon-design.png)
+
+**A narrower window: groups fold into drop-downs, like the Fluent ribbon**
+
+![A collapsed ribbon group dropped down](docs/screenshots/blazor/ribbon-collapsed.png)
+
+**All tools pane, in the Dracula theme**
+
+![All tools pane in the Dracula theme](docs/screenshots/blazor/all-tools-dracula.png)
+
+**Office theme**
+
+![Office theme](docs/screenshots/blazor/theme-office.png)
+
+**Select Text: copy, highlight or ask the AI about it**
+
+![Select Text](docs/screenshots/blazor/select-text.png)
+
+**Edit Images: move, resize, replace, save or delete a picture in the PDF**
+
+![Edit Images](docs/screenshots/blazor/edit-images.png)
+
+**Mind Map of the document (AI Assistant)**
+
+![Mind map](docs/screenshots/blazor/mind-map.png)
+
+**Design templates (Invoice)**
+
+![Invoice template on the design canvas](docs/screenshots/blazor/design-invoice.png)
+
+**Take the Tour**
+
+![The tour](docs/screenshots/blazor/tour.png)
 
 **Floating toolbox: Draw tools with ink colours**
 

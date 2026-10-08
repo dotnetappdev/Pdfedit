@@ -38,7 +38,7 @@ window.pdfedit = (() => {
             if (!ribbon || ribbon.__peFit) return;
             ribbon.__peFit = true;
             const fit = () => {
-                const groups = [...ribbon.querySelectorAll(':scope > .pe-group')];
+                const groups = [...ribbon.querySelectorAll(':scope > .pe-ribbon-row > .pe-group')];
                 groups.forEach(g => g.classList.remove('collapsed', 'open'));
                 for (let i = groups.length - 1; i >= 0 && ribbon.scrollWidth > ribbon.clientWidth + 1; i--) {
                     const g = groups[i];
@@ -51,7 +51,7 @@ window.pdfedit = (() => {
             let pending = 0;
             const later = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(fit); };
             new ResizeObserver(later).observe(ribbon);
-            new MutationObserver(m => { if (m.some(r => r.type === 'childList' && r.target === ribbon)) later(); })
+            new MutationObserver(m => { if (m.some(r => r.type === 'childList' && (r.target === ribbon || r.target.classList?.contains('pe-ribbon-row')))) later(); })
                 .observe(ribbon, { childList: true, subtree: true });
             ribbon.addEventListener('click', e => {
                 const toggle = e.target.closest('.pe-group-collapsed');

@@ -1569,3 +1569,5 @@ html, body {
 
 /* Seven tabs on the right-hand panel: let them wrap rather than hide behind a scroll. */
 .pe-panel.right .pe-panel-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
+
+.pe-ribbon-row { display: contents; }

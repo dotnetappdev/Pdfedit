@@ -17,6 +17,21 @@ offered on the start page.
 
 <table>
   <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/ribbon-collapsed.png" alt="Ribbon with a collapsed group"><br>Ribbon (groups fold into drop-downs)</td>
+    <td align="center"><img src="../docs/screenshots/blazor/all-tools-dracula.png" alt="All tools, Dracula theme"><br>All tools, Dracula theme</td>
+    <td align="center"><img src="../docs/screenshots/blazor/theme-office.png" alt="Office theme"><br>Office theme</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/select-text.png" alt="Select Text"><br>Select Text</td>
+    <td align="center"><img src="../docs/screenshots/blazor/edit-images.png" alt="Edit Images"><br>Edit Images</td>
+    <td align="center"><img src="../docs/screenshots/blazor/mind-map.png" alt="Mind map"><br>Mind Map</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/design-invoice.png" alt="Invoice template"><br>Design templates</td>
+    <td align="center"><img src="../docs/screenshots/blazor/tour.png" alt="The tour"><br>Take the Tour</td>
+    <td></td>
+  </tr>
+  <tr>
     <td align="center"><img src="../docs/screenshots/blazor/theme-light.png" alt="Filling a form, Light theme"><br>Light</td>
     <td align="center"><img src="../docs/screenshots/blazor/theme-dark.png" alt="Filling a form, Dark theme"><br>Dark</td>
     <td align="center"><img src="../docs/screenshots/blazor/theme-high-contrast.png" alt="Filling a form, High contrast theme"><br>High contrast</td>
@@ -50,9 +65,24 @@ offered on the start page.
 
 ## Themes
 
-Light, Dark and High Contrast use the Windows app's colours exactly (PdfEdit/Themes/*.xaml);
-**System** follows the device's dark-mode and high-contrast settings. Pick one on the View tab
-(Theme) or cycle with the button at the top right; the choice is remembered in the browser.
+Light, Dark and High Contrast use the Windows app's colours exactly (PdfEdit/Themes/*.xaml), and
+so do its other palettes — Office, Office Black, Dracula, Nord, One Dark, Monokai, Solarized Light,
+Solarized Dark and GitHub Light (PdfEdit/Services/ThemeCatalog.cs). **System** follows the device's
+dark-mode and high-contrast settings. Pick one on View → Theme or cycle with the button at the top
+right; the choice is remembered in the browser.
+
+## The ribbon
+
+The ribbon has the Windows app's nine tabs — Home, Fill & Sign, Edit, View, Tools, Forms, AI
+Assistant, Design and Help — with the same groups, in the same order, and every command that can
+work in a browser. When the window is too narrow, groups fold into a drop-down button from the
+right, as the Windows app's Fluent ribbon does. The **All tools** tab of the side panel lists every
+feature by task, with a search box.
+
+Left out, because a browser can't do them: scanning straight from a TWAIN/WIA scanner (Scan uses
+your camera or photos instead), Check for Updates (the web version updates when the server does)
+and "Use my Windows accent colour". Searching a folder of PDFs works by choosing the folder (or
+the files) to upload.
 
 ## What it can do
 
@@ -76,6 +106,8 @@ Light, Dark and High Contrast use the Windows app's colours exactly (PdfEdit/The
 | Certificate signing | Sign with Certificate using your .pfx / .p12 Digital ID or a new self-signed one (downloaded so you can reuse it): in an empty signature field, a box on the page or invisibly, with reason, location, contact, optional timestamp server, certify, and your drawn signature in the box; Check Signatures shows whether each signature is intact, trusted and what it covers. The Digital ID is only held in memory for the session |
 | Floating toolbox | The quick-tools rail beside the pages, like the Windows app's: Select (Hand to pan, Marquee zoom), Comment (sticky note, text callout with a leader line, insert text, replace text, stamps with a picker, comments list), Highlight (highlight, underline, squiggly, strikethrough, with colours), Draw (freehand, rectangle, ellipse, arrow, line, cloud, polygon, polyline, eraser, with ink colours), Add text (text, tick, cross, dot, circle, line, date, vertical text, with mark colours), Sign (saved signatures and initials, add new, sign with certificate), More (measure with units, navigate, fill, shapes, form fields) and page tools (rotate, insert blank, delete, extract). Each group remembers the last tool picked; the corner arrow opens its options. In Design view it becomes the design toolbox: select, fill, sign, text, shapes, pen, picture, table, ticks, crosses, every field type, and a grid with snap. Single-letter shortcuts (V select, H hand, Z zoom, T text, I highlight, W draw, M stamp, D date, S sign, E edit fields) work when you're not typing in a box. Everything saves as real PDF annotations with their own appearance, so they show in any viewer |
 | Saved signatures | Signatures and initials you draw or type can be kept for next time: they're stored in `pdfedit.db` (SQLite) in the app's folder, keyed by an anonymous ID kept in your browser, at most eight of each, and can be deleted from the Sign flyout. Set `PdfEdit:Database` to put the database somewhere else. Digital IDs and passwords are never stored |
+| Matching the Windows ribbon | Home: Scan (camera), Clean Up Scans (blank pages, crooked scans, two-page spreads), From Google Docs (a shared link), Save As, Close, Settings, Cut / Copy / Paste (also a picture pasted from another app with Ctrl+V), First / Previous / Next / Last page, Extract Page, Delete / Extract Range, Crop Pages, Remove Password. Fill & Sign: Hand, Zoom, Vertical Text, Line and Circle marks, text size, A− / A+, bold, italic, underline and colours, New Initials, Stamps… (your own stamps, kept per browser), Highlight Fields, Clear All, Eraser, Link. Edit: Undo / Redo Ann., Delete, Find & Highlight, Import from JSON, Find & Replace in fields, Export to Other, Extract Images, Arrange Fields (align, space and size several fields: Ctrl+click to select). View: Rotate CW / CCW, Reset Rotation, All Pages, Slide Show, Two Pages, Auto Scroll, Night Mode, UI Scale, Add Bookmark, Attach File, Export / Import XFDF, Annotation Summary (CSV), Search PDFs (a folder), Visual Compare, Accessibility Check (with fixes). Tools: Select Text (copy, highlight, ask the AI), Edit Images, Snapshot, Remove Links, Callout, Cloud, Polygon, Polyline, highlight opacity, stroke width, text alignment and UPPERCASE. Forms tab. AI: Outline, Write (email, study notes, flashcards, quiz, FAQ, actions, plain English, social post), Ask by Voice (the browser's speech recognition), Ask Across PDFs (answers cite file and page), Design Form with AI, Mind Map, Fill Fields, Profiles and Quick Fill. Design: the seven templates, Import PDF Page, text, shape, field and pen formats, Align (Ctrl+click several), Bring Forward / Send Backward, page size, grid, snap, background, zoom, position and size, Export Image (PNG or JPEG). Help: What's New, Tip of the Day, Take the Tour. Keyboard: Ctrl+X/C/V, Del, Ctrl+] / Ctrl+[, Ctrl+→ / Ctrl+←, Ctrl+Shift+= / −, F1 |
+| Kept per browser | Settings (your name for dynamic stamps, date format, text size and colour, UI scale, Fit Width on open, field highlighting, tips at start), your own stamps and fill-in profiles are kept in `pdfedit.db` (SQLite) in the app's folder, under the browser's anonymous ID, like saved signatures. API keys, passwords and Digital IDs are never stored |
 | AI Assistant | Chat about the open PDF with page links, Summarize, Extract data, Review contract, Find personal info, Translate, Fill form with AI, Translate PDF (every paragraph translated and written back in place, keeping the layout; Undo brings back the original), and the changes the AI proposes (fill fields, highlight, redact, notes, stamps, rotate, delete, watermark, bookmarks, commands) applied one by one or all at once |
 
 Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.
@@ -149,5 +181,5 @@ by PdfEdit's own converter, and text, Markdown and web pages always are.
 
 ## Not in the web version yet
 
-Scanning straight from a scanner: browsers can't reach TWAIN scanners, so use Scan with Camera or
-pictures instead.
+Scanning straight from a scanner: browsers can't reach TWAIN scanners, so use Scan (your camera)
+or pictures instead. Check for Updates and the Windows accent colour are Windows-only too.

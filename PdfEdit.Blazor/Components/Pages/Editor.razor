@@ -35,6 +35,8 @@
 
     @* ── Ribbon ────────────────────────────────────────────────────────── *@
     <div class="pe-ribbon" role="toolbar" aria-label="@TabName(_tab)">
+        @* Keyed by tab, so each tab's groups are new elements (none keep another tab's collapsed state). *@
+        <div class="pe-ribbon-row" @key="_tab">
         @switch (_tab)
         {
             case RibbonTab.Home:
@@ -878,6 +880,7 @@
                 </RibbonGroup>
                 break;
         }
+        </div>
     </div>
 
     @* ── Workspace ─────────────────────────────────────────────────────── *@
