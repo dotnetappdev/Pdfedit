@@ -1058,6 +1058,7 @@
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.HighlightFields" /> Highlight form fields</label>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.OpenFitWidth" /> Open documents at Fit Width</label>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.ShowTipsAtStart" /> Show a Tip of the Day when PdfEdit opens</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.StampLocation" /> Add my location to dynamic stamps (the browser asks first; only the coordinates are added)</label>
                 <p class="pe-hint mt-2 mb-0">Kept for this browser in the app's database. The theme is on View → Theme; AI keys are on AI Assistant → API Keys and are never kept.</p>
             </ChildContent>
             <Footer>
@@ -1630,7 +1631,7 @@
                 _settings = new WebSettings
                 {
                     AuthorName = cur.AuthorName, DateFormat = cur.DateFormat, DefaultFontSize = cur.DefaultFontSize, DefaultTextColour = cur.DefaultTextColour,
-                    OpenFitWidth = cur.OpenFitWidth, HighlightFields = cur.HighlightFields, UiScale = cur.UiScale, ShowTipsAtStart = cur.ShowTipsAtStart,
+                    OpenFitWidth = cur.OpenFitWidth, HighlightFields = cur.HighlightFields, UiScale = cur.UiScale, ShowTipsAtStart = cur.ShowTipsAtStart, StampLocation = cur.StampLocation,
                 };
                 break;
             case DialogKind.Accessibility when Ed.Doc != null:

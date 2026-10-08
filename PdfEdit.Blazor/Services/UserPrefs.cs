@@ -85,4 +85,6 @@ public sealed class WebSettings
     public bool HighlightFields { get; set; } = true;
     public double UiScale { get; set; } = 1;
     public bool ShowTipsAtStart { get; set; }
+    /// <summary>Add where you are (latitude, longitude) to dynamic stamps; the browser asks permission.</summary>
+    public bool StampLocation { get; set; }
 }

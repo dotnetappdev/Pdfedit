@@ -892,6 +892,26 @@ html, body {
 .pe-toast.error { background: #B3261E; }
 .pe-toast.success { background: #1E7B34; }
 
+/* Share: shown when the browser wants one more click before opening the share sheet. */
+.pe-share-prompt {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--pe-toast-bg);
+    color: var(--pe-toast-fg);
+    padding: 8px 10px 8px 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+    z-index: 2001;
+    max-width: calc(100vw - 32px);
+}
+.pe-share-prompt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pe-status .pe-dictating { color: #B3261E; font-weight: 600; }
+
 /* ── Welcome (no document open) ──────────────────────────────────────────── */
 
 .pe-welcome {

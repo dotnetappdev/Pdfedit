@@ -56,6 +56,7 @@ public partial class Editor
             string who = string.IsNullOrWhiteSpace(_stampAuthor) ? "" : $"By {_stampAuthor.Trim()} ";
             subtitle = $"{who}at {now.ToString("t", CultureInfo.CurrentCulture)}, {now.ToString("d", CultureInfo.CurrentCulture)}";
             subtitle = char.ToUpper(subtitle[0]) + subtitle[1..];
+            if (await StampLocationAsync() is { } place) subtitle += $" · {place}";
         }
         var (w, h) = StampCatalog.SizeFor(def.Title, subtitle);
         return new PageItem

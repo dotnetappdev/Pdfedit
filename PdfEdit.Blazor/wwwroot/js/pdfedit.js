@@ -520,6 +520,122 @@ window.pdfedit = (() => {
             stop() { window.__peVoice?.stop(); },
         },
 
+        // ── Share: the device's share sheet (phones, tablets, Windows, macOS) with the PDF attached ──
+        // Returns 'shared', 'cancelled', 'unsupported' or 'failed'. If too long has passed since the
+        // click for the browser to allow it, a small "Share" prompt is shown to click again.
+        async share(url, name) {
+            if (!navigator.share || !navigator.canShare) return 'unsupported';
+            let file;
+            try {
+                const r = await fetch(url);
+                if (!r.ok) return 'failed';
+                file = new File([await r.blob()], name, { type: 'application/pdf' });
+            } catch { return 'failed'; }
+            if (!navigator.canShare({ files: [file] })) return 'unsupported';
+            const go = () => navigator.share({ files: [file], title: name });
+            try { await go(); return 'shared'; }
+            catch (e) {
+                if (e?.name === 'AbortError') return 'cancelled';
+                if (e?.name !== 'NotAllowedError') return 'failed';
+            }
+            // The click is too long ago (a big file, a slow connection): ask for one more.
+            return await new Promise(done => {
+                document.querySelector('.pe-share-prompt')?.remove();
+                const box = document.createElement('div');
+                box.className = 'pe-share-prompt';
+                box.setAttribute('role', 'dialog');
+                box.innerHTML = '<span></span><button class="pe-btn primary" type="button">Share</button><button class="pe-btn" type="button">Cancel</button>';
+                box.querySelector('span').textContent = `${name} is ready to share`;
+                const [ok, cancel] = box.querySelectorAll('button');
+                const end = result => { box.remove(); done(result); };
+                ok.onclick = async () => {
+                    try { await go(); end('shared'); }
+                    catch (e) { end(e?.name === 'AbortError' ? 'cancelled' : 'failed'); }
+                };
+                cancel.onclick = () => end('cancelled');
+                document.body.appendChild(box);
+                ok.focus();
+            });
+        },
+
+        // ── Dictation: speech typed into the field, note or text box last clicked ──
+        // Keeps listening (restarting after pauses) until stopped. Spoken punctuation is understood.
+        dictation: (() => {
+            let rec = null, on = false, target = null, net = null;
+            const editable = el => el && (el.tagName === 'TEXTAREA' || el.isContentEditable ||
+                (el.tagName === 'INPUT' && /^(text|search|email|url|tel|number|)$/i.test(el.type)));
+            document.addEventListener('focusin', e => { if (editable(e.target)) target = e.target; }, true);
+            const words = [
+                [/\s*\b(new paragraph)\b\s*/gi, '\n\n'], [/\s*\b(new line|next line)\b\s*/gi, '\n'],
+                [/\s*\b(full stop|period)\b/gi, '.'], [/\s*\bcomma\b/gi, ','], [/\s*\bquestion mark\b/gi, '?'],
+                [/\s*\bexclamation (mark|point)\b/gi, '!'], [/\s*\bcolon\b/gi, ':'], [/\s*\bsemicolon\b/gi, ';'],
+                [/\bopen bracket\s*/gi, '('], [/\s*\bclose bracket\b/gi, ')'], [/\s*\bhyphen\s*/gi, '-'],
+            ];
+            const tidy = text => words.reduce((t, [re, to]) => t.replace(re, to), text).trim();
+            function insert(text) {
+                const el = target;
+                if (!el || !el.isConnected) { net?.invokeMethodAsync('OnDictation', 'nowhere', text); return; }
+                if (el.tagName === 'INPUT' && el.type === 'number') text = text.replace(/[^\d.,-]/g, '');
+                if (el.isContentEditable) {
+                    el.focus();
+                    document.execCommand('insertText', false, (el.textContent && !/\s$/.test(el.textContent) ? ' ' : '') + text);
+                } else {
+                    const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? el.value.length;
+                    const before = el.value.slice(0, start);
+                    const glue = before && !/[\s(\n]$/.test(before) && !/^[.,?!:;)]/.test(text) ? ' ' : '';
+                    if (el.tagName === 'INPUT') text = text.replace(/\n+/g, ' ');
+                    try { el.setRangeText(glue + text, start, end, 'end'); }
+                    catch { el.value = before + glue + text + el.value.slice(end); }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    el.focus();
+                }
+                net?.invokeMethodAsync('OnDictation', 'typed', text);
+            }
+            function start() {
+                const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+                rec = new R();
+                rec.lang = navigator.language || 'en-GB';
+                rec.continuous = true;
+                rec.interimResults = false;
+                rec.onresult = e => {
+                    for (let i = e.resultIndex; i < e.results.length; i++)
+                        if (e.results[i].isFinal) { const t = tidy(e.results[i][0].transcript); if (t) insert(t); }
+                };
+                rec.onerror = e => {
+                    if (e.error === 'no-speech' || e.error === 'aborted') return;
+                    on = false;
+                    net?.invokeMethodAsync('OnDictation', 'error', e.error);
+                };
+                // Browsers stop listening after a pause: carry on until Dictate is turned off.
+                rec.onend = () => { if (on) { try { rec.start(); } catch { on = false; net?.invokeMethodAsync('OnDictation', 'stopped', ''); } } };
+                rec.start();
+            }
+            return {
+                supported: () => !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+                start(dotnet) {
+                    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) return false;
+                    net = dotnet; on = true;
+                    try { start(); } catch { on = false; return false; }
+                    target?.focus();
+                    return true;
+                },
+                stop() { on = false; try { rec?.stop(); } catch { } },
+            };
+        })(),
+
+        // ── Where the user is (for dynamic stamps): the browser asks permission the first time ──
+        // Returns { lat, lon, accuracy } or { error }.
+        location() {
+            return new Promise(done => {
+                if (!navigator.geolocation) { done({ error: 'unsupported' }); return; }
+                navigator.geolocation.getCurrentPosition(
+                    p => done({ lat: p.coords.latitude, lon: p.coords.longitude, accuracy: p.coords.accuracy }),
+                    e => done({ error: e.code === 1 ? 'denied' : e.code === 3 ? 'timeout' : 'unavailable' }),
+                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * 60 * 1000 });
+            });
+        },
+
         // Mind map topics that have a page: clicking one goes there.
         mindMapLinks(dotnet) {
             document.querySelector('.pe-mindmap')?.addEventListener('click', e => {

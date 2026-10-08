@@ -66,6 +66,7 @@
                     </div>
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-floppy" Label="Save Draft" Title="Keep your work in this browser now — it's also kept every few seconds — so reloading or closing the page doesn't lose it" Disabled="@(NoDoc && Design.Elements is not { Count: > 0 })" OnClick="SaveDraftNowAsync" />
+                        <RibbonButton Icon="bi-share" Label="Share" Title="Send the PDF with your device's share sheet: mail, messages, AirDrop, Teams… (downloads it if the browser can't share)" Disabled="NoDoc" OnClick="ShareAsync" />
                     </div>
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
@@ -229,6 +230,7 @@
                     <div class="pe-stack">
                         @ToolButton(Tool.Eraser, "bi-eraser", "Eraser", "Eraser — click a drawing or comment to remove it")
                         @ToolButton(Tool.Link, "bi-link-45deg", "Link", "Link — drag a rectangle to add a link to a web page, email or page")
+                        <RibbonButton Icon="@(Dictating ? "bi-mic-fill" : "bi-mic")" Label="Dictate" Title="Type by speaking: click a field, note or text box, then talk. Click again to stop" Active="Dictating" OnClick="ToggleDictationAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Finish">
@@ -237,6 +239,9 @@
                         <RibbonButton Icon="bi-download" Label="Save" Title="Download the filled and signed PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
                         <RibbonButton Icon="bi-layers" Label="Flatten &amp; Save" Title="Make fields and comments part of the page so they can't be changed, then download" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
                         <RibbonButton Icon="bi-printer" Label="Print" Title="Print the document (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-share" Label="Share" Title="Send the PDF with your device's share sheet: mail, messages, AirDrop, Teams… (downloads it if the browser can't share)" Disabled="NoDoc" OnClick="ShareAsync" />
                     </div>
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo (Ctrl+Z)" Disabled="!CanUndo" OnClick="UndoAsync" />
@@ -1255,6 +1260,11 @@
     <div class="pe-status" role="status">
         <span>@_status</span>
         <span class="pe-spacer"></span>
+        @if (Dictating)
+        {
+            <button class="pe-dictating" title="Stop dictation" @onclick="ToggleDictationAsync"><i class="bi bi-mic-fill"></i> Dictating</button>
+            <span>·</span>
+        }
         @if (DraftSavedAt is { } kept && (Doc != null || DesignMode))
         {
             <span class="pe-draft-kept" title="Your work is kept in this browser as a draft: reloading or closing the page doesn't lose it"><i class="bi bi-cloud-check"></i> Draft saved @kept.ToString("HH:mm")</span>

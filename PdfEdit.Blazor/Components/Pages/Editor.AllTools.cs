@@ -30,6 +30,7 @@ public partial class Editor
         [
             new("Convert & save as", "bi-arrow-left-right", "Convert to Word, Excel, HTML, ePub, images or PDF/A",
             [
+                Run("Share (mail, messages, AirDrop…)", ShareAsync, "Your device's share sheet with the PDF attached"),
                 Run("Microsoft Word (.docx)", () => ExportAsync(ExportFormat.Word), "Text of every page as a Word document"),
                 Run("Microsoft Excel (.xlsx)", () => ExportAsync(ExportFormat.Excel), "Tables and columns rebuilt as rows and cells, numbers as numbers"),
                 Run("Microsoft PowerPoint (.pptx)", () => ExportAsync(ExportFormat.PowerPoint), "One slide per page"),
@@ -49,6 +50,7 @@ public partial class Editor
             new("Edit content", "bi-pencil", "Add text, watermarks, headers, page numbers",
             [
                 Tool("Add text", ToolKind.Text, "Click on the page to type"),
+                Run("Dictate (type by speaking)", ToggleDictationAsync, "Click a field, note or text box, then talk"),
                 Tool("Edit images (move, resize, replace, delete)", ToolKind.EditImages, "Select a picture already in the PDF"),
                 Run("Edit page on the Design canvas", ImportPdfPageAsync, "Move and restyle the page's text, images and fields"),
                 Dlg("Watermark", DialogKind.Watermark),
