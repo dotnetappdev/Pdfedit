@@ -30,10 +30,7 @@
 
             case Backstage.New:
                 <h2>New</h2>
-                <div class="pe-option-list">
-                    <button class="pe-option" @onclick="() => ActAsync(Ed.NewBlankAsync, close: true)"><i class="bi bi-file-earmark"></i><span>Blank PDF<small>One empty A4 page</small></span></button>
-                    <button class="pe-option" @onclick="() => Dialog(DialogKind.Combine)"><i class="bi bi-file-earmark-image"></i><span>From images or files<small>Pictures and PDFs, combined in order</small></span></button>
-                </div>
+                <TemplateGallery Ed="Ed" Done="Ed.CloseBackstage" />
                 break;
 
             case Backstage.Open:

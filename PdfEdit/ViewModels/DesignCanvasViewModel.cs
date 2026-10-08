@@ -518,9 +518,12 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
     public void SaveDesign(string path)
         => Services.DesignSerializerService.Save(Elements, _pageSize, _customPageWidth, _customPageHeight, _pageBackground, path);
 
-    public void LoadDesign(string path)
+    public void LoadDesign(string path) => LoadDesignDocument(DesignDocument.FromJson(System.IO.File.ReadAllText(path)));
+
+    /// <summary>Replaces the canvas with a design (a .pdfdesign file's contents or a template).</summary>
+    public void LoadDesignDocument(DesignDocument design)
     {
-        var (elems, ps, cw, ch, bg) = Services.DesignSerializerService.Load(path);
+        var (elems, ps, cw, ch, bg) = Services.DesignSerializerService.Load(design);
         SaveUndo();
         Elements.Clear();
         SelectedElement = null;
@@ -677,190 +680,11 @@ public class DesignCanvasViewModel : INotifyPropertyChanged
 
     // ── Templates ─────────────────────────────────────────────────────────────
 
-    public void LoadTemplate(string templateName)
-    {
-        SaveUndo();
-        Elements.Clear();
-        SelectedElement = null;
-
-        switch (templateName)
-        {
-            case "Invoice":      LoadInvoiceTemplate(); break;
-            case "Letter":       LoadLetterTemplate();  break;
-            case "BusinessCard": LoadBusinessCardTemplate(); break;
-            case "Certificate":  LoadCertificateTemplate(); break;
-            case "Form":         LoadFormTemplate(); break;
-            case "Resume":       LoadResumeTemplate(); break;
-            case "Flyer":        LoadFlyerTemplate(); break;
-        }
-    }
-
-    private void LoadInvoiceTemplate()
-    {
-        PageSize = DesignPageSize.A4;
-        double w = PageWidth;
-
-        Elements.Add(new TextDesignElement { X = 30, Y = 30, Width = w - 60, Height = 50, Text = "INVOICE", FontSize = 36, Bold = true, Color = Color.FromRgb(30, 80, 160), Alignment = TextAlignment.Left });
-        Elements.Add(new TextDesignElement { X = 30, Y = 90, Width = 250, Height = 20, Text = "Your Company Name", FontSize = 13, Bold = true, Color = Color.FromRgb(60, 60, 60) });
-        Elements.Add(new TextDesignElement { X = 30, Y = 112, Width = 250, Height = 18, Text = "123 Business Street, City, Country", FontSize = 10, Color = Color.FromRgb(100, 100, 100) });
-        Elements.Add(new TextDesignElement { X = w - 200, Y = 90, Width = 170, Height = 20, Text = $"Invoice #: 001", FontSize = 11, Bold = true, Alignment = TextAlignment.Right, Color = Color.FromRgb(60, 60, 60) });
-        Elements.Add(new TextDesignElement { X = w - 200, Y = 112, Width = 170, Height = 18, Text = $"Date: {DateTime.Now:dd MMM yyyy}", FontSize = 10, Alignment = TextAlignment.Right, Color = Color.FromRgb(100, 100, 100) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 30, Y = 145, Width = w - 60, Height = 2, StrokeColor = Color.FromRgb(30, 80, 160), StrokeThickness = 2 });
-
-        var table = new TableDesignElement { X = 30, Y = 165, Width = w - 60, Height = 200, Rows = 6, Columns = 4 };
-        table.SetCell(0, 0, "Description"); table.SetCell(0, 1, "Qty"); table.SetCell(0, 2, "Unit Price"); table.SetCell(0, 3, "Total");
-        table.SetCell(1, 0, "Service / Product 1"); table.SetCell(1, 1, "1"); table.SetCell(1, 2, "$100.00"); table.SetCell(1, 3, "$100.00");
-        table.SetCell(2, 0, "Service / Product 2"); table.SetCell(2, 1, "2"); table.SetCell(2, 2, "$50.00"); table.SetCell(2, 3, "$100.00");
-        Elements.Add(table);
-
-        Elements.Add(new TextDesignElement { X = w - 200, Y = 385, Width = 170, Height = 22, Text = "TOTAL: $200.00", FontSize = 14, Bold = true, Alignment = TextAlignment.Right, Color = Color.FromRgb(30, 80, 160) });
-        Elements.Add(new TextDesignElement { X = 30, Y = 440, Width = w - 60, Height = 18, Text = "Payment due within 30 days. Thank you for your business!", FontSize = 10, Color = Color.FromRgb(100, 100, 100) });
-
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadLetterTemplate()
-    {
-        PageSize = DesignPageSize.A4;
-        double w = PageWidth;
-        Elements.Add(new TextDesignElement { X = 30, Y = 30, Width = 200, Height = 25, Text = "Your Name", FontSize = 14, Bold = true });
-        Elements.Add(new TextDesignElement { X = 30, Y = 56, Width = 200, Height = 18, Text = "Your Address", FontSize = 10, Color = Color.FromRgb(100,100,100) });
-        Elements.Add(new TextDesignElement { X = 30, Y = 74, Width = 200, Height = 18, Text = $"{DateTime.Now:dd MMMM yyyy}", FontSize = 10 });
-        Elements.Add(new TextDesignElement { X = 30, Y = 120, Width = 300, Height = 20, Text = "Recipient Name", FontSize = 12, Bold = true });
-        Elements.Add(new TextDesignElement { X = 30, Y = 142, Width = 300, Height = 18, Text = "Company Name", FontSize = 10 });
-        Elements.Add(new TextDesignElement { X = 30, Y = 185, Width = w - 60, Height = 20, Text = "Dear [Recipient Name],", FontSize = 12 });
-        Elements.Add(new TextDesignElement { X = 30, Y = 215, Width = w - 60, Height = 80, Text = "I am writing to you regarding...\n\nPlease feel free to contact me should you have any questions.", FontSize = 11 });
-        Elements.Add(new TextDesignElement { X = 30, Y = 320, Width = 200, Height = 18, Text = "Yours sincerely,", FontSize = 11 });
-        Elements.Add(new TextDesignElement { X = 30, Y = 360, Width = 200, Height = 20, Text = "Your Name", FontSize = 12, Bold = true });
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadBusinessCardTemplate()
-    {
-        PageSize = DesignPageSize.Custom;
-        CustomPageWidth = 252; CustomPageHeight = 144;
-        double w = CustomPageWidth; double h = CustomPageHeight;
-
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = w, Height = h, FillColor = Color.FromRgb(25, 65, 140), StrokeColor = Colors.Transparent });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = 8, Height = h, FillColor = Color.FromRgb(255, 180, 0), StrokeColor = Colors.Transparent });
-        Elements.Add(new TextDesignElement { X = 24, Y = 28, Width = w - 32, Height = 28, Text = "John Smith", FontSize = 20, Bold = true, Color = Colors.White });
-        Elements.Add(new TextDesignElement { X = 24, Y = 58, Width = w - 32, Height = 18, Text = "Senior Designer", FontSize = 11, Color = Color.FromArgb(200, 255, 255, 255) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 24, Y = 82, Width = w - 48, Height = 1, StrokeColor = Color.FromArgb(80, 255, 255, 255), StrokeThickness = 1 });
-        Elements.Add(new TextDesignElement { X = 24, Y = 90, Width = w - 32, Height = 16, Text = "john@example.com  |  +1 555 000 0000", FontSize = 9, Color = Color.FromArgb(180, 255, 255, 255) });
-        Elements.Add(new TextDesignElement { X = 24, Y = 108, Width = w - 32, Height = 16, Text = "www.yourwebsite.com", FontSize = 9, Color = Color.FromArgb(180, 255, 255, 255) });
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadCertificateTemplate()
-    {
-        PageSize = DesignPageSize.Letter;
-        double w = PageWidth; double h = PageHeight;
-
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = w, Height = h, FillColor = Color.FromRgb(253, 248, 230), StrokeColor = Colors.Transparent });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 20, Y = 20, Width = w - 40, Height = h - 40, FillColor = Colors.Transparent, StrokeColor = Color.FromRgb(180, 140, 60), StrokeThickness = 3 });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 26, Y = 26, Width = w - 52, Height = h - 52, FillColor = Colors.Transparent, StrokeColor = Color.FromRgb(180, 140, 60), StrokeThickness = 1 });
-        Elements.Add(new TextDesignElement { X = 40, Y = 60, Width = w - 80, Height = 30, Text = "Certificate of Achievement", FontSize = 11, Color = Color.FromRgb(130, 100, 40), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 40, Y = 120, Width = w - 80, Height = 55, Text = "Certificate of Excellence", FontSize = 40, Bold = true, Color = Color.FromRgb(100, 70, 20), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 40, Y = 210, Width = w - 80, Height = 25, Text = "This is to certify that", FontSize = 14, Color = Color.FromRgb(80, 60, 30), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 40, Y = 248, Width = w - 80, Height = 40, Text = "Recipient Name", FontSize = 28, Bold = true, Italic = true, Color = Color.FromRgb(30, 80, 160), Alignment = TextAlignment.Center });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 120, Y = 298, Width = w - 240, Height = 1, StrokeColor = Color.FromRgb(180, 140, 60), StrokeThickness = 1.5 });
-        Elements.Add(new TextDesignElement { X = 40, Y = 310, Width = w - 80, Height = 25, Text = "has successfully completed the requirements for", FontSize = 12, Color = Color.FromRgb(80, 60, 30), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 40, Y = 345, Width = w - 80, Height = 30, Text = "Outstanding Performance Award", FontSize = 16, Bold = true, Color = Color.FromRgb(30, 80, 160), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 80, Y = 660, Width = 180, Height = 20, Text = "Authorized Signature", FontSize = 10, Alignment = TextAlignment.Center, Color = Color.FromRgb(80, 60, 30) });
-        Elements.Add(new TextDesignElement { X = w - 260, Y = 660, Width = 180, Height = 20, Text = $"Date: {DateTime.Now:dd MMMM yyyy}", FontSize = 10, Alignment = TextAlignment.Center, Color = Color.FromRgb(80, 60, 30) });
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadFormTemplate()
-    {
-        PageSize = DesignPageSize.A4;
-        double w = PageWidth;
-        Elements.Add(new TextDesignElement { X = 30, Y = 30, Width = w - 60, Height = 35, Text = "Application Form", FontSize = 24, Bold = true, Alignment = TextAlignment.Center, Color = Color.FromRgb(30, 80, 160) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 30, Y = 72, Width = w - 60, Height = 2, StrokeColor = Color.FromRgb(30, 80, 160), StrokeThickness = 2 });
-
-        var fields = new[] { ("Full Name", 100), ("Email Address", 150), ("Phone Number", 200), ("Address", 250), ("Date of Birth", 300) };
-        foreach (var (label, y) in fields)
-        {
-            Elements.Add(new TextDesignElement { X = 30, Y = y, Width = 200, Height = 20, Text = label + ":", FontSize = 11, Bold = true, Color = Color.FromRgb(60, 60, 60) });
-            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 240, Y = y, Width = w - 270, Height = 22, FillColor = Colors.White, StrokeColor = Color.FromRgb(180, 180, 180), StrokeThickness = 1 });
-        }
-
-        Elements.Add(new TextDesignElement { X = 30, Y = 365, Width = 200, Height = 20, Text = "Comments:", FontSize = 11, Bold = true, Color = Color.FromRgb(60, 60, 60) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 30, Y = 390, Width = w - 60, Height = 80, FillColor = Colors.White, StrokeColor = Color.FromRgb(180, 180, 180), StrokeThickness = 1 });
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadResumeTemplate()
-    {
-        PageSize = DesignPageSize.A4;
-        double w = PageWidth; double h = PageHeight;
-
-        // Left sidebar
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = 175, Height = h, FillColor = Color.FromRgb(35, 55, 90), StrokeColor = Colors.Transparent });
-        // Photo placeholder
-        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = 37, Y = 30, Width = 100, Height = 100, FillColor = Color.FromArgb(60, 255, 255, 255), StrokeColor = Color.FromArgb(120, 255, 255, 255), StrokeThickness = 2 });
-        Elements.Add(new TextDesignElement { X = 10, Y = 145, Width = 155, Height = 28, Text = "Your Name", FontSize = 18, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 10, Y = 175, Width = 155, Height = 18, Text = "UX / Product Designer", FontSize = 10, Color = Color.FromArgb(180, 255, 255, 255), Alignment = TextAlignment.Center });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 20, Y = 204, Width = 135, Height = 1, StrokeColor = Color.FromArgb(80, 255, 255, 255), StrokeThickness = 1 });
-
-        // Sidebar section headers
-        foreach (var (text, y) in new[] { ("CONTACT", 218), ("SKILLS", 340), ("LANGUAGES", 480) })
-            Elements.Add(new TextDesignElement { X = 14, Y = y, Width = 148, Height = 16, Text = text, FontSize = 8, Bold = true, Color = Color.FromRgb(200, 180, 100), Alignment = TextAlignment.Left });
-
-        Elements.Add(new TextDesignElement { X = 14, Y = 240, Width = 148, Height = 72, Text = "📧 you@example.com\n📞 +1 555 000 0000\n🌐 linkedin.com/in/you\n📍 City, Country", FontSize = 9, Color = Color.FromArgb(200, 255, 255, 255) });
-
-        var skills = new[] { "Figma", "Adobe XD", "Prototyping", "User Research" };
-        for (int i = 0; i < skills.Length; i++)
-        {
-            Elements.Add(new TextDesignElement { X = 14, Y = 360 + i * 24, Width = 100, Height = 18, Text = skills[i], FontSize = 9, Color = Color.FromArgb(220, 255, 255, 255) });
-            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = 148, Height = 5, FillColor = Color.FromArgb(40, 255, 255, 255), StrokeColor = Colors.Transparent });
-            Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 14, Y = 375 + i * 24, Width = (float)(148 * (0.95 - i * 0.12)), Height = 5, FillColor = Color.FromRgb(200, 180, 100), StrokeColor = Colors.Transparent });
-        }
-
-        // Main content area
-        Elements.Add(new TextDesignElement { X = 195, Y = 30, Width = w - 215, Height = 30, Text = "PROFESSIONAL SUMMARY", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 62, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
-        Elements.Add(new TextDesignElement { X = 195, Y = 70, Width = w - 215, Height = 55, Text = "Passionate designer with 5+ years of experience crafting intuitive digital products. Focused on user-centered design and delivering measurable results.", FontSize = 10, Color = Color.FromRgb(60, 60, 60) });
-
-        Elements.Add(new TextDesignElement { X = 195, Y = 145, Width = w - 215, Height = 24, Text = "EXPERIENCE", FontSize = 10, Bold = true, Color = Color.FromRgb(35, 55, 90) });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Line) { X = 195, Y = 170, Width = w - 215, Height = 1, StrokeColor = Color.FromRgb(35, 55, 90), StrokeThickness = 1.5 });
-        foreach (var (company, role, dates, y2) in new[] {
-            ("Acme Corp", "Lead UX Designer", "2021–Present", 180),
-            ("Beta Studio", "Product Designer", "2018–2021", 250) })
-        {
-            Elements.Add(new TextDesignElement { X = 195, Y = y2, Width = w - 215, Height = 18, Text = role, FontSize = 11, Bold = true, Color = Color.FromRgb(40, 40, 40) });
-            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 18, Width = 200, Height = 16, Text = company, FontSize = 9, Color = Color.FromRgb(35, 55, 90) });
-            Elements.Add(new TextDesignElement { X = w - 215 - 80, Y = y2 + 18, Width = 80, Height = 16, Text = dates, FontSize = 9, Color = Color.FromRgb(120, 120, 120), Alignment = TextAlignment.Right });
-            Elements.Add(new TextDesignElement { X = 195, Y = y2 + 36, Width = w - 215, Height = 36, Text = "• Designed and iterated on key product features\n• Led cross-functional design sprints", FontSize = 9, Color = Color.FromRgb(80, 80, 80) });
-        }
-
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
-
-    private void LoadFlyerTemplate()
-    {
-        PageSize = DesignPageSize.A4;
-        double w = PageWidth; double h = PageHeight;
-
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = 0, Y = 0, Width = w, Height = h, FillColor = Color.FromRgb(15, 15, 35), StrokeColor = Colors.Transparent });
-        // Accent circles
-        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = -60, Y = -60, Width = 240, Height = 240, FillColor = Color.FromArgb(60, 0, 180, 255), StrokeColor = Colors.Transparent });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Ellipse) { X = w - 120, Y = h - 160, Width = 200, Height = 200, FillColor = Color.FromArgb(50, 255, 80, 180), StrokeColor = Colors.Transparent });
-
-        Elements.Add(new TextDesignElement { X = 30, Y = 80, Width = w - 60, Height = 30, Text = "SPECIAL EVENT", FontSize = 12, Bold = true, Color = Color.FromRgb(0, 200, 255), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 30, Y = 120, Width = w - 60, Height = 80, Text = "AMAZING\nCONFERENCE\n2026", FontSize = 42, Bold = true, Color = Colors.White, Alignment = TextAlignment.Center });
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = (w - 60) / 2 - 25, Y = 240, Width = 90, Height = 4, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent });
-
-        Elements.Add(new TextDesignElement { X = 30, Y = 270, Width = w - 60, Height = 30, Text = "The Future of Technology & Innovation", FontSize = 14, Italic = true, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
-        Elements.Add(new TextDesignElement { X = 30, Y = 330, Width = w - 60, Height = 25, Text = "📅 15–17 June 2026   📍 Convention Center, New York", FontSize = 12, Color = Color.FromArgb(200, 255, 255, 255), Alignment = TextAlignment.Center });
-
-        Elements.Add(new ShapeDesignElement(DesignElementType.Rectangle) { X = w / 2 - 90, Y = 400, Width = 180, Height = 44, FillColor = Color.FromRgb(0, 200, 255), StrokeColor = Colors.Transparent, CornerRadius = 22 });
-        Elements.Add(new TextDesignElement { X = w / 2 - 90, Y = 412, Width = 180, Height = 24, Text = "REGISTER NOW", FontSize = 13, Bold = true, Color = Color.FromRgb(15, 15, 35), Alignment = TextAlignment.Center });
-
-        Elements.Add(new TextDesignElement { X = 30, Y = h - 80, Width = w - 60, Height = 20, Text = "www.amazingconf.example.com", FontSize = 11, Color = Color.FromArgb(160, 255, 255, 255), Alignment = TextAlignment.Center });
-
-        foreach (var e in Elements) e.ZOrder = Elements.IndexOf(e);
-    }
+    /// <summary>
+    /// Puts a template from the shared catalog (PdfEdit.Core's TemplateCatalog, the same templates as
+    /// the web version) on the canvas, replacing what's there as one undo step.
+    /// </summary>
+    public void LoadTemplate(string templateId) => LoadDesignDocument(Templates.TemplateCatalog.Create(templateId));
 
     public void ZoomIn()  => Zoom = Math.Min(5.0, _zoom + 0.1);
     public void ZoomOut() => Zoom = Math.Max(0.1, _zoom - 0.1);

@@ -485,6 +485,30 @@ public partial class MainWindow : RibbonWindow
         }
     }
 
+    /// <summary>File → New from Template (and Design → All Templates): the template chooser.</summary>
+    private async void NewFromTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM == null) return;
+        var dlg = new Dialogs.TemplateChooserDialog { Owner = this };
+        if (dlg.ShowDialog() != true) return;
+        switch (dlg.Result)
+        {
+            case Dialogs.TemplateChooserDialog.Choice.Customise when dlg.TemplateId != null:
+                VM.DesignCanvas.LoadTemplate(dlg.TemplateId);
+                VM.IsDesignMode = true;
+                break;
+            case Dialogs.TemplateChooserDialog.Choice.OpenAsPdf when dlg.TemplateId != null:
+                await VM.OpenTemplateAsPdfAsync(dlg.TemplateId);
+                break;
+            case Dialogs.TemplateChooserDialog.Choice.BlankPdf:
+                VM.CreateBlankPdfCommand.Execute(null);
+                break;
+            case Dialogs.TemplateChooserDialog.Choice.BlankDesign:
+                VM.NewDesignCommand.Execute(null);
+                break;
+        }
+    }
+
     private void DesignTemplate_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.DesignCanvas == null) return;

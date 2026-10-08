@@ -65,8 +65,18 @@ public static class DesignPdfExporter
         // Design origin is top-left (y down); PDF origin is bottom-left (y up).
         float x = (float)e.X, y = (float)(pageH - e.Y - e.H), w = (float)e.W, h = (float)e.H;
 
-        if (e.Opacity < 0.999)
-            canvas.SetExtGState(new PdfExtGState().SetFillOpacity((float)e.Opacity).SetStrokeOpacity((float)e.Opacity));
+        // The element's opacity applies to it alone (it used to carry on to everything drawn after it).
+        bool faded = e.Opacity < 0.999;
+        if (faded)
+            canvas.SaveState().SetExtGState(new PdfExtGState().SetFillOpacity((float)e.Opacity).SetStrokeOpacity((float)e.Opacity));
+        try { DrawElement(e, canvas, doc, pdf, page, pageH, radioGroups, usedNames, x, y, w, h); }
+        finally { if (faded) canvas.RestoreState(); }
+    }
+
+    private static void DrawElement(DesignItem e, PdfCanvas canvas, Document doc, PdfDocument pdf, PdfPage page, double pageH,
+        Dictionary<string, (PdfButtonFormField Group, int ButtonCount)> radioGroups, Dictionary<string, int> usedNames,
+        float x, float y, float w, float h)
+    {
 
         switch (e.Type)
         {

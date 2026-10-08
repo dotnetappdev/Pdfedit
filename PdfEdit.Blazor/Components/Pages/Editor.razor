@@ -703,6 +703,7 @@
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Templates">
+                    <RibbonButton Icon="bi-grid-3x2-gap" Label="All Templates" Large="true" Title="Choose from every template: invoices, forms, resumes, flyers, certificates, planners…" OnClick="() => OpenBackstage(Backstage.New)" />
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-receipt" Label="Invoice" Title="A professional invoice" OnClick="@(() => LoadTemplate("Invoice"))" />
                         <RibbonButton Icon="bi-envelope-paper" Label="Letter" Title="A formal letter" OnClick="@(() => LoadTemplate("Letter"))" />

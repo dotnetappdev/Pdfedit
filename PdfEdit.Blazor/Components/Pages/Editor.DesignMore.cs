@@ -68,15 +68,42 @@ public partial class Editor
         SetZoom(Math.Min((width - 140) / (pw * PointsToPx), 720 / (ph * PointsToPx)));
     }
 
-    private void LoadTemplate(string name)
+    private void LoadTemplate(string name) => UseTemplate(name);
+
+    /// <summary>Puts a template (<see cref="PdfEdit.Templates.TemplateCatalog"/>) on the Design canvas to customise.</summary>
+    public void UseTemplate(string id)
     {
+        var template = PdfEdit.Templates.TemplateCatalog.Find(id);
+        if (template == null) return;
         DesignCheckpoint();
-        Design = DesignTemplates.Create(name);
+        Design = template.Create();
         Design.Elements ??= new();
-        _designName = DesignTemplates.Title(name);
+        _designName = template.Title;
         SelectedDesignId = null;
         SetDesignMode(true);
-        Status($"{DesignTemplates.Title(name)} template — click anything to change it");
+        Status($"{template.Title} template — click anything to change it");
+    }
+
+    /// <summary>Makes a template straight into a PDF (with its form fields) and opens it to fill in.</summary>
+    public async Task UseTemplateAsPdfAsync(string id)
+    {
+        var template = PdfEdit.Templates.TemplateCatalog.Find(id);
+        if (template == null) return;
+        await RunAsync($"Making {template.Title}…", async () =>
+        {
+            var temp = Path.Combine(Path.GetTempPath(), $"pdfedit-template-{Guid.NewGuid():N}.pdf");
+            try
+            {
+                await Task.Run(() => DesignPdfExporter.Export(template.Create(), temp));
+                var session = await Store.OpenFileAsync(temp);
+                session.FileName = template.Title + ".pdf";
+                SetDocument(session);
+                DesignMode = false;
+                _tab = template.Fillable ? RibbonTab.FillSign : RibbonTab.Home;
+                Status($"Opened {template.Title}.pdf" + (template.Fillable ? " — click a field to fill it in" : ""));
+            }
+            finally { TryDelete(temp); }
+        });
     }
 
     /// <summary>The current PDF page as editable design elements (text, pictures, boxes and its form fields).</summary>

@@ -20,6 +20,14 @@
         <button class="pe-btn" @onclick="() => { Ed.ShowDialog(DialogKind.ScanCamera); Ed.Refresh(); }"><i class="bi bi-camera"></i> Scan with camera</button>
     </div>
 
+    <div class="pe-welcome-templates">
+        <div class="pe-recent-head">
+            <h4 class="pe-hint" style="font-weight:600">Start from a template</h4>
+            <button class="pe-link" @onclick="() => { Ed.OpenBackstage(Backstage.New); Ed.Refresh(); }">More templates</button>
+        </div>
+        <TemplateGallery Ed="Ed" Compact="true" />
+    </div>
+
     @if (Ed.Samples.Count > 0)
     {
         <h4 class="pe-hint" style="font-weight:600">Sample documents</h4>

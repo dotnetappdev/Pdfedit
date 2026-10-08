@@ -1,0 +1,114 @@
+@* The template chooser, like PowerPoint's or Google Docs': blank options, then every template as a
+   thumbnail, by category or search. Choosing one shows it large with what it can be used for. *@
+@using PdfEdit.Templates
+<div class="pe-tg">
+    @if (!Compact)
+    {
+        <div class="pe-tg-blank">
+            <button class="pe-tg-start" @onclick="() => Run(Ed.NewBlankAsync)">
+                <span class="pe-tg-blankpage"><i class="bi bi-plus-lg"></i></span><span>Blank PDF</span>
+            </button>
+            <button class="pe-tg-start" @onclick="NewDesign">
+                <span class="pe-tg-blankpage"><i class="bi bi-pencil-square"></i></span><span>Blank design</span>
+            </button>
+            <button class="pe-tg-start" @onclick="FromFiles">
+                <span class="pe-tg-blankpage"><i class="bi bi-images"></i></span><span>From images or files</span>
+            </button>
+        </div>
+
+        <div class="pe-tg-bar">
+            <div class="pe-tg-search">
+                <i class="bi bi-search"></i>
+                <input type="search" placeholder="Search templates — invoice, resume, calendar…" aria-label="Search templates"
+                       @bind="_query" @bind:event="oninput" />
+            </div>
+            <div class="pe-tg-cats" role="tablist" aria-label="Template categories">
+                <button role="tab" aria-selected="@(_category == null)" class="@(_category == null ? "on" : "")" @onclick="() => _category = null">All</button>
+                @foreach (var c in TemplateCatalog.Categories)
+                {
+                    var cat = c;
+                    <button role="tab" aria-selected="@(_category == cat)" class="@(_category == cat ? "on" : "")" @onclick="() => _category = cat">@cat</button>
+                }
+            </div>
+        </div>
+    }
+
+    @{ var shown = Shown(); }
+    @if (shown.Count == 0)
+    {
+        <p class="pe-hint">No templates match “@_query”.</p>
+    }
+    <div class="pe-tg-grid @(Compact ? "compact" : "")">
+        @foreach (var t in shown)
+        {
+            var tpl = t;
+            <button class="pe-tg-card" title="@t.Description" @onclick="() => _preview = tpl">
+                <span class="pe-tg-thumb"><img src="@($"/templates/{t.Id}.png?scale=0.4")" alt="" loading="lazy" draggable="false" /></span>
+                <span class="pe-tg-title">@t.Title</span>
+                <span class="pe-tg-meta">@t.Category@(t.Fillable ? " · Fillable" : "")</span>
+            </button>
+        }
+    </div>
+</div>
+
+@if (_preview is { } p)
+{
+    var list = Shown();
+    int at = list.IndexOf(p);
+    <div class="pe-tg-backdrop" @onclick="() => _preview = null"></div>
+    <div class="pe-tg-preview" role="dialog" aria-modal="true" aria-label="@p.Title template">
+        <button class="pe-tg-close" title="Close" aria-label="Close" @onclick="() => _preview = null"><i class="bi bi-x-lg"></i></button>
+        <div class="pe-tg-big">
+            @if (at > 0) { <button class="pe-tg-nav prev" title="Previous template" aria-label="Previous template" @onclick="() => _preview = list[at - 1]"><i class="bi bi-chevron-left"></i></button> }
+            <img src="@($"/templates/{p.Id}.png?scale=1")" alt="@p.Title" draggable="false" />
+            @if (at >= 0 && at < list.Count - 1) { <button class="pe-tg-nav next" title="Next template" aria-label="Next template" @onclick="() => _preview = list[at + 1]"><i class="bi bi-chevron-right"></i></button> }
+        </div>
+        <div class="pe-tg-info">
+            <span class="pe-tg-cat">@p.Category</span>
+            <h3>@p.Title</h3>
+            <p>@p.Description</p>
+            @if (p.Fillable)
+            {
+                <p class="pe-tg-note"><i class="bi bi-ui-checks"></i> Has form fields: open it as a PDF to fill in, sign and send.</p>
+            }
+            <div class="pe-tg-actions">
+                <button class="pe-btn primary" @onclick="() => Use(p)"><i class="bi bi-pencil-square"></i> Customise in Design</button>
+                <button class="pe-btn" @onclick="() => Run(() => Ed.UseTemplateAsPdfAsync(p.Id))"><i class="bi bi-file-earmark-pdf"></i> Open as PDF</button>
+            </div>
+            <p class="pe-hint">Customise changes the text, colours and layout on the Design canvas. Open as PDF makes it a PDF straight away.</p>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    /// <summary>Called once a choice has been made (closes File → New).</summary>
+    [Parameter] public EventCallback Done { get; set; }
+    /// <summary>A short row of featured templates (the start page), without blank options or filters.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    private static readonly string[] Featured =
+        ["InvoiceModern", "ResumeModern", "Letterhead", "JobApplication", "Award", "WeeklyPlanner", "EventPoster", "Budget"];
+
+    private string? _category;
+    private string _query = "";
+    private PdfTemplate? _preview;
+
+    private List<PdfTemplate> Shown() => Compact
+        ? Featured.Select(TemplateCatalog.Find).OfType<PdfTemplate>().ToList()
+        : TemplateCatalog.Search(_category, _query).ToList();
+
+    private async Task Run(Func<Task> action)
+    {
+        _preview = null;
+        await Done.InvokeAsync();
+        await action();
+        Ed.Refresh();
+    }
+
+    private Task Use(PdfTemplate t) => Run(() => { Ed.UseTemplate(t.Id); return Task.CompletedTask; });
+
+    private Task NewDesign() => Run(() => { Ed.NewDesignPage(); return Task.CompletedTask; });
+
+    private Task FromFiles() => Run(() => { Ed.ShowDialog(DialogKind.Combine); return Task.CompletedTask; });
+}

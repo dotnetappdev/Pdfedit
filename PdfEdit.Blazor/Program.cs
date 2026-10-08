@@ -19,6 +19,8 @@ builder.Services.AddSingleton<CloudSignIns>();
 // Saved signatures and initials: SQLite in the app's folder (pdfedit.db, or PdfEdit:Database).
 builder.Services.AddSingleton<SavedSignatures>();
 builder.Services.AddSingleton<UserPrefs>();
+// Thumbnails for the template chooser (File → New).
+builder.Services.AddSingleton<TemplatePreviews>();
 
 // Office-to-PDF uses LibreOffice on the server; PdfEdit:Office:LibreOfficePath if it isn't on the PATH.
 if (builder.Configuration["PdfEdit:Office:LibreOfficePath"] is { Length: > 0 } soffice)

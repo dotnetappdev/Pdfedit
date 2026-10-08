@@ -55,6 +55,12 @@
                                                 Command="{Binding OpenCommand}"
                                                 AutomationProperties.Name="Open PDF file"/>
 
+                    <Fluent:MenuItem Header="New from Template…"
+                                                KeyTip="T"
+                                                Click="NewFromTemplate_Click"
+                                                ToolTip="Invoices, forms, agreements, letters, resumes, flyers, certificates, planners and more"
+                                                AutomationProperties.Name="New from template"/>
+
                     <Fluent:MenuItem Header="Scan…"
                                                 KeyTip="N"
                                                 Command="{Binding ScanCommand}"
@@ -2956,6 +2962,14 @@
                 <Fluent:RibbonGroupBox Header="Templates"
                                         IsEnabled="{Binding IsDesignMode}"
                                         AutomationProperties.Name="Design templates group">
+                    <Fluent:Button Header="All Templates"
+                                   Click="NewFromTemplate_Click"
+                                   ToolTip="Choose from every template: invoices, forms, resumes, flyers, certificates, planners…"
+                                   AutomationProperties.Name="All templates">
+                        <Fluent:Button.LargeIcon>
+                            <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xF0E2;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Invoice"
                                    Tag="Invoice" Click="DesignTemplate_Click"
                                    ToolTip="Load a professional invoice template"

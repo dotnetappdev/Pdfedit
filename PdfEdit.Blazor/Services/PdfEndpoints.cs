@@ -16,6 +16,15 @@ public static class PdfEndpoints
             return Results.File(png, "image/png");
         });
 
+        // A template's thumbnail for the chooser: /templates/Invoice.png?scale=0.5
+        app.MapGet("/templates/{id}.png", async (string id, double? scale, TemplatePreviews previews, HttpContext http) =>
+        {
+            var png = await previews.GetAsync(id, scale ?? 0.5);
+            if (png == null) return Results.NotFound();
+            http.Response.Headers.CacheControl = "public, max-age=3600";
+            return Results.File(png, "image/png");
+        });
+
         // The current version of the document, as a PDF.
         // ?inline=true shows it in the browser (to print) instead of downloading it.
         app.MapGet("/documents/{id}/file", (string id, bool? inline, PdfDocumentStore store) =>

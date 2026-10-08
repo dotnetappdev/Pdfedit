@@ -30,9 +30,12 @@ public static class DesignSerializerService
         File.WriteAllText(path, doc.ToJson());
     }
 
-    public static (List<DesignElement> Elements, DesignPageSize PageSize, double CustomW, double CustomH, Color BgColor) Load(string path)
+    public static (List<DesignElement> Elements, DesignPageSize PageSize, double CustomW, double CustomH, Color BgColor) Load(string path) =>
+        Load(DesignDocument.FromJson(File.ReadAllText(path)));
+
+    /// <summary>The canvas elements of a design (a .pdfdesign file's contents, or a template).</summary>
+    public static (List<DesignElement> Elements, DesignPageSize PageSize, double CustomW, double CustomH, Color BgColor) Load(DesignDocument doc)
     {
-        var doc = DesignDocument.FromJson(File.ReadAllText(path));
 
         var pageSize = Enum.TryParse<DesignPageSize>(doc.PageSize, out var ps) ? ps : DesignPageSize.A4;
         var bgColor  = ParseColor(doc.BgColor);

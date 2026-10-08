@@ -1,12 +1,12 @@
 using PdfEdit.Models;
 
-namespace PdfEdit.Blazor.Services;
+namespace PdfEdit.Templates;
 
 /// <summary>
-/// The Design canvas's ready-made pages (the Windows app's Design → Templates): the same pages,
-/// positions, text, fonts and colours as its DesignCanvasViewModel.LoadTemplate.
+/// The first seven Design-canvas templates (Invoice, Letter, Form, Certificate, Business Card, Resume,
+/// Flyer), as the Windows app has always laid them out. Part of <see cref="TemplateCatalog"/>.
 /// </summary>
-public static class DesignTemplates
+internal static class ClassicTemplates
 {
     public static readonly string[] Names = ["Invoice", "Letter", "Form", "Certificate", "BusinessCard", "Resume", "Flyer"];
 
@@ -47,11 +47,18 @@ public static class DesignTemplates
     };
 
     private static DesignItem Shape(string type, double x, double y, double w, double h, string fill, string stroke,
-        double thick = 2, double radius = 0) => new()
+        double thick = 2, double radius = 0)
     {
-        Type = "shape", ShapeType = type, X = x, Y = y, W = w, H = h,
-        FillColor = fill, StrokeColor = stroke, StrokeThick = Math.Max(0.5, thick), CornerRadius = radius,
-    };
+        // A see-through fill becomes the shape's opacity: PDF fills are drawn without the colour's alpha.
+        var f = DesignColor.Parse(fill);
+        bool faded = f.A is > 0 and < 255 && DesignColor.Parse(stroke).A == 0;
+        return new()
+        {
+            Type = "shape", ShapeType = type, X = x, Y = y, W = w, H = h, Opacity = faded ? f.A / 255.0 : 1,
+            FillColor = faded ? DesignColor.ToHex(255, f.R, f.G, f.B) : fill, StrokeColor = stroke,
+            StrokeThick = Math.Max(0.5, thick), CornerRadius = radius,
+        };
+    }
 
     private static DesignItem Line(double x, double y, double w, double h, string stroke, double thick) =>
         Shape("Line", x, y, w, h, Transparent, stroke, thick);
@@ -171,7 +178,7 @@ public static class DesignTemplates
         foreach (var (text, y) in new[] { ("CONTACT", 218), ("SKILLS", 340), ("LANGUAGES", 480) })
             e.Add(Text(14, y, 148, 16, text, 8, gold, bold: true));
 
-        e.Add(Text(14, 240, 148, 72, "📧 you@example.com\n📞 +1 555 000 0000\n🌐 linkedin.com/in/you\n📍 City, Country", 9, Argb(200, 255, 255, 255)));
+        e.Add(Text(14, 240, 148, 72, "you@example.com\n+1 555 000 0000\nlinkedin.com/in/you\nCity, Country", 9, Argb(200, 255, 255, 255)));
 
         var skills = new[] { "Figma", "Adobe XD", "Prototyping", "User Research" };
         for (int i = 0; i < skills.Length; i++)
@@ -212,11 +219,11 @@ public static class DesignTemplates
         e.Add(Shape("Ellipse", w - 120, h - 160, 200, 200, Argb(50, 255, 80, 180), Transparent));
 
         e.Add(Text(30, 80, w - 60, 30, "SPECIAL EVENT", 12, cyan, bold: true, align: "Center"));
-        e.Add(Text(30, 120, w - 60, 80, "AMAZING\nCONFERENCE\n2026", 42, White, bold: true, align: "Center"));
-        e.Add(Shape("Rectangle", (w - 60) / 2 - 25, 240, 90, 4, cyan, Transparent));
+        e.Add(Text(30, 110, w - 60, 150, "AMAZING\nCONFERENCE\n2026", 38, White, bold: true, align: "Center"));
+        e.Add(Shape("Rectangle", w / 2 - 45, 280, 90, 4, cyan, Transparent));
 
-        e.Add(Text(30, 270, w - 60, 30, "The Future of Technology & Innovation", 14, Argb(200, 255, 255, 255), italic: true, align: "Center"));
-        e.Add(Text(30, 330, w - 60, 25, "📅 15–17 June 2026   📍 Convention Center, New York", 12, Argb(200, 255, 255, 255), align: "Center"));
+        e.Add(Text(30, 298, w - 60, 30, "The Future of Technology & Innovation", 14, Argb(200, 255, 255, 255), italic: true, align: "Center"));
+        e.Add(Text(30, 330, w - 60, 25, "15–17 June 2026  ·  Convention Center, New York", 12, Argb(200, 255, 255, 255), align: "Center"));
 
         e.Add(Shape("Rectangle", w / 2 - 90, 400, 180, 44, cyan, Transparent, radius: 22));
         e.Add(Text(w / 2 - 90, 412, 180, 24, "REGISTER NOW", 13, ink, bold: true, align: "Center"));
