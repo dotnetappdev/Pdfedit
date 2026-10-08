@@ -1,0 +1,27 @@
+name: Ask assistant
+
+# Deploys the website's "Ask the guide" assistant (staticsite/worker) to Cloudflare Workers.
+# Needs the repository secrets CLOUDFLARE_API_TOKEN (Edit Cloudflare Workers) and ANTHROPIC_API_KEY
+# (CLOUDFLARE_ACCOUNT_ID too if the token can see more than one account). Afterwards set the
+# repository variable ASK_ENDPOINT to the Worker's address so the Website workflow uses it.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy the Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: staticsite/worker
+          secrets: |
+            ANTHROPIC_API_KEY
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

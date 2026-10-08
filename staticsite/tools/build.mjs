@@ -31,7 +31,7 @@ const include = (html, where) => html.replace(/<!--\s*@include\s+(\w+)\s*-->/g, 
 const withRoot = (html, root) => html.replaceAll('{{root}}', root);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' };
-const strip = html => html.replace(/<[^>]+>/g, ' ').replace(/&([a-z]+|#\d+);/gi, (m, e) => ENTITIES[e.toLowerCase()] ?? ' ').replace(/\s+/g, ' ').trim();
+const strip = html => html.replace(/<strong class="callout-title">(\w+)<\/strong>/g, '$1: ').replace(/<\/?(strong|em|b|i|code|a|kbd|span|mark|sup|sub)\b[^>]*>/gi, '').replace(/<[^>]+>/g, ' ').replace(/&([a-z]+|#\d+);/gi, (m, e) => ENTITIES[e.toLowerCase()] ?? ' ').replace(/\s+/g, ' ').trim();
 const slugify = s => strip(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
 
 // ── Top-level pages ──────────────────────────────────────────────────────────
@@ -213,6 +213,20 @@ const editLink = src => `<p class="edit"><a href="${GITHUB}/edit/${BRANCH}/${src
 
 const search = [];
 const searchText = html => strip(html.replace(/<a class="anchor"[^>]*>#<\/a>/g, '')).slice(0, 6000);
+// The guide cut into sections for "Ask the guide": each heading with its text, so the chat can
+// send the few passages a question needs. Long sections are split.
+const chunks = [];
+function addChunks(html, url, title, where) {
+  const parts = html.replace(/<a class="anchor"[^>]*>#<\/a>/g, '').split(/(?=<h[23] id=")/);
+  for (const part of parts) {
+    const m = part.match(/^<h[23] id="([^"]+)"[^>]*>([\s\S]*?)<\/h[23]>/);
+    const text = strip(m ? part.slice(m[0].length) : part);
+    if (text.length < 40) continue;
+    const heading = m ? strip(m[2]) : '';
+    for (let i = 0; i < text.length; i += 1600)
+      chunks.push({ t: title, h: heading, s: where, u: url + (m ? '#' + m[1] : ''), x: text.slice(i, i + 1800) });
+  }
+}
 const firstParagraph = html => strip(html.match(/<p>([\s\S]*?)<\/p>/)?.[1] ?? '').slice(0, 200);
 
 // ── Build the user guide ─────────────────────────────────────────────────────
@@ -240,6 +254,7 @@ for (const [i, p] of guidePages.entries()) {
   </div>`;
   const description = firstParagraph(p.rendered.html) || `${p.title}: PdfEdit user guide.`;
   await writeFile(join(out, 'docs', `${p.slug}.html`), shell({ title: p.title, description, page: 'docs', body }));
+  addChunks(p.rendered.html, `docs/${p.slug}.html`, p.title, `User guide · ${p.section}`);
   search.push({ t: p.title, u: `docs/${p.slug}.html`, s: `User guide · ${p.section}`, d: description,
     h: p.rendered.outline.map(o => [o.text, o.id]), x: searchText(p.rendered.html) });
 }
@@ -263,7 +278,7 @@ await writeFile(join(out, 'docs', 'index.html'), shell({
         <h1>PdfEdit user guide</h1>
         <p class="lead">How everything works in PdfEdit for Windows, PdfEdit for Mac and PdfEdit for the web. Search, or start with a section below.</p>
         ${searchBox('Search the guide and tutorials — e.g. “signature”, “merge”, “OCR”')}
-        <p class="quick">Popular: <a href="filling-and-signing.html">Fill and sign</a> · <a href="forms.html">Make a form fillable</a> · <a href="pages-and-security.html#passwords-and-redaction">Redact</a> · <a href="scan-and-ocr.html">Scan and OCR</a> · <a href="keyboard-shortcuts.html">Shortcuts</a></p>
+        <p class="quick"><button type="button" class="btn small" data-ask-open>Ask a question</button> Popular: <a href="filling-and-signing.html">Fill and sign</a> · <a href="forms.html">Make a form fillable</a> · <a href="pages-and-security.html#passwords-and-redaction">Redact</a> · <a href="scan-and-ocr.html">Scan and OCR</a> · <a href="keyboard-shortcuts.html">Shortcuts</a></p>
       </section>
       <div class="doc-cards">
         ${GUIDE.map(([section, pages]) => `
@@ -324,6 +339,7 @@ for (const [i, t] of tutorials.entries()) {
     ${outlineHtml(r.outline)}
   </div>`;
   await writeFile(join(out, 'tutorials', `${t.slug}.html`), shell({ title: t.title, description: t.summary, page: 'tutorials', body }));
+  addChunks(`<p>${esc(t.summary)}</p>` + r.html, `tutorials/${t.slug}.html`, t.title, `Tutorial · ${t.group}`);
   search.push({ t: t.title, u: `tutorials/${t.slug}.html`, s: `Tutorial · ${t.group}`, d: t.summary,
     h: r.outline.map(o => [o.text, o.id]), x: searchText(r.html) });
 }
@@ -339,6 +355,7 @@ await writeFile(join(out, 'tutorials', 'index.html'), shell({
         <h1>Tutorials</h1>
         <p class="lead">Step-by-step walkthroughs, each a few minutes long. They work the same in PdfEdit for Windows, for Mac and on the web unless a step says otherwise.</p>
         ${searchBox('Search the tutorials and guide')}
+        <p class="quick"><button type="button" class="btn small" data-ask-open>Ask a question</button> Not sure which tutorial you need? Ask, and get an answer with links.</p>
       </section>
       ${TUTORIAL_GROUPS.filter(g => tutorials.some(t => t.group === g)).map(g => `
       <section class="section">
@@ -361,6 +378,13 @@ await writeFile(join(out, 'tutorials', 'index.html'), shell({
 for (const p of media) await cp(join(repo, p), join(out, 'img/repo', p));
 await cp(join(site, 'assets'), join(out, 'assets'), { recursive: true });
 await cp(join(site, 'data'), join(out, 'data'), { recursive: true });
+// The "Ask the guide" assistant's address can come from the build (the ASK_ENDPOINT repository variable).
+if (process.env.ASK_ENDPOINT) {
+  const settings = JSON.parse(await readFile(join(out, 'data', 'site.json'), 'utf8'));
+  settings.chatEndpoint = process.env.ASK_ENDPOINT;
+  await writeFile(join(out, 'data', 'site.json'), JSON.stringify(settings, null, 2));
+}
 await writeFile(join(out, 'data', 'search.json'), JSON.stringify(search));
+await writeFile(join(out, 'data', 'chunks.json'), JSON.stringify(chunks.map((c, i) => ({ i, ...c }))));
 await writeFile(join(out, '.nojekyll'), '');
-console.log(`_site: ${pageCount} pages, ${guidePages.length + 1} guide pages, ${tutorials.length + 1} tutorial pages, ${shots.size} screenshots, ${media.size} doc pictures`);
+console.log(`_site: ${chunks.length} chat passages, ${pageCount} pages, ${guidePages.length + 1} guide pages, ${tutorials.length + 1} tutorial pages, ${shots.size} screenshots, ${media.size} doc pictures`);

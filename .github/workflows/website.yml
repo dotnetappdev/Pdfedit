@@ -54,6 +54,8 @@ jobs:
         run: node staticsite/tools/update-releases.mjs
 
       - name: Build the site
+        env:
+          ASK_ENDPOINT: ${{ vars.ASK_ENDPOINT }}   # the "Ask the guide" Worker, if there is one
         run: node staticsite/tools/build.mjs
 
       # ── GitHub Pages (Actions deployment) ──

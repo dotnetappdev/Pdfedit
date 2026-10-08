@@ -65,6 +65,17 @@ goes wrong* and *What's next*. A quote that starts with **Tip:**, **Note:**, **I
 name (`forms.md`, `make-a-form-fillable.md`). The build writes `data/search.json` for the search
 box.
 
+## Ask the guide (AI chat)
+
+Every page has an **Ask the guide** button (`assets/js/ask.js`). It answers questions from the user
+guide and tutorials: the build cuts them into passages (`data/chunks.json`, one per heading), the
+page picks the best ones for each question and an LLM answers from those only, citing them as
+links. Visitors choose who answers in its ⚙ settings: the site's own assistant, their own Claude or
+OpenAI key (kept in their browser), a local model (Ollama, LM Studio), or no AI (the matching
+sections). The site's assistant is a small Cloudflare Worker that keeps the API key secret; see
+[`worker/README.md`](worker/README.md) to deploy it and set `ASK_ENDPOINT`. `?ask=question` on any
+page opens the chat with that question.
+
 ## Working on it
 
 ```bash
