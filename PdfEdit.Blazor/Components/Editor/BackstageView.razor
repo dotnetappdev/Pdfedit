@@ -41,7 +41,8 @@
                 <div class="pe-drop" style="max-width:560px">
                     <i class="bi bi-cloud-arrow-up"></i>
                     <strong>Drop a PDF here</strong> or click to choose one
-                    <InputFile accept=".pdf,application/pdf" OnChange="OnFile" aria-label="Open a PDF" />
+                    <small class="d-block">Word, Excel, PowerPoint, OpenDocument, text and web pages open as PDFs too</small>
+                    <InputFile accept="@(".pdf,application/pdf," + Editor.OfficeAccept)" OnChange="OnFile" aria-label="Open a PDF or another document" />
                 </div>
                 <h4 class="pe-hint" style="font-weight:600">Cloud storage</h4>
                 <div class="pe-option-list" style="max-width:560px">

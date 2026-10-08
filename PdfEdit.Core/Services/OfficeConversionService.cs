@@ -35,13 +35,22 @@ public static class OfficeConversionService
         return WordExtensions.Contains(ext) || ExcelExtensions.Contains(ext) || PowerPointExtensions.Contains(ext) || TextExtensions.Contains(ext);
     }
 
+    /// <summary>
+    /// LibreOffice's soffice program, when it isn't where PdfEdit looks for it (the web version sets
+    /// this from PdfEdit:Office:LibreOfficePath).
+    /// </summary>
+    public static string? LibreOfficePath { get; set; }
+
     /// <summary>What can do the conversion on this PC, for messages.</summary>
     public static string? AvailableConverter()
     {
-        if (Type.GetTypeFromProgID("Word.Application") != null) return "Microsoft Office";
+        if (OfficeProgId("Word.Application") != null) return "Microsoft Office";
         if (FindLibreOffice() != null) return "LibreOffice";
         return null;
     }
+
+    /// <summary>The installed Office application (Windows only).</summary>
+    private static Type? OfficeProgId(string progId) => OperatingSystem.IsWindows() ? Type.GetTypeFromProgID(progId) : null;
 
     /// <summary>A free name for the PDF next to the source ("Report.pdf", "Report (2).pdf" …).</summary>
     public static string OutputPathFor(string source)
@@ -71,7 +80,7 @@ public static class OfficeConversionService
         }
 
         Exception? officeError = null;
-        if (Type.GetTypeFromProgID(progId) is { } type)
+        if (OfficeProgId(progId) is { } type)
         {
             try
             {
@@ -95,7 +104,8 @@ public static class OfficeConversionService
         }
         if (officeError != null) throw new InvalidOperationException($"Microsoft Office couldn't convert the file: {officeError.Message}", officeError);
         throw new InvalidOperationException(
-            "PdfEdit converts Word (.docx) files itself; other Office files need Microsoft Office or the free LibreOffice (libreoffice.org) installed on this PC.");
+            "PdfEdit converts Word (.docx) files itself; other Office files need Microsoft Office or the free LibreOffice (libreoffice.org) installed on this " +
+            (OperatingSystem.IsWindows() ? "PC." : "computer."));
     }
 
     private static void RunSta(Action action)
@@ -171,6 +181,10 @@ public static class OfficeConversionService
                 UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardOutput = true, RedirectStandardError = true,
             };
+            // On a server several conversions can run at once: each gets its own LibreOffice profile
+            // (one profile can only be used by one LibreOffice at a time).
+            if (!OperatingSystem.IsWindows())
+                psi.ArgumentList.Add("-env:UserInstallation=" + new Uri(Path.Combine(outDir, "profile")).AbsoluteUri);
             foreach (var a in new[] { "--headless", "--norestore", "--convert-to", "pdf", "--outdir", outDir, source }) psi.ArgumentList.Add(a);
             using var p = Process.Start(psi) ?? throw new InvalidOperationException("LibreOffice didn't start.");
             string err = p.StandardError.ReadToEnd();
@@ -187,6 +201,19 @@ public static class OfficeConversionService
 
     private static string? FindLibreOffice()
     {
+        if (!string.IsNullOrWhiteSpace(LibreOfficePath) && File.Exists(LibreOfficePath)) return LibreOfficePath;
+        if (!OperatingSystem.IsWindows())
+        {
+            var dirs = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                .Concat(new[] { "/usr/bin", "/usr/local/bin", "/opt/libreoffice/program", "/Applications/LibreOffice.app/Contents/MacOS" });
+            foreach (var dir in dirs)
+                foreach (var name in new[] { "soffice", "libreoffice" })
+                {
+                    string p = Path.Combine(dir, name);
+                    if (File.Exists(p)) return p;
+                }
+            return null;
+        }
         foreach (var root in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) })
         {
             if (string.IsNullOrEmpty(root)) continue;

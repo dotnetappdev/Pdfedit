@@ -178,7 +178,9 @@ public partial class Editor
         var folder = Directory.CreateTempSubdirectory("pdfedit-merge-").FullName;
         try
         {
-            var paths = await SaveUploadsAsync(files, folder);
+            var paths = new List<string>();
+            await RunAsync("Reading the files…", async () => paths = await ConvertOfficeFilesAsync(await SaveUploadsAsync(files, folder)));
+            if (paths.Count != files.Count) return;   // couldn't read or convert them (already said why)
             await ChangeAsync("Merging…", $"Added {files.Count} file{(files.Count == 1 ? "" : "s")} to the end",
                 (src, dest) => PdfToolsService.CombineFiles(new[] { src }.Concat(paths), dest));
         }

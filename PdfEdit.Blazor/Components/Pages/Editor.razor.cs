@@ -123,11 +123,20 @@ public partial class Editor
 
     // ── Opening and closing ──────────────────────────────────────────────────
 
+    /// <summary>Word, Excel, PowerPoint, OpenDocument, text, Markdown and web pages, opened as PDFs.</summary>
+    public const string OfficeAccept = ".docx,.doc,.docm,.odt,.rtf,.xlsx,.xls,.xlsm,.ods,.csv,.pptx,.ppt,.pptm,.odp,.txt,.md,.html,.htm";
+
     public async Task OpenUploadAsync(IBrowserFile file)
     {
         if (file.Size > PdfDocumentStore.MaxUploadBytes)
         {
             Toast($"That file is too big (the limit is {PdfDocumentStore.MaxUploadBytes / 1024 / 1024} MB).", "error");
+            return;
+        }
+        string ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext != ".pdf" && OfficeConversionService.IsOfficeFile(file.Name))
+        {
+            await OpenOfficeUploadAsync(file);
             return;
         }
         // Read it now: the browser file can't be read again later (for a password retry).
@@ -138,6 +147,42 @@ public partial class Editor
         try { await OpenPathAsync(temp, file.Name, null); }
         finally { if (PendingPassword == null) TryDelete(temp); }
     }
+
+    /// <summary>Converts an Office or text file to PDF on the server (LibreOffice, or PdfEdit's own converters) and opens it.</summary>
+    private async Task OpenOfficeUploadAsync(IBrowserFile file)
+    {
+        var folder = Directory.CreateTempSubdirectory("pdfedit-convert-").FullName;
+        var source = Path.Combine(folder, PdfDocumentStore.SafeName(file.Name));
+        var pdf = Path.Combine(Path.GetTempPath(), $"pdfedit-upload-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            await using (var s = file.OpenReadStream(PdfDocumentStore.MaxUploadBytes))
+            await using (var f = File.Create(source))
+                await s.CopyToAsync(f);
+            bool converted = false;
+            await RunAsync($"Converting {file.Name} to PDF…", async () =>
+            {
+                await Task.Run(() => OfficeConversionService.Convert(source, pdf));
+                converted = File.Exists(pdf);
+            });
+            if (converted) await OpenPathAsync(pdf, Path.GetFileNameWithoutExtension(file.Name) + ".pdf", null);
+        }
+        finally
+        {
+            TryDelete(pdf);
+            try { Directory.Delete(folder, true); } catch { }
+        }
+    }
+
+    /// <summary>Office and text files among uploaded paths, converted to PDFs next to them (pictures and PDFs stay as they are).</summary>
+    public static async Task<List<string>> ConvertOfficeFilesAsync(List<string> paths) =>
+        (await Task.WhenAll(paths.Select(p => Task.Run(() =>
+        {
+            if (Path.GetExtension(p).Equals(".pdf", StringComparison.OrdinalIgnoreCase) || !OfficeConversionService.IsOfficeFile(p)) return p;
+            var dest = p + ".pdf";
+            OfficeConversionService.Convert(p, dest);
+            return dest;
+        })))).ToList();
 
     public Task OpenSampleAsync(string path) => OpenPathAsync(path, Path.GetFileName(path), null);
 
@@ -180,7 +225,7 @@ public partial class Editor
             var folder = Directory.CreateTempSubdirectory("pdfedit-combine-").FullName;
             try
             {
-                var paths = await SaveUploadsAsync(files, folder);
+                var paths = await ConvertOfficeFilesAsync(await SaveUploadsAsync(files, folder));
                 var dest = Path.Combine(folder, "Combined.pdf");
                 int pages = await Task.Run(() => PdfToolsService.CombineFiles(paths, dest));
                 SetDocument(await Store.OpenFileAsync(dest));

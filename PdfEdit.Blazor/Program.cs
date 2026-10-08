@@ -15,6 +15,10 @@ builder.Services.AddSingleton<OcrEngine>();
 builder.Services.AddScoped<CloudConnections>();
 builder.Services.AddSingleton<CloudSignIns>();
 
+// Office-to-PDF uses LibreOffice on the server; PdfEdit:Office:LibreOfficePath if it isn't on the PATH.
+if (builder.Configuration["PdfEdit:Office:LibreOfficePath"] is { Length: > 0 } soffice)
+    PdfEdit.Services.OfficeConversionService.LibreOfficePath = soffice;
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

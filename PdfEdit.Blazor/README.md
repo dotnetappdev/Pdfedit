@@ -17,7 +17,7 @@ offered on the start page.
 
 | Area | Features |
 |---|---|
-| File | Open (upload or samples), password-protected PDFs, New blank, Create from images/files, Save (download), Save As flattened / PDF/A / password-protected, Print, Export, Close |
+| File | Open (upload or samples; Word, Excel, PowerPoint, OpenDocument, text, Markdown and web pages are converted to PDF), password-protected PDFs, New blank, Create from images/files, Save (download), Save As flattened / PDF/A / password-protected, Print, Export, Close |
 | Fill & Sign | Fill every kind of form field, Add Text, Date, ticks, crosses and dots, draw or type a signature and place it, sticky notes, highlights, drag anything you've added to move it or its corner to resize it, works on rotated pages too (text, stamps and signatures are written upright), Apply Changes, Flatten & Download |
 | Pages | Rotate, delete, insert blank before/after, duplicate, move up/down, extract or delete a range, split, merge PDFs and pictures, insert a PDF, export a page as an image |
 | Document | Properties, watermark (add/remove), page numbers, header/footer, Bates numbers, compress, resize pages, pages per sheet, booklet, greyscale |
@@ -89,6 +89,13 @@ export PdfEdit__Cloud__OneDrive__Tenant=common     # or organizations, consumers
 A service with no client ID isn't offered. `PdfEdit__Cloud__TestServer` sends every cloud request
 to a stand-in server instead, for testing.
 
+## Office files
+
+Word, Excel, PowerPoint and OpenDocument files are converted with LibreOffice on the server
+(`apt install libreoffice-core libreoffice-writer libreoffice-calc libreoffice-impress`, or set
+`PdfEdit__Office__LibreOfficePath` to its `soffice`). Without it, .docx files are still converted
+by PdfEdit's own converter, and text, Markdown and web pages always are.
+
 ## How it works
 
 - Each upload gets a temporary folder on the server; every change writes a new version of the
@@ -100,4 +107,4 @@ to a stand-in server instead, for testing.
 ## Not in the web version yet
 
 Scanning straight from a scanner (browsers can't reach TWAIN scanners — use Scan with Camera or
-pictures instead), Office-to-PDF conversion, and several documents open at once.
+pictures instead) and several documents open at once.

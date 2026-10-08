@@ -288,8 +288,8 @@
         var merging = Ed.Dialog == DialogKind.Merge;
         <Modal Title="@(merging ? "Merge PDFs" : "Create a PDF from files")" OnClose="Close">
             <ChildContent>
-                <p class="pe-hint">@(merging ? "The files are added after the last page, in the order you pick them." : "PDFs and pictures (PNG, JPEG, GIF, BMP, TIFF) are combined in the order you pick them; each picture becomes an A4 page.")</p>
-                <InputFile class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff" OnChange="e => _files = e.GetMultipleFiles(50)" />
+                <p class="pe-hint">@(merging ? "The files are added after the last page, in the order you pick them." : "PDFs, pictures (PNG, JPEG, GIF, BMP, TIFF) and documents (Word, Excel, PowerPoint, OpenDocument, text, web pages) are combined in the order you pick them; each picture becomes an A4 page.")</p>
+                <InputFile class="form-control" multiple accept="@CombineAccept" OnChange="e => _files = e.GetMultipleFiles(50)" />
                 @if (_files.Count > 0)
                 {
                     <ol class="mt-2 mb-0">@foreach (var f in _files) { <li>@f.Name</li> }</ol>
@@ -298,7 +298,7 @@
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
                 <button class="pe-btn primary" disabled="@(_files.Count == 0)"
-                        @onclick="() => Do(() => merging ? Ed.MergeAsync(_files) : Ed.CombineFilesAsync(_files))">@(merging ? "Merge" : "Create")</button>
+                        @onclick="() => DoFiles(files => merging ? Ed.MergeAsync(files) : Ed.CombineFilesAsync(files))">@(merging ? "Merge" : "Create")</button>
             </Footer>
         </Modal>
         break;
@@ -312,7 +312,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.InsertPdfAsync(_files[0], _insertAtStart))">Insert</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.InsertPdfAsync(files[0], _insertAtStart))">Insert</button>
             </Footer>
         </Modal>
         break;
@@ -325,7 +325,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.ImportDataAsync(_files[0]))">Import</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.ImportDataAsync(files[0]))">Import</button>
             </Footer>
         </Modal>
         break;
@@ -448,7 +448,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.OpenDesignAsync(_files[0]))">Open</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.OpenDesignAsync(files[0]))">Open</button>
             </Footer>
         </Modal>
         break;
@@ -461,7 +461,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.AddDesignPictureAsync(_files[0]))">Insert</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.AddDesignPictureAsync(files[0]))">Insert</button>
             </Footer>
         </Modal>
         break;
@@ -513,7 +513,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.ScanImagesAsync(_files, _scanOcr && _ocrLanguages is { Count: > 0 }, _ocrLang))">Make PDF</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.ScanImagesAsync(files, _scanOcr && _ocrLanguages is { Count: > 0 }, _ocrLang))">Make PDF</button>
             </Footer>
         </Modal>
         break;
@@ -526,7 +526,7 @@
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => Do(() => Ed.CompareWithAsync(_files[0]))">Compare</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.CompareWithAsync(files[0]))">Compare</button>
             </Footer>
         </Modal>
         break;
@@ -1165,6 +1165,7 @@
     }
 
     private const string My = "My files";
+    private const string CombineAccept = ".pdf,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff," + Editor.OfficeAccept;
     private const string Zip = "zip", Combined = "combined", Both = "both";
     private int _stepPicks;
 
@@ -1196,6 +1197,25 @@
         "Google Slides" or "PowerPoint" => "bi-file-earmark-slides",
         _ => "bi-file-earmark",
     };
+
+    /// <summary>
+    /// Reads the chosen files first, then closes the dialog and runs the command with them: once
+    /// the dialog has gone, its file picker has too, and the browser can't send the files any more.
+    /// </summary>
+    private async Task DoFiles(Func<IReadOnlyList<IBrowserFile>, Task> action)
+    {
+        var files = new List<IBrowserFile>();
+        try
+        {
+            foreach (var f in _files) files.Add(await BufferedFile.ReadAsync(f));
+        }
+        catch (IOException ex)
+        {
+            Ed.Toast(ex.Message.Contains("exceeds") ? $"That file is too big (the limit is {PdfDocumentStore.MaxUploadBytes / 1024 / 1024} MB)." : ex.Message, "error");
+            return;
+        }
+        await Do(() => action(files));
+    }
 
     /// <summary>Closes the dialog and runs the editor command.</summary>
     private async Task Do(Func<Task> action)
