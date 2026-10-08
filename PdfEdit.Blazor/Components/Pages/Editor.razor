@@ -892,8 +892,38 @@
         {
             var mi = _menuItem;
             <div class="pe-ctx-backdrop" @onclick="CloseMenu" @oncontextmenu="CloseMenu" @oncontextmenu:preventDefault="true"></div>
-            <div class="pe-ctxmenu" role="menu" aria-label="@(mi?.Describe() ?? $"Page {_menuPage + 1}")" style="left:@Css(_menuX)px;top:@Css(_menuY)px">
-                @if (mi != null)
+            var mf = _menuField;
+            <div class="pe-ctxmenu" role="menu" aria-label="@(mi?.Describe() ?? (mf != null ? $"Field {FieldLabel(mf)}" : $"Page {_menuPage + 1}"))" style="left:@Css(_menuX)px;top:@Css(_menuY)px">
+                @if (mf != null)
+                {
+                    int count = SelectedWidgets.Count;
+                    <div class="pe-ctxmenu-head">@FieldLabel(mf)@(count > 1 ? $" + {count - 1} more" : "")</div>
+                    <button role="menuitem" @onclick="() => MenuAct(() => FieldProperties(mf))"><i class="bi bi-sliders"></i>Properties…</button>
+                    <button role="menuitem" @onclick="() => MenuAct(() => ClearField(mf))"><i class="bi bi-eraser"></i>Clear value</button>
+                    <hr />
+                    @foreach (var (title, ops) in new (string, ArrangeOp[])[]
+                    {
+                        ("Align", [ArrangeOp.AlignLefts, ArrangeOp.AlignCenters, ArrangeOp.AlignRights, ArrangeOp.AlignTops, ArrangeOp.AlignMiddles, ArrangeOp.AlignBottoms]),
+                        ("Distribute", [ArrangeOp.DistributeHorizontally, ArrangeOp.DistributeVertically]),
+                        ("Same size", [ArrangeOp.MakeSameWidth, ArrangeOp.MakeSameHeight, ArrangeOp.MakeSameSize]),
+                    })
+                    {
+                        <div class="pe-ctxmenu-row" role="group" aria-label="@title">
+                            <span>@title</span>
+                            @foreach (var op in ops)
+                            {
+                                var cmd = Arrange.Commands.First(c => c.Op == op);
+                                <button class="pe-ctxmenu-chip" title="@cmd.Hint" aria-label="@cmd.Hint" @onclick="() => MenuAct(() => ArrangeFields(cmd.Op))"><i class="bi @cmd.Icon"></i></button>
+                            }
+                        </div>
+                    }
+                    <button role="menuitem" @onclick="() => MenuAct(() => ArrangeFields(ArrangeOp.CenterOnPage))"><i class="bi bi-symmetry-vertical"></i>Center on page</button>
+                    <button role="menuitem" @onclick="() => MenuAct(() => SelectAllFieldsOnPage(mf.PageNumber - 1))"><i class="bi bi-ui-checks-grid"></i>Select all fields on page</button>
+                    <hr />
+                    <button role="menuitem" @onclick="() => MenuAct(() => DeleteField(mf))"><i class="bi bi-trash3"></i>Delete field</button>
+                    <button role="menuitem" @onclick="() => MenuAct(TogglePrepareMode)"><i class="bi bi-pencil-square"></i>Done — back to filling in</button>
+                }
+                else if (mi != null)
                 {
                     <button role="menuitem" disabled="@mi.Locked" @onclick="() => MenuAsync(CutAsync)"><i class="bi bi-scissors"></i>Cut</button>
                     <button role="menuitem" @onclick="() => MenuAsync(CopyAsync)"><i class="bi bi-copy"></i>Copy</button>

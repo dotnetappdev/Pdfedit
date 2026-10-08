@@ -1970,3 +1970,4 @@ html, body {
 .pe-link:disabled { opacity: .45; cursor: default; }
 .pe-cm-replybox { display: flex; gap: 4px; width: 100%; }
 .pe-cm-replybox input { flex: 1; }
+.pe-ctxmenu-head { padding: 4px 14px 6px; font-weight: 600; font-size: 11.5px; color: var(--pe-dim); border-bottom: 1px solid var(--pe-border); margin-bottom: 4px; }
