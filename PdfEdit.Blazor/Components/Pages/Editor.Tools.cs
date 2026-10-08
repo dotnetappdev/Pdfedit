@@ -70,7 +70,7 @@ public partial class Editor
         if (SnapshotPng == null) return;
         var png = SnapshotPng;
         var url = await Store.StageDownloadAsync($"{BaseName} snapshot.png", path => File.WriteAllBytes(path, png));
-        await JS.InvokeVoidAsync("pdfedit.download", url);
+        await DownloadUrlAsync(url);
     }
 
     // ── Select Text ──────────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ public partial class Editor
         {
             var (bytes, ext) = await Task.Run(() => ImageEditService.GetImageFile(doc.CurrentPath, img.PageNumber, img.Index));
             var url = await Store.ExportAsync(doc, $"{BaseName} page {img.PageNumber} picture {img.Index + 1}{ext}", path => File.WriteAllBytes(path, bytes));
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
         });
     }
 

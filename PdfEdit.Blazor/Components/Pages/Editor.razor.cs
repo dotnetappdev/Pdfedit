@@ -488,7 +488,7 @@ public partial class Editor
             await CommitPendingAsync();
             var current = Doc.CurrentPath;
             var url = await Store.ExportAsync(Doc, fileName, path => write(current, path));
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
             Status($"Downloaded {fileName}");
         });
     }
@@ -939,9 +939,44 @@ public partial class Editor
 
     // ── Misc ─────────────────────────────────────────────────────────────────
 
-    public async Task OpenUrlAsync(string url) => await JS.InvokeVoidAsync("pdfedit.openInNewTab", url);
+    public async Task OpenUrlAsync(string url)
+    {
+        // The desktop app opens web pages in the computer's browser.
+        if (PdfEditWebHost.Desktop is { } desktop && Uri.TryCreate(url, UriKind.Absolute, out var uri)) { desktop.OpenExternal(uri); return; }
+        await JS.InvokeVoidAsync("pdfedit.openInNewTab", url);
+    }
 
-    public async Task DownloadUrlAsync(string url) => await JS.InvokeVoidAsync("pdfedit.download", url);
+    /// <summary>
+    /// Hands a file the server made (the PDF, an export, a ZIP…) to the user: a browser download on the
+    /// web; the system's Save dialog in the desktop app.
+    /// </summary>
+    public async Task DownloadUrlAsync(string url)
+    {
+        if (PdfEditWebHost.Desktop is { } desktop && FileForUrl(url) is { } file)
+        {
+            var saved = await desktop.SaveFileAsync(file.Name, file.Path);
+            if (saved != null) Status($"Saved {Path.GetFileName(saved)}");
+            return;
+        }
+        await JS.InvokeVoidAsync("pdfedit.download", url);
+    }
+
+    /// <summary>The file on the server behind one of its download addresses.</summary>
+    private (string Path, string Name)? FileForUrl(string url)
+    {
+        var path = url.Split('?')[0].TrimStart('/').Split('/').Select(Uri.UnescapeDataString).ToArray();
+        switch (path)
+        {
+            case ["documents", var id, "file"] when Store.Get(id) is { } s:
+                return (s.CurrentPath, s.FileName);
+            case ["documents", var id, "exports", var name] when Store.Get(id) is { } s && Store.ExportPath(s, name) is { } export:
+                return (export, name);
+            case ["downloads", var id, var name] when Store.DownloadPath(id, name) is { } download:
+                return (download, name);
+            default:
+                return null;
+        }
+    }
 
     public async Task FocusAsync(string elementId) => await JS.InvokeVoidAsync("pdfedit.focus", elementId);
 

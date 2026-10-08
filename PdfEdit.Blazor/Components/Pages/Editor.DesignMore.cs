@@ -145,7 +145,7 @@ public partial class Editor
                 else
                 {
                     var url = await Store.StageDownloadAsync(name, path => File.WriteAllBytes(path, png));
-                    await JS.InvokeVoidAsync("pdfedit.download", url);
+                    await DownloadUrlAsync(url);
                 }
                 Status($"Downloaded {name}");
             }

@@ -210,6 +210,14 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![Translate PDF — after: the layout and colours are kept](docs/screenshots/blazor/translate-after.png)
 
+### Cross-platform desktop (Avalonia)
+
+**PdfEdit.Avalonia** runs the web version inside a desktop window on Windows, macOS and Linux — the same ribbon,
+tools and drafts, with the system's Save dialog, your PDF viewer for printing, and PDFs opened from the
+command line or Open with. The program is called PdfEdit, like the Windows app. It hosts the web app in its own process on
+a private local address that only its window can use, and shows it in WebView2, WebKit or WebKitGTK
+([how to build and run it](docs/building.md#the-cross-platform-desktop-app-windows-macos-linux)).
+
 ### Desktop (Windows) version
 
 ![Filling in and signing a flat PDF form](docs/screenshots/fill-and-sign.gif)
@@ -258,6 +266,9 @@ git clone https://github.com/dotnetappdev/Pdfedit.git
 cd Pdfedit
 dotnet run --project PdfEdit
 ```
+
+The cross-platform desktop app (Windows, macOS and Linux) is `dotnet run --project PdfEdit.Avalonia`: an
+Avalonia window showing the web version in the system's web view — see [Building](docs/building.md).
 
 Needs the .NET 10 SDK. Bugs and ideas go in [issues](https://github.com/dotnetappdev/Pdfedit/issues); pull requests go to the `devmain` branch.
 

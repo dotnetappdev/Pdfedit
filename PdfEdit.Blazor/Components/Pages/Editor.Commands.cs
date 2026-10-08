@@ -22,7 +22,7 @@ public partial class Editor
         await RunAsync("Saving…", async () =>
         {
             await CommitPendingAsync();
-            await JS.InvokeVoidAsync("pdfedit.download", $"/documents/{Doc.Id}/file?v={Doc.Version}");
+            await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}");
             Doc.IsModified = false;
             Status($"Downloaded {Doc.FileName}");
         });
@@ -34,6 +34,15 @@ public partial class Editor
         await RunAsync("Preparing to print…", async () =>
         {
             await CommitPendingAsync();
+            if (PdfEditWebHost.Desktop is { } desktop)
+            {
+                // The desktop app prints from the computer's PDF viewer.
+                var copy = Path.Combine(Directory.CreateTempSubdirectory("pdfedit-print-").FullName, Doc.FileName);
+                File.Copy(Doc.CurrentPath, copy);
+                desktop.OpenWithSystem(copy);
+                Status("Opened the PDF in your PDF viewer: print it from there");
+                return;
+            }
             // The browser's PDF viewer prints it.
             await JS.InvokeVoidAsync("pdfedit.openInNewTab", $"/documents/{Doc.Id}/file?inline=true&v={Doc.Version}");
             Status("Opened the PDF in a new tab: print it from there");
@@ -150,7 +159,7 @@ public partial class Editor
             await CommitPendingAsync();
             var png = await Store.RenderPageAsync(Doc, page, 3);
             var url = await Store.ExportAsync(Doc, $"{BaseName} page {page + 1}.png", path => File.WriteAllBytes(path, png));
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
             Status($"Downloaded page {page + 1} as an image");
         });
     }
@@ -428,7 +437,7 @@ public partial class Editor
                     }
                 });
             }
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
             Status(asSlides ? "Downloaded the PowerPoint" : $"Downloaded {pngs.Count} page images");
         });
     }

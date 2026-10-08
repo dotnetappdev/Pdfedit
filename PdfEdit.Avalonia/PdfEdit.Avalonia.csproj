@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PdfEdit for Windows, macOS and Linux: an Avalonia window holding a native web view (WebView2,
+    WebKit, WebKitGTK) that shows the PdfEdit web app, which runs inside this same process on a
+    private local address. The program is called PdfEdit, like the WPF app.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>PdfEdit</AssemblyName>
+    <RootNamespace>PdfEdit.Avalonia</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\pdfedit.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Version>1.3.0</Version>
+    <Product>PdfEdit</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The whole web app: its pages, services and static files, run in this process -->
+    <ProjectReference Include="..\PdfEdit.Blazor\PdfEdit.Blazor.csproj" />
+  </ItemGroup>
+
+  <!--
+    Publishing: the web app's page files (wwwroot, with its fingerprinted CSS and scripts, and the
+    list of them) go next to PdfEdit, where the in-process web server serves them from. A build
+    (dotnet run / F5) serves them from the web project instead.
+  -->
+  <Target Name="PublishPdfEditWebAssets" AfterTargets="Publish">
+    <PropertyGroup>
+      <_WebPublishDir>$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)web-publish/</_WebPublishDir>
+    </PropertyGroup>
+    <MSBuild Projects="..\PdfEdit.Blazor\PdfEdit.Blazor.csproj" Targets="Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$(_WebPublishDir);RuntimeIdentifier=;SelfContained=false;_IsPublishing=true" />
+    <ItemGroup>
+      <_WebAssets Include="$(_WebPublishDir)wwwroot/**/*" />
+      <_WebManifest Include="$(_WebPublishDir)PdfEdit.Blazor.staticwebassets.endpoints.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebAssets)" DestinationFiles="@(_WebAssets->'$(PublishDir)wwwroot/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_WebManifest)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

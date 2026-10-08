@@ -29,7 +29,7 @@ public partial class Editor
                     Status("Sharing cancelled");
                     break;
                 case "unsupported":
-                    await JS.InvokeVoidAsync("pdfedit.download", $"/documents/{Doc.Id}/file?v={Doc.Version}");
+                    await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}");
                     Doc.IsModified = false;
                     Toast("This browser can't share files, so the PDF was downloaded instead.");
                     break;

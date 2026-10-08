@@ -232,7 +232,7 @@ public partial class Editor
         if (MindMapSvg == null) return;
         var svg = MindMapSvg;
         var url = await Store.StageDownloadAsync($"{BaseName} mind map.svg", path => File.WriteAllText(path, svg));
-        await JS.InvokeVoidAsync("pdfedit.download", url);
+        await DownloadUrlAsync(url);
     }
 
     // ── Design Form with AI ──────────────────────────────────────────────────

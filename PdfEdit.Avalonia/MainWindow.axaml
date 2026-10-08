@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PdfEdit.Avalonia.MainWindow"
+        Title="PdfEdit"
+        Icon="/Assets/pdfedit.png"
+        Width="1440" Height="900" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <!-- The PdfEdit app itself, in the platform's own web view -->
+        <NativeWebView x:Name="Web" IsVisible="False" />
+        <!-- Shown while the app starts, or if it can't -->
+        <StackPanel x:Name="Splash" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" MaxWidth="560">
+            <Image Source="/Assets/pdfedit.png" Width="96" Height="96" />
+            <TextBlock x:Name="SplashText" Text="Starting PdfEdit…" FontSize="18" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Window>

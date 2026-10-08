@@ -15,7 +15,7 @@ public partial class Editor
     {
         var uri = new Uri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
-        bool ours = query.ContainsKey("new") || query.ContainsKey("url") || query.ContainsKey("handoff") || query.ContainsKey("page")
+        bool ours = query.ContainsKey("new") || query.ContainsKey("url") || query.ContainsKey("handoff") || query.ContainsKey("desktop-open") || query.ContainsKey("page")
                     || uri.Fragment.StartsWith("#page=", StringComparison.OrdinalIgnoreCase);
         if (!ours) return;
 
@@ -23,6 +23,12 @@ public partial class Editor
         {
             if (what == "blank") await NewBlankAsync();
             else if (what == "design") NewDesignPage();
+        }
+        else if (PdfEditWebHost.Desktop != null && query.TryGetValue("desktop-open", out var local) && File.Exists(local.ToString()))
+        {
+            // The desktop app was started with a PDF (double-clicked, or Open with PdfEdit).
+            string file = local.ToString();
+            await OpenPathAsync(file, Path.GetFileName(file), null);
         }
         else if (query.TryGetValue("handoff", out var code) && code.ToString() is { Length: 32 } c)
         {

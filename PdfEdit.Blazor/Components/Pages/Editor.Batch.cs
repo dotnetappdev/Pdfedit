@@ -136,7 +136,7 @@ public partial class Editor
             if (ok > 0)
             {
                 var url = await Store.StageDownloadAsync("Batch results.zip", zip => ZipFile.CreateFromDirectory(output, zip));
-                await JS.InvokeVoidAsync("pdfedit.download", url);
+                await DownloadUrlAsync(url);
                 Toast($"Batch finished — {ok} file{(ok == 1 ? "" : "s")} downloaded as a ZIP.", failed == 0 ? "success" : "");
             }
         }
@@ -256,7 +256,7 @@ public partial class Editor
                     if (combined != null) File.Copy(combined, Path.Combine(output, Path.GetFileName(combined)));
                     url = await Store.StageDownloadAsync(baseName + " (filled).zip", zip => ZipFile.CreateFromDirectory(output, zip));
                 }
-                await JS.InvokeVoidAsync("pdfedit.download", url);
+                await DownloadUrlAsync(url);
                 BulkStatus = $"Made {written.Count} filled PDF{(written.Count == 1 ? "" : "s")}{(combined != null ? (mode == "combined" ? ", downloaded as one PDF" : " and a combined copy") : "")}.";
                 Status(BulkStatus);
                 Toast(BulkStatus, "success");

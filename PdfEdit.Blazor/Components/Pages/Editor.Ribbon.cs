@@ -341,7 +341,7 @@ public partial class Editor
         {
             var bytes = await Task.Run(() => Store.Forms.ExtractAttachment(doc.CurrentPath, a.Name));
             var url = await Store.ExportAsync(doc, PdfDocumentStore.SafeName(a.Name), path => File.WriteAllBytes(path, bytes));
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
         });
     }
 

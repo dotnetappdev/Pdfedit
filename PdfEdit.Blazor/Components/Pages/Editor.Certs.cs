@@ -45,7 +45,7 @@ public partial class Editor
         SigningCert?.Dispose();
         SigningCert = DigitalSignatureService.LoadPfx(pfx, password);
         var url = await Store.StageDownloadAsync($"{name} (Digital ID).pfx", path => File.WriteAllBytes(path, pfx));
-        await JS.InvokeVoidAsync("pdfedit.download", url);
+        await DownloadUrlAsync(url);
         Toast("Digital ID created. Keep the downloaded .pfx file and its password to sign with it again.", "success");
     }
 
@@ -82,7 +82,7 @@ public partial class Editor
             await Store.ApplyAsync(Doc, (src, dest) => DigitalSignatureService.Sign(src, dest, req));
             LoadValues();
             _observePages = true;
-            await JS.InvokeVoidAsync("pdfedit.download", $"/documents/{Doc.Id}/file?v={Doc.Version}");
+            await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}");
             Doc.IsModified = false;
             SignatureChecks = DigitalSignatureService.Verify(Doc.CurrentPath);
             Status("Signed and downloaded. Changing the PDF here afterwards makes the signature invalid.");

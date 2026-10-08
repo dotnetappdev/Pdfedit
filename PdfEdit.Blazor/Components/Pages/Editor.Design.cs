@@ -367,7 +367,7 @@ public partial class Editor
     {
         var json = Design.ToJson();
         var url = await Store.StageDownloadAsync(_designName + ".pdfdesign", path => File.WriteAllText(path, json));
-        await JS.InvokeVoidAsync("pdfedit.download", url);
+        await DownloadUrlAsync(url);
         Status($"Downloaded {_designName}.pdfdesign — open it here or in the Windows app");
     }
 
@@ -377,7 +377,7 @@ public partial class Editor
         await RunAsync("Making the PDF…", async () =>
         {
             var url = await Store.StageDownloadAsync(_designName + ".pdf", path => DesignPdfExporter.Export(design, path));
-            await JS.InvokeVoidAsync("pdfedit.download", url);
+            await DownloadUrlAsync(url);
             Status($"Downloaded {_designName}.pdf");
         });
     }
