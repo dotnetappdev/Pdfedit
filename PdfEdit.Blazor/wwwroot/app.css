@@ -1971,3 +1971,11 @@ html, body {
 .pe-cm-replybox { display: flex; gap: 4px; width: 100%; }
 .pe-cm-replybox input { flex: 1; }
 .pe-ctxmenu-head { padding: 4px 14px 6px; font-weight: 600; font-size: 11.5px; color: var(--pe-dim); border-bottom: 1px solid var(--pe-border); margin-bottom: 4px; }
+
+/* The PDF's own links */
+.pe-link-hit { position: absolute; z-index: 16; display: block; border: 0; padding: 0; background: transparent; cursor: pointer; border-radius: 2px; }
+.pe-link-hit:hover, .pe-link-hit:focus-visible { background: rgba(10, 132, 255, .18); outline: 1px solid rgba(10, 132, 255, .6); }
+.pe-link-hit.editing { z-index: 32; outline: 1.5px solid #0A84FF; background: rgba(10, 132, 255, .08); }
+.pe-ctxmenu a.pe-ctxmenu-a { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; color: inherit; text-decoration: none; }
+.pe-ctxmenu a.pe-ctxmenu-a:hover { background: var(--pe-hover); }
+.pe-ctxmenu a.pe-ctxmenu-a i { width: 16px; text-align: center; color: var(--pe-dim); }

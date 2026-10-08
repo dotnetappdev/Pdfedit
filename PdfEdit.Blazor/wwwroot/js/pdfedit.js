@@ -122,11 +122,13 @@ window.pdfedit = (() => {
                 if (t.closest('input, select, [contenteditable="true"], .pe-ctxmenu')) return;
                 if (t.tagName === 'TEXTAREA' && t.selectionStart !== t.selectionEnd) return;
                 const item = t.closest('[data-drag^="i:"], [data-drag^="f:"]');
+                const link = item ? null : t.closest('[data-link]');
                 const page = t.closest('.pe-page[data-page]');
-                if (!item && !page) return;
+                if (!item && !link && !page) return;
                 e.preventDefault();
                 const r = page?.getBoundingClientRect();
-                dotnet.invokeMethodAsync('OnContextMenu', item ? item.dataset.drag : '', page ? +page.dataset.page : -1,
+                const key = item ? item.dataset.drag : link ? 'l:' + link.dataset.link : '';
+                dotnet.invokeMethodAsync('OnContextMenu', key, page ? +page.dataset.page : -1,
                     r ? (e.clientX - r.left) / r.width * 100 : 0, r ? (e.clientY - r.top) / r.height * 100 : 0, e.clientX, e.clientY,
                     window.innerWidth, window.innerHeight);
             });

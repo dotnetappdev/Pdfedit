@@ -29,6 +29,8 @@ public sealed class PdfSession : IDisposable
     public PdfiumRenderEngine Renderer { get; set; } = new();
     public List<BookmarkItem> Bookmarks { get; set; } = new();
     public List<PdfAnnotationItem> Annotations { get; set; } = new();
+    /// <summary>The PDF's hyperlinks (/Link annotations), clickable on the page.</summary>
+    public List<PdfLinkInfo> Links { get; set; } = new();
     /// <summary>PdfEdit's own annotations, shown on the page as editable items (and left out of the page image).</summary>
     public List<OwnAnnotation> Own { get; set; } = new();
     public PdfMetadataInfo Metadata { get; set; } = new();
@@ -235,6 +237,7 @@ public sealed class PdfDocumentStore : IDisposable
 
         session.Info = info;
         session.Bookmarks = await Task.Run(() => { try { return forms.GetBookmarks(path); } catch { return new List<BookmarkItem>(); } });
+        session.Links = await Task.Run(() => { try { return LinkService.GetLinks(path); } catch { return new List<PdfLinkInfo>(); } });
         session.Own = await Task.Run(() => PdfAnnotationReader.ReadOwn(path));
         var own = session.Own.Select(o => o.Id).ToHashSet();
         session.Annotations = (await Task.Run(() => PdfAnnotationReader.Read(path)))

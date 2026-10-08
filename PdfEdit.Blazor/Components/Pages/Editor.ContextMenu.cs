@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using PdfEdit.Blazor.Components.Editor;
 using PdfEdit.Models;
+using PdfEdit.Services;
 
 namespace PdfEdit.Blazor.Components.Pages;
 
@@ -12,6 +13,7 @@ public partial class Editor
 {
     private PageItem? _menuItem;
     private FormFieldInfo? _menuField;
+    private PdfLinkInfo? _menuLink;
     private int _menuPage = -1;
     private double _menuX, _menuY, _menuPageX, _menuPageY;
 
@@ -25,6 +27,8 @@ public partial class Editor
         // "i:<id>" a page item, "f:<name>|<widget>" a form field in Edit Fields, "" the page.
         _menuItem = key.StartsWith("i:") ? _items.FirstOrDefault(i => i.Id == key[2..]) : null;
         _menuField = null;
+        _menuLink = key.StartsWith("l:") && key[2..].Split('|') is [var lp, var li] && int.TryParse(lp, out int lpage) && int.TryParse(li, out int lidx)
+            ? Doc.Links.FirstOrDefault(l => l.PageNumber == lpage && l.AnnotIndex == lidx) : null;
         if (key.StartsWith("f:") && key[2..].Split('|') is [var name, var w] && int.TryParse(w, out int widget))
         {
             _menuField = Doc.Info.FormFields.FirstOrDefault(f => f.Name == Uri.UnescapeDataString(name) && f.WidgetIndex == widget);
@@ -40,10 +44,10 @@ public partial class Editor
         }
         // Kept on screen: the item menu is about 270 × 470 pixels, the page menu 250 × 260.
         double scale = UiScale > 0 ? UiScale : 1;
-        double mw = 270 * scale, mh = (_menuItem != null || _menuField != null ? 470 : 260) * scale;
+        double mw = 270 * scale, mh = (_menuItem != null || _menuField != null ? 470 : _menuLink != null ? 200 : 260) * scale;
         _menuX = Math.Max(4, Math.Min(clientX, viewW - mw - 4)) / scale;
         _menuY = Math.Max(4, Math.Min(clientY, viewH - mh - 4)) / scale;
-        _menuPage = _menuItem?.Page ?? (_menuField != null ? _menuField.PageNumber - 1 : page);
+        _menuPage = _menuItem?.Page ?? (_menuField != null ? _menuField.PageNumber - 1 : _menuLink != null ? _menuLink.PageNumber - 1 : page);
         if (_menuPage < 0 || _menuPage >= PageCount) { CloseMenu(); return Task.CompletedTask; }
         var (pw, ph) = ViewSize(_menuPage);
         _menuPageX = xPct / 100 * pw;
@@ -56,6 +60,7 @@ public partial class Editor
     {
         _menuItem = null;
         _menuField = null;
+        _menuLink = null;
         _menuPage = -1;
     }
 

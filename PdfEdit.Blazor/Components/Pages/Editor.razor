@@ -893,8 +893,26 @@
             var mi = _menuItem;
             <div class="pe-ctx-backdrop" @onclick="CloseMenu" @oncontextmenu="CloseMenu" @oncontextmenu:preventDefault="true"></div>
             var mf = _menuField;
+            var ml = _menuLink;
             <div class="pe-ctxmenu" role="menu" aria-label="@(mi?.Describe() ?? (mf != null ? $"Field {FieldLabel(mf)}" : $"Page {_menuPage + 1}"))" style="left:@Css(_menuX)px;top:@Css(_menuY)px">
-                @if (mf != null)
+                @if (ml != null)
+                {
+                    var mhref = SafeHref(ml.Target);
+                    <div class="pe-ctxmenu-head">@ml.Target.Describe()</div>
+                    @if (mhref != null)
+                    {
+                        <a role="menuitem" class="pe-ctxmenu-a" href="@mhref" target="_blank" rel="noopener noreferrer" @onclick="CloseMenu"><i class="bi bi-box-arrow-up-right"></i>Open link</a>
+                    }
+                    else if (ml.Target.PageNumber != null)
+                    {
+                        <button role="menuitem" @onclick="() => MenuAsync(() => LinkClickAsync(ml))"><i class="bi bi-arrow-right-square"></i>Go to page @ml.Target.PageNumber</button>
+                    }
+                    <button role="menuitem" @onclick="() => MenuAct(() => EditLink(ml))"><i class="bi bi-pencil"></i>Edit link…</button>
+                    <button role="menuitem" @onclick="() => MenuAsync(() => CopyLinkAsync(ml))"><i class="bi bi-copy"></i>Copy link address</button>
+                    <hr />
+                    <button role="menuitem" @onclick="() => MenuAsync(() => RemoveLinkAsync(ml))"><i class="bi bi-link"></i>Remove link</button>
+                }
+                else if (mf != null)
                 {
                     int count = SelectedWidgets.Count;
                     <div class="pe-ctxmenu-head">@FieldLabel(mf)@(count > 1 ? $" + {count - 1} more" : "")</div>
@@ -1128,6 +1146,26 @@
                             @foreach (var hit in _searchHits.Where(x => x.PageNumber == pg + 1))
                             {
                                 <div class="pe-search-hit @(hit == CurrentHit ? "current" : "")" style="@HitStyle(hit)"></div>
+                            }
+
+                            @* The PDF's own links: web, email and phone links open in a new tab, page links jump; with the Link tool a click edits one. *@
+                            @foreach (var link in LinksOn(pg))
+                            {
+                                var lk = link;
+                                var href = SafeHref(lk.Target);
+                                var linkKey = $"{lk.PageNumber}|{lk.AnnotIndex}";
+                                var linkTitle = (_tool == Tool.Link ? "Edit link: " : string.Empty) + lk.Target.Describe();
+                                @if (href != null && _tool != Tool.Link)
+                                {
+                                    <a class="pe-link-hit" style="@ViewStyle(pg, lk.Left, lk.Bottom, lk.Width, lk.Height)" href="@href" target="_blank" rel="noopener noreferrer"
+                                       title="@lk.Target.Describe()" aria-label="Link: @lk.Target.Describe()" data-link="@linkKey"></a>
+                                }
+                                else
+                                {
+                                    <button class="pe-link-hit @(_tool == Tool.Link ? "editing" : "")" style="@ViewStyle(pg, lk.Left, lk.Bottom, lk.Width, lk.Height)"
+                                            title="@linkTitle" aria-label="Link: @lk.Target.Describe()"
+                                            data-link="@linkKey" @onclick="() => LinkClickAsync(lk)"></button>
+                                }
                             }
 
                             @foreach (var f in Doc.Info.FormFields.Where(f => f.PageNumber == pg + 1 && !IsDeleted(f) && !Doc.SignedFields.Contains(f.Name)))

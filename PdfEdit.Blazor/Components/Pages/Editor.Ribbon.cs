@@ -476,20 +476,7 @@ public partial class Editor
     public async Task AddLinkAsync(string kind, string target, bool visibleBorder)
     {
         if (PendingLink is not { } l || Doc == null) return;
-        target = target.Trim();
-        LinkTarget link;
-        switch (kind)
-        {
-            case "page" when int.TryParse(target, out int p) && p >= 1 && p <= PageCount: link = LinkTarget.ToPage(p); break;
-            case "page": Toast($"Enter a page from 1 to {PageCount}.", "error"); return;
-            case "email" when target.Contains('@'): link = LinkTarget.ToUri("mailto:" + target.Replace("mailto:", "")); break;
-            case "phone" when target.Length > 2: link = LinkTarget.ToUri("tel:" + new string(target.Where(c => char.IsDigit(c) || c == '+').ToArray())); break;
-            case "url" when target.Length > 3:
-                link = LinkTarget.ToUri(target.Contains("://") ? target : "https://" + target);
-                if (!Uri.TryCreate(link.Uri, UriKind.Absolute, out var u) || u.Scheme is not ("http" or "https")) { Toast("That isn't a web address.", "error"); return; }
-                break;
-            default: Toast("Enter where the link goes.", "error"); return;
-        }
+        if (MakeTarget(kind, target) is not { } link) return;
         PendingLink = null;
         _dialog = DialogKind.None;
         var r = ToUser(l.Page, l.Left, l.Top, l.Width, l.Height);
@@ -498,10 +485,81 @@ public partial class Editor
             LinkService.AddLink(src, dest, pageNo, r.Left, r.Bottom, r.Width, r.Height, link, visibleBorder));
     }
 
+    /// <summary>The link's target from the dialog (kind: url, email, phone or page), or null with a message.</summary>
+    private LinkTarget? MakeTarget(string kind, string target)
+    {
+        target = target.Trim();
+        LinkTarget link;
+        switch (kind)
+        {
+            case "page" when int.TryParse(target, out int p) && p >= 1 && p <= PageCount: link = LinkTarget.ToPage(p); break;
+            case "page": Toast($"Enter a page from 1 to {PageCount}.", "error"); return null;
+            case "email" when target.Contains('@'): link = LinkTarget.ToUri("mailto:" + target.Replace("mailto:", "")); break;
+            case "phone" when target.Length > 2: link = LinkTarget.ToUri("tel:" + new string(target.Where(c => char.IsDigit(c) || c == '+').ToArray())); break;
+            case "url" when target.Length > 3:
+                link = LinkTarget.ToUri(target.Contains("://") ? target : "https://" + target);
+                if (!Uri.TryCreate(link.Uri, UriKind.Absolute, out var u) || u.Scheme is not ("http" or "https")) { Toast("That isn't a web address.", "error"); return null; }
+                break;
+            default: Toast("Enter where the link goes.", "error"); return null;
+        }
+        return link;
+    }
+
     public void CancelLink()
     {
         PendingLink = null;
+        EditingLink = null;
         _dialog = DialogKind.None;
+    }
+
+    // ── Links already in the PDF ─────────────────────────────────────────────
+
+    /// <summary>The link being changed in the Link dialog (null when adding one).</summary>
+    public PdfLinkInfo? EditingLink { get; private set; }
+
+    public IEnumerable<PdfLinkInfo> LinksOn(int page) => Doc?.Links.Where(l => l.PageNumber == page + 1) ?? [];
+
+    /// <summary>Only web, email and phone links open from the page; anything else (javascript:, file:) never does.</summary>
+    public static string? SafeHref(LinkTarget t) =>
+        t.Uri is { } u && Uri.TryCreate(u, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" or "mailto" or "tel" ? uri.AbsoluteUri : null;
+
+    /// <summary>A click on a link: a page link goes there; with the Link tool, any link opens to be edited.</summary>
+    private async Task LinkClickAsync(PdfLinkInfo link)
+    {
+        if (_tool == Tool.Link) { EditLink(link); return; }
+        if (link.Target.PageNumber is { } p) await GoToPageAsync(Math.Clamp(p - 1, 0, PageCount - 1));
+    }
+
+    public void EditLink(PdfLinkInfo link)
+    {
+        EditingLink = link;
+        PendingLink = null;
+        _dialog = DialogKind.Link;
+    }
+
+    public async Task UpdateLinkAsync(string kind, string target, bool visibleBorder)
+    {
+        if (EditingLink is not { } l) return;
+        if (MakeTarget(kind, target) is not { } link) return;
+        EditingLink = null;
+        _dialog = DialogKind.None;
+        await ChangeAsync("Changing the link…", $"Link changed: {link.Describe()}", (src, dest) =>
+            LinkService.UpdateLink(src, dest, l.PageNumber, l.AnnotIndex, link, visibleBorder));
+    }
+
+    public async Task RemoveLinkAsync(PdfLinkInfo l)
+    {
+        EditingLink = null;
+        _dialog = DialogKind.None;
+        await ChangeAsync("Removing the link…", "Link removed — Undo brings it back", (src, dest) =>
+            LinkService.RemoveLinks(src, dest, l.PageNumber, l.AnnotIndex));
+    }
+
+    private async Task CopyLinkAsync(PdfLinkInfo l)
+    {
+        string text = l.Target.PageNumber is { } p ? $"Page {p}" : l.Target.Uri ?? "";
+        await TryCopyText(text);
+        Status("Copied " + text);
     }
 
     private async Task RemoveLinksAsync()

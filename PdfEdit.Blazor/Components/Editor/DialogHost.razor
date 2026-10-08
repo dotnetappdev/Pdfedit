@@ -1509,7 +1509,7 @@
         break;
 
     case DialogKind.Link:
-        <Modal Title="Add Link" OnClose="CancelLink">
+        <Modal Title="@(Ed.EditingLink != null ? "Edit Link" : "Add Link")" OnClose="CancelLink">
             <ChildContent>
                 <div class="pe-panel-tabs mb-2" style="border:0">
                     @foreach (var (k, label) in new[] { ("url", "Web page"), ("email", "Email"), ("phone", "Phone"), ("page", "Page in this PDF") })
@@ -1523,8 +1523,19 @@
                 <label class="d-flex gap-2 mt-2"><input type="checkbox" @bind="_check1" /> Show a border round the link</label>
             </ChildContent>
             <Footer>
+                @if (Ed.EditingLink is { } editing)
+                {
+                    <button class="pe-btn me-auto" @onclick="() => ActAsync(() => Ed.RemoveLinkAsync(editing))"><i class="bi bi-trash3"></i> Remove link</button>
+                }
                 <button class="pe-btn" @onclick="CancelLink">Cancel</button>
-                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => ActAsync(() => Ed.AddLinkAsync(_linkKind, _text1, _check1))">Add Link</button>
+                @if (Ed.EditingLink != null)
+                {
+                    <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => ActAsync(() => Ed.UpdateLinkAsync(_linkKind, _text1, _check1))">Save</button>
+                }
+                else
+                {
+                    <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => ActAsync(() => Ed.AddLinkAsync(_linkKind, _text1, _check1))">Add Link</button>
+                }
             </Footer>
         </Modal>
         break;
@@ -1628,6 +1639,15 @@
                 break;
             case DialogKind.Profiles:
                 _profile = Ed.CurrentProfile is { } cp ? CopyProfile(cp) : Ed.Profiles.Count > 0 ? CopyProfile(Ed.Profiles[0]) : new PersonalProfile();
+                break;
+            case DialogKind.Link when Ed.EditingLink is { } l:
+                // Editing: start from what the link does now.
+                var u = l.Target.Uri ?? "";
+                (_linkKind, _text1) = l.Target.PageNumber is { } pn ? ("page", pn.ToString())
+                    : u.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ? ("email", u[7..])
+                    : u.StartsWith("tel:", StringComparison.OrdinalIgnoreCase) ? ("phone", u[4..])
+                    : ("url", u);
+                _check1 = l.HasBorder;
                 break;
             case DialogKind.Link:
                 _linkKind = "url"; _check1 = false;
