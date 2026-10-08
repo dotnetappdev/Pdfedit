@@ -66,7 +66,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          info=$(gh api "repos/${{ github.repository }}/pages" 2>/dev/null || echo '{}')
+          # Not found (Pages off) prints an error body and fails: count that as no setting at all.
+          info=$(gh api "repos/${{ github.repository }}/pages" 2>/dev/null) || info='{}'
           type=$(echo "$info" | jq -r '.build_type // "off"')
           branch=$(echo "$info" | jq -r '.source.branch // ""')
           url=$(echo "$info" | jq -r '.html_url // ""')
