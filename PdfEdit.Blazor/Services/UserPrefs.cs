@@ -87,4 +87,8 @@ public sealed class WebSettings
     public bool ShowTipsAtStart { get; set; }
     /// <summary>Add where you are (latitude, longitude) to dynamic stamps; the browser asks permission.</summary>
     public bool StampLocation { get; set; }
+    /// <summary>Show a notification when a long job (OCR, batch, translating) finishes while PdfEdit is in the background.</summary>
+    public bool NotifyWhenDone { get; set; }
+    /// <summary>No sliding or fading, and jumps instead of smooth scrolling (the system's own setting is followed too).</summary>
+    public bool ReduceMotion { get; set; }
 }

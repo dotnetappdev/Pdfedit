@@ -54,7 +54,8 @@ public partial class Editor
         {
             var now = await BrowserNowAsync();
             string who = string.IsNullOrWhiteSpace(_stampAuthor) ? "" : $"By {_stampAuthor.Trim()} ";
-            subtitle = $"{who}at {now.ToString("t", CultureInfo.CurrentCulture)}, {now.ToString("d", CultureInfo.CurrentCulture)}";
+            var culture = await UserCultureAsync();
+            subtitle = $"{who}at {now.ToString("t", culture)}, {now.ToString("d", culture)}";
             subtitle = char.ToUpper(subtitle[0]) + subtitle[1..];
             if (await StampLocationAsync() is { } place) subtitle += $" · {place}";
         }
@@ -64,6 +65,20 @@ public partial class Editor
             Kind = ItemKind.Stamp, Page = page, Left = x - w / 2, Top = y - h / 2, Width = w, Height = h,
             Text = def.Title, Subtitle = subtitle, Color = def.Color,
         };
+    }
+
+    private CultureInfo? _userCulture;
+    /// <summary>The browser's culture once known (read when the page first loads).</summary>
+    public CultureInfo UserCulture => _userCulture ?? CultureInfo.GetCultureInfo("en-GB");
+
+    /// <summary>The browser's language and region, so dates and times read as the user expects (not as the server's).</summary>
+    public async Task<CultureInfo> UserCultureAsync()
+    {
+        if (_userCulture != null) return _userCulture;
+        try { _userCulture = CultureInfo.GetCultureInfo(await JS.InvokeAsync<string>("pdfedit.locale")); }
+        catch { _userCulture = CultureInfo.GetCultureInfo("en-GB"); }
+        if (_userCulture.Equals(CultureInfo.InvariantCulture)) _userCulture = CultureInfo.GetCultureInfo("en-GB");
+        return _userCulture;
     }
 
     // Dynamic stamps show the time where the user is, not where the server is.

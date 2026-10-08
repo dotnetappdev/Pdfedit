@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using PdfEdit.Models;
 using PdfEdit.Services;
 
@@ -88,4 +89,31 @@ public partial class MainViewModel
         PushUndo(() => Apply(before), () => Apply(after));
         StatusText = $"Properties of \"{edited.DisplayName}\" updated. Save to write them to the PDF.";
     }
+
+    // ── Form progress (status bar) ───────────────────────────────────────────
+
+    private FormProgress? FillProgress =>
+        HasDocument ? FormProgress.Of(AllFields, n => FieldValues.TryGetValue(n, out var v) ? v : null) is { IsForm: true } p ? p : null : null;
+
+    /// <summary>"7 of 12 filled · 2 required left" (✓ when done); hidden when the PDF has no form to fill.</summary>
+    public string FillProgressLabel => FillProgress is { } p ? (p.Done ? "✓ " : "") + p.Label : "";
+    public bool HasFillProgress => FillProgress != null;
+
+    private void RaiseFillProgress()
+    {
+        OnPropertyChanged(nameof(FillProgressLabel));
+        OnPropertyChanged(nameof(HasFillProgress));
+    }
+
+    private ICommand? _nextEmptyFieldCommand;
+
+    /// <summary>Goes to the next empty field, required ones first.</summary>
+    public ICommand NextEmptyFieldCommand => _nextEmptyFieldCommand ??= new RelayCommand(() =>
+    {
+        var next = FormProgress.NextEmpty(AllFields, n => FieldValues.TryGetValue(n, out var v) ? v : null, SelectedField?.Name);
+        if (next == null) { ToastService.Instance.Success("Every field is filled in."); return; }
+        if (next.PageNumber > 0) CurrentPageIndex = next.PageNumber - 1;
+        SelectedField = next;
+        StatusText = $"Next: {next.DisplayName}{(next.IsRequired ? " (required)" : "")}";
+    }, () => HasDocument);
 }

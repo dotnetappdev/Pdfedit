@@ -105,6 +105,7 @@ public partial class Editor
                 wanted[DesignDraftId] = (new { id = DesignDraftId, window = _windowId, kind = "design", name = _designName, order = Tabs.Count, active = DesignMode, changes = true }, state, null);
             }
 
+            if (_active != null) RememberView(_active);
             foreach (var (id, (info, state, pdfKey)) in wanted)
             {
                 // The PDF's version is part of what's compared: an applied change fetches the PDF again.
@@ -120,7 +121,7 @@ public partial class Editor
             }
             await JS.InvokeVoidAsync("pdfeditDrafts.setUnsaved", !ok && Tabs.Any(t => t.HasChanges));
             if (!ok) _draftDirty = true;   // try again next time
-            if (wrote || force) { DraftSavedAt = DateTime.Now; StateHasChanged(); }
+            if (wrote || force) { DraftSavedAt = await BrowserNowAsync(); StateHasChanged(); }
         }
         catch (Exception) { ok = false; _draftDirty = true; }
         finally { _draftSaving = false; }
@@ -217,6 +218,7 @@ public partial class Editor
             _page = draft.Page;
             _zoom = draft.Zoom > 0 ? draft.Zoom : _zoom;
             _fitOnOpen = false;
+            _rememberedViewFor = null;   // the draft's own page and zoom win
             _restoreScroll = -1;
             return true;
         }
@@ -248,5 +250,40 @@ public partial class Editor
         await using var s = await stream.OpenReadStreamAsync(256L * 1024 * 1024);
         using var reader = new StreamReader(s);
         return await reader.ReadToEndAsync();
+    }
+
+    // ── Where each document was left ─────────────────────────────────────────
+
+    /// <summary>Set when a document is opened: its last page and zoom are looked up after it's drawn.</summary>
+    private DocTab? _rememberedViewFor;
+    private string? _lastRememberedView;
+
+    private static string ViewKey(DocTab tab) => $"{tab.Session.FileName}|{tab.Session.Info.PageCount}";
+
+    private void RememberView(DocTab tab)
+    {
+        if (tab == _rememberedViewFor) return;   // just opened: its old place hasn't been put back yet
+        var mark = $"{ViewKey(tab)}|{_page}|{_zoom}";
+        if (mark == _lastRememberedView) return;
+        _lastRememberedView = mark;
+        _ = JS.InvokeVoidAsync("pdfedit.view.set", ViewKey(tab), _page, _zoom).AsTask();
+    }
+
+    private sealed record RememberedView(int Page, double Zoom);
+
+    /// <summary>A document opened again comes back at the page and zoom it was left at.</summary>
+    private async Task<bool> RememberedViewAsync(DocTab tab)
+    {
+        try
+        {
+            var v = await JS.InvokeAsync<RememberedView?>("pdfedit.view.get", ViewKey(tab));
+            if (v == null || (v.Page <= 0 && Math.Abs(v.Zoom - 1) < 0.01)) return false;
+            _page = Math.Clamp(v.Page, 0, Math.Max(0, PageCount - 1));
+            _zoom = Math.Clamp(v.Zoom, 0.1, 5);
+            _restoreScroll = -1;
+            if (_page > 0) Status($"Back at page {_page + 1}, where you left {tab.Session.FileName}");
+            return true;
+        }
+        catch { return false; }
     }
 }

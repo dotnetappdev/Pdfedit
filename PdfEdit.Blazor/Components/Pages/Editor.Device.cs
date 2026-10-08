@@ -117,4 +117,24 @@ public partial class Editor
 
     public static string FormatPlace(double lat, double lon) => string.Create(CultureInfo.InvariantCulture,
         $"{Math.Abs(lat):0.0000}° {(lat >= 0 ? 'N' : 'S')}, {Math.Abs(lon):0.0000}° {(lon >= 0 ? 'E' : 'W')}");
+
+    // ── Done while you were away ─────────────────────────────────────────────
+
+    private static readonly TimeSpan LongJob = TimeSpan.FromSeconds(8);
+
+    /// <summary>
+    /// After a long job (OCR, batch, translating…): if the tab isn't being looked at, its title flashes
+    /// "✓ Done" and, when the browser allows it, a notification says what finished.
+    /// </summary>
+    private async Task NotifyIfAwayAsync(string what, DateTime startedUtc, bool ok = true)
+    {
+        if (DateTime.UtcNow - startedUtc < LongJob) return;
+        try { await JS.InvokeVoidAsync("pdfedit.notifyDone", what, ok, Settings.NotifyWhenDone); } catch { }
+    }
+
+    /// <summary>Settings → notifications: asks the browser's permission (from the click on the box).</summary>
+    public async Task<string> AskNotificationPermissionAsync()
+    {
+        try { return await JS.InvokeAsync<string>("pdfedit.askNotify"); } catch { return "unsupported"; }
+    }
 }

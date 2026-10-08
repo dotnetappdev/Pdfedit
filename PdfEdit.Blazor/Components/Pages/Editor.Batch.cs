@@ -111,6 +111,7 @@ public partial class Editor
         }
 
         BatchRunning = true;
+        var batchStarted = DateTime.UtcNow;
         BatchLog.Clear();
         BatchStatus = "Starting…";
         _batchCts = new CancellationTokenSource();
@@ -143,6 +144,7 @@ public partial class Editor
         catch (Exception ex) { BatchStatus = "Failed: " + ex.Message; }
         finally
         {
+            await NotifyIfAwayAsync("Batch process — " + (BatchStatus is { Length: > 0 } bs ? bs : "finished"), batchStarted);
             BatchRunning = false;
             _batchCts.Dispose();
             _batchCts = null;

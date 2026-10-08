@@ -911,6 +911,7 @@ html, body {
 }
 .pe-share-prompt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pe-status .pe-dictating { color: #B3261E; font-weight: 600; }
+.pe-status .pe-form-progress.done { color: #1E7B34; }
 
 /* ── Welcome (no document open) ──────────────────────────────────────────── */
 
@@ -1999,3 +2000,23 @@ html, body {
 .pe-ctxmenu a.pe-ctxmenu-a { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; color: inherit; text-decoration: none; }
 .pe-ctxmenu a.pe-ctxmenu-a:hover { background: var(--pe-hover); }
 .pe-ctxmenu a.pe-ctxmenu-a i { width: 16px; text-align: center; color: var(--pe-dim); }
+
+/* Continue on Phone */
+.pe-handoff { display: flex; gap: 20px; align-items: flex-start; }
+.pe-handoff img { flex: none; background: #fff; padding: 8px; border-radius: 8px; image-rendering: pixelated; }
+@media (max-width: 600px) { .pe-handoff { flex-direction: column; align-items: center; } }
+
+/* Signature from a photo: a checkerboard behind it shows what's see-through. */
+.pe-sig-photo {
+    min-height: 120px; display: grid; place-items: center; padding: 8px; border: 1px solid var(--pe-input-border); border-radius: 4px;
+    background: #fff repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px;
+}
+.pe-sig-photo img { max-width: 100%; max-height: 200px; }
+
+/* Reduce motion: the system's setting, or Settings → Reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+}
+.pe-reduce-motion *, .pe-reduce-motion *::before, .pe-reduce-motion *::after {
+    animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important;
+}

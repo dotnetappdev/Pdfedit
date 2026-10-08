@@ -157,6 +157,11 @@
                                    Foreground="{DynamicResource DimForegroundBrush}"
                                    VerticalAlignment="Center"
                                    Text="No image selected" FontSize="11"/>
+                        <CheckBox x:Name="RemovePaperCb" Margin="16,0,0,0" VerticalAlignment="Center" IsChecked="True"
+                                  Content="Remove the paper (photo or scan)"
+                                  Checked="RemovePaper_Changed" Unchecked="RemovePaper_Changed"
+                                  ToolTip="Makes the paper see-through and crops to the signature, so it sits cleanly on the page"
+                                  AutomationProperties.Name="Remove the paper background"/>
                     </StackPanel>
                     <Border Grid.Row="1" BorderBrush="{DynamicResource AppBorderBrush}"
                             BorderThickness="1" CornerRadius="6" Background="White">

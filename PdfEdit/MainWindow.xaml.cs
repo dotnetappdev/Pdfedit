@@ -147,14 +147,19 @@ public partial class MainWindow : RibbonWindow
             await vm.OpenFileAsync(path);
     }
 
+    private async Task OpenFilesAsync(IReadOnlyList<string> paths)
+    {
+        foreach (var path in paths) await OpenFileAsync(path);
+    }
+
     protected override void OnDrop(System.Windows.DragEventArgs e)
     {
         base.OnDrop(e);
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            var pdf = System.Array.Find(files, f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
-            if (pdf != null) _ = OpenFileAsync(pdf);
+            var pdfs = files.Where(f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (pdfs.Count > 0) _ = OpenFilesAsync(pdfs);   // several PDFs: each in its own tab
             else if (VM != null && files.Where(OfficeConversionService.IsOfficeFile).ToList() is { Count: > 0 } office)
                 _ = VM.ConvertOfficeFilesAsync(office);   // Word / Excel / PowerPoint dropped: make PDFs
         }

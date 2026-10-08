@@ -543,8 +543,17 @@ public partial class MainViewModel : INotifyPropertyChanged
     public bool IsLoading
     {
         get => _isLoading;
-        set { _isLoading = value; OnPropertyChanged(); }
+        set
+        {
+            if (value && !_isLoading) _loadingSince = DateTime.UtcNow;
+            // A long job that finished while you were in another window: flash the taskbar button.
+            if (!value && _isLoading && DateTime.UtcNow - _loadingSince > TimeSpan.FromSeconds(8))
+                Application.Current?.Dispatcher.BeginInvoke(TaskbarFlash.IfInBackground);
+            _isLoading = value;
+            OnPropertyChanged();
+        }
     }
+    private DateTime _loadingSince;
 
     public bool HighlightFields
     {
@@ -1473,6 +1482,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (_selectedField?.Name == fieldName) OnPropertyChanged(nameof(SelectedFieldValue));
         StatusText = $"Field '{fieldName}' updated.";
         RecalculateFields();
+        RaiseFillProgress();
     }
 
     private bool _recalculating;
@@ -1889,6 +1899,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             DocumentLoaded?.Invoke();
             string msg = $"Opened: {System.IO.Path.GetFileName(path)} — " +
                          $"{Document.PageCount} page(s), {Document.FormFields.Count} field(s).";
+            RaiseFillProgress();
             StatusText = msg;
             ToastService.Instance.Success($"Opened {System.IO.Path.GetFileName(path)}");
 
@@ -2112,6 +2123,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         PageChanged?.Invoke();
         StatusText = "All fields cleared.";
         ToastService.Instance.Info("All fields cleared.");
+        RaiseFillProgress();
     }
 
     /// <summary>

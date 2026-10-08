@@ -32,6 +32,7 @@ public partial class MainViewModel
         {
             if (_isAutoScrolling == value || (value && !HasDocument)) return;
             _isAutoScrolling = value;
+            KeepAwake.Set("autoscroll", value);
             OnPropertyChanged();
             StatusText = value ? $"Auto-scroll on ({AutoScrollLabel}). Faster / Slower to change, Esc or a click to stop." : "Auto-scroll off.";
         }
@@ -67,7 +68,9 @@ public partial class MainViewModel
     {
         if (_document == null) return;
         var show = new Dialogs.PresentationWindow(_renderService, _document.PageSizes, _currentPageIndex);
-        show.ShowDialog();
+        KeepAwake.Set("slideshow", true);
+        try { show.ShowDialog(); }
+        finally { KeepAwake.Set("slideshow", false); }
         CurrentPageIndex = show.PageIndex;
     }, () => HasDocument);
 

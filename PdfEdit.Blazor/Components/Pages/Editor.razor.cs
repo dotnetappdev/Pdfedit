@@ -103,7 +103,9 @@ public partial class Editor
             await LoadThemeAsync();
             await LoadSavedSignaturesAsync();
             LoadPrefs();
+            await UserCultureAsync();
             await RestoreDraftsAsync();
+            await StartFromLinkAsync();
             StateHasChanged();
         }
         _draftDirty = true;
@@ -113,6 +115,11 @@ public partial class Editor
             await JS.InvokeVoidAsync("pdfedit.observePages", _self, _viewer);
         }
         if (TourIndex != null) await JS.InvokeVoidAsync("pdfedit.placeTour");
+        if (_rememberedViewFor is { } opened && opened == _active)
+        {
+            _rememberedViewFor = null;
+            if (await RememberedViewAsync(opened)) { _fitOnOpen = false; StateHasChanged(); }
+        }
         if (_fitOnOpen && Doc != null)
         {
             _fitOnOpen = false;
@@ -148,6 +155,40 @@ public partial class Editor
 
     /// <summary>Word, Excel, PowerPoint, OpenDocument, text, Markdown and web pages, opened as PDFs.</summary>
     public const string OfficeAccept = ".docx,.doc,.docm,.odt,.rtf,.xlsx,.xls,.xlsm,.ods,.csv,.pptx,.ppt,.pptm,.odp,.txt,.md,.html,.htm";
+
+    /// <summary>Several files chosen or dropped at once: each opens in its own tab.</summary>
+    public async Task OpenUploadsAsync(IReadOnlyList<IBrowserFile> files)
+    {
+        if (files.Count == 1) { await OpenUploadAsync(files[0]); return; }
+        // Every file is read first: the box they were chosen in goes away once the first one opens,
+        // and the browser can't hand over the rest after that.
+        var folder = Directory.CreateTempSubdirectory("pdfedit-uploads-").FullName;
+        try
+        {
+            var saved = new List<(string Path, string Name)>();
+            await RunAsync($"Reading {files.Count} files…", async () =>
+            {
+                foreach (var file in files)
+                {
+                    if (file.Size > PdfDocumentStore.MaxUploadBytes) { Toast($"{file.Name} is too big to open.", "error"); continue; }
+                    var path = Path.Combine(folder, $"{saved.Count}-{PdfDocumentStore.SafeName(file.Name)}");
+                    try
+                    {
+                        await using var s = file.OpenReadStream(PdfDocumentStore.MaxUploadBytes);
+                        await using var f = File.Create(path);
+                        await s.CopyToAsync(f);
+                        saved.Add((path, file.Name));
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or IOException or JSException) { Toast($"Couldn't read {file.Name}.", "error"); }
+                }
+            });
+            var pdfs = await ConvertOfficeFilesAsync(saved.Select(x => x.Path).ToList());
+            for (int i = 0; i < pdfs.Count; i++)
+                await OpenPathAsync(pdfs[i], Path.ChangeExtension(saved[i].Name, ".pdf"), null);
+            if (saved.Count > 1) Status($"Opened {saved.Count} documents — they're in the tabs above the pages");
+        }
+        finally { if (PendingPassword == null) try { Directory.Delete(folder, true); } catch { } }
+    }
 
     public async Task OpenUploadAsync(IBrowserFile file)
     {
@@ -478,14 +519,18 @@ public partial class Editor
         _busy = true;
         _status = busy;
         StateHasChanged();
+        var started = DateTime.UtcNow;
+        bool ok = true;
         try { await work(); }
         catch (Exception ex)
         {
+            ok = false;
             Toast(ex.Message, "error");
             _status = "Something went wrong";
         }
         finally
         {
+            await NotifyIfAwayAsync(ok ? $"{busy.TrimEnd('…', '.')} — done" : $"{busy.TrimEnd('…', '.')} — something went wrong", started, ok);
             _busy = false;
             StateHasChanged();
         }

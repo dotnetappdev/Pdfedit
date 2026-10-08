@@ -26,6 +26,7 @@ public sealed class ReadAloudService
     {
         Stop();
         var cts = _cts = new CancellationTokenSource();
+        KeepAwake.Set("reading", true);
         ReadingChanged?.Invoke(true);
         try
         {
@@ -56,7 +57,7 @@ public sealed class ReadAloudService
         }
         finally
         {
-            if (ReferenceEquals(_cts, cts)) { _cts = null; ReadingChanged?.Invoke(false); }
+            if (ReferenceEquals(_cts, cts)) { _cts = null; KeepAwake.Set("reading", false); ReadingChanged?.Invoke(false); }
         }
     }
 

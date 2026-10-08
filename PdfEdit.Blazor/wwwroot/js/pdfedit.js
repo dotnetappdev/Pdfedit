@@ -17,7 +17,7 @@ window.pdfedit = (() => {
         },
 
         scrollToPage(index, smooth) {
-            document.getElementById('page-' + index)?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+            document.getElementById('page-' + index)?.scrollIntoView({ behavior: smooth && !pdfeditReduceMotion() ? 'smooth' : 'auto', block: 'start' });
         },
 
         // Scrolls so a rectangle (in % of its page) is in view.
@@ -26,7 +26,7 @@ window.pdfedit = (() => {
             const viewer = page?.closest('.pe-viewer');
             if (!page || !viewer) return;
             const y = page.offsetTop + page.offsetHeight * topPercent / 100 - viewer.clientHeight / 3;
-            viewer.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+            viewer.scrollTo({ top: Math.max(0, y), behavior: pdfeditReduceMotion() ? 'auto' : 'smooth' });
         },
 
         focus(id) { document.getElementById(id)?.focus(); },
@@ -378,6 +378,21 @@ window.pdfedit = (() => {
         },
 
         timeZone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; },
+        // Where each document was left (page and zoom), so opening it again goes back there. Last 50 kept.
+        view: {
+            get(key) { try { return JSON.parse(localStorage.getItem('pdfedit-views') || '{}')[key] ?? null; } catch { return null; } },
+            set(key, page, zoom) {
+                try {
+                    const all = JSON.parse(localStorage.getItem('pdfedit-views') || '{}');
+                    all[key] = { page, zoom, at: Date.now() };
+                    const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at);
+                    keys.slice(50).forEach(k => delete all[k]);
+                    localStorage.setItem('pdfedit-views', JSON.stringify(all));
+                } catch { }
+            },
+        },
+        // The browser's language and region (en-GB, de-DE …): dates and times on stamps are written the way the user reads them.
+        locale() { return navigator.languages?.[0] || navigator.language || 'en-GB'; },
 
         // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc, Delete).
         listenKeys(dotnet) {
@@ -462,9 +477,10 @@ window.pdfedit = (() => {
         autoScroll(viewer, speed) {
             clearInterval(window.__peAutoScroll);
             viewer?.removeEventListener('wheel', window.__peAutoStop);
+            pdfeditAwake.set('autoscroll', !!(viewer && speed));
             if (!viewer || !speed) return;
             let last = performance.now();
-            window.__peAutoStop = () => { clearInterval(window.__peAutoScroll); window.__peDotnet?.invokeMethodAsync('OnAutoScrollStopped'); };
+            window.__peAutoStop = () => { clearInterval(window.__peAutoScroll); pdfeditAwake.set('autoscroll', false); window.__peDotnet?.invokeMethodAsync('OnAutoScrollStopped'); };
             viewer.addEventListener('wheel', window.__peAutoStop, { once: true });
             window.__peAutoScroll = setInterval(() => {
                 const now = performance.now();
@@ -624,6 +640,33 @@ window.pdfedit = (() => {
             };
         })(),
 
+        // ── Done while you were away: a notification (if allowed) and a flashing tab title ──
+        notifyDone(text, ok, notify) {
+            if (document.visibilityState === 'visible' && document.hasFocus()) return;
+            try {
+                if (notify && window.Notification?.permission === 'granted') {
+                    const n = new Notification('PdfEdit', { body: text, icon: 'icons/icon-192.png', tag: 'pdfedit-done' });
+                    n.onclick = () => { window.focus(); n.close(); };
+                }
+            } catch { }
+            const title = document.title, mark = ok ? '✓ Done — ' : '⚠ ';
+            let on = false;
+            clearInterval(window.__peFlash);
+            window.__peFlash = setInterval(() => { on = !on; document.title = on ? mark + title : title; }, 1000);
+            const stop = () => {
+                if (document.visibilityState !== 'visible') return;
+                clearInterval(window.__peFlash); document.title = title;
+                document.removeEventListener('visibilitychange', stop); window.removeEventListener('focus', stop);
+            };
+            document.addEventListener('visibilitychange', stop);
+            window.addEventListener('focus', stop);
+        },
+        async askNotify() {
+            if (!window.Notification) return 'unsupported';
+            if (Notification.permission !== 'default') return Notification.permission;
+            try { return await Notification.requestPermission(); } catch { return 'denied'; }
+        },
+
         // ── Where the user is (for dynamic stamps): the browser asks permission the first time ──
         // Returns { lat, lon, accuracy } or { error }.
         location() {
@@ -691,13 +734,58 @@ window.pdfedit = (() => {
                     if (voice) u.voice = voice;
                     u.rate = rate || 1;
                     u.onstart = () => dotnet.invokeMethodAsync('OnReadingPage', item.page);
-                    if (i === items.length - 1) { u.onend = () => dotnet.invokeMethodAsync('OnReadingDone'); u.onerror = u.onend; }
+                    if (i === items.length - 1) { u.onend = () => { pdfeditAwake.set('reading', false); dotnet.invokeMethodAsync('OnReadingDone'); }; u.onerror = u.onend; }
                     speechSynthesis.speak(u);
                 });
+                pdfeditAwake.set('reading', items.length > 0);
             },
             pause() { speechSynthesis.pause(); },
             resume() { speechSynthesis.resume(); },
-            stop() { speechSynthesis.cancel(); },
+            stop() { speechSynthesis.cancel(); pdfeditAwake.set('reading', false); },
+        },
+
+        // ── Signature from a photo or scan: the paper made see-through, cropped to the ink ──
+        // The same steps as PdfEdit.Core's SignatureCleanup (the desktop app's Image tab).
+        sigCleanup: {
+            async fromInput(input, removePaper) {
+                const file = input?.files?.[0];
+                if (!file) return null;
+                const bitmap = await createImageBitmap(file);
+                const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+                const w = Math.max(1, Math.round(bitmap.width * scale)), h = Math.max(1, Math.round(bitmap.height * scale));
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(bitmap, 0, 0, w, h);
+                if (!removePaper) return c.toDataURL('image/png');
+                const img = ctx.getImageData(0, 0, w, h), d = img.data, n = w * h;
+                const lum = new Uint8Array(n), hist = new Uint32Array(256);
+                for (let p = 0; p < n; p++) {
+                    const l = ((d[p * 4] * 299 + d[p * 4 + 1] * 587 + d[p * 4 + 2] * 114) / 1000) | 0;
+                    lum[p] = l; hist[l]++;
+                }
+                const pct = f => { let seen = 0; const t = n * f; for (let v = 0; v < 256; v++) { seen += hist[v]; if (seen > t) return v; } return 255; };
+                const paper = pct(0.75), ink = pct(0.005);
+                if (paper - ink < 40) return 'noink';
+                const clear = paper - (paper - ink) * 0.18, solid = ink + (paper - ink) * 0.35;
+                let minX = w, minY = h, maxX = -1, maxY = -1;
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+                    const p = y * w + x, i = p * 4, l = lum[p];
+                    const a = l >= clear ? 0 : l <= solid ? 1 : (clear - l) / (clear - solid);
+                    const alpha = Math.round(a * d[i + 3]);
+                    d[i + 3] = alpha;
+                    if (alpha > 0) { d[i] *= 0.8; d[i + 1] *= 0.8; d[i + 2] *= 0.8; } else { d[i] = d[i + 1] = d[i + 2] = 0; }
+                    if (alpha > 96) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+                }
+                if (maxX < 0) return 'noink';
+                ctx.putImageData(img, 0, 0);
+                const m = Math.max(4, (Math.min(w, h) / 50) | 0);
+                minX = Math.max(0, minX - m); minY = Math.max(0, minY - m); maxX = Math.min(w - 1, maxX + m); maxY = Math.min(h - 1, maxY + m);
+                const out = document.createElement('canvas');
+                out.width = maxX - minX + 1; out.height = maxY - minY + 1;
+                out.getContext('2d').drawImage(c, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+                return out.toDataURL('image/png');
+            },
         },
 
         // ── Signature pad ────────────────────────────────────────────────────
@@ -827,7 +915,7 @@ window.pdfeditRecent = (() => {
         const input = e.target;
         if (input?.type !== 'file' || !input.files?.length) return;
         if (input.id === 'pe-recent-input') touch(keyOf(input.files[0]));
-        else if (input.closest('.pe-drop')) add(input.files[0]);
+        else if (input.closest('.pe-drop') || input.id === 'pe-launch-input') [...input.files].reduce((p, f) => p.then(() => add(f)), Promise.resolve());
     }, true);
 
     return {
@@ -928,3 +1016,69 @@ window.pdfeditDrafts = (() => {
         setUnsaved(on) { unsaved = !!on; },
     };
 })();
+
+// ── Installed app ────────────────────────────────────────────────────────────
+// The service worker makes PdfEdit installable (its own window, taskbar icon and Start menu entry).
+// Installed, it can be chosen in "Open with" for PDF files: they arrive here and are opened as if
+// dropped on the start page.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+}
+window.pdfeditLaunch = (() => {
+    const waitFor = (selector, ms = 15000) => new Promise(done => {
+        const t0 = Date.now();
+        const look = () => {
+            const el = document.querySelector(selector);
+            if (el) done(el); else if (Date.now() - t0 > ms) done(null); else setTimeout(look, 150);
+        };
+        look();
+    });
+    // Hands files to the start page's Open area one at a time (each opens in its own tab).
+    async function openFiles(files) {
+        for (const file of files) {
+            const input = await waitFor('#pe-launch-input');
+            if (!input) return;
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            await new Promise(r => setTimeout(r, 1500));
+        }
+    }
+    if ('launchQueue' in window) {
+        window.launchQueue.setConsumer(async params => {
+            if (!params.files?.length) return;
+            const files = await Promise.all(params.files.map(h => h.getFile()));
+            openFiles(files.filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf'));
+        });
+    }
+    return { openFiles };
+})();
+
+// ── Keep the screen awake ────────────────────────────────────────────────────
+// While reading aloud or showing a slide show the screen shouldn't dim or lock. The browser lets
+// go of the lock when the tab is hidden, so it's asked for again when the tab comes back.
+window.pdfeditAwake = (() => {
+    const reasons = new Set();
+    let lock = null;
+    async function sync() {
+        const want = reasons.size > 0 && document.visibilityState === 'visible';
+        try {
+            if (want && !lock && navigator.wakeLock) {
+                lock = await navigator.wakeLock.request('screen');
+                lock.addEventListener('release', () => { lock = null; });
+            } else if (!want && lock) {
+                await lock.release();
+                lock = null;
+            }
+        } catch { lock = null; }
+    }
+    document.addEventListener('visibilitychange', sync);
+    document.addEventListener('fullscreenchange', () => set('slideshow', !!document.fullscreenElement));
+    function set(reason, on) { if (on) reasons.add(reason); else reasons.delete(reason); sync(); }
+    return { set, get active() { return !!lock; } };
+})();
+
+// Reduce motion: the system's setting, or Settings → Reduce motion (a class on the app).
+window.pdfeditReduceMotion = () =>
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !!document.querySelector('.pe-reduce-motion');

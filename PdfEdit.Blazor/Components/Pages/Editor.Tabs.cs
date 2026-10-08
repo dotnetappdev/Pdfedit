@@ -30,6 +30,7 @@ public partial class Editor
         LoadValues();
         if (FieldCount > 0) _right = RightTab.Fields;
         _fitOnOpen = Settings.OpenFitWidth;
+        _rememberedViewFor = tab;
         _keepAlive ??= new Timer(_ =>
         {
             // Open tabs stay open however long they sit in the background.

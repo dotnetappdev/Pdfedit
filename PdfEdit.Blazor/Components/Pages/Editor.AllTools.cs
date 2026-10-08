@@ -31,6 +31,7 @@ public partial class Editor
             new("Convert & save as", "bi-arrow-left-right", "Convert to Word, Excel, HTML, ePub, images or PDF/A",
             [
                 Run("Share (mail, messages, AirDrop…)", ShareAsync, "Your device's share sheet with the PDF attached"),
+                Run("Continue on phone (QR code)", ContinueOnPhoneAsync, "Open a copy on your phone or tablet, at the same page"),
                 Run("Microsoft Word (.docx)", () => ExportAsync(ExportFormat.Word), "Text of every page as a Word document"),
                 Run("Microsoft Excel (.xlsx)", () => ExportAsync(ExportFormat.Excel), "Tables and columns rebuilt as rows and cells, numbers as numbers"),
                 Run("Microsoft PowerPoint (.pptx)", () => ExportAsync(ExportFormat.PowerPoint), "One slide per page"),
@@ -70,7 +71,7 @@ public partial class Editor
                 Dlg("From images", DialogKind.Combine, "One page per image", needsDoc: false),
                 Dlg("From Word, Excel or PowerPoint", DialogKind.Combine, "Converted on the server", needsDoc: false),
                 Dlg("From text, Markdown or HTML", DialogKind.Combine, "Headings, lists, tables and pictures are kept", needsDoc: false),
-                Dlg("From a Google Docs link", DialogKind.GoogleLink, "Google Docs, Sheets, Slides, or a Word file on Drive", needsDoc: false),
+                Dlg("From a link (web address or Google Docs)", DialogKind.GoogleLink, "A PDF on the web, or Google Docs, Sheets, Slides or a Word file on Drive", needsDoc: false),
                 Act("Design a PDF (Design canvas)", NewDesignPage, needsDoc: false),
                 Run("Export design as PDF", ExportDesignAsync, needsDoc: false),
             ]),

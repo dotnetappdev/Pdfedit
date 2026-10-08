@@ -231,10 +231,21 @@
         <Modal Title="@(Ed.MakingInitials ? "Your Initials" : "Your Signature")" OnClose="CloseSignature" Wide>
             <ChildContent>
                 <div class="pe-panel-tabs mb-2" style="border:0">
-                    <button class="pe-panel-tab @(_sigTyped ? "" : "active")" @onclick="() => SetSigMode(false)">Draw</button>
+                    <button class="pe-panel-tab @(_sigTyped || _sigPicture ? "" : "active")" @onclick="() => SetSigMode(false)">Draw</button>
                     <button class="pe-panel-tab @(_sigTyped ? "active" : "")" @onclick="() => SetSigMode(true)">Type</button>
+                    <button class="pe-panel-tab @(_sigPicture ? "active" : "")" @onclick="SetSigPicture">Picture</button>
                 </div>
-                @if (_sigTyped)
+                @if (_sigPicture)
+                {
+                    <input type="file" accept="image/*" class="form-control" @ref="_sigPhotoInput" @onchange="SigPhotoChosen" aria-label="A photo or scan of your signature" />
+                    <label class="pe-check-label mt-2"><input type="checkbox" checked="@_sigRemovePaper" @onchange="SigRemovePaperChanged" />
+                        Remove the paper (makes it see-through and crops to the signature)</label>
+                    <div class="pe-sig-photo mt-2">
+                        @if (_sigPhotoUrl != null) { <img src="@_sigPhotoUrl" alt="Your signature" /> }
+                        else { <span class="pe-hint">Sign a piece of white paper, take a photo of it, and choose it here.</span> }
+                    </div>
+                }
+                else if (_sigTyped)
                 {
                     <div class="row g-2">
                         <div class="col-7"><label>Your name</label><input class="form-control" @bind="_sigName" @bind:event="oninput" /></div>
@@ -254,7 +265,7 @@
                     <canvas class="pe-sigpad" @ref="_sigCanvas" data-color="@_sigColor" aria-label="Draw your signature"></canvas>
                     <p class="pe-hint mt-1 mb-0">Draw with the mouse, a pen or your finger.</p>
                 }
-                <div class="d-flex align-items-center gap-2 mt-2">
+                <div class="d-flex align-items-center gap-2 mt-2" style="@(_sigPicture ? "display:none!important" : "")">
                     <label class="mb-0">Ink</label>
                     @foreach (var c in new[] { "#0b2a6f", "#000000", "#1565c0" })
                     {
@@ -267,7 +278,7 @@
                     Keep @(Ed.MakingInitials ? "these initials" : "this signature") for next time on this browser</label>
             </ChildContent>
             <Footer>
-                @if (!_sigTyped) { <button class="pe-btn me-auto" @onclick="ClearSig">Clear</button> }
+                @if (!_sigTyped && !_sigPicture) { <button class="pe-btn me-auto" @onclick="ClearSig">Clear</button> }
                 <button class="pe-btn" @onclick="CloseSignature">Cancel</button>
                 <button class="pe-btn primary" @onclick="UseSignature">@(Ed.MakingInitials ? "Use initials" : "Use signature")</button>
             </Footer>
@@ -988,7 +999,7 @@
                             <i class="bi @(c.IntegrityOk ? (c.Trusted ? "bi-patch-check-fill" : "bi-patch-exclamation-fill") : "bi-x-octagon-fill")"
                                style="font-size:22px;color:@(c.IntegrityOk ? (c.Trusted ? "#1E7B34" : "#E6A100") : "#C62828")"></i>
                             <div style="flex:1;font-size:12.5px">
-                                <strong>@c.SignedBy</strong> — @c.SignedAt.ToLocalTime().ToString("g") (@c.FieldName)<br />
+                                <strong>@c.SignedBy</strong> — @c.SignedAt.ToLocalTime().ToString("g", Ed.UserCulture) (@c.FieldName)<br />
                                 @(c.IntegrityOk ? "The document hasn't been changed since it was signed." : "The document has been changed since it was signed, or the signature is damaged.")
                                 @(c.CoversWholeDocument ? "" : $" Signed revision {c.Revision} of {c.TotalRevisions}: later changes aren't covered.")<br />
                                 <span class="pe-hint">@c.TrustNote@(c.Timestamped ? " Timestamped." : "")@(c.Reason.Length > 0 ? $" Reason: {c.Reason}." : "")@(c.Location.Length > 0 ? $" Location: {c.Location}." : "")</span>
@@ -1016,16 +1027,36 @@
         </Modal>
         break;
 
-    case DialogKind.GoogleLink:
-        <Modal Title="Import from Google Docs" OnClose="Close">
+    case DialogKind.Handoff when Ed.Handoff is { } h:
+        <Modal Title="Continue on Phone" OnClose="Close">
             <ChildContent>
-                <p>Paste the link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):</p>
-                <input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="https://docs.google.com/document/d/…" aria-label="Google link" autofocus />
-                <p class="pe-hint mt-2 mb-0">The file must be shared as “Anyone with the link”. For private files, use Import from Cloud and sign in to Google Drive.</p>
+                <div class="pe-handoff">
+                    <img src="@h.QrDataUrl" width="240" height="240" alt="QR code that opens this PDF on another device" />
+                    <div>
+                        <p>Point your phone's camera at the code to open <strong>@Ed.Doc?.FileName</strong> there, at the same page — handy for signing with your finger.</p>
+                        <p class="pe-hint">The phone gets its own copy with everything applied so far. The link works for 15 minutes; when you're done on the phone, use Share or Save there.</p>
+                        @if (h.LocalOnly)
+                        {
+                            <p class="pe-hint" style="color:#B3261E">This PdfEdit is running on <em>localhost</em>, which your phone can't reach. Open PdfEdit by your computer's network address (or on a server) to use this.</p>
+                        }
+                        <button class="pe-btn" @onclick="() => CopyText(h.Link)"><i class="bi bi-clipboard"></i> @(_copied ? "Copied" : "Copy link")</button>
+                    </div>
+                </div>
+            </ChildContent>
+            <Footer><button class="pe-btn primary" @onclick="Close">Done</button></Footer>
+        </Modal>
+        break;
+
+    case DialogKind.GoogleLink:
+        <Modal Title="Open from a Link" OnClose="Close">
+            <ChildContent>
+                <p>Paste the web address of a PDF, or a link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):</p>
+                <input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="https://example.com/form.pdf" aria-label="Link" autofocus />
+                <p class="pe-hint mt-2 mb-0">The file must be public (Google files shared as “Anyone with the link”). For private files, use Import from Cloud and sign in.</p>
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => Do(() => Ed.ImportGoogleLinkAsync(_text1))">Import</button>
+                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => Do(() => Ed.ImportGoogleLinkAsync(_text1))">Open</button>
             </Footer>
         </Modal>
         break;
@@ -1058,7 +1089,10 @@
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.HighlightFields" /> Highlight form fields</label>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.OpenFitWidth" /> Open documents at Fit Width</label>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.ShowTipsAtStart" /> Show a Tip of the Day when PdfEdit opens</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.ReduceMotion" /> Reduce motion (no animations or smooth scrolling; your system's setting is followed too)</label>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.StampLocation" /> Add my location to dynamic stamps (the browser asks first; only the coordinates are added)</label>
+                <label class="d-flex gap-2"><input type="checkbox" checked="@_settings.NotifyWhenDone" @onchange="NotifyChangedAsync" /> Notify me when a long job (OCR, batch, translating) finishes while I'm in another window</label>
+                @if (_notifyNote != null) { <p class="pe-hint ms-4 mb-0">@_notifyNote</p> }
                 <p class="pe-hint mt-2 mb-0">Kept for this browser in the app's database. The theme is on View → Theme; AI keys are on AI Assistant → API Keys and are never kept.</p>
             </ChildContent>
             <Footer>
@@ -1631,7 +1665,7 @@
                 _settings = new WebSettings
                 {
                     AuthorName = cur.AuthorName, DateFormat = cur.DateFormat, DefaultFontSize = cur.DefaultFontSize, DefaultTextColour = cur.DefaultTextColour,
-                    OpenFitWidth = cur.OpenFitWidth, HighlightFields = cur.HighlightFields, UiScale = cur.UiScale, ShowTipsAtStart = cur.ShowTipsAtStart, StampLocation = cur.StampLocation,
+                    OpenFitWidth = cur.OpenFitWidth, HighlightFields = cur.HighlightFields, UiScale = cur.UiScale, ShowTipsAtStart = cur.ShowTipsAtStart, StampLocation = cur.StampLocation, NotifyWhenDone = cur.NotifyWhenDone, ReduceMotion = cur.ReduceMotion,
                 };
                 break;
             case DialogKind.Accessibility when Ed.Doc != null:
@@ -1708,7 +1742,7 @@
             _self ??= DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("pdfedit.mindMapLinks", _self);
         }
-        if (Ed.Dialog == DialogKind.Signature && !_sigTyped && !_sigPadReady)
+        if (Ed.Dialog == DialogKind.Signature && !_sigTyped && !_sigPicture && !_sigPadReady)
         {
             _sigPadReady = true;
             await JS.InvokeVoidAsync("pdfedit.sigPad.init", _sigCanvas);
@@ -1805,6 +1839,28 @@
         await Do(() => action(files));
     }
 
+    private bool _copied;
+    private string? _notifyNote;
+
+    private async Task NotifyChangedAsync(ChangeEventArgs e)
+    {
+        _settings.NotifyWhenDone = e.Value is true;
+        _notifyNote = null;
+        if (!_settings.NotifyWhenDone) return;
+        var answer = await Ed.AskNotificationPermissionAsync();
+        if (answer != "granted")
+        {
+            _settings.NotifyWhenDone = false;
+            _notifyNote = answer == "unsupported" ? "This browser can't show notifications." : "The browser blocked notifications for this site. Allow them in the site settings (the icon left of the address), then tick this again.";
+        }
+    }
+
+    private async Task CopyText(string text)
+    {
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", text); _copied = true; }
+        catch { _copied = false; }
+    }
+
     /// <summary>Closes the dialog and runs the editor command.</summary>
     private async Task Do(Func<Task> action)
     {
@@ -1898,7 +1954,35 @@
     private void SetSigMode(bool typed)
     {
         _sigTyped = typed;
+        _sigPicture = false;
         _sigPadReady = false;
+    }
+
+    // ── Signature from a photo or scan (cleaned up in the browser) ──
+    private bool _sigPicture, _sigRemovePaper = true;
+    private string? _sigPhotoUrl;
+    private ElementReference _sigPhotoInput;
+
+    private void SetSigPicture()
+    {
+        _sigPicture = true;
+        _sigTyped = false;
+        _sigPadReady = false;
+    }
+
+    private async Task SigPhotoChosen(ChangeEventArgs _) => await LoadSigPhotoAsync();
+
+    private async Task SigRemovePaperChanged(ChangeEventArgs e)
+    {
+        _sigRemovePaper = e.Value is true;
+        await LoadSigPhotoAsync();
+    }
+
+    private async Task LoadSigPhotoAsync()
+    {
+        try { _sigPhotoUrl = await JS.InvokeAsync<string?>("pdfedit.sigCleanup.fromInput", _sigPhotoInput, _sigRemovePaper); }
+        catch { _sigPhotoUrl = null; }
+        if (_sigPhotoUrl == "noink") { _sigPhotoUrl = null; Ed.Toast("Couldn't find a signature in that picture. Try a clearer photo on white paper, or untick Remove the paper.", "error"); Ed.Refresh(); }
     }
 
     private async Task SetSigColor(string colour)
@@ -1917,12 +2001,13 @@
 
     private async Task UseSignature()
     {
-        string dataUrl = _sigTyped
+        string dataUrl = _sigPicture ? _sigPhotoUrl ?? ""
+            : _sigTyped
             ? (string.IsNullOrWhiteSpace(_sigName) ? "" : await JS.InvokeAsync<string>("pdfedit.sigPad.typed", _sigName, _sigFont, _sigColor))
             : await JS.InvokeAsync<string>("pdfedit.sigPad.toPng", _sigCanvas);
         if (string.IsNullOrEmpty(dataUrl))
         {
-            Ed.Toast(_sigTyped ? "Type your name first." : "Draw your signature first.", "error");
+            Ed.Toast(_sigPicture ? "Choose a picture of your signature first." : _sigTyped ? "Type your name first." : "Draw your signature first.", "error");
             Ed.Refresh();
             return;
         }

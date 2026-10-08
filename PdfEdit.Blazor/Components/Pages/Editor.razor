@@ -5,7 +5,7 @@
 
 <PageTitle>@(Doc == null ? "PdfEdit" : $"{Doc.FileName} — PdfEdit")</PageTitle>
 
-<div class="pe-app @ThemeClass" data-bs-theme="@(ThemeIsLight ? "light" : "dark")" style="@(UiScale != 1 ? $"zoom:{Css(UiScale)}" : null)">
+<div class="pe-app @ThemeClass @(Settings.ReduceMotion ? "pe-reduce-motion" : "")" data-bs-theme="@(ThemeIsLight ? "light" : "dark")" style="@(UiScale != 1 ? $"zoom:{Css(UiScale)}" : null)">
 
     @* ── Title bar ─────────────────────────────────────────────────────── *@
     <div class="pe-titlebar">
@@ -48,7 +48,7 @@
                         <RibbonButton Icon="bi-file-earmark-word" Label="From Office" Title="Make a PDF from Word, Excel, PowerPoint, text, Markdown or HTML files" OnClick="() => ShowDialog(DialogKind.Combine)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-google" Label="From Google Docs" Title="Paste a Google Docs, Sheets or Slides link to import it as a PDF" OnClick="() => ShowDialog(DialogKind.GoogleLink)" />
+                        <RibbonButton Icon="bi-link-45deg" Label="From Link" Title="Open a PDF from a web address, or import a Google Docs, Sheets or Slides link" OnClick="() => ShowDialog(DialogKind.GoogleLink)" />
                         <RibbonButton Icon="bi-cloud-arrow-down" Label="Import from Cloud" Title="Open a PDF, Word file or Google Doc from Google Drive or OneDrive" OnClick="() => ShowCloudAsync(save: false)" />
                         @if (Doc?.CloudFile != null)
                         {
@@ -67,6 +67,7 @@
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-floppy" Label="Save Draft" Title="Keep your work in this browser now — it's also kept every few seconds — so reloading or closing the page doesn't lose it" Disabled="@(NoDoc && Design.Elements is not { Count: > 0 })" OnClick="SaveDraftNowAsync" />
                         <RibbonButton Icon="bi-share" Label="Share" Title="Send the PDF with your device's share sheet: mail, messages, AirDrop, Teams… (downloads it if the browser can't share)" Disabled="NoDoc" OnClick="ShareAsync" />
+                        <RibbonButton Icon="bi-phone" Label="On Phone" Title="Continue on your phone or tablet: a QR code opens a copy of this PDF there, at the same page" Disabled="NoDoc" OnClick="ContinueOnPhoneAsync" />
                     </div>
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
@@ -1081,6 +1082,11 @@
                                     <hr />
                                     <button role="menuitem" disabled="@(PageCount < 2)" @onclick="() => ThumbActionAsync(mp, DeleteThisPageAsync)"><i class="bi bi-trash3"></i>Delete Page</button>
                                     <button role="menuitem" @onclick="() => ThumbActionAsync(mp, ExtractThisPageAsync)"><i class="bi bi-box-arrow-up-right"></i>Extract Page…</button>
+                                    @if (Doc?.SourceUrl != null)
+                                    {
+                                        <hr />
+                                        <button role="menuitem" title="A link that opens this PDF at this page" @onclick="() => { _thumbMenu = null; return CopyLinkToPageAsync(mp); }"><i class="bi bi-link-45deg"></i>Copy Link to Page</button>
+                                    }
                                 </div>
                             }
                         }
@@ -1260,6 +1266,13 @@
     <div class="pe-status" role="status">
         <span>@_status</span>
         <span class="pe-spacer"></span>
+        @if (FillProgress is { } fp)
+        {
+            <button class="pe-form-progress @(fp.Done ? "done" : "")" title="@(fp.Done ? "Every field is filled in" : "Go to the next empty field (required ones first)")" @onclick="NextEmptyFieldAsync">
+                <i class="bi @(fp.Done ? "bi-check-circle-fill" : "bi-input-cursor-text")"></i> @fp.Label
+            </button>
+            <span>·</span>
+        }
         @if (Dictating)
         {
             <button class="pe-dictating" title="Stop dictation" @onclick="ToggleDictationAsync"><i class="bi bi-mic-fill"></i> Dictating</button>
@@ -1316,6 +1329,8 @@
     }
     @if (_backstage != null) { <BackstageView Ed="this" /> }
     @if (_dialog != DialogKind.None) { <DialogHost Ed="this" /> }
+    @* PDFs opened with the installed app ("Open with PdfEdit") arrive here, whatever is on screen. *@
+    <InputFile id="pe-launch-input" style="display:none" OnChange="e => OpenUploadAsync(e.File)" />
     @if (_toast != null)
     {
         <div class="pe-toast @_toastKind" role="alert" @onclick="() => _toast = null">@_toast</div>

@@ -421,6 +421,37 @@ public partial class Editor
     private static readonly HttpClient GoogleHttp = new() { Timeout = TimeSpan.FromMinutes(2) };
 
     /// <summary>
+    /// From Link: the web address of a PDF, downloaded on the server and opened. Addresses inside the
+    /// server's own network are refused (so a link can't reach the server's neighbours).
+    /// </summary>
+    public async Task OpenWebLinkAsync(string link)
+    {
+        if (PdfEdit.Services.Cloud.WebPdfDownload.Parse(link) is not { } url)
+        {
+            Toast("That isn't a web address. It should look like https://example.com/form.pdf or a docs.google.com link.", "error");
+            return;
+        }
+        _dialog = DialogKind.None;
+        var folder = Directory.CreateTempSubdirectory("pdfedit-link-").FullName;
+        try
+        {
+            string? pdf = null, name = "document.pdf";
+            await RunAsync($"Downloading from {url.Host}…", async () =>
+            {
+                try { (pdf, name) = await PdfEdit.Services.Cloud.WebPdfDownload.DownloadAsync(url, folder, PdfDocumentStore.MaxUploadBytes, blockLocalNetwork: true); }
+                catch (HttpRequestException ex) { throw new InvalidOperationException("Couldn't download that PDF: " + ex.Message); }
+                catch (TaskCanceledException) { throw new InvalidOperationException("The site took too long to send the PDF."); }
+            });
+            if (pdf != null && File.Exists(pdf))
+            {
+                await OpenPathAsync(pdf, name, null);
+                if (Doc != null && Doc.FileName == PdfDocumentStore.SafeName(name)) Doc.SourceUrl = url.AbsoluteUri;
+            }
+        }
+        finally { try { Directory.Delete(folder, true); } catch { } }
+    }
+
+    /// <summary>
     /// A Google Doc, Sheet or Slides file shared as "Anyone with the link", fetched as a PDF (the
     /// Windows app also uses a connected account; here use Import from Cloud for private files).
     /// </summary>
@@ -429,7 +460,7 @@ public partial class Editor
         var parsed = GoogleLinkImport.Parse(link.Trim());
         if (parsed is not { } p)
         {
-            Toast("That isn't a Google Docs, Sheets, Slides or Drive link. It should start with https://docs.google.com/ or https://drive.google.com/.", "error");
+            await OpenWebLinkAsync(link);
             return;
         }
         _dialog = DialogKind.None;

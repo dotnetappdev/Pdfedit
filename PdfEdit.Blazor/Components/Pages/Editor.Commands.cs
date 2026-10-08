@@ -331,6 +331,24 @@ public partial class Editor
         await SelectFieldAsync(missing[0]);
     }
 
+    /// <summary>Status bar: how much of the form is filled in (null when the PDF has no form to fill).</summary>
+    public FormProgress? FillProgress =>
+        Doc == null || PrepareMode ? null : FormProgress.Of(Doc.Info.FormFields, n => Values.GetValueOrDefault(n)) is { IsForm: true } p ? p : null;
+
+    /// <summary>Goes to the next empty field (required ones first).</summary>
+    public async Task NextEmptyFieldAsync()
+    {
+        if (Doc == null) return;
+        if (FormProgress.NextEmpty(Doc.Info.FormFields, n => Values.GetValueOrDefault(n), SelectedField) is not { } next)
+        {
+            Toast("Every field is filled in.", "success");
+            return;
+        }
+        ShowRight(RightTab.Fields);
+        await SelectFieldAsync(next);
+        Status($"Next: {next.DisplayName}{(next.IsRequired ? " (required)" : "")}");
+    }
+
     public async Task SelectFieldAsync(FormFieldInfo f)
     {
         SelectedField = f.Name;

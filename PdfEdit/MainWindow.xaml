@@ -84,10 +84,10 @@
                                                 Command="{Binding CreatePdfFromOfficeCommand}"
                                                 AutomationProperties.Name="Import a Word, Excel or PowerPoint file"/>
 
-                    <Fluent:MenuItem Header="Import from Google Docs…"
+                    <Fluent:MenuItem Header="Open from a Link…"
                                                 KeyTip="G"
                                                 Command="{Binding ImportGoogleLinkCommand}"
-                                                AutomationProperties.Name="Import from a Google Docs link"/>
+                                                AutomationProperties.Name="Open a PDF from a web address or a Google Docs link"/>
 
                     <Fluent:MenuItem Header="Import from Cloud…"
                                                 KeyTip="D"
@@ -314,10 +314,10 @@
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                    <Fluent:Button Header="From Google&#x0a;Docs"
+                    <Fluent:Button Header="From&#x0a;Link"
                                    Command="{Binding ImportGoogleLinkCommand}"
-                                   ToolTip="Paste a Google Docs, Sheets or Slides link to import it as a PDF"
-                                   AutomationProperties.Name="Import from Google Docs">
+                                   ToolTip="Open a PDF from a web address, or import a Google Docs, Sheets or Slides link"
+                                   AutomationProperties.Name="Open from a link">
                         <Fluent:Button.LargeIcon>
                             <Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox>
                         </Fluent:Button.LargeIcon>
@@ -4858,6 +4858,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
@@ -4867,8 +4868,17 @@
                            AutomationProperties.Name="Status message"
                            AutomationProperties.LiveSetting="Polite"/>
             </StatusBarItem>
+            <!-- Form progress: "7 of 12 filled · 2 required left"; click to go to the next empty field -->
+            <StatusBarItem Grid.Column="1" Margin="8,0"
+                           Visibility="{Binding HasFillProgress, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Button Command="{Binding NextEmptyFieldCommand}" Content="{Binding FillProgressLabel}"
+                        Background="Transparent" BorderThickness="0" Padding="4,0" Cursor="Hand"
+                        Foreground="{DynamicResource ForegroundBrush}"
+                        ToolTip="Go to the next empty field (required ones first)"
+                        AutomationProperties.Name="Form progress: go to the next empty field"/>
+            </StatusBarItem>
             <!-- Clickable page counter: shows "Page X of Y", click to type a page number -->
-            <StatusBarItem Grid.Column="1" Margin="8,0">
+            <StatusBarItem Grid.Column="2" Margin="8,0">
                 <StackPanel Orientation="Horizontal" x:Name="PageNavStatusPanel">
                     <TextBlock Text="Page " VerticalAlignment="Center" FontSize="{DynamicResource StatusBarFontSize}"/>
                     <TextBox x:Name="PageNumberBox"
@@ -4888,12 +4898,12 @@
                                FontSize="{DynamicResource StatusBarFontSize}"/>
                 </StackPanel>
             </StatusBarItem>
-            <StatusBarItem Grid.Column="2" Margin="8,0">
+            <StatusBarItem Grid.Column="3" Margin="8,0">
                 <TextBlock Text="{Binding ZoomPercent}"
                            AutomationProperties.Name="Zoom level"
                            ToolTip="Zoom level — use Ctrl+0 to fit, Ctrl+1 for 100%"/>
             </StatusBarItem>
-            <StatusBarItem Grid.Column="3" Margin="8,0">
+            <StatusBarItem Grid.Column="4" Margin="8,0">
                 <TextBlock AutomationProperties.Name="Active tool and rotation">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="Tool: {0}  |  Rotation: {1}°">
@@ -4903,11 +4913,11 @@
                     </TextBlock.Text>
                 </TextBlock>
             </StatusBarItem>
-            <StatusBarItem Grid.Column="4" Margin="8,0">
+            <StatusBarItem Grid.Column="5" Margin="8,0">
                 <TextBlock Text="{Binding UiScale, StringFormat='Scale: {0:P0}'}"
                            AutomationProperties.Name="Interface scale"/>
             </StatusBarItem>
-            <StatusBarItem Grid.Column="5" Margin="8,0"
+            <StatusBarItem Grid.Column="6" Margin="8,0"
                            Visibility="{Binding DesignCanvas.HasSelection, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock AutomationProperties.Name="Design element position and size">
                     <TextBlock.Text>

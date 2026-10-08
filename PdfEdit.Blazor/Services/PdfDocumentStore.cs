@@ -38,6 +38,8 @@ public sealed class PdfSession : IDisposable
     public HashSet<string> SignedFields { get; set; } = new();
     /// <summary>The cloud file this was opened from or last saved to (Save back updates it).</summary>
     public (string Provider, string FileId, string Name)? CloudFile { get; set; }
+    /// <summary>The web address it was opened from (From Link or ?url=), so a link to one of its pages can be shared.</summary>
+    public string? SourceUrl { get; set; }
 
     /// <summary>Goes up with every change, so page image URLs change and browsers fetch them again.</summary>
     public int Version { get; set; }
@@ -369,6 +371,35 @@ public sealed class PdfDocumentStore : IDisposable
         return $"/downloads/{id}/{Uri.EscapeDataString(name)}";
     }
 
+    // ── Continue on another device ───────────────────────────────────────────
+
+    /// <summary>How long a "continue on your phone" link works.</summary>
+    public static readonly TimeSpan HandoffLife = TimeSpan.FromMinutes(15);
+    private readonly ConcurrentDictionary<string, (string Path, string Name, DateTime Expires)> _handoffs = new();
+
+    /// <summary>
+    /// A copy of the document's current version for another device to open (its own copy, so either
+    /// side can close it). Returns the code for the link: long and random, so it can't be guessed.
+    /// </summary>
+    public string CreateHandoff(PdfSession session)
+    {
+        var code = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        var folder = Path.Combine(_root, "downloads", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "handoff.pdf");
+        File.Copy(session.CurrentPath, path);
+        _handoffs[code] = (path, session.FileName, DateTime.UtcNow + HandoffLife);
+        return code;
+    }
+
+    /// <summary>Opens a handed-over copy as a new document, or null when the link is wrong or has expired.</summary>
+    public async Task<PdfSession?> OpenHandoffAsync(string code)
+    {
+        if (!_handoffs.TryGetValue(code, out var h) || h.Expires < DateTime.UtcNow || !File.Exists(h.Path)) return null;
+        await using var stream = File.OpenRead(h.Path);
+        return await OpenAsync(stream, h.Name);
+    }
+
     public string? DownloadPath(string id, string name)
     {
         if (!Guid.TryParseExact(id, "N", out _)) return null;
@@ -389,6 +420,8 @@ public sealed class PdfDocumentStore : IDisposable
         foreach (var (id, s) in _sessions)
             if (DateTime.UtcNow - s.LastUsedUtc > (s.Released ? ReleasedIdle : Idle) && _sessions.TryRemove(id, out _))
                 s.Dispose();
+        foreach (var (code, h) in _handoffs)
+            if (h.Expires < DateTime.UtcNow) _handoffs.TryRemove(code, out _);
         try
         {
             var downloads = new DirectoryInfo(Path.Combine(_root, "downloads"));

@@ -19,38 +19,63 @@ public partial class MainViewModel
 
     private ICommand? _importGoogleLinkCommand;
 
-    /// <summary>Import a Google Docs / Sheets / Slides (or Drive) link as a PDF.</summary>
+    /// <summary>
+    /// From Link: a Google Docs / Sheets / Slides (or Drive) link imported as a PDF, or the web
+    /// address of any PDF downloaded and opened.
+    /// </summary>
     public ICommand ImportGoogleLinkCommand => _importGoogleLinkCommand ??= new AsyncRelayCommand(async () =>
     {
         string start = "";
-        try { if (Clipboard.ContainsText() && GoogleLinkImport.Parse(Clipboard.GetText()) != null) start = Clipboard.GetText().Trim(); } catch { }
-        var dlg = new Dialogs.InputDialog("Import from Google Docs",
-            "Paste the link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):", start)
+        try { if (Clipboard.ContainsText() && WebPdfDownload.Parse(Clipboard.GetText()) != null) start = Clipboard.GetText().Trim(); } catch { }
+        var dlg = new Dialogs.InputDialog("Open from a Link",
+            "Paste the web address of a PDF, or a Google Docs, Sheets or Slides link (shared as \u201cAnyone with the link\u201d):", start)
         { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.InputText)) return;
-        if (GoogleLinkImport.Parse(dlg.InputText) == null)
+        string link = dlg.InputText.Trim();
+        bool google = GoogleLinkImport.Parse(link) != null;
+        var web = google ? null : WebPdfDownload.Parse(link);
+        if (!google && web == null)
         {
-            Dialogs.AppDialog.ShowInfo("That isn't a Google Docs, Sheets, Slides or Drive link. It should start with https://docs.google.com/ or https://drive.google.com/.", "Import from Google Docs");
+            Dialogs.AppDialog.ShowInfo("That isn't a web address. It should look like https://example.com/form.pdf or a docs.google.com link.", "Open from a Link");
             return;
         }
         string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PdfEdit", "Imported");
         try
         {
-            StatusText = "Importing from Google…";
+            StatusText = google ? "Importing from Google…" : $"Downloading from {web!.Host}…";
             IsLoading = true;
-            string pdf = await GoogleLinkImport.ImportAsync(dlg.InputText.Trim(), folder);
+            string pdf;
+            if (google) pdf = await GoogleLinkImport.ImportAsync(link, folder);
+            else
+            {
+                // On your own PC, intranet links are fine (the web version refuses them on its server).
+                var (path, name) = await WebPdfDownload.DownloadAsync(web!, folder, 500L * 1024 * 1024, blockLocalNetwork: false);
+                pdf = UniquePath(Path.Combine(folder, name));
+                File.Move(path, pdf);
+            }
             if (_currentFilePath != null) SaveDocumentState();
             await LoadDocumentAsync(pdf);
             await OfferFormFieldsAsync();
-            ToastService.Instance.Success($"Imported as {Path.GetFileName(pdf)} (in Documents\\PdfEdit\\Imported).");
+            ToastService.Instance.Success($"Opened as {Path.GetFileName(pdf)} (in Documents\\PdfEdit\\Imported).");
         }
         catch (Exception ex)
         {
             IsLoading = false;
-            StatusText = "Import failed.";
-            Dialogs.AppDialog.ShowError("Couldn't import from Google.", ex);
+            StatusText = "Couldn't open the link.";
+            Dialogs.AppDialog.ShowError(google ? "Couldn't import from Google." : "Couldn't open the PDF from that link.", ex);
         }
     });
+
+    private static string UniquePath(string path)
+    {
+        if (!File.Exists(path)) return path;
+        string dir = Path.GetDirectoryName(path)!, stem = Path.GetFileNameWithoutExtension(path), ext = Path.GetExtension(path);
+        for (int i = 2; ; i++)
+        {
+            string candidate = Path.Combine(dir, $"{stem} ({i}){ext}");
+            if (!File.Exists(candidate)) return candidate;
+        }
+    }
     public ICommand SaveToCloudCommand => _saveToCloudCommand ??= new AsyncRelayCommand(SaveToCloudAsync, () => HasDocument && !_uploading);
 
     /// <summary>"Google Drive" if the open file came from there, else null.</summary>

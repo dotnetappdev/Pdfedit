@@ -86,15 +86,59 @@ public partial class SignatureDialog : Window
 
         try
         {
-            _imageBytes = File.ReadAllBytes(dlg.FileName);
-            var bmp = new BitmapImage(new Uri(dlg.FileName));
-            ImagePreview.Source = bmp;
+            _originalImage = File.ReadAllBytes(dlg.FileName);
             ImagePathLabel.Text = Path.GetFileName(dlg.FileName);
+            ShowImage();
         }
         catch (Exception ex)
         {
             AppDialog.ShowError("Failed to load image.", ex);
         }
+    }
+
+    private byte[]? _originalImage;
+
+    private void RemovePaper_Changed(object sender, RoutedEventArgs e) => ShowImage();
+
+    /// <summary>The chosen picture, with the paper made see-through when "Remove the paper" is ticked.</summary>
+    private void ShowImage()
+    {
+        if (_originalImage == null) return;
+        _imageBytes = _originalImage;
+        if (RemovePaperCb?.IsChecked == true)
+        {
+            try { _imageBytes = CleanSignaturePhoto(_originalImage) ?? _originalImage; }
+            catch { _imageBytes = _originalImage; }
+        }
+        var bmp = new BitmapImage();
+        bmp.BeginInit();
+        bmp.CacheOption = BitmapCacheOption.OnLoad;
+        bmp.StreamSource = new MemoryStream(_imageBytes);
+        bmp.EndInit();
+        bmp.Freeze();
+        ImagePreview.Source = bmp;
+    }
+
+    /// <summary>A photo or scan of a signature as a PNG with the paper removed and cropped to the ink (null if no ink was found).</summary>
+    private static byte[]? CleanSignaturePhoto(byte[] file)
+    {
+        var frame = BitmapDecoder.Create(new MemoryStream(file), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
+        BitmapSource src = frame;
+        // Phone photos are huge: 1600 pixels across is plenty for a signature.
+        double scale = Math.Min(1.0, 1600.0 / Math.Max(src.PixelWidth, src.PixelHeight));
+        if (scale < 1) src = new TransformedBitmap(src, new ScaleTransform(scale, scale));
+        src = new FormatConvertedBitmap(src, PixelFormats.Bgra32, null, 0);
+        int w = src.PixelWidth, h = src.PixelHeight, stride = w * 4;
+        var pixels = new byte[stride * h];
+        src.CopyPixels(pixels, stride, 0);
+        if (SignatureCleanup.RemovePaper(pixels, w, h, stride) is not { } ink) return null;
+        var clean = BitmapSource.Create(w, h, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
+        var cropped = new CroppedBitmap(clean, new Int32Rect(ink.X, ink.Y, ink.Width, ink.Height));
+        var enc = new PngBitmapEncoder();
+        enc.Frames.Add(BitmapFrame.Create(cropped));
+        using var ms = new MemoryStream();
+        enc.Save(ms);
+        return ms.ToArray();
     }
 
     // ── Buttons ─────────────────────────────────────────────────────────────
@@ -107,6 +151,7 @@ public partial class SignatureDialog : Window
             case 1: InkArea.Strokes.Clear(); break;
             case 2:
                 _imageBytes = null;
+                _originalImage = null;
                 ImagePreview.Source = null;
                 ImagePathLabel.Text = "No image selected";
                 break;

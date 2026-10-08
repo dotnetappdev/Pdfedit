@@ -39,6 +39,7 @@ public partial class Editor
         var doc = Doc;
         int only = TranslateThisPage ? _page + 1 : 0;
         Translating = true;
+        var translateStarted = DateTime.UtcNow;
         TranslateStatus = "Reading the text…";
         _translateCts = new CancellationTokenSource();
         var ct = _translateCts.Token;
@@ -81,6 +82,7 @@ public partial class Editor
         catch (Exception ex) { TranslateStatus = "Translation failed: " + ex.Message; }
         finally
         {
+            await NotifyIfAwayAsync("Translate PDF — finished", translateStarted);
             Translating = false;
             _translateCts?.Dispose();
             _translateCts = null;
