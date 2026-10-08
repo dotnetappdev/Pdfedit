@@ -112,6 +112,11 @@ public partial class Editor
                 Kind = ItemKind.Callout, Text = o.Text, Color = o.Colour, FontSize = 10,
                 Points = o.Tip is { } tip ? [ToViewPoint(page, tip.X, tip.Y)] : null,
             },
+            "Signature" or "Picture" when o.Image is { } img => new PageItem
+            {
+                Kind = o.Kind == "Picture" ? ItemKind.Picture : ItemKind.Signature, Image = img,
+                ImageUrl = $"data:{(img is [0xFF, 0xD8, ..] ? "image/jpeg" : "image/png")};base64,{Convert.ToBase64String(img)}",
+            },
             "Insert" => new PageItem { Kind = ItemKind.InsertText, Text = o.Text, Color = o.Colour },
             "Replace" => new PageItem { Kind = ItemKind.ReplaceText, Text = o.Text, Color = o.Colour },
             _ => null,
@@ -121,6 +126,7 @@ public partial class Editor
         {
             Id = o.Id, Kind = item.Kind, Page = page, Left = v.Left, Top = v.Top, Width = v.Width, Height = v.Height,
             Text = item.Text, FontSize = item.FontSize, Color = item.Color, Subtitle = item.Subtitle, Points = item.Points,
+            Image = item.Image, ImageUrl = item.ImageUrl,
             LineWidth = item.LineWidth, Markup = item.Markup, Rotation = item.Rotation, CharSpacing = item.CharSpacing,
             Fit = item.Fit, Bold = item.Bold, Italic = item.Italic, Opacity = item.Opacity,
             Unit = item.Unit, Author = string.IsNullOrWhiteSpace(o.Author) ? null : o.Author,

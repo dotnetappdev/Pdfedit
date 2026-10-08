@@ -862,7 +862,7 @@ public class PdfFormService
                         stamp.SetNormalAppearance(ap.GetPdfObject());
                         if (sigRot != 0) stamp.Put(PdfName.Rotate, new PdfNumber(sigRot));
                         stamp.SetFlags(PdfAnnotation.PRINT | PdfAnnotation.LOCKED);
-                        stamp.SetContents("Signature");
+                        stamp.SetContents(sig.IsPicture ? "Picture" : "Signature");
                         stamp.Put(PdfName.NM, new PdfString(TrackedName(sig.Id)));
                         page.AddAnnotation(stamp);
                     }

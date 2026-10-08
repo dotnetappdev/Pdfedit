@@ -19,4 +19,7 @@ public class PlacedSignature
     public double Rotation { get; set; }
     // Written to the PDF as /NM "pdfedit:<id>" (see CommentInfo.Id)
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>A picture placed on the page rather than a signature (saved as the stamp's text, "Picture").</summary>
+    public bool IsPicture { get; set; }
 }

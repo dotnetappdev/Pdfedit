@@ -318,7 +318,7 @@ public partial class Editor
                 .Select(i => new PlacedSignature
                 {
                     PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                    ImageBytes = i.Image!, Rotation = Rotation(i.Page), Id = i.Id,
+                    ImageBytes = i.Image!, Rotation = Rotation(i.Page), Id = i.Id, IsPicture = i.Kind == ItemKind.Picture,
                 }).ToList();
             var notes = _items.Where(i => i.Kind == ItemKind.Note)
                 .Select(i => new StickyNoteAnnotation

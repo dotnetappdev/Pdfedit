@@ -19,7 +19,7 @@ public sealed record PdfAnnotationItem(int PageNumber, int Index, string Kind, s
 /// <summary>
 /// One of PdfEdit's own annotations (/NM "pdfedit:&lt;id&gt;") read back so it can be edited again on the
 /// page, in the PDF's coordinates. Kind is Text, Mark, Stamp, Ink, Highlight, Note, Rectangle, Ellipse,
-/// Line, Arrow, Distance, Polygon, Area, Polyline, Perimeter, Cloud, Callout, Insert or Replace.
+/// Line, Arrow, Distance, Polygon, Area, Polyline, Perimeter, Cloud, Callout, Insert, Replace, Signature or Picture.
 /// </summary>
 public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
 {
@@ -40,6 +40,8 @@ public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
     public double Opacity { get; init; } = 1;
     public HighlightKind Markup { get; init; } = HighlightKind.Highlight;
     public List<PointD>? Points { get; init; }
+    /// <summary>A signature's or picture's image (PNG, or JPEG for photos).</summary>
+    public byte[]? Image { get; init; }
     /// <summary>A callout's tip.</summary>
     public PointD? Tip { get; init; }
     /// <summary>A measurement's unit (in, mm, cm or pt).</summary>
@@ -58,7 +60,7 @@ public static class PdfAnnotationReader
     /// <summary>
     /// PdfEdit's own annotations that the page can show as editable items: text, marks, stamps, ink,
     /// highlights / underlines, sticky notes, shapes, lines, measurements, clouds, callouts and the
-    /// insert / replace text marks. Placed signatures (locked) stay part of the page.
+    /// insert / replace text marks, and placed signatures and pictures.
     /// </summary>
     public static List<OwnAnnotation> ReadOwn(string path)
     {
@@ -119,8 +121,13 @@ public static class PdfAnnotationReader
                                 CharSpacing = da.Spacing, Colour = da.Colour ?? own.Colour,
                             });
                             break;
+                        case "Stamp" when contents is "Signature" or "Picture":
+                            // A placed signature or picture: its image comes back out of the stamp's appearance.
+                            if (ImageOf(o) is not { } image) continue;
+                            list.Add(own with { Kind = contents, Image = image });
+                            break;
                         case "Stamp":
-                            if (contents == "Signature" || contents.Length == 0) continue;   // a placed signature: stays put
+                            if (contents.Length == 0) continue;
                             var lines = contents.Split('\n', 2);
                             list.Add(own with { Kind = "Stamp", Text = lines[0], Subtitle = lines.Length > 1 ? lines[1] : null });
                             break;
@@ -239,6 +246,58 @@ public static class PdfAnnotationReader
             });
         }
         return c;
+    }
+
+    /// <summary>
+    /// The picture in a signature or picture stamp's appearance, as an image file: rebuilt as a PNG with
+    /// its transparency (the PDF keeps the colours and the see-through mask apart), or the JPEG as stored.
+    /// </summary>
+    private static byte[]? ImageOf(PdfDictionary annot)
+    {
+        try
+        {
+            var ap = annot.GetAsDictionary(PdfName.AP)?.GetAsStream(PdfName.N);
+            var xobjects = ap?.GetAsDictionary(PdfName.Resources)?.GetAsDictionary(PdfName.XObject);
+            if (xobjects == null) return null;
+            foreach (var key in xobjects.KeySet())
+            {
+                if (xobjects.GetAsStream(key) is not { } stream || !PdfName.Image.Equals(stream.GetAsName(PdfName.Subtype))) continue;
+                return Decode(stream);
+            }
+        }
+        catch { /* not an image we can read: the stamp stays part of the page */ }
+        return null;
+    }
+
+    private static byte[]? Decode(PdfStream image)
+    {
+        var xobject = new iText.Kernel.Pdf.Xobject.PdfImageXObject(image);
+        int w = (int)xobject.GetWidth(), h = (int)xobject.GetHeight();
+        var filter = image.Get(PdfName.Filter);
+        bool jpeg = PdfName.DCTDecode.Equals(filter) || filter is PdfArray fa && fa.Contains(PdfName.DCTDecode);
+        var cs = image.GetAsName(PdfName.ColorSpace);
+        int bpc = image.GetAsNumber(PdfName.BitsPerComponent)?.IntValue() ?? 8;
+        int channels = PdfName.DeviceRGB.Equals(cs) ? 3 : PdfName.DeviceGray.Equals(cs) ? 1 : 0;
+        if (jpeg || channels == 0 || bpc != 8 || w <= 0 || h <= 0)
+            return xobject.GetImageBytes(true);   // as stored (JPEG), or iText's PNG of other colour spaces
+
+        byte[] px = image.GetBytes(true);
+        if (px.Length < w * h * channels) return xobject.GetImageBytes(true);
+        byte[]? alpha = null;
+        if (image.GetAsStream(PdfName.SMask) is { } mask
+            && mask.GetAsNumber(PdfName.Width)?.IntValue() == w && mask.GetAsNumber(PdfName.Height)?.IntValue() == h)
+        {
+            alpha = mask.GetBytes(true);
+            if (alpha.Length < w * h) alpha = null;
+        }
+        var bgra = new byte[w * h * 4];
+        for (int i = 0, n = w * h; i < n; i++)
+        {
+            byte r = px[i * channels], g = channels == 3 ? px[i * 3 + 1] : r, b = channels == 3 ? px[i * 3 + 2] : r;
+            bgra[i * 4] = b; bgra[i * 4 + 1] = g; bgra[i * 4 + 2] = r;
+            bgra[i * 4 + 3] = alpha?[i] ?? 255;
+        }
+        return PngEncoder.FromBgra(bgra, w, h, alpha: alpha != null);
     }
 
     /// <summary>The box inside an annotation's /Rect that /RD describes (a cloud's or callout's own box).</summary>

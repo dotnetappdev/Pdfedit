@@ -4,17 +4,18 @@ using System.IO.Compression;
 namespace PdfEdit.Blazor.Services;
 
 /// <summary>
-/// Turns the BGRA pixels PdfEdit.Render produces into a PNG (24-bit RGB: pages are rendered on
-/// white, so there's no transparency to keep). Small and dependency-free, so the site needs no
-/// imaging library.
+/// Turns the BGRA pixels PdfEdit.Render produces into a PNG: 24-bit RGB for pages (rendered on
+/// white, so there's no transparency to keep), or 32-bit RGBA with <c>alpha</c> for signatures and
+/// pictures that are see-through. Small and dependency-free, so the site needs no imaging library.
 /// </summary>
 public static class PngEncoder
 {
     private static readonly byte[] Signature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
     private static readonly uint[] CrcTable = BuildCrcTable();
 
-    public static byte[] FromBgra(byte[] bgra, int width, int height)
+    public static byte[] FromBgra(byte[] bgra, int width, int height, bool alpha = false)
     {
+        int channels = alpha ? 4 : 3;
         using var output = new MemoryStream();
         output.Write(Signature);
 
@@ -22,7 +23,7 @@ public static class PngEncoder
         BinaryPrimitives.WriteInt32BigEndian(ihdr, width);
         BinaryPrimitives.WriteInt32BigEndian(ihdr[4..], height);
         ihdr[8] = 8;    // bits per channel
-        ihdr[9] = 2;    // colour type: RGB
+        ihdr[9] = (byte)(alpha ? 6 : 2);    // colour type: RGBA or RGB
         ihdr[10] = 0;   // compression: deflate
         ihdr[11] = 0;   // filter method
         ihdr[12] = 0;   // no interlace
@@ -32,15 +33,16 @@ public static class PngEncoder
         {
             using (var z = new ZLibStream(raw, CompressionLevel.Fastest, leaveOpen: true))
             {
-                var row = new byte[1 + width * 3];   // filter byte 0 (None), then RGB
+                var row = new byte[1 + width * channels];   // filter byte 0 (None), then RGB(A)
                 for (int y = 0; y < height; y++)
                 {
                     int src = y * width * 4;
-                    for (int x = 0, dst = 1; x < width; x++, src += 4, dst += 3)
+                    for (int x = 0, dst = 1; x < width; x++, src += 4, dst += channels)
                     {
                         row[dst] = bgra[src + 2];
                         row[dst + 1] = bgra[src + 1];
                         row[dst + 2] = bgra[src];
+                        if (alpha) row[dst + 3] = bgra[src + 3];
                     }
                     z.Write(row);
                 }
