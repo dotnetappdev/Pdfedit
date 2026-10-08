@@ -5,6 +5,23 @@
         Icon="/Assets/pdfedit.png"
         Width="1440" Height="900" MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterScreen">
+    <!-- The Help menu in the Mac menu bar (Windows and Linux have Help on the ribbon instead) -->
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="Help">
+                <NativeMenu>
+                    <NativeMenuItem Header="PdfEdit User Guide" Click="UserGuide_Click" />
+                    <NativeMenuItem Header="Tutorials" Click="Tutorials_Click" />
+                    <NativeMenuItem Header="Getting Started" Click="GettingStarted_Click" />
+                    <NativeMenuItem Header="Keyboard Shortcuts" Click="Shortcuts_Click" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="Troubleshooting" Click="Troubleshooting_Click" />
+                    <NativeMenuItem Header="Report a Problem…" Click="ReportProblem_Click" />
+                    <NativeMenuItem Header="What's New" Click="WhatsNew_Click" />
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
     <Grid>
         <!-- The PdfEdit app itself, in the platform's own web view -->
         <NativeWebView x:Name="Web" IsVisible="False" />

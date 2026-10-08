@@ -143,6 +143,14 @@
                                                     Click="WhatsNew_Click"
                                                     AutomationProperties.Name="What's new"/>
                         <Separator/>
+                        <Fluent:MenuItem Header="User Guide"
+                                                    KeyTip="D"
+                                                    Click="UserGuide_Click"
+                                                    AutomationProperties.Name="User guide on the PdfEdit website"/>
+                        <Fluent:MenuItem Header="Tutorials"
+                                                    KeyTip="L"
+                                                    Click="Tutorials_Click"
+                                                    AutomationProperties.Name="Tutorials on the PdfEdit website"/>
                         <Fluent:MenuItem Header="Keyboard Shortcuts (F1)"
                                                     KeyTip="K"
                                                     Command="{Binding ShowShortcutsCommand}"
@@ -156,6 +164,10 @@
                                                     Click="TakeTour_Click"
                                                     AutomationProperties.Name="Take the tour of PdfEdit"/>
                         <Separator/>
+                        <Fluent:MenuItem Header="Troubleshooting"
+                                                    KeyTip="S"
+                                                    Click="Troubleshooting_Click"
+                                                    AutomationProperties.Name="Troubleshooting and common questions"/>
                         <Fluent:MenuItem Header="Report a Problem…"
                                                     KeyTip="R"
                                                     Click="ReportProblem_Click"
@@ -3453,6 +3465,14 @@
                 </Fluent:RibbonGroupBox>
 
                 <Fluent:RibbonGroupBox Header="Learn" AutomationProperties.Name="Learn group">
+                    <Fluent:Button Header="User&#x0a;Guide" Size="Large" Click="UserGuide_Click"
+                                   ToolTip="How everything in PdfEdit works, on the PdfEdit website" AutomationProperties.Name="User guide">
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Tutorials" Size="Large" Click="Tutorials_Click"
+                                   ToolTip="Step-by-step walkthroughs: sign a form, make a form fillable, merge, redact, scan and more" AutomationProperties.Name="Tutorials">
+                        <Fluent:Button.LargeIcon><Viewbox Width="{DynamicResource LargeIconSize}" Height="{DynamicResource LargeIconSize}"><TextBlock Text="&#xE7BE;" FontFamily="Segoe MDL2 Assets" FontSize="20"/></Viewbox></Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                     <Fluent:Button Header="Tip of the Day" Size="Middle" Click="TipOfTheDay_Click"
                                    ToolTip="A useful tip about PdfEdit, one at a time" AutomationProperties.Name="Tip of the Day">
                         <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE82F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
@@ -3471,6 +3491,10 @@
                     <Fluent:Button Header="Report a Problem" Size="Middle" Click="ReportProblem_Click"
                                    ToolTip="Tell us about a bug or ask for a feature on GitHub" AutomationProperties.Name="Report a problem">
                         <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xEBE8;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Troubleshooting" Size="Middle" Click="Troubleshooting_Click"
+                                   ToolTip="Answers to common questions and problems, on the PdfEdit website" AutomationProperties.Name="Troubleshooting">
+                        <Fluent:Button.Icon><Viewbox Width="{DynamicResource SmallIconSize}" Height="{DynamicResource SmallIconSize}"><TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="13"/></Viewbox></Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="PdfEdit on GitHub" Size="Middle" Click="GitHubPage_Click"
                                    ToolTip="The project page: source code, releases and documentation" AutomationProperties.Name="PdfEdit on GitHub">

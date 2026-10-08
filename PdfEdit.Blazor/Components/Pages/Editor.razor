@@ -883,11 +883,14 @@
                     <RibbonButton Large Icon="bi-windows" Label="Windows App" Title="Download the full Windows app" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases/latest"))" />
                 </RibbonGroup>
                 <RibbonGroup Title="Learn">
+                    <RibbonButton Large Icon="bi-book" Label="User Guide" Title="How everything in PdfEdit works, on the PdfEdit website" OnClick="@(() => OpenUrlAsync(HelpLinks.UserGuide))" />
+                    <RibbonButton Large Icon="bi-mortarboard" Label="Tutorials" Title="Step-by-step walkthroughs: sign a form, make a form fillable, merge, redact, scan and more" OnClick="@(() => OpenUrlAsync(HelpLinks.Tutorials))" />
                     <RibbonButton Large Icon="bi-lightbulb" Label="Tip of the Day" Title="A useful tip about PdfEdit, one at a time" OnClick="ShowTip" />
                     <RibbonButton Large Icon="bi-signpost-split" Label="Take the Tour" Title="A quick walk round the main parts of the window" OnClick="StartTour" />
                     <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" Title="Every keyboard shortcut (F1)" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
                 </RibbonGroup>
                 <RibbonGroup Title="Support">
+                    <RibbonButton Large Icon="bi-life-preserver" Label="Troubleshooting" Title="Answers to common questions and problems" OnClick="@(() => OpenUrlAsync(HelpLinks.Troubleshooting))" />
                     <RibbonButton Large Icon="bi-bug" Label="Report a Problem" Title="Tell us about a bug or ask for a feature on GitHub" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/issues/new"))" />
                     <RibbonButton Large Icon="bi-github" Label="PdfEdit on GitHub" Title="The project page: source code, releases and documentation" OnClick="() => OpenUrlAsync(GitHubUrl)" />
                 </RibbonGroup>

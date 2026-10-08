@@ -6,8 +6,8 @@ using PdfEdit.Services;
 namespace PdfEdit;
 
 /// <summary>
-/// The Help tab: Check for Updates, What's New, the tour and tips, Report a Problem, GitHub and
-/// About; plus a check of GitHub each time PdfEdit starts (unless turned off) that asks about a
+/// The Help tab: Check for Updates, What's New, the User Guide and Tutorials on the PdfEdit website,
+/// the tour and tips, Troubleshooting, Report a Problem, GitHub and About; plus a check of GitHub each time PdfEdit starts (unless turned off) that asks about a
 /// newer version the user hasn't skipped.
 /// </summary>
 public partial class MainWindow
@@ -17,6 +17,12 @@ public partial class MainWindow
     private void CheckForUpdates_Click(object sender, RoutedEventArgs e) => ShowUpdateDialog();
 
     private void WhatsNew_Click(object sender, RoutedEventArgs e) => OpenWebPage(UpdateService.ReleasesPage);
+
+    private void UserGuide_Click(object sender, RoutedEventArgs e) => OpenWebPage(HelpLinks.UserGuide);
+
+    private void Tutorials_Click(object sender, RoutedEventArgs e) => OpenWebPage(HelpLinks.Tutorials);
+
+    private void Troubleshooting_Click(object sender, RoutedEventArgs e) => OpenWebPage(HelpLinks.Troubleshooting);
 
     private void ReportProblem_Click(object sender, RoutedEventArgs e) => OpenWebPage(GitHubUrl + "/issues/new");
 

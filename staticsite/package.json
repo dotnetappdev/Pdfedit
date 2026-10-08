@@ -1,0 +1,13 @@
+{
+  "name": "pdfedit-website",
+  "private": true,
+  "description": "The PdfEdit website: download pages, docs and tutorials",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "releases": "node tools/update-releases.mjs"
+  },
+  "dependencies": {
+    "marked": "12.0.2"
+  }
+}

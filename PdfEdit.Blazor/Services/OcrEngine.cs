@@ -11,7 +11,7 @@ namespace PdfEdit.Blazor.Services;
 /// </summary>
 public sealed class OcrEngine(IConfiguration config, ILogger<OcrEngine> log)
 {
-    private readonly string _exe = config["PdfEdit:Ocr:TesseractPath"] is { Length: > 0 } p ? p : "tesseract";
+    private readonly string _exe = config["PdfEdit:Ocr:TesseractPath"] is { Length: > 0 } p ? p : FindTesseract();
     private readonly string? _tessdata = config["PdfEdit:Ocr:TessdataDir"];
     private List<string>? _languages;
     private readonly SemaphoreSlim _gate = new(Math.Max(1, Environment.ProcessorCount / 2));
@@ -36,6 +36,20 @@ public sealed class OcrEngine(IConfiguration config, ILogger<OcrEngine> log)
     }
 
     public async Task<bool> IsAvailableAsync() => (await LanguagesAsync()).Count > 0;
+
+    /// <summary>
+    /// Tesseract on the PATH, or where Homebrew, MacPorts or the Windows installer put it: an app
+    /// opened from Finder doesn't get the shell's PATH, so the Mac app wouldn't find Homebrew's copy.
+    /// </summary>
+    private static string FindTesseract()
+    {
+        string name = OperatingSystem.IsWindows() ? "tesseract.exe" : "tesseract";
+        var dirs = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Concat(OperatingSystem.IsWindows()
+                ? [Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Tesseract-OCR")]
+                : ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin", "/usr/bin"]);
+        return dirs.Select(d => Path.Combine(d, name)).FirstOrDefault(File.Exists) ?? "tesseract";
+    }
 
     /// <summary>
     /// Reads the words on a page image. Positions come back in PDF points (bottom-left origin) for

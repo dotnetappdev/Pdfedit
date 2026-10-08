@@ -35,7 +35,7 @@ public partial class Editor
         new("Properties and more", "Properties shows the details of what you've selected; the other tabs list the fields, comments and bookmarks, search results and the AI chat.", ".pe-panel.right"),
         new("AI Assistant", "Ask questions about the open PDF and get answers with page links. It can fill fields, highlight text and add notes; you apply each change.", ".pe-ribbon", RibbonTab.AI),
         new("Page number", "Shows where you are. Type a page number to jump to it.", ".pe-status"),
-        new("Help", "What's New, this tour, Tip of the Day, keyboard shortcuts, Report a Problem and About PdfEdit are all here.", ".pe-ribbon", RibbonTab.Help),
+        new("Help", "The User Guide and Tutorials, What's New, this tour, Tip of the Day, keyboard shortcuts, Report a Problem and About PdfEdit are all here.", ".pe-ribbon", RibbonTab.Help),
         new("You're all set", "Press F1 any time for keyboard shortcuts. Enjoy PdfEdit!"),
     ];
 

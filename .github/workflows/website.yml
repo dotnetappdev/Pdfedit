@@ -1,6 +1,7 @@
 name: Website
 
-# Builds the PdfEdit website (staticsite/) and publishes it on GitHub Pages. The downloads and
+# Builds the PdfEdit website (staticsite/): the download pages, plus the user guide made from docs/*.md
+# and the tutorials in staticsite/content, and publishes it on GitHub Pages. The downloads and
 # "What's new" come from the GitHub releases, fetched fresh on every build — so the site updates
 # itself after each release (when Build & Release finishes), daily, and whenever the site changes.
 #
@@ -15,7 +16,8 @@ on:
     branches: [devmain]
     paths:
       - 'staticsite/**'
-      - 'docs/screenshots/**'
+      - 'docs/**'
+      - 'PdfEdit.Blazor/README.md'
       - '.github/workflows/website.yml'
   schedule:
     - cron: '17 6 * * *'
@@ -40,6 +42,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: staticsite/package-lock.json
+
+      - name: Install the site's tools
+        run: npm ci --prefix staticsite --no-audit --no-fund
 
       - name: Fetch the latest releases
         env:

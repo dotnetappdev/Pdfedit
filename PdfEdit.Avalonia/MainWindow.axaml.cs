@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
 using PdfEdit.Blazor;
 using PdfEdit.Blazor.Services;
+using PdfEdit.Services;
 
 namespace PdfEdit.Avalonia;
 
@@ -78,6 +79,16 @@ public partial class MainWindow : Window, IDesktopShell
             Web.IsVisible = true;
         });
     }
+
+    // ── Help menu (Mac menu bar): the PdfEdit website's guide and tutorials ───
+
+    private void UserGuide_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(HelpLinks.UserGuide));
+    private void Tutorials_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(HelpLinks.Tutorials));
+    private void GettingStarted_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(HelpLinks.GettingStarted));
+    private void Shortcuts_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(HelpLinks.KeyboardShortcuts));
+    private void Troubleshooting_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(HelpLinks.Troubleshooting));
+    private void ReportProblem_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri($"https://github.com/{UpdateService.Owner}/{UpdateService.Repo}/issues/new"));
+    private void WhatsNew_Click(object? sender, EventArgs e) => OpenInBrowser(new Uri(UpdateService.ReleasesPage));
 
     private static void OpenInBrowser(Uri uri)
     {
