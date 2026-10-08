@@ -46,13 +46,28 @@ public partial class MainWindow : Window, IDesktopShell
             await _server.StartAsync();
             var address = _server.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();
             _home = new Uri(address.TrimEnd('/') + "/");
-            string open = Program.FilesToOpen.FirstOrDefault() is { } file ? "&desktop-open=" + Uri.EscapeDataString(file) : "";
+            string open = Program.FilesToOpen.Concat(Pending).FirstOrDefault() is { } file ? "&desktop-open=" + Uri.EscapeDataString(file) : "";
             Web.Source = new Uri(_home, $"?desktop-token={token}{open}");
+            Pending.Clear();
+            _ready = this;
         }
         catch (Exception ex)
         {
             SplashText.Text = "PdfEdit couldn't start: " + ex.Message;
         }
+    }
+
+    private static readonly List<string> Pending = new();
+    private static MainWindow? _ready;
+
+    /// <summary>Opens a PDF in PdfEdit: now if the window is ready, otherwise as soon as it is.</summary>
+    public static void OpenFile(string path)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_ready is { _home: { } home } window) window.Web.Source = new Uri(home, "?desktop-open=" + Uri.EscapeDataString(path));
+            else if (!Pending.Contains(path)) Pending.Add(path);
+        });
     }
 
     private void ShowApp()

@@ -50,3 +50,7 @@ Thumbs.db
 
 # PdfEdit.Blazor saved signatures (SQLite)
 PdfEdit.Blazor/pdfedit.db*
+
+# PdfEdit Desktop installer builds
+publish_desktop/
+obj-desktop-mac/

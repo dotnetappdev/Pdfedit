@@ -52,6 +52,33 @@ pwsh installer\build-installer.ps1 -SkipMsix    # EXE installer only
 
 The EXE needs [Inno Setup 6](https://jrsoftware.org/isinfo.php), and the MSIX needs the Windows SDK (`makeappx.exe`).
 
+### PdfEdit Desktop installers (Windows and Mac)
+
+The cross-platform app has its own installers, separate from the Windows app's:
+
+```powershell
+pwsh installer/desktop/build-windows.ps1     # dist/PdfEdit-Desktop-Setup-<version>.exe and a portable ZIP
+```
+```bash
+installer/desktop/build-mac.sh               # dist/PdfEdit-Desktop-<version>-mac-arm64.dmg and -mac-x64.dmg
+```
+
+- **Windows** needs Inno Setup 6.3+. The installer includes .NET, installs as *PdfEdit Desktop*
+  next to the Windows app (its own folder and Start menu entry), can add itself to Open with for
+  PDFs, and installs Microsoft's WebView2 runtime if the PC hasn't got it.
+- **Mac** needs a Mac with the .NET 10 SDK (the script builds `PdfEdit.app` for Apple silicon and
+  Intel and packs each in a disk image; elsewhere it makes a `.tar.gz` of the app to check). It's
+  signed ad hoc unless `MACOS_SIGN_IDENTITY` names a Developer ID certificate; with `APPLE_ID`,
+  `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD` set too it's notarized, so it opens without a warning.
+  Signed ad hoc, the first launch needs right-click → **Open** (or System Settings → Privacy &
+  Security → Open Anyway).
+
+GitHub Actions builds both on every release (the `desktop-windows` and `desktop-mac` jobs add them to
+the release), and the **PdfEdit Desktop installers** workflow builds them on demand or whenever the
+desktop app changes, as downloads on the run's page. For signed Mac builds, add the repository
+secrets `MACOS_CERT_P12` (base64 of the .p12), `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`,
+`APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`.
+
 ## How releases are published
 
 GitHub Actions builds and publishes every release. There's nothing to do by hand.

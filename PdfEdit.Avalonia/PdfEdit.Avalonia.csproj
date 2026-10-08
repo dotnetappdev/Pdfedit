@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\*.icns" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +35,13 @@
     <!-- The whole web app: its pages, services and static files, run in this process -->
     <ProjectReference Include="..\PdfEdit.Blazor\PdfEdit.Blazor.csproj" />
   </ItemGroup>
+
+  <!-- Debugging symbols (SkiaSharp and HarfBuzz ship ~100 MB of them) aren't installed for users. -->
+  <Target Name="NoSymbolsInPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
 
   <!--
     Publishing: the web app's page files (wwwroot, with its fingerprinted CSS and scripts, and the

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>                 <string>PdfEdit</string>
+    <key>CFBundleDisplayName</key>          <string>PdfEdit</string>
+    <key>CFBundleIdentifier</key>           <string>com.dotnetappdev.pdfedit.desktop</string>
+    <key>CFBundleExecutable</key>           <string>PdfEdit</string>
+    <key>CFBundleIconFile</key>             <string>PdfEdit.icns</string>
+    <key>CFBundlePackageType</key>          <string>APPL</string>
+    <key>CFBundleShortVersionString</key>   <string>__VERSION__</string>
+    <key>CFBundleVersion</key>              <string>__VERSION__</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>LSMinimumSystemVersion</key>       <string>12.0</string>
+    <key>LSApplicationCategoryType</key>    <string>public.app-category.productivity</string>
+    <key>NSHighResolutionCapable</key>      <true/>
+    <key>NSPrincipalClass</key>             <string>NSApplication</string>
+    <key>NSHumanReadableCopyright</key>     <string>PdfEdit — https://github.com/dotnetappdev/pdfedit</string>
+    <!-- The page shown in the web view comes from PdfEdit itself on this Mac (127.0.0.1). -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>  <true/>
+    </dict>
+    <!-- Used only when you choose Scan with Camera or Dictate. -->
+    <key>NSCameraUsageDescription</key>     <string>PdfEdit uses the camera when you scan pages with Scan with Camera.</string>
+    <key>NSMicrophoneUsageDescription</key> <string>PdfEdit uses the microphone when you dictate into a field.</string>
+    <key>NSSpeechRecognitionUsageDescription</key> <string>PdfEdit turns your speech into text when you dictate.</string>
+    <key>NSLocationWhenInUseUsageDescription</key> <string>PdfEdit adds your location to dynamic stamps when you turn that on in Settings.</string>
+    <!-- PDFs: PdfEdit appears in Open With (without taking over the default PDF app). -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>     <string>PDF Document</string>
+            <key>CFBundleTypeRole</key>     <string>Editor</string>
+            <key>LSHandlerRank</key>        <string>Alternate</string>
+            <key>LSItemContentTypes</key>   <array><string>com.adobe.pdf</string></array>
+        </dict>
+    </array>
+</dict>
+</plist>

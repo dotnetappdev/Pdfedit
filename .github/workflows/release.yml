@@ -443,3 +443,118 @@ jobs:
             dist/PdfEdit-${{ env.VERSION4 }}.msix
             dist/PdfEdit-TestCert.cer
           fail_on_unmatched_files: false
+
+  # ── Job 3: PdfEdit Desktop (the cross-platform Avalonia app) for Windows ──────
+  # Runs after the release exists and adds its own installer to it, so a problem here never holds
+  # up the Windows (WPF) release.
+  desktop-windows:
+    name: PdfEdit Desktop — Windows installer
+    runs-on: windows-latest
+    needs: [metadata, build-and-release]
+    if: needs.metadata.outputs.release != 'false'
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup install failed" }
+          }
+
+      - name: Build installer and portable ZIP
+        shell: pwsh
+        run: pwsh installer/desktop/build-windows.ps1 -Version $env:VERSION
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PdfEdit-Desktop-${{ env.VERSION }}-windows
+          path: |
+            dist/PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip
+          retention-days: 30
+
+      - name: Add to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.metadata.outputs.tag }}
+          append_body: true
+          body: |
+
+            ### PdfEdit Desktop for Windows (cross-platform version)
+            The web version's interface in a desktop window ([what's different](https://github.com/dotnetappdev/pdfedit/blob/devmain/docs/building.md#the-cross-platform-desktop-app-windows-macos-linux)). Installs alongside the Windows app above.
+            - `PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe` — installer (.NET included; installs Microsoft's WebView2 runtime if your PC hasn't got it)
+            - `PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip` — no install: unzip and run `PdfEdit.exe`
+          files: |
+            dist/PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip
+          fail_on_unmatched_files: true
+
+  # ── Job 4: PdfEdit Desktop for macOS (Apple silicon and Intel) ─────────────────
+  # Signed and notarized when these repository secrets are set; otherwise signed ad hoc (the app then
+  # opens after right-click → Open the first time):
+  #   MACOS_CERT_P12 (base64 of a "Developer ID Application" .p12), MACOS_CERT_PASSWORD,
+  #   MACOS_SIGN_IDENTITY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD
+  desktop-mac:
+    name: PdfEdit Desktop — macOS disk images
+    runs-on: macos-latest
+    needs: [metadata, build-and-release]
+    if: needs.metadata.outputs.release != 'false'
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Import the signing certificate (if set)
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          if [[ -z "$MACOS_CERT_P12" ]]; then echo "No certificate: the app will be signed ad hoc."; exit 0; fi
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p "" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "" "$KEYCHAIN"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+      - name: Build PdfEdit.app and the disk images
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: bash installer/desktop/build-mac.sh "$VERSION" "arm64 x64"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PdfEdit-Desktop-${{ env.VERSION }}-mac
+          path: dist/PdfEdit-Desktop-${{ env.VERSION }}-mac-*.dmg
+          retention-days: 30
+
+      - name: Add to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.metadata.outputs.tag }}
+          append_body: true
+          body: |
+
+            ### PdfEdit Desktop for Mac
+            Open the disk image and drag PdfEdit to Applications. macOS 12 or later; nothing else to install.
+            - `PdfEdit-Desktop-${{ env.VERSION }}-mac-arm64.dmg` — Apple silicon (M1 and later)
+            - `PdfEdit-Desktop-${{ env.VERSION }}-mac-x64.dmg` — Intel Macs
+          files: dist/PdfEdit-Desktop-${{ env.VERSION }}-mac-*.dmg
+          fail_on_unmatched_files: true

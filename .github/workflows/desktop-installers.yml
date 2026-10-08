@@ -1,0 +1,60 @@
+name: PdfEdit Desktop installers
+
+# Builds the PdfEdit Desktop (Avalonia) installers for Windows and macOS and keeps them as
+# downloadable artifacts on the run's page — for trying a build without making a release.
+# (Releases get them too: see the desktop-windows and desktop-mac jobs in release.yml.)
+on:
+  workflow_dispatch:
+  push:
+    branches: [devmain]
+    paths:
+      - 'PdfEdit.Avalonia/**'
+      - 'installer/desktop/**'
+      - '.github/workflows/desktop-installers.yml'
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup install failed" }
+          }
+      - name: Build
+        shell: pwsh
+        run: pwsh installer/desktop/build-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PdfEdit-Desktop-windows
+          path: |
+            dist/PdfEdit-Desktop-Setup-*.exe
+            dist/PdfEdit-Desktop-*-win-x64.zip
+          retention-days: 14
+
+  mac:
+    name: macOS disk images
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build (signed ad hoc)
+        run: bash installer/desktop/build-mac.sh "" "arm64 x64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PdfEdit-Desktop-mac
+          path: dist/PdfEdit-Desktop-*-mac-*.dmg
+          retention-days: 14
