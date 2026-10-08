@@ -642,6 +642,119 @@
         </Modal>
         break;
 
+    case DialogKind.Cloud:
+        <Modal Title="@(Ed.CloudSaving ? "Save to cloud storage" : "Open from cloud storage")" OnClose="Close" Wide>
+            <ChildContent>
+                @if (Ed.Cloud.Providers.Count == 0)
+                {
+                    <p>Cloud storage isn't set up on this server.</p>
+                    <p class="pe-hint mb-0">
+                        Whoever runs PdfEdit can add a Google Drive and/or OneDrive OAuth app in its settings
+                        (PdfEdit:Cloud:Google:ClientId and ClientSecret, PdfEdit:Cloud:OneDrive:ClientId and ClientSecret),
+                        with <code>@(Ed.CloudCallbackUrl)</code> as the redirect address. See the README.
+                    </p>
+                }
+                else
+                {
+                    <div class="pe-panel-tabs mb-2" role="tablist">
+                        @foreach (var p in Ed.Cloud.Providers)
+                        {
+                            var provider = p;
+                            <button class="pe-panel-tab @(Ed.CloudService == provider ? "active" : "")" role="tab"
+                                    @onclick="() => ActAsync(() => Ed.SelectCloudAsync(provider))">@provider.DisplayName</button>
+                        }
+                    </div>
+                    @if (Ed.CloudService is { } svc)
+                    {
+                        @if (!svc.IsConnected)
+                        {
+                            <div class="pe-cloud-connect">
+                                <i class="bi bi-cloud"></i>
+                                <p>Connect your @svc.DisplayName to open PDFs from it and save them back.</p>
+                                <button class="pe-btn primary" @onclick="() => ActAsync(Ed.ConnectCloudAsync)">Connect @svc.DisplayName</button>
+                                @if (Ed.CloudSignInUrl != null)
+                                {
+                                    <p class="pe-hint mt-2 mb-0">Waiting for you to sign in… If no window opened, <a href="@Ed.CloudSignInUrl" target="_blank" rel="noopener">open the sign-in page</a>.</p>
+                                }
+                                <p class="pe-hint mt-2 mb-0">You stay signed in only while this page is open; PdfEdit keeps nothing afterwards.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="pe-hint"><i class="bi bi-person-circle"></i> @svc.AccountName</span>
+                                <button class="pe-btn ms-auto" @onclick="Ed.DisconnectCloud">Disconnect</button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <nav class="pe-crumbs" aria-label="Folder">
+                                    @if (Ed.CloudSearching)
+                                    {
+                                        <button class="pe-linkbtn" @onclick="() => ActAsync(() => Ed.CloudLoadAsync(svc.RootId, Ed.CloudPath.FirstOrDefault().Name ?? My, reset: true))">@My</button>
+                                        <span>› Search results</span>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var (crumb, i) in Ed.CloudPath.Select((c, i) => (c, i)))
+                                        {
+                                            var c = crumb;
+                                            @if (i > 0) { <span>›</span> }
+                                            <button class="pe-linkbtn" @onclick="() => ActAsync(() => Ed.CloudLoadAsync(c.Id, c.Name))">@c.Name</button>
+                                        }
+                                    }
+                                </nav>
+                                <input type="search" class="form-control form-control-sm ms-auto" style="max-width:220px" placeholder="Search" aria-label="Search cloud files"
+                                       @bind="Ed.CloudSearchText" @bind:event="oninput" @onkeydown="CloudSearchKey" />
+                                <button class="pe-btn" @onclick="() => ActAsync(Ed.CloudSearchAsync)" aria-label="Search"><i class="bi bi-search"></i></button>
+                            </div>
+                            <div class="pe-cloud-list">
+                                @if (Ed.CloudLoading)
+                                {
+                                    <p class="pe-hint p-3 mb-0">Loading…</p>
+                                }
+                                else if (Ed.CloudItems.Count == 0)
+                                {
+                                    <p class="pe-hint p-3 mb-0">@(Ed.CloudSearching ? "Nothing found." : "This folder has no PDFs or folders.")</p>
+                                }
+                                else
+                                {
+                                    <ul class="pe-list" role="listbox" aria-label="Files">
+                                        @foreach (var it in Ed.CloudItems)
+                                        {
+                                            var item = it;
+                                            bool usable = item.IsFolder || !Ed.CloudSaving;
+                                            <li class="@(usable ? "" : "pe-disabled")" role="option" title="@item.Name"
+                                                @onclick="() => CloudClick(item, usable)">
+                                                <i class="bi @CloudIcon(item) pe-type"></i>
+                                                <span>@item.Name</span>
+                                                <span class="pe-meta">@item.Kind @item.SizeText @item.ModifiedText</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                            @if (Ed.CloudSaving)
+                            {
+                                <div class="d-flex align-items-end gap-2 mt-2">
+                                    <div class="flex-grow-1">
+                                        <label class="mb-0">File name</label>
+                                        <input class="form-control form-control-sm" @bind="Ed.CloudSaveName" @bind:event="oninput" aria-label="File name" />
+                                    </div>
+                                    <button class="pe-btn primary" disabled="@(Ed.Doc == null || Ed.CloudPath.Count == 0 || Ed.CloudSearching)"
+                                            @onclick="() => ActAsync(Ed.CloudSaveHereAsync)">Save in @(Ed.CloudPath.Count > 0 ? Ed.CloudPath[^1].Name : "this folder")</button>
+                                </div>
+                            }
+                        }
+                        @if (Ed.CloudError != null)
+                        {
+                            <p class="mt-2 mb-0" style="color:#dc3545">@Ed.CloudError</p>
+                        }
+                    }
+                }
+            </ChildContent>
+            <Footer><button class="pe-btn" @onclick="Close">Close</button></Footer>
+        </Modal>
+        break;
+
     case DialogKind.Signatures:
         <Modal Title="Signatures" OnClose="Close" Wide>
             <ChildContent>
@@ -831,6 +944,29 @@
         _shown = DialogKind.None;
         Ed.Refresh();
     }
+
+    /// <summary>Runs an editor command and keeps the dialog open (the cloud browser).</summary>
+    private async Task ActAsync(Func<Task> action)
+    {
+        Ed.Refresh();
+        await action();
+        Ed.Refresh();
+    }
+
+    private const string My = "My files";
+
+    private Task CloudClick(CloudItem item, bool usable) => usable ? ActAsync(() => Ed.CloudOpenAsync(item)) : Task.CompletedTask;
+
+    private Task CloudSearchKey(KeyboardEventArgs e) => e.Key == "Enter" ? ActAsync(Ed.CloudSearchAsync) : Task.CompletedTask;
+
+    private static string CloudIcon(CloudItem item) => item.IsFolder ? "bi-folder-fill" : item.Kind switch
+    {
+        "PDF" => "bi-file-earmark-pdf",
+        "Google Doc" or "Word" => "bi-file-earmark-word",
+        "Google Sheet" or "Excel" => "bi-file-earmark-excel",
+        "Google Slides" or "PowerPoint" => "bi-file-earmark-slides",
+        _ => "bi-file-earmark",
+    };
 
     /// <summary>Closes the dialog and runs the editor command.</summary>
     private async Task Do(Func<Task> action)

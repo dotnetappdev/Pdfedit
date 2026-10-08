@@ -11,6 +11,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton<PdfDocumentStore>();
 // OCR with the Tesseract program on the server (see Services/OcrEngine.cs).
 builder.Services.AddSingleton<OcrEngine>();
+// Google Drive / OneDrive: OAuth apps from configuration, sign-ins kept per browser session.
+builder.Services.AddScoped<CloudConnections>();
+builder.Services.AddSingleton<CloudSignIns>();
 
 var app = builder.Build();
 
@@ -28,6 +31,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapPdfEndpoints();
+app.MapCloudEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

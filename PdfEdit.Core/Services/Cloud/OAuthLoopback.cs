@@ -15,6 +15,13 @@ public static class OAuthLoopback
 {
     public sealed record Result(string Code, string RedirectUri, string CodeVerifier);
 
+    /// <summary>A fresh PKCE pair and state value, for a sign-in that is caught somewhere else (the web version).</summary>
+    public static (string Verifier, string Challenge, string State) NewPkce()
+    {
+        string verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
+        return (verifier, Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(verifier))), Base64Url(RandomNumberGenerator.GetBytes(16)));
+    }
+
     /// <param name="buildAuthUrl">Makes the sign-in URL from (redirectUri, state, codeChallenge).</param>
     /// <param name="host">"127.0.0.1" (Google) or "localhost" (Microsoft).</param>
     public static async Task<Result> SignInAsync(Func<string, string, string, string> buildAuthUrl, string host, CancellationToken ct)

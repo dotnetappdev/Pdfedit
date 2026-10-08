@@ -43,6 +43,14 @@
                     <strong>Drop a PDF here</strong> or click to choose one
                     <InputFile accept=".pdf,application/pdf" OnChange="OnFile" aria-label="Open a PDF" />
                 </div>
+                <h4 class="pe-hint" style="font-weight:600">Cloud storage</h4>
+                <div class="pe-option-list" style="max-width:560px">
+                    @foreach (var p in CloudChoices)
+                    {
+                        var key = p.Key;
+                        <button class="pe-option" @onclick="() => ActAsync(() => Ed.ShowCloudAsync(save: false, key), close: false)"><i class="bi @p.Icon"></i><span>@p.Name<small>@p.Hint</small></span></button>
+                    }
+                </div>
                 @if (Ed.Samples.Count > 0)
                 {
                     <h4 class="pe-hint" style="font-weight:600">Sample documents</h4>
@@ -65,6 +73,18 @@
                     <button class="pe-option" @onclick="() => ActAsync(Ed.SaveFlattenedAsync, close: true)"><i class="bi bi-layers"></i><span>Flattened PDF<small>Fields and comments become part of the page</small></span></button>
                     <button class="pe-option" @onclick="() => ActAsync(Ed.SaveAsPdfAAsync, close: true)"><i class="bi bi-archive"></i><span>PDF/A<small>For long-term archiving</small></span></button>
                     <button class="pe-option" @onclick="() => Dialog(DialogKind.Protect)"><i class="bi bi-lock"></i><span>Password-protected PDF<small>Needs a password to open</small></span></button>
+                </div>
+                <h4 class="pe-hint" style="font-weight:600;margin-top:18px">Cloud storage</h4>
+                <div class="pe-option-list">
+                    @if (Ed.CloudFileName is { } cloudName)
+                    {
+                        <button class="pe-option" @onclick="() => ActAsync(Ed.SaveBackToCloudAsync, close: true)"><i class="bi bi-cloud-check"></i><span>Save back<small>Replace @cloudName</small></span></button>
+                    }
+                    @foreach (var p in CloudChoices)
+                    {
+                        var key = p.Key;
+                        <button class="pe-option" @onclick="() => ActAsync(() => Ed.ShowCloudAsync(save: true, key), close: false)"><i class="bi @p.Icon"></i><span>Save to @p.Name<small>Choose a folder and a name</small></span></button>
+                    }
                 </div>
                 break;
 
@@ -103,6 +123,13 @@
         (ExportFormat.Images, "bi-images", "Page images", "Every page as a PNG, in a ZIP"),
         (ExportFormat.Pictures, "bi-file-image", "Pictures", "The pictures inside the PDF, in a ZIP"),
     ];
+
+    // Google Drive / OneDrive when the server has OAuth apps for them; otherwise one entry that explains.
+    private IEnumerable<(string? Key, string Name, string Icon, string Hint)> CloudChoices =>
+        Ed.Cloud.Providers.Count == 0
+            ? [(null, "Google Drive or OneDrive", "bi-cloud", "Not set up on this server yet")]
+            : Ed.Cloud.Providers.Select(p => ((string?)p.Key, p.DisplayName, p.Key == "GoogleDrive" ? "bi-google" : "bi-microsoft",
+                p.IsConnected ? $"Signed in as {p.AccountName}" : "Connect to see your files"));
 
     private string Active(Backstage page) => Ed.BackstagePage == page ? "active" : "";
 

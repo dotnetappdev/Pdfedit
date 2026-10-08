@@ -45,6 +45,14 @@
                         <RibbonButton Icon="bi-download" Label="Save" Title="Download the PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
                         <RibbonButton Icon="bi-printer" Label="Print" Title="Open the PDF to print it (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
                     </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-cloud-arrow-down" Label="Open from Cloud" Title="Open a PDF from Google Drive or OneDrive" OnClick="() => ShowCloudAsync(save: false)" />
+                        <RibbonButton Icon="bi-cloud-arrow-up" Label="Save to Cloud" Title="Save to Google Drive or OneDrive" Disabled="NoDoc" OnClick="() => ShowCloudAsync(save: true)" />
+                        @if (Doc?.CloudFile != null)
+                        {
+                            <RibbonButton Icon="bi-cloud-check" Label="Save Back" Title="@($"Replace {CloudFileName}")" OnClick="SaveBackToCloudAsync" />
+                        }
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Search">
                     <div class="pe-stack">

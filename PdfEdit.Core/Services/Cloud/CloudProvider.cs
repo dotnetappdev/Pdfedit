@@ -35,8 +35,32 @@ public sealed record CloudItem(string Id, string Name, bool IsFolder, long Size,
 }
 
 /// <summary>
+/// A sign-in that lives only in memory (the web version): the OAuth app's details come from the
+/// server's configuration and the tokens are dropped when the browser session ends.
+/// </summary>
+public sealed class CloudSession
+{
+    public required string ClientId { get; init; }
+    /// <summary>Needed by Google; for Microsoft only when the app is a "Web" (confidential) app.</summary>
+    public string? ClientSecret { get; init; }
+    /// <summary>Microsoft tenant: common, organizations, consumers or a tenant ID.</summary>
+    public string? Tenant { get; init; }
+    /// <summary>
+    /// For testing: send every request to this stand-in server instead, as
+    /// {TestServer}/{original host}{original path and query}.
+    /// </summary>
+    public string? TestServer { get; init; }
+
+    internal string? RefreshToken { get; set; }
+    internal string? AccessToken { get; set; }
+    internal DateTime AccessExpiry { get; set; }
+    public string? AccountName { get; internal set; }
+}
+
+/// <summary>
 /// Shared parts of Google Drive and OneDrive: sign-in with the user's own OAuth app, tokens kept
-/// encrypted for this Windows user, access tokens refreshed as needed, and authorised requests.
+/// encrypted for this Windows user (or only in memory for a <see cref="CloudSession"/>), access
+/// tokens refreshed as needed, and authorised requests.
 /// </summary>
 public abstract class CloudProvider
 {
@@ -44,6 +68,12 @@ public abstract class CloudProvider
 
     private string? _accessToken;
     private DateTime _accessExpiry;
+
+    /// <summary>The in-memory sign-in, or null for the desktop app (settings and Windows-protected tokens).</summary>
+    protected CloudSession? Session { get; }
+
+    protected CloudProvider() { }
+    protected CloudProvider(CloudSession session) => Session = session;
 
     /// <summary>Key used in settings ("GoogleDrive" / "OneDrive").</summary>
     public abstract string Key { get; }
@@ -53,28 +83,56 @@ public abstract class CloudProvider
     /// <summary>The user has entered their app credentials in Settings.</summary>
     public abstract bool IsConfigured { get; }
 
-    public bool IsConnected => AppSettings.Current.CloudTokens.ContainsKey(Key);
-    public string? AccountName => AppSettings.Current.CloudAccounts.TryGetValue(Key, out var a) ? a : null;
+    public bool IsConnected => Session != null
+        ? Session.RefreshToken != null || Session.AccessToken != null
+        : AppSettings.Current.CloudTokens.ContainsKey(Key);
+    public string? AccountName => Session != null
+        ? Session.AccountName
+        : AppSettings.Current.CloudAccounts.TryGetValue(Key, out var a) ? a : null;
 
-    /// <summary>Opens the browser to sign in and keeps the refresh token.</summary>
+    /// <summary>Opens the browser to sign in (desktop) and keeps the refresh token.</summary>
     public async Task ConnectAsync(CancellationToken ct = default)
     {
         if (!IsConfigured) throw new InvalidOperationException($"Add your {DisplayName} app details in Settings → Cloud first.");
-        var tokens = await SignInAsync(ct);
-        SaveTokens(tokens);
+        var r = await OAuthLoopback.SignInAsync(AuthorizeUrl, LoopbackHost, ct);
+        await CompleteSignInAsync(r.Code, r.RedirectUri, r.CodeVerifier, ct);
+    }
+
+    /// <summary>
+    /// Finishes a sign-in: swaps the code the provider sent back to <paramref name="redirectUri"/>
+    /// for tokens and keeps them. The web version calls this from its sign-in callback page.
+    /// </summary>
+    public async Task CompleteSignInAsync(string code, string redirectUri, string codeVerifier, CancellationToken ct = default)
+    {
+        SaveTokens(await ExchangeCodeAsync(code, redirectUri, codeVerifier, ct));
         string? account = null;
         try { account = await GetAccountNameAsync(ct); } catch { }
+        if (Session != null)
+        {
+            Session.AccountName = account ?? "Signed in";
+            return;
+        }
         AppSettings.Current.CloudAccounts[Key] = account ?? "Signed in";
         AppSettings.Current.Save();
     }
 
     public void Disconnect()
     {
+        _accessToken = null;
+        if (Session != null)
+        {
+            Session.RefreshToken = Session.AccessToken = Session.AccountName = null;
+            return;
+        }
         AppSettings.Current.CloudTokens.Remove(Key);
         AppSettings.Current.CloudAccounts.Remove(Key);
         AppSettings.Current.Save();
-        _accessToken = null;
     }
+
+    /// <summary>The provider's sign-in page for (redirectUri, state, PKCE code challenge).</summary>
+    public abstract string AuthorizeUrl(string redirectUri, string state, string codeChallenge);
+    /// <summary>Host the desktop sign-in listens on: "127.0.0.1" (Google) or "localhost" (Microsoft).</summary>
+    protected abstract string LoopbackHost { get; }
 
     public abstract Task<List<CloudItem>> ListAsync(string folderId, CancellationToken ct = default);
     public abstract Task<List<CloudItem>> SearchAsync(string text, CancellationToken ct = default);
@@ -101,7 +159,7 @@ public abstract class CloudProvider
     public abstract Task UpdateAsync(string fileId, string localPath, CancellationToken ct = default);
     public abstract Task<CloudItem> CreateFolderAsync(string parentId, string name, CancellationToken ct = default);
 
-    protected abstract Task<TokenSet> SignInAsync(CancellationToken ct);
+    protected abstract Task<TokenSet> ExchangeCodeAsync(string code, string redirectUri, string codeVerifier, CancellationToken ct);
     protected abstract Task<TokenSet> RefreshAsync(string refreshToken, CancellationToken ct);
     protected abstract Task<string?> GetAccountNameAsync(CancellationToken ct);
 
@@ -119,9 +177,9 @@ public abstract class CloudProvider
             r.TryGetProperty("expires_in", out var e) && e.TryGetInt32(out int s) ? s : 3600);
     }
 
-    protected static async Task<TokenSet> PostTokenAsync(string url, Dictionary<string, string> form, CancellationToken ct)
+    protected async Task<TokenSet> PostTokenAsync(string url, Dictionary<string, string> form, CancellationToken ct)
     {
-        using var resp = await Http.PostAsync(url, new FormUrlEncodedContent(form), ct);
+        using var resp = await Http.PostAsync(Route(url), new FormUrlEncodedContent(form), ct);
         string body = await resp.Content.ReadAsStringAsync(ct);
         if (!resp.IsSuccessStatusCode)
         {
@@ -138,8 +196,23 @@ public abstract class CloudProvider
         return ParseTokens(body);
     }
 
+    /// <summary>A URL as it is sent: unchanged, or pointed at the session's stand-in test server.</summary>
+    protected string Route(string url)
+    {
+        if (Session?.TestServer is not { Length: > 0 } test) return url;
+        var u = new Uri(url);
+        return test.TrimEnd('/') + "/" + u.Host + u.PathAndQuery;
+    }
+
     private void SaveTokens(TokenSet t)
     {
+        if (Session != null)
+        {
+            Session.AccessToken = t.AccessToken;
+            Session.AccessExpiry = DateTime.UtcNow.AddSeconds(t.ExpiresIn - 60);
+            if (t.RefreshToken != null) Session.RefreshToken = t.RefreshToken;
+            return;
+        }
         _accessToken = t.AccessToken;
         _accessExpiry = DateTime.UtcNow.AddSeconds(t.ExpiresIn - 60);
         if (t.RefreshToken != null)
@@ -151,6 +224,20 @@ public abstract class CloudProvider
 
     protected async Task<string> AccessTokenAsync(CancellationToken ct)
     {
+        if (Session != null)
+        {
+            if (Session.AccessToken != null && DateTime.UtcNow < Session.AccessExpiry) return Session.AccessToken;
+            if (Session.RefreshToken == null)
+                throw new InvalidOperationException(Session.AccessToken == null
+                    ? $"Connect {DisplayName} first." : $"Your {DisplayName} sign-in has expired. Please connect again.");
+            try { SaveTokens(await RefreshAsync(Session.RefreshToken, ct)); }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("invalid_grant") || ex.Message.Contains("expired") || ex.Message.Contains("revoked"))
+            {
+                Disconnect();
+                throw new InvalidOperationException($"Your {DisplayName} sign-in has expired. Please connect again.", ex);
+            }
+            return Session.AccessToken!;
+        }
         if (_accessToken != null && DateTime.UtcNow < _accessExpiry) return _accessToken;
         if (!AppSettings.Current.CloudTokens.TryGetValue(Key, out var stored))
             throw new InvalidOperationException($"Connect {DisplayName} first (Settings → Cloud).");
@@ -174,12 +261,14 @@ public abstract class CloudProvider
         for (int attempt = 0; ; attempt++)
         {
             var req = make();
+            if (Session?.TestServer != null && req.RequestUri != null) req.RequestUri = new Uri(Route(req.RequestUri.ToString()));
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await AccessTokenAsync(ct));
             var resp = await Http.SendAsync(req, option, ct);
             if (resp.IsSuccessStatusCode) return resp;
             if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized && attempt == 0)
             {
                 _accessToken = null;   // expired early: refresh once and retry
+                if (Session != null) Session.AccessToken = null;
                 resp.Dispose();
                 continue;
             }

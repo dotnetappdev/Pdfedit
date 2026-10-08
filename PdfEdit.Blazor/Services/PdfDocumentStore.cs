@@ -32,6 +32,8 @@ public sealed class PdfSession : IDisposable
     public PdfMetadataInfo Metadata { get; set; } = new();
     /// <summary>Signature fields that have been signed (their appearance stays on the page).</summary>
     public HashSet<string> SignedFields { get; set; } = new();
+    /// <summary>The cloud file this was opened from or last saved to (Save back updates it).</summary>
+    public (string Provider, string FileId, string Name)? CloudFile { get; set; }
 
     /// <summary>Goes up with every change, so page image URLs change and browsers fetch them again.</summary>
     public int Version { get; set; }

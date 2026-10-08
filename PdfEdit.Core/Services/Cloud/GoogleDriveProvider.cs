@@ -8,11 +8,16 @@ namespace PdfEdit.Services.Cloud;
 
 /// <summary>
 /// Google Drive (Drive API v3) with the user's own OAuth client ("Desktop app" type in Google
-/// Cloud Console). Shows folders and PDFs; opens, saves back and uploads new files.
+/// Cloud Console, or "Web application" for the web version). Shows folders and PDFs; opens,
+/// saves back and uploads new files.
 /// </summary>
 public sealed class GoogleDriveProvider : CloudProvider
 {
     public static readonly GoogleDriveProvider Instance = new();
+
+    private GoogleDriveProvider() { }
+    /// <summary>A provider signed in only for this session (the web version).</summary>
+    public GoogleDriveProvider(CloudSession session) : base(session) { }
 
     private const string Scope = "https://www.googleapis.com/auth/drive";
     private const string Api = "https://www.googleapis.com/drive/v3";
@@ -37,26 +42,25 @@ public sealed class GoogleDriveProvider : CloudProvider
     public override string Key => "GoogleDrive";
     public override string DisplayName => "Google Drive";
     public override string RootId => "root";
-    public override bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(AppSettings.Current.GoogleClientId) && !string.IsNullOrWhiteSpace(AppSettings.Current.GoogleClientSecret);
+    public override bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(ClientSecret);
 
-    private static string ClientId => AppSettings.Current.GoogleClientId.Trim();
-    private static string ClientSecret => AppSettings.Current.GoogleClientSecret.Trim();
+    private string ClientId => (Session?.ClientId ?? AppSettings.Current.GoogleClientId).Trim();
+    private string ClientSecret => (Session != null ? Session.ClientSecret ?? "" : AppSettings.Current.GoogleClientSecret).Trim();
 
-    protected override async Task<TokenSet> SignInAsync(CancellationToken ct)
-    {
-        var r = await OAuthLoopback.SignInAsync((redirect, state, challenge) =>
-            "https://accounts.google.com/o/oauth2/v2/auth" +
-            $"?client_id={Uri.EscapeDataString(ClientId)}&redirect_uri={Uri.EscapeDataString(redirect)}" +
-            $"&response_type=code&scope={Uri.EscapeDataString(Scope)}&state={state}" +
-            $"&code_challenge={challenge}&code_challenge_method=S256&access_type=offline&prompt=consent",
-            "127.0.0.1", ct);
-        return await PostTokenAsync("https://oauth2.googleapis.com/token", new()
+    protected override string LoopbackHost => "127.0.0.1";
+
+    public override string AuthorizeUrl(string redirectUri, string state, string codeChallenge) =>
+        Route("https://accounts.google.com/o/oauth2/v2/auth" +
+              $"?client_id={Uri.EscapeDataString(ClientId)}&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+              $"&response_type=code&scope={Uri.EscapeDataString(Scope)}&state={Uri.EscapeDataString(state)}" +
+              $"&code_challenge={codeChallenge}&code_challenge_method=S256&access_type=offline&prompt=consent");
+
+    protected override Task<TokenSet> ExchangeCodeAsync(string code, string redirectUri, string codeVerifier, CancellationToken ct) =>
+        PostTokenAsync("https://oauth2.googleapis.com/token", new()
         {
-            ["code"] = r.Code, ["client_id"] = ClientId, ["client_secret"] = ClientSecret,
-            ["redirect_uri"] = r.RedirectUri, ["grant_type"] = "authorization_code", ["code_verifier"] = r.CodeVerifier,
+            ["code"] = code, ["client_id"] = ClientId, ["client_secret"] = ClientSecret,
+            ["redirect_uri"] = redirectUri, ["grant_type"] = "authorization_code", ["code_verifier"] = codeVerifier,
         }, ct);
-    }
 
     protected override Task<TokenSet> RefreshAsync(string refreshToken, CancellationToken ct) =>
         PostTokenAsync("https://oauth2.googleapis.com/token", new()

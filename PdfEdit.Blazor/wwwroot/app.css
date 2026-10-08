@@ -871,3 +871,22 @@ html, body {
 .pe-same { color: var(--pe-dim); }
 .pe-diff-del { color: #B71C1C; background: rgba(229, 59, 59, .1); padding: 1px 4px; overflow-wrap: anywhere; }
 .pe-diff-add { color: #1B5E20; background: rgba(46, 176, 78, .12); padding: 1px 4px; overflow-wrap: anywhere; }
+
+/* ── Cloud storage ───────────────────────────────────────────────────────── */
+
+.pe-cloud-list {
+    height: 340px;
+    overflow: auto;
+    border: 1px solid var(--pe-input-border);
+    border-radius: 4px;
+    background: var(--pe-input-bg);
+}
+.pe-cloud-list .pe-list li { gap: 8px; }
+.pe-cloud-list .pe-list li span:not(.pe-meta) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pe-cloud-list .pe-list li.pe-disabled { opacity: .5; cursor: default; }
+.pe-cloud-list .pe-list li.pe-disabled:hover { background: transparent; }
+.pe-cloud-connect { text-align: center; padding: 30px 16px; }
+.pe-cloud-connect > i { font-size: 40px; color: var(--pe-accent); }
+.pe-crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12.5px; min-width: 0; }
+.pe-linkbtn { border: 0; background: none; padding: 0 2px; color: var(--pe-accent); cursor: pointer; font: inherit; }
+.pe-linkbtn:hover { text-decoration: underline; }

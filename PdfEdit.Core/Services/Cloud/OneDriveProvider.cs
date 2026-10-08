@@ -15,6 +15,10 @@ public sealed class OneDriveProvider : CloudProvider
 {
     public static readonly OneDriveProvider Instance = new();
 
+    private OneDriveProvider() { }
+    /// <summary>A provider signed in only for this session (the web version).</summary>
+    public OneDriveProvider(CloudSession session) : base(session) { }
+
     private const string Scope = "Files.ReadWrite User.Read offline_access";
     private const string Graph = "https://graph.microsoft.com/v1.0";
     private const string Select = "$select=id,name,size,folder,file,lastModifiedDateTime";
@@ -22,31 +26,38 @@ public sealed class OneDriveProvider : CloudProvider
     public override string Key => "OneDrive";
     public override string DisplayName => "OneDrive";
     public override string RootId => "root";
-    public override bool IsConfigured => !string.IsNullOrWhiteSpace(AppSettings.Current.OneDriveClientId);
+    public override bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
 
-    private static string ClientId => AppSettings.Current.OneDriveClientId.Trim();
-    private static string Tenant => string.IsNullOrWhiteSpace(AppSettings.Current.OneDriveTenant) ? "common" : AppSettings.Current.OneDriveTenant.Trim();
-    private static string Authority => $"https://login.microsoftonline.com/{Uri.EscapeDataString(Tenant)}/oauth2/v2.0";
+    private string ClientId => (Session?.ClientId ?? AppSettings.Current.OneDriveClientId).Trim();
+    private string Tenant => (Session != null ? Session.Tenant : AppSettings.Current.OneDriveTenant) is { Length: > 0 } t && !string.IsNullOrWhiteSpace(t) ? t.Trim() : "common";
+    private string Authority => $"https://login.microsoftonline.com/{Uri.EscapeDataString(Tenant)}/oauth2/v2.0";
 
-    protected override async Task<TokenSet> SignInAsync(CancellationToken ct)
-    {
-        var r = await OAuthLoopback.SignInAsync((redirect, state, challenge) =>
-            $"{Authority}/authorize?client_id={Uri.EscapeDataString(ClientId)}&response_type=code" +
-            $"&redirect_uri={Uri.EscapeDataString(redirect)}&response_mode=query&scope={Uri.EscapeDataString(Scope)}" +
-            $"&state={state}&code_challenge={challenge}&code_challenge_method=S256&prompt=select_account",
-            "localhost", ct);
-        return await PostTokenAsync($"{Authority}/token", new()
+    protected override string LoopbackHost => "localhost";
+
+    public override string AuthorizeUrl(string redirectUri, string state, string codeChallenge) =>
+        Route($"{Authority}/authorize?client_id={Uri.EscapeDataString(ClientId)}&response_type=code" +
+              $"&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_mode=query&scope={Uri.EscapeDataString(Scope)}" +
+              $"&state={Uri.EscapeDataString(state)}&code_challenge={codeChallenge}&code_challenge_method=S256&prompt=select_account");
+
+    protected override Task<TokenSet> ExchangeCodeAsync(string code, string redirectUri, string codeVerifier, CancellationToken ct) =>
+        PostTokenAsync($"{Authority}/token", WithSecret(new()
         {
-            ["client_id"] = ClientId, ["code"] = r.Code, ["redirect_uri"] = r.RedirectUri,
-            ["grant_type"] = "authorization_code", ["code_verifier"] = r.CodeVerifier, ["scope"] = Scope,
-        }, ct);
-    }
+            ["client_id"] = ClientId, ["code"] = code, ["redirect_uri"] = redirectUri,
+            ["grant_type"] = "authorization_code", ["code_verifier"] = codeVerifier, ["scope"] = Scope,
+        }), ct);
 
     protected override Task<TokenSet> RefreshAsync(string refreshToken, CancellationToken ct) =>
-        PostTokenAsync($"{Authority}/token", new()
+        PostTokenAsync($"{Authority}/token", WithSecret(new()
         {
             ["client_id"] = ClientId, ["refresh_token"] = refreshToken, ["grant_type"] = "refresh_token", ["scope"] = Scope,
-        }, ct);
+        }), ct);
+
+    // A "Web" app registration (the web version) also sends its client secret.
+    private Dictionary<string, string> WithSecret(Dictionary<string, string> form)
+    {
+        if (!string.IsNullOrWhiteSpace(Session?.ClientSecret)) form["client_secret"] = Session.ClientSecret.Trim();
+        return form;
+    }
 
     protected override async Task<string?> GetAccountNameAsync(CancellationToken ct)
     {

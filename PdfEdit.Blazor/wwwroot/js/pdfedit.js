@@ -44,6 +44,13 @@ window.pdfedit = (() => {
 
         openInNewTab(url) { window.open(url, '_blank', 'noopener'); },
 
+        // Cloud sign-in in a small window; false if the browser blocked it.
+        openPopup(url) {
+            const w = 520, h = 680;
+            const left = window.screenX + Math.max(0, (window.outerWidth - w) / 2), top = window.screenY + Math.max(0, (window.outerHeight - h) / 2);
+            return !!window.open(url, 'pdfedit-signin', `popup,width=${w},height=${h},left=${left},top=${top}`);
+        },
+
         // Drag to move, or drag the corner handle to resize, anything marked data-drag (Prepare Form
         // field boxes, things placed on a page). Moves are shown live and reported to .NET at the end
         // as percentages of the page.
