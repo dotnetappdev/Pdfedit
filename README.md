@@ -106,6 +106,10 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![The Sign flyout with a saved signature and initials](docs/screenshots/blazor/toolbox-sign.png)
 
+**Signatures and pictures stay editable after Apply changes, saving or reopening**
+
+![A signature applied to the PDF, selected again to move, resize or delete](docs/screenshots/blazor/signature-after-save.png)
+
 **More tools: measure, navigate, fill, shapes and form fields**
 
 ![The More flyout](docs/screenshots/blazor/toolbox-more.png)

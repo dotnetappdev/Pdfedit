@@ -98,6 +98,8 @@ PdfEdit in the browser ([PdfEdit.Blazor](../PdfEdit.Blazor/README.md)): the same
 | Comments: status, checkmarks, replies | Edit Fields: align, space, size |
 | <img src="screenshots/blazor/thumbnail-menu.png" width="480" alt="Thumbnail menu"> | <img src="screenshots/blazor/date-format.png" width="480" alt="Date format popover"> |
 | Thumbnail menu, rotate, drag to reorder | Date format, day, month, year |
+| <img src="screenshots/blazor/signature-after-save.png" width="480" alt="A signature applied to the PDF, selected again"> | |
+| Signatures and pictures stay editable after saving | |
 | <img src="screenshots/blazor/theme-light.png" width="480" alt="Filling a form in the web version, Light theme"> | <img src="screenshots/blazor/theme-dark.png" width="480" alt="Dark theme"> |
 | Light | Dark |
 | <img src="screenshots/blazor/theme-high-contrast.png" width="480" alt="High contrast theme"> | <img src="screenshots/blazor/draw-measure.png" width="480" alt="A stamp, freehand drawing, an arrow and a distance measurement"> |
