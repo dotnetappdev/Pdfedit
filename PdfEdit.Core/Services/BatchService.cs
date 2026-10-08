@@ -72,9 +72,15 @@ public static class BatchService
     }
 
     // ── Run ───────────────────────────────────────────────────────────────────
-    /// <summary>Runs the steps over the files. Must be started on the UI thread (OCR renders pages).</summary>
+    /// <summary>
+    /// Runs the steps over the files. <paramref name="ocr"/>(source, destination, ct) makes a
+    /// searchable copy for the OCR step — the Windows app and the web version each bring their own
+    /// OCR engine; without one the OCR step fails for each file. (The Windows app starts this on
+    /// the UI thread because its OCR renders pages.)
+    /// </summary>
     public static async Task<(int Ok, int Failed)> RunAsync(IReadOnlyList<string> files, IReadOnlyList<BatchStep> steps,
-        BatchOutput output, IProgress<BatchProgress> progress, CancellationToken ct)
+        BatchOutput output, IProgress<BatchProgress> progress, CancellationToken ct,
+        Func<string, string, CancellationToken, Task>? ocr = null)
     {
         int ok = 0, failed = 0;
         int batesNext = steps.FirstOrDefault(s => s.Kind == BatchStepKind.Bates)?.GetInt("Start", 1) ?? 1;
@@ -99,7 +105,8 @@ public static class BatchService
                     switch (step.Kind)
                     {
                         case BatchStepKind.Ocr:
-                            await OcrAsync(src, next, ct);
+                            if (ocr == null) throw new InvalidOperationException("OCR isn't available here.");
+                            await ocr(src, next, ct);
                             break;
                         case BatchStepKind.Compress:
                             await Task.Run(() => form.CompressPdf(src, next), ct);
@@ -208,24 +215,5 @@ public static class BatchService
             var page = pdf.GetPage(p);
             page.SetRotation(((page.GetRotation() + degrees) % 360 + 360) % 360);
         }
-    }
-
-    /// <summary>OCR pages that have no text and add an invisible text layer.</summary>
-    private static async Task OcrAsync(string src, string dest, CancellationToken ct)
-    {
-        const double zoom = 2.0; // same as the single-file OCR
-        using var renderer = RendererFactory.Create();
-        await renderer.LoadAsync(src);
-        var byPage = new Dictionary<int, List<OcrWord>>();
-        for (int i = 0; i < renderer.PageCount; i++)
-        {
-            ct.ThrowIfCancellationRequested();
-            if (PdfTextExtractorService.GetPageText(src, i + 1).Trim().Length > 20) continue;
-            var (w, h) = renderer.GetPageSizeInPoints(i);
-            var bmp = await renderer.RenderPageAsync(i, zoom);
-            var (_, words) = await OcrService.RecognizeAsync(bmp, w, h);
-            byPage[i + 1] = words;
-        }
-        await Task.Run(() => PdfToolsService.AddInvisibleTextLayer(src, dest, byPage), ct);
     }
 }

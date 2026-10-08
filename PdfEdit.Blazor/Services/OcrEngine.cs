@@ -63,6 +63,31 @@ public sealed class OcrEngine(IConfiguration config, ILogger<OcrEngine> log)
         }
     }
 
+    /// <summary>
+    /// A searchable copy of <paramref name="src"/>: upright pages without text are read and get an
+    /// invisible text layer (the batch OCR step). Copies the file unchanged when nothing was read.
+    /// </summary>
+    public async Task MakeSearchableAsync(string src, string dest, string languages, CancellationToken ct)
+    {
+        if (!await IsAvailableAsync()) throw new InvalidOperationException("OCR isn't set up on this server.");
+        using var renderer = new PdfEdit.Render.PdfiumRenderEngine();
+        await renderer.LoadAsync(src);
+        var byPage = new Dictionary<int, List<OcrWord>>();
+        for (int i = 0; i < renderer.PageCount; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (renderer.GetPageRotation(i) != 0) continue;
+            if (PdfTextExtractorService.GetPageText(src, i + 1).Trim().Length > 20) continue;
+            var (w, h) = renderer.GetPageSizeInPoints(i);
+            var page = await renderer.RenderPageAsync(i, 1.0, 3.0 * 72 / 96);   // about 216 dpi
+            var png = PngEncoder.FromBgra(page.Pixels ?? [], page.PixelWidth, page.PixelHeight);
+            var (_, words) = await RecognizeAsync(png, page.PixelWidth, page.PixelHeight, w, h, languages, ct);
+            if (words.Count > 0) byPage[i + 1] = words;
+        }
+        if (byPage.Count == 0) File.Copy(src, dest, overwrite: true);
+        else await Task.Run(() => PdfToolsService.AddInvisibleTextLayer(src, dest, byPage), ct);
+    }
+
     /// <summary>Tesseract's TSV: level 5 rows are words with their pixel boxes and confidence.</summary>
     internal static (string Text, List<OcrWord> Words) ParseTsv(string tsv, double sx, double sy, double pageHeightPt)
     {

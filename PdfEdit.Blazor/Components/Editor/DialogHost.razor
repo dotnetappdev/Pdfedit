@@ -755,6 +755,185 @@
         </Modal>
         break;
 
+    case DialogKind.Batch:
+        <Modal Title="Batch Process" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="pe-batch">
+                    <section>
+                        <h4>1. Files</h4>
+                        @if (Ed.Doc != null)
+                        {
+                            <label class="pe-check-label mb-1"><input type="checkbox" @bind="Ed.BatchIncludeOpen" /> The open document (@Ed.Doc.FileName)</label>
+                        }
+                        <div class="pe-drop small">
+                            <i class="bi bi-files"></i> Add PDFs
+                            <InputFile multiple accept=".pdf,application/pdf" OnChange="AddBatchFiles" aria-label="Add PDFs to process" />
+                        </div>
+                        <ul class="pe-list pe-batch-list">
+                            @foreach (var (f, i) in Ed.BatchFiles.Select((f, i) => (f, i)))
+                            {
+                                var index = i;
+                                <li><i class="bi bi-file-earmark-pdf pe-type"></i><span>@f.Name</span>
+                                    <button class="pe-linkbtn ms-auto" title="Remove" aria-label="Remove @f.Name" @onclick="() => Ed.RemoveBatchFile(index)"><i class="bi bi-x-lg"></i></button></li>
+                            }
+                        </ul>
+                    </section>
+                    <section>
+                        <h4>2. Steps</h4>
+                        <select @key="_stepPicks" class="form-select form-select-sm mb-1" aria-label="Add a step" @onchange="AddBatchStep">
+                            <option value="">Add a step…</option>
+                            @foreach (var k in Enum.GetValues<BatchStepKind>())
+                            {
+                                <option value="@k">@BatchStep.Title(k)</option>
+                            }
+                        </select>
+                        <ul class="pe-list pe-batch-list">
+                            @foreach (var st in Ed.BatchSteps)
+                            {
+                                var step = st;
+                                <li class="@(Ed.SelectedBatchStep == step ? "selected" : "")" @onclick="() => Ed.SelectedBatchStep = step">
+                                    <span>@step.Summary()</span>
+                                    <span class="ms-auto d-flex gap-1">
+                                        <button class="pe-linkbtn" title="Move up" aria-label="Move up" @onclick="() => Ed.MoveBatchStep(step, -1)" @onclick:stopPropagation="true"><i class="bi bi-arrow-up"></i></button>
+                                        <button class="pe-linkbtn" title="Move down" aria-label="Move down" @onclick="() => Ed.MoveBatchStep(step, 1)" @onclick:stopPropagation="true"><i class="bi bi-arrow-down"></i></button>
+                                        <button class="pe-linkbtn" title="Remove" aria-label="Remove step" @onclick="() => Ed.RemoveBatchStep(step)" @onclick:stopPropagation="true"><i class="bi bi-x-lg"></i></button>
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                    <section class="pe-props">
+                        <h4>3. Settings</h4>
+                        @if (Ed.SelectedBatchStep is not { } sel)
+                        {
+                            <p class="pe-hint">Add steps, then select one to change its settings.</p>
+                        }
+                        else
+                        {
+                            <strong style="font-size:12.5px">@BatchStep.Title(sel.Kind)</strong>
+                            @foreach (var p in BatchStep.Schema(sel.Kind))
+                            {
+                                var param = p;
+                                @if (param.IsBool)
+                                {
+                                    <label class="pe-check-label mt-1"><input type="checkbox" checked="@sel.GetBool(param.Key)" @onchange="e => SetBatchSetting(sel, param.Key, e)" /> @param.Label</label>
+                                }
+                                else if (param.Choices != null)
+                                {
+                                    <label>@param.Label</label>
+                                    <select class="form-select form-select-sm" value="@sel.Get(param.Key)" @onchange="e => SetBatchSetting(sel, param.Key, e)">
+                                        @foreach (var c in param.Choices) { <option value="@c">@c</option> }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <label>@param.Label</label>
+                                    <input class="form-control form-control-sm" type="@(param.Secret ? "password" : "text")" value="@sel.Get(param.Key)" @onchange="e => SetBatchSetting(sel, param.Key, e)" />
+                                }
+                            }
+                            @if (sel.Kind == BatchStepKind.Ocr)
+                            {
+                                <label>Languages</label>
+                                <input class="form-control form-control-sm" @bind="Ed.BatchOcrLanguages" />
+                                <p class="pe-hint mt-1">Tesseract language codes, e.g. eng or eng+deu. Pages that already have text are skipped.</p>
+                            }
+                            @if (sel.Kind == BatchStepKind.HeaderFooter) { <p class="pe-hint mt-1">{file} = file name, {date} = today.</p> }
+                            @if (sel.Kind == BatchStepKind.Password) { <p class="pe-hint mt-1">Passwords are only used for this run.</p> }
+                            @if (BatchStep.Schema(sel.Kind).Count == 0 && sel.Kind != BatchStepKind.Ocr) { <p class="pe-hint mt-1">No settings.</p> }
+                        }
+                    </section>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <label class="mb-0">Add to file names</label>
+                    <input class="form-control form-control-sm" style="width:130px" @bind="Ed.BatchSuffix" aria-label="Add to file names" />
+                    <span class="pe-hint ms-2">@Ed.BatchStatus</span>
+                </div>
+                @if (Ed.BatchLog.Count > 0)
+                {
+                    <ul class="pe-batch-log">
+                        @foreach (var (err, text) in Ed.BatchLog)
+                        {
+                            <li class="@(err ? "err" : "")"><i class="bi @(err ? "bi-x-circle" : "bi-check-circle")"></i> @text</li>
+                        }
+                    </ul>
+                }
+            </ChildContent>
+            <Footer>
+                @if (Ed.BatchRunning)
+                {
+                    <button class="pe-btn" @onclick="Ed.StopBatch">Stop</button>
+                }
+                else
+                {
+                    <button class="pe-btn primary" disabled="@(Ed.BatchSteps.Count == 0)" @onclick="() => ActAsync(Ed.RunBatchAsync)">Run and download</button>
+                }
+                <button class="pe-btn" @onclick="Close">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.BulkFill:
+        <Modal Title="Bulk Fill" OnClose="Close" Wide>
+            <ChildContent>
+                <p class="pe-hint">One filled copy of this form for each row of a spreadsheet (CSV or Excel .xlsx) — like a mail merge.</p>
+                <div class="pe-drop small">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> @(Ed.BulkData == null ? "Choose the spreadsheet" : $"{Ed.BulkDataName}: {Ed.BulkData.Rows.Count} row(s), {Ed.BulkData.Headers.Count} column(s) — choose another")
+                    <InputFile accept=".csv,.xlsx,.tsv,.txt" OnChange="LoadBulkData" aria-label="Choose the spreadsheet" />
+                </div>
+                @if (Ed.BulkData is { } data)
+                {
+                    <div class="pe-bulk-map">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Field</th><th>Type</th><th>Column</th><th>First row</th></tr></thead>
+                            <tbody>
+                                @foreach (var f in Ed.BulkFields)
+                                {
+                                    var field = f;
+                                    int col = Ed.BulkMapping.GetValueOrDefault(field.Name, -1);
+                                    <tr>
+                                        <td>@field.Name</td>
+                                        <td class="pe-hint">@field.Kind</td>
+                                        <td>
+                                            <select class="form-select form-select-sm" value="@col" @onchange="e => SetBulkColumn(field.Name, e)" aria-label="Column for @field.Name">
+                                                <option value="-1">— leave empty —</option>
+                                                @for (int c = 0; c < data.Headers.Count; c++)
+                                                {
+                                                    <option value="@c">@data.Headers[c]</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td class="pe-hint">@(col >= 0 && data.Rows.Count > 0 ? data.Cell(0, col) : "")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row g-2 mt-1 align-items-end">
+                        <div class="col-6">
+                            <label class="mb-0">File names</label>
+                            <input class="form-control form-control-sm" @bind="Ed.BulkPattern" @bind:event="oninput" aria-label="File names"
+                                   title="Column names in braces, e.g. {Last name} {First name}; {row} is the row number" />
+                            <span class="pe-hint">@(Ed.BulkExampleName.Length > 0 ? "e.g. " + Ed.BulkExampleName : "")</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="pe-check-label"><input type="checkbox" @bind="Ed.BulkFlatten" /> Flatten (values can't be changed afterwards)</label>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mt-2">
+                        <label class="pe-check-label"><input type="radio" name="bulkout" checked="@(Ed.BulkOutput == "zip")" @onchange="() => Ed.BulkOutput = Zip" /> One PDF per row (ZIP)</label>
+                        <label class="pe-check-label"><input type="radio" name="bulkout" checked="@(Ed.BulkOutput == "combined")" @onchange="() => Ed.BulkOutput = Combined" /> All in one PDF</label>
+                        <label class="pe-check-label"><input type="radio" name="bulkout" checked="@(Ed.BulkOutput == "both")" @onchange="() => Ed.BulkOutput = Both" /> Both (ZIP)</label>
+                    </div>
+                    @if (Ed.BulkStatus != null) { <p class="pe-hint mt-2 mb-0">@Ed.BulkStatus</p> }
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn primary" disabled="@(Ed.BulkData == null)" @onclick="() => ActAsync(Ed.RunBulkFillAsync)">Fill and download</button>
+                <button class="pe-btn" @onclick="Close">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
     case DialogKind.Signatures:
         <Modal Title="Signatures" OnClose="Close" Wide>
             <ChildContent>
@@ -954,6 +1133,24 @@
     }
 
     private const string My = "My files";
+    private const string Zip = "zip", Combined = "combined", Both = "both";
+    private int _stepPicks;
+
+    private async Task AddBatchFiles(InputFileChangeEventArgs e) => await ActAsync(() => Ed.AddBatchFilesAsync(e.GetMultipleFiles(200)));
+
+    private void AddBatchStep(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<BatchStepKind>(e.Value?.ToString(), out var kind)) Ed.AddBatchStep(kind);
+        _stepPicks++;   // a fresh picker, back on "Add a step…"
+    }
+
+    private static void SetBatchSetting(BatchStep step, string key, ChangeEventArgs e) =>
+        step.Settings[key] = e.Value is bool b ? (b ? "true" : "false") : e.Value?.ToString() ?? "";
+
+    private Task LoadBulkData(InputFileChangeEventArgs e) => ActAsync(() => Ed.LoadBulkDataAsync(e.File));
+
+    private void SetBulkColumn(string field, ChangeEventArgs e) =>
+        Ed.BulkMapping[field] = int.TryParse(e.Value?.ToString(), out var c) ? c : -1;
 
     private Task CloudClick(CloudItem item, bool usable) => usable ? ActAsync(() => Ed.CloudOpenAsync(item)) : Task.CompletedTask;
 

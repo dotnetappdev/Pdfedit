@@ -279,7 +279,7 @@ public partial class BatchDialog : Window
         });
         try
         {
-            var (ok, failed) = await BatchService.RunAsync(_files.ToList(), _steps.ToList(), output, progress, _cts.Token);
+            var (ok, failed) = await BatchService.RunAsync(_files.ToList(), _steps.ToList(), output, progress, _cts.Token, BatchOcr.OcrAsync);
             SummaryText.Text = failed == 0 ? $"Finished: {ok} file(s) processed." : $"Finished: {ok} processed, {failed} failed — see the list above.";
             if (failed == 0) ToastService.Instance.Success($"Batch finished — {ok} file(s).");
         }

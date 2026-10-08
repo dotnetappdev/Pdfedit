@@ -126,7 +126,9 @@ public static class BulkFillService
             var states = field.GetAppearanceStates().Where(s => s != "Off").Distinct().ToList();
             if (btn.IsRadio())
             {
-                var match = states.FirstOrDefault(s => s.Equals(value, StringComparison.OrdinalIgnoreCase));
+                // "1/2" picks the option named 1_2, "full" picks Full …
+                var match = states.FirstOrDefault(s => s.Equals(value, StringComparison.OrdinalIgnoreCase))
+                            ?? states.FirstOrDefault(s => Norm(s).Length > 0 && Norm(s) == Norm(value));
                 if (match != null) field.SetValue(match);
                 return;
             }

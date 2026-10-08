@@ -222,6 +222,7 @@
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-ui-checks" Label="Fields Panel" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
                         <RibbonButton Icon="bi-asterisk" Label="Check Required" Title="Find required fields that are still empty" Disabled="@(NoDoc || FieldCount == 0)" OnClick="CheckRequired" />
+                        <RibbonButton Icon="bi-table" Label="Bulk Fill" Title="One filled copy of this form for each row of a spreadsheet" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ShowBulkFillAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Redact">
@@ -327,6 +328,10 @@
                 <RibbonGroup Title="Scan &amp; OCR">
                     <RibbonButton Large Icon="bi-textarea-resize" Label="Recognise Text" Title="OCR: make scanned pages searchable and copyable" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Ocr)" />
                     <RibbonButton Large Icon="bi-camera" Label="Scan with Camera" Title="Take photos of paper pages (or choose pictures) and make a PDF" OnClick="() => ShowDialog(DialogKind.ScanCamera)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Batch">
+                    <RibbonButton Large Icon="bi-collection-play" Label="Batch Process" Title="Run steps (OCR, compress, watermark, numbering, password …) over many PDFs" OnClick="ShowBatch" />
+                    <RibbonButton Large Icon="bi-table" Label="Bulk Fill" Title="One filled copy of this form for each row of a spreadsheet" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ShowBulkFillAsync" />
                 </RibbonGroup>
                 <RibbonGroup Title="Measure">
                     <RibbonButton Large Icon="bi-rulers" Label="Distance" Title="Drag between two points" Disabled="NoDoc" Active="_tool == Tool.Distance" OnClick="() => SetTool(Tool.Distance)" />

@@ -113,6 +113,8 @@ public partial class Editor
         if (Doc != null) Store.Close(Doc);
         SigningCert?.Dispose();
         _self?.Dispose();
+        _batchCts?.Cancel();
+        if (_batchFolder != null) try { Directory.Delete(_batchFolder, true); } catch { }
         await Task.CompletedTask;
     }
 
