@@ -16,7 +16,22 @@ public partial class Editor
 {
     public bool DesignMode { get; private set; }
     public DesignDocument Design { get; private set; } = NewDesign();
-    public string? SelectedDesignId { get; set; }
+    private string? _selectedDesignId;
+
+    /// <summary>The selected element (the last one clicked when several are selected).</summary>
+    public string? SelectedDesignId
+    {
+        get => _selectedDesignId;
+        set
+        {
+            _selectedDesignId = value;
+            SelectedDesignIds.Clear();
+            if (value != null) SelectedDesignIds.Add(value);
+        }
+    }
+
+    /// <summary>Every selected element, in the order clicked (Ctrl+click adds one).</summary>
+    public List<string> SelectedDesignIds { get; } = new();
     public DesignTool DesignToolNow => _designTool;
     private DesignTool _designTool = DesignTool.Select;
     private string _designName = "Untitled design";
@@ -294,7 +309,7 @@ public partial class Editor
         var item = new DesignItem
         {
             Type = "freehand", X = x0, Y = y0, W = Math.Max(1, pts.Max(p => p.X) - x0), H = Math.Max(1, pts.Max(p => p.Y) - y0),
-            Color = "#FF000000", Thickness = 2, Strokes = [pts],
+            Color = "#FF" + DesignPenColor.TrimStart('#').ToUpperInvariant(), Thickness = DesignPenWidth, Strokes = [pts],
         };
         Design.Elements ??= new();
         Design.Elements.Add(item);

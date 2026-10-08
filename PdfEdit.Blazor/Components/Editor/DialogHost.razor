@@ -214,7 +214,8 @@
                 <div class="mb-2">
                     <label>Pages on each A4 sheet</label>
                     <select class="form-select" @bind="_nup">
-                        <option value="2">2 (side by side)</option><option value="4">4</option><option value="6">6</option><option value="9">9</option>
+                        <option value="2">2 (side by side)</option><option value="4">4</option><option value="6">6</option><option value="9">9</option><option value="16">16</option>
+                        <option value="0">Booklet (two per sheet, in folding order)</option>
                     </select>
                 </div>
                 <label class="d-flex gap-2"><input type="checkbox" @bind="_nupBorders" /> Draw a border round each page</label>
@@ -326,8 +327,8 @@
     case DialogKind.ImportData:
         <Modal Title="Import Form Data" OnClose="Close">
             <ChildContent>
-                <p class="pe-hint">Choose a data file made by Export Data (field name, a tab, then the value, one per line).</p>
-                <InputFile class="form-control" accept=".txt,.tsv" OnChange="e => _files = [e.File]" />
+                <p class="pe-hint">Choose a data file made by Export Data (field name, a tab, then the value, one per line), or a JSON file of {"field name": value} pairs.</p>
+                <InputFile class="form-control" accept=".txt,.tsv,.json" OnChange="e => _files = [e.File]" />
             </ChildContent>
             <Footer>
                 <button class="pe-btn" @onclick="Close">Cancel</button>
@@ -1014,6 +1015,519 @@
             <Footer><button class="pe-btn primary" @onclick="Close">Close</button></Footer>
         </Modal>
         break;
+
+    case DialogKind.GoogleLink:
+        <Modal Title="Import from Google Docs" OnClose="Close">
+            <ChildContent>
+                <p>Paste the link to a Google Doc, Sheet or Slides file (or a Word file on Google Drive):</p>
+                <input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="https://docs.google.com/document/d/…" aria-label="Google link" autofocus />
+                <p class="pe-hint mt-2 mb-0">The file must be shared as “Anyone with the link”. For private files, use Import from Cloud and sign in to Google Drive.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => Do(() => Ed.ImportGoogleLinkAsync(_text1))">Import</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Settings:
+        <Modal Title="Settings" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2"><label>Your name (on dynamic stamps)</label><input class="form-control" @bind="_settings.AuthorName" /></div>
+                <div class="row g-2 mb-2">
+                    <div class="col-7">
+                        <label>Date format</label>
+                        <select class="form-select" @bind="_settings.DateFormat">
+                            @foreach (var f in new[] { "d MMMM yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "d MMM yyyy", "dddd d MMMM yyyy" })
+                            {
+                                <option value="@f">@DateTime.Today.ToString(f)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-5"><label>Text size</label><input class="form-control" type="number" min="4" max="144" @bind="_settings.DefaultFontSize" /></div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><label>Text colour</label><input class="form-control form-control-color" type="color" @bind="_settings.DefaultTextColour" /></div>
+                    <div class="col-6">
+                        <label>UI scale</label>
+                        <select class="form-select" @bind="_settings.UiScale">
+                            @foreach (var s in new[] { 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 }) { <option value="@s">@((int)(s * 100))%</option> }
+                        </select>
+                    </div>
+                </div>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.HighlightFields" /> Highlight form fields</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.OpenFitWidth" /> Open documents at Fit Width</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_settings.ShowTipsAtStart" /> Show a Tip of the Day when PdfEdit opens</label>
+                <p class="pe-hint mt-2 mb-0">Kept for this browser in the app's database. The theme is on View → Theme; AI keys are on AI Assistant → API Keys and are never kept.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="() => Act(() => Ed.SaveSettingsFromDialog(_settings))">Save</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Crop:
+        <Modal Title="Crop Pages" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Trim this much from the edge of every page, in points (72 points = 1 inch, about 2.5 cm).</p>
+                <div class="row g-2">
+                    <div class="col-3"><label>Left</label><input class="form-control" type="number" min="0" @bind="_cropL" /></div>
+                    <div class="col-3"><label>Right</label><input class="form-control" type="number" min="0" @bind="_cropR" /></div>
+                    <div class="col-3"><label>Top</label><input class="form-control" type="number" min="0" @bind="_cropT" /></div>
+                    <div class="col-3"><label>Bottom</label><input class="form-control" type="number" min="0" @bind="_cropB" /></div>
+                </div>
+                <p class="pe-hint mt-2 mb-0">Undo brings the margins back.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_cropL + _cropR + _cropT + _cropB <= 0)" @onclick="() => Do(() => Ed.CropAsync(_cropL, _cropB, _cropR, _cropT))">Crop</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Stamps:
+        <Modal Title="Stamps" OnClose="CloseStamps" Wide>
+            <ChildContent>
+                @if (Ed.EditingStamp is { } es)
+                {
+                    <h6>@(string.IsNullOrEmpty(es.Title) ? "New stamp" : "Change stamp")</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label>Text</label><input class="form-control" @bind="es.Title" @bind:event="oninput" maxlength="40" placeholder="e.g. CHECKED" autofocus /></div>
+                        <div class="col-3"><label>Colour</label><input class="form-control form-control-color" type="color" @bind="es.Color" /></div>
+                        <div class="col-3 d-flex align-items-end"><label class="d-flex gap-2"><input type="checkbox" @bind="es.Dynamic" /> Add name and time</label></div>
+                    </div>
+                    <div class="mb-2">Preview: <span class="pe-stamp-chip" style="color:@es.Color">@(string.IsNullOrWhiteSpace(es.Title) ? "STAMP" : es.Title.ToUpperInvariant())</span></div>
+                    <div class="d-flex gap-2">
+                        <button class="pe-btn primary" @onclick="() => Act(Ed.SaveEditingStamp)">Save stamp</button>
+                        <button class="pe-btn" @onclick="() => Ed.EditingStamp = null">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var g in Ed.StampGroups)
+                    {
+                        <h6 class="mt-1">@g.Key</h6>
+                        <div class="pe-stamp-list">
+                            @foreach (var d in g)
+                            {
+                                var key = StampCatalog.KeyOf(d);
+                                <button class="pe-stamp-chip @(Ed.StampKey == key ? "active" : "")" style="color:@d.Color" title="@(d.Dynamic ? "Adds who stamped it and when" : d.Title)"
+                                        @onclick="() => { Ed.PickStamp(key); Close(); }">@d.Title</button>
+                            }
+                        </div>
+                    }
+                    @if (Ed.CustomStamps.Count > 0)
+                    {
+                        <h6>Change or delete your stamps</h6>
+                        <ul class="pe-list">
+                            @foreach (var c in Ed.CustomStamps.ToList())
+                            {
+                                var cs = c;
+                                <li class="d-flex align-items-center gap-2">
+                                    <span class="pe-stamp-chip" style="color:@cs.Color">@cs.Title</span>
+                                    <span class="pe-spacer"></span>
+                                    <button class="pe-linkbtn" @onclick="() => Ed.EditCustomStamp(cs)">Change</button>
+                                    <button class="pe-linkbtn" @onclick="() => Act(() => Ed.DeleteCustomStamp(cs))">Delete</button>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    <p class="pe-hint mb-0">Click a stamp to choose it, then click the page. Your own stamps are kept for this browser.</p>
+                }
+            </ChildContent>
+            <Footer>
+                @if (Ed.EditingStamp == null)
+                {
+                    <button class="pe-btn" @onclick="() => Ed.EditingStamp = new CustomStampSetting { Color = PdfEdit.Models.StampCatalog.ColorFor(string.Empty) }">New Stamp…</button>
+                }
+                <button class="pe-btn primary" @onclick="CloseStamps">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.FindHighlight:
+        <Modal Title="Find &amp; Highlight" OnClose="Close">
+            <ChildContent>
+                <label>Highlight every place this appears</label>
+                <input class="form-control mb-2" @bind="_text1" @bind:event="oninput" placeholder="Text to find" autofocus />
+                <label>Colour</label>
+                <div class="d-flex gap-2">
+                    @foreach (var (hex, name) in Editor.HighlightColors)
+                    {
+                        var h = hex;
+                        <button class="pe-swatch @(_text2 == h ? "active" : "")" style="background:@h" title="@name" aria-label="@name" @onclick="() => _text2 = h"></button>
+                    }
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => ActAsync(() => Ed.FindAndHighlightAsync(_text1, _text2))">Highlight All</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.FindReplace:
+        <Modal Title="Find &amp; Replace in Fields" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2"><label>Find</label><input class="form-control" @bind="_text1" @bind:event="oninput" autofocus /></div>
+                <div class="mb-2"><label>Replace with</label><input class="form-control" @bind="_text2" /></div>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_check1" /> Match case</label>
+                <label class="d-flex gap-2"><input type="checkbox" @bind="_check2" /> Whole field only</label>
+                @if (_replaced != null) { <p class="pe-hint mt-2 mb-0">@_replaced</p> }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn primary" disabled="@string.IsNullOrEmpty(_text1)" @onclick="ReplaceInFields">Replace All</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.AddBookmark:
+        <Modal Title="Add Bookmark" OnClose="Close">
+            <ChildContent>
+                <div class="mb-2"><label>Name</label><input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="@($"Page {Ed.CurrentPage + 1}")" autofocus /></div>
+                <label>Page</label>
+                <input class="form-control" type="number" min="1" max="@Ed.PageCount" @bind="_number" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" @onclick="AddBookmark">Add</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.ImportXfdf:
+        <Modal Title="Import XFDF" OnClose="Close">
+            <ChildContent>
+                <p class="pe-hint">Choose an XFDF file of comments exported by Acrobat, Foxit or PdfEdit.</p>
+                <InputFile class="form-control" accept=".xfdf,.xml" OnChange="e => _files = [e.File]" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="() => DoFiles(files => Ed.ImportXfdfAsync(files[0]))">Import</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Attachments:
+        <Modal Title="Attachments" OnClose="Close">
+            <ChildContent>
+                @if (Ed.Attachments.Count == 0)
+                {
+                    <p class="pe-hint">No files are attached to this PDF.</p>
+                }
+                else
+                {
+                    <ul class="pe-list mb-2">
+                        @foreach (var a in Ed.Attachments)
+                        {
+                            var att = a;
+                            <li class="d-flex align-items-center gap-2">
+                                <i class="bi bi-paperclip"></i> <span>@att.Name</span> <small class="pe-hint">@att.SizeDisplay</small>
+                                <span class="pe-spacer"></span>
+                                <button class="pe-linkbtn" @onclick="() => ActAsync(() => Ed.DownloadAttachmentAsync(att))">Download</button>
+                                <button class="pe-linkbtn" @onclick="() => ActAsync(() => Ed.RemoveAttachmentAsync(att))">Remove</button>
+                            </li>
+                        }
+                    </ul>
+                }
+                <label>Attach files</label>
+                <InputFile class="form-control" multiple OnChange="e => _files = e.GetMultipleFiles(20)" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0)" @onclick="AttachChosen">Attach</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Accessibility:
+        <Modal Title="Accessibility Check" OnClose="Close" Wide>
+            <ChildContent>
+                @{ var fixable = Ed.AccessibilityResults.Count(r => r.CanFix); }
+                <p>@Ed.AccessibilityResults.Count(r => r.Status == CheckStatus.Passed) passed · @Ed.AccessibilityResults.Count(r => r.Status == CheckStatus.Failed) failed · @Ed.AccessibilityResults.Count(r => r.Status == CheckStatus.Warning) to look at · @Ed.AccessibilityResults.Count(r => r.Status == CheckStatus.Manual) to check by hand</p>
+                <ul class="pe-checklist">
+                    @foreach (var r in Ed.AccessibilityResults)
+                    {
+                        <li><span title="@r.StatusText">@r.Glyph</span><span><b>@r.Rule</b> <small style="display:inline">(@r.Category)</small></span><small>@r.Detail</small></li>
+                    }
+                </ul>
+                @if (fixable > 0)
+                {
+                    <h6 class="mt-3">Fix the common problems</h6>
+                    <div class="row g-2">
+                        <div class="col-7"><label>Title</label><input class="form-control" @bind="_axTitle" /></div>
+                        <div class="col-5"><label>Language</label><input class="form-control" @bind="_axLang" placeholder="en-GB" /></div>
+                    </div>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                @if (Ed.AccessibilityResults.Count(r => r.CanFix) is var fixable && fixable > 0)
+                {
+                    <button class="pe-btn primary" @onclick="() => ActAsync(() => Ed.FixAccessibilityAsync(new AccessibilityFixOptions { Title = NullIfEmpty(_axTitle), Language = NullIfEmpty(_axLang) }))">Fix @fixable problem@(fixable == 1 ? "" : "s")</button>
+                }
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Cleanup when Ed.CleanupFindings is { } cf:
+        <Modal Title="Clean Up Scans" OnClose="Close">
+            <ChildContent>
+                <p>@cf.Status</p>
+                <label class="d-flex gap-2 mb-1 @(cf.CanRemoveBlank ? "" : "pe-hint")"><input type="checkbox" @bind="Ed.CleanupRemoveBlank" disabled="@(!cf.CanRemoveBlank)" /> @cf.Blank</label>
+                <label class="d-flex gap-2 mb-1 @(cf.CanStraighten ? "" : "pe-hint")"><input type="checkbox" @bind="Ed.CleanupStraighten" disabled="@(!cf.CanStraighten)" /> @cf.Skew</label>
+                <label class="d-flex gap-2 @(cf.CanSplit ? "" : "pe-hint")"><input type="checkbox" @bind="Ed.CleanupSplit" disabled="@(!cf.CanSplit)" /> @cf.Split</label>
+                <p class="pe-hint mt-2 mb-0">Undo puts the pages back as they were.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(!(Ed.CleanupRemoveBlank && cf.CanRemoveBlank || Ed.CleanupStraighten && cf.CanStraighten || Ed.CleanupSplit && cf.CanSplit))" @onclick="() => Do(Ed.ApplyCleanupAsync)">Clean Up</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.SearchFolder:
+        <Modal Title="Search PDFs" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><label>Find</label><input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="Text to look for" autofocus /></div>
+                    <div class="col-6">
+                        <label>In a folder <span class="pe-hint">(or choose PDFs below)</span></label>
+                        <InputFile class="form-control" webkitdirectory multiple OnChange="e => _files = e.GetMultipleFiles(500)" />
+                    </div>
+                </div>
+                <InputFile class="form-control mb-2" accept=".pdf" multiple OnChange="e => _files = e.GetMultipleFiles(500)" />
+                @if (Ed.FolderSearchStatus != null) { <p class="mb-1">@Ed.FolderSearchStatus</p> }
+                @if (Ed.FolderHits.Count > 0)
+                {
+                    <ul class="pe-hits">
+                        @foreach (var (file, pg, snippet) in Ed.FolderHits)
+                        {
+                            <li><b>@file</b> · page @pg<br /><span class="pe-hint">@snippet</span></li>
+                        }
+                    </ul>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn primary" disabled="@(_files.Count == 0 || string.IsNullOrWhiteSpace(_text1))" @onclick="SearchFiles">Search @(_files.Count > 0 ? $"{_files.Count(f => f.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))} PDFs" : "")</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.AskAcross:
+        <Modal Title="Ask Across PDFs" OnClose="Close" Wide>
+            <ChildContent>
+                <label>Your question</label>
+                <textarea class="form-control mb-2" rows="2" @bind="_text1" @bind:event="oninput" placeholder="e.g. Which of these contracts renew automatically, and when?" autofocus></textarea>
+                <div class="row g-2 mb-2">
+                    <div class="col-7"><label>PDFs to ask about</label><InputFile class="form-control" accept=".pdf" multiple OnChange="e => _files = e.GetMultipleFiles(50)" /></div>
+                    <div class="col-5 d-flex align-items-end"><label class="d-flex gap-2"><input type="checkbox" @bind="Ed.AskAcrossIncludeOpen" disabled="@Ed.NoDoc" /> Include the open document</label></div>
+                </div>
+                @if (Ed.AskAcrossStatus != null) { <p class="mb-1 pe-hint">@Ed.AskAcrossStatus</p> }
+                @if (Ed.AskAcrossAnswer.Length > 0)
+                {
+                    <div class="pe-answer">@((MarkupString)Ed.ReplyHtml(Ed.AskAcrossAnswer))</div>
+                    @if (Ed.AskAcrossSources.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            @foreach (var (file, pg) in Ed.AskAcrossSources) { <span class="pe-stamp-chip" style="color:var(--pe-accent);font-weight:500">@file · p.@pg</span> }
+                        </div>
+                    }
+                }
+            </ChildContent>
+            <Footer>
+                @if (Ed.AiRunning) { <button class="pe-btn" @onclick="Ed.StopAi">Stop</button> }
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn primary" disabled="@(Ed.AiRunning || string.IsNullOrWhiteSpace(_text1) || (_files.Count == 0 && (Ed.NoDoc || !Ed.AskAcrossIncludeOpen)))" @onclick="AskAcross">Ask</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.DesignAi:
+        <Modal Title="Design Form with AI" OnClose="Close" Wide>
+            <ChildContent>
+                <label>Describe the form you need</label>
+                <textarea class="form-control mb-2" rows="4" @bind="Ed.DesignAiDescription" @bind:event="oninput"
+                          placeholder="e.g. A car damage report: the driver's name, address and licence number, the car's make, model and registration, a description of the damage, and a signature with the date." autofocus></textarea>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label>Paper</label>
+                        <select class="form-select" @bind="Ed.DesignAiPaper"><option>A4</option><option>Letter</option></select>
+                    </div>
+                    <div class="col-8">
+                        <label>Colour</label>
+                        <div class="d-flex gap-2">
+                            @foreach (var (name, hex) in FormDesignAi.Accents)
+                            {
+                                var h = hex;
+                                <button class="pe-swatch @(Ed.DesignAiAccent == h ? "active" : "")" style="background:@DesignColor.ToCss(h, "#1E50A0")" title="@name" aria-label="@name" @onclick="() => Ed.DesignAiAccent = h"></button>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (Ed.DesignAiStatus != null) { <p class="mt-2 mb-0">@Ed.DesignAiStatus</p> }
+                <p class="pe-hint mt-2 mb-0">The new form replaces what's on the design canvas (Undo brings it back).</p>
+            </ChildContent>
+            <Footer>
+                @if (Ed.AiRunning) { <button class="pe-btn" @onclick="Ed.StopAi">Stop</button> }
+                <button class="pe-btn" @onclick="Close">Cancel</button>
+                <button class="pe-btn primary" disabled="@(Ed.AiRunning)" @onclick="() => ActAsync(Ed.DesignFormWithAiAsync)">Design It</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Profiles:
+        <Modal Title="Manage Profiles" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="d-flex gap-2 mb-2 align-items-center">
+                    <select class="form-select" style="max-width:260px" value="@(_profile?.Id ?? "")" @onchange="PickProfile" aria-label="Profile">
+                        @foreach (var p in Ed.Profiles) { <option value="@p.Id">@p.DisplayName</option> }
+                        @if (_profile != null && !Ed.Profiles.Any(p => p.Id == _profile.Id)) { <option value="@_profile.Id">(new profile)</option> }
+                    </select>
+                    <button class="pe-btn" @onclick="NewProfile">New</button>
+                    @if (_profile != null && Ed.Profiles.Any(p => p.Id == _profile.Id))
+                    {
+                        <button class="pe-btn" @onclick="DeleteProfile">Delete</button>
+                    }
+                </div>
+                @if (_profile is { } pr)
+                {
+                    <div class="row g-2">
+                        <div class="col-12"><label>Profile name</label><input class="form-control" @bind="pr.DisplayName" /></div>
+                        <div class="col-4"><label>First name</label><input class="form-control" @bind="pr.FirstName" /></div>
+                        <div class="col-4"><label>Middle name</label><input class="form-control" @bind="pr.MiddleName" /></div>
+                        <div class="col-4"><label>Last name</label><input class="form-control" @bind="pr.LastName" /></div>
+                        <div class="col-4"><label>Date of birth</label><input class="form-control" @bind="pr.DateOfBirth" placeholder="dd/mm/yyyy" /></div>
+                        <div class="col-4"><label>Email</label><input class="form-control" type="email" @bind="pr.Email" /></div>
+                        <div class="col-4"><label>Phone</label><input class="form-control" @bind="pr.Phone" /></div>
+                        <div class="col-6"><label>Address line 1</label><input class="form-control" @bind="pr.AddressLine1" /></div>
+                        <div class="col-6"><label>Address line 2</label><input class="form-control" @bind="pr.AddressLine2" /></div>
+                        <div class="col-4"><label>Town / city</label><input class="form-control" @bind="pr.City" /></div>
+                        <div class="col-4"><label>County / state</label><input class="form-control" @bind="pr.County" /></div>
+                        <div class="col-4"><label>Postcode</label><input class="form-control" @bind="pr.Postcode" /></div>
+                        <div class="col-6"><label>Country</label><input class="form-control" @bind="pr.Country" /></div>
+                        <div class="col-6"><label>National Insurance number</label><input class="form-control" @bind="pr.NationalInsuranceNumber" /></div>
+                    </div>
+                    <p class="pe-hint mt-2 mb-0">Profiles are kept for this browser in the app's database, so Quick Fill can fill forms in one click. Anyone using this browser can see them.</p>
+                }
+                else
+                {
+                    <p class="pe-hint">No profiles yet. Click New to make one.</p>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn primary" disabled="@(_profile == null)" @onclick="SaveProfile">Save</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.MindMap:
+        <Modal Title="Mind Map" OnClose="Close" Wide>
+            <ChildContent>
+                <div class="pe-mindmap">@((MarkupString)(Ed.MindMapSvg ?? ""))</div>
+                <p class="pe-hint mt-2 mb-0">Click a topic with a page number to go to that page.</p>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="() => ActAsync(Ed.SaveMindMapAsync)">Download (SVG)</button>
+                <button class="pe-btn primary" @onclick="Close">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Tip:
+        var tip = Ed.CurrentTip;
+        <Modal Title="Tip of the Day" OnClose="Close">
+            <ChildContent>
+                <div class="d-flex gap-3">
+                    <i class="bi bi-lightbulb" style="font-size:30px;color:var(--pe-accent)"></i>
+                    <div>
+                        <h5>@tip.Title</h5>
+                        <p class="mb-0">@tip.Text</p>
+                    </div>
+                </div>
+            </ChildContent>
+            <Footer>
+                <label class="d-flex gap-2 me-auto"><input type="checkbox" checked="@Ed.Settings.ShowTipsAtStart" @onchange="ToggleTipsAtStart" /> Show tips when PdfEdit opens</label>
+                <button class="pe-btn" @onclick="() => Ed.NextTip(-1)">Previous</button>
+                <button class="pe-btn" @onclick="() => Ed.NextTip(1)">Next Tip</button>
+                <button class="pe-btn primary" @onclick="Close">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Snapshot:
+        <Modal Title="Snapshot" OnClose="Close">
+            <ChildContent>
+                <img class="pe-snapshot" src="@Ed.SnapshotUrl" alt="Snapshot" />
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="Close">Close</button>
+                <button class="pe-btn" @onclick="() => ActAsync(Ed.CopySnapshotAsync)"><i class="bi bi-clipboard"></i> Copy</button>
+                <button class="pe-btn primary" @onclick="() => ActAsync(Ed.SaveSnapshotAsync)"><i class="bi bi-download"></i> Save as Picture</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.SelectedText:
+        <Modal Title="Selected Text" OnClose="Close" Wide>
+            <ChildContent>
+                @if (Ed.SelectedPageText.Length == 0)
+                {
+                    <p>There's no text in that area — it may be a picture. Snapshot copies it as a picture, or Recognise Text (OCR) makes it into text.</p>
+                }
+                else
+                {
+                    <div class="pe-selected-text">@Ed.SelectedPageText</div>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button class="pe-btn" @onclick="() => ActAsync(Ed.CopySelectedTextAsync)"><i class="bi bi-clipboard"></i> Copy</button>
+                        <button class="pe-btn" @onclick="() => { Ed.MarkSelectedArea(HighlightKind.Highlight); Ed.Refresh(); }"><i class="bi bi-highlighter"></i> Highlight</button>
+                        <button class="pe-btn" @onclick="() => { Ed.MarkSelectedArea(HighlightKind.Underline); Ed.Refresh(); }"><i class="bi bi-type-underline"></i> Underline</button>
+                        <button class="pe-btn" @onclick="() => { Ed.MarkSelectedArea(HighlightKind.Strikethrough); Ed.Refresh(); }"><i class="bi bi-type-strikethrough"></i> Strike</button>
+                    </div>
+                    <h6 class="mt-3">Ask the AI</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="pe-btn" @onclick="@(() => Do(() => Ed.AskAboutSelectionAsync("explain")))">Explain</button>
+                        <button class="pe-btn" @onclick="@(() => Do(() => Ed.AskAboutSelectionAsync("summarise")))">Summarise</button>
+                        <button class="pe-btn" @onclick="@(() => Do(() => Ed.AskAboutSelectionAsync("rewrite")))">Rewrite</button>
+                        <button class="pe-btn" @onclick="@(() => Do(() => Ed.AskAboutSelectionAsync("translate")))">Translate to @Ed.TranslateLanguage</button>
+                    </div>
+                    <div class="d-flex gap-2 mt-2">
+                        <input class="form-control" @bind="_text1" @bind:event="oninput" placeholder="Or ask your own question about it" />
+                        <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="@(() => Do(() => Ed.AskAboutSelectionAsync("ask", _text1)))">Ask</button>
+                    </div>
+                }
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="() => Do(Ed.SnapshotSelectedAreaAsync)"><i class="bi bi-camera"></i> Snapshot</button>
+                <button class="pe-btn primary" @onclick="Close">Close</button>
+            </Footer>
+        </Modal>
+        break;
+
+    case DialogKind.Link:
+        <Modal Title="Add Link" OnClose="CancelLink">
+            <ChildContent>
+                <div class="pe-panel-tabs mb-2" style="border:0">
+                    @foreach (var (k, label) in new[] { ("url", "Web page"), ("email", "Email"), ("phone", "Phone"), ("page", "Page in this PDF") })
+                    {
+                        var kk = k;
+                        <button class="pe-panel-tab @(_linkKind == kk ? "active" : "")" @onclick="() => _linkKind = kk">@label</button>
+                    }
+                </div>
+                <input class="form-control" @bind="_text1" @bind:event="oninput" autofocus aria-label="Where the link goes"
+                       placeholder="@LinkPlaceholder" />
+                <label class="d-flex gap-2 mt-2"><input type="checkbox" @bind="_check1" /> Show a border round the link</label>
+            </ChildContent>
+            <Footer>
+                <button class="pe-btn" @onclick="CancelLink">Cancel</button>
+                <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_text1)" @onclick="() => ActAsync(() => Ed.AddLinkAsync(_linkKind, _text1, _check1))">Add Link</button>
+            </Footer>
+        </Modal>
+        break;
 }
 
 @code {
@@ -1023,6 +1537,15 @@
 
     // Inputs (reset each time a dialog opens)
     private string _password = "", _range = "";
+    private string _text1 = "", _text2 = "", _linkKind = "url", _axTitle = "", _axLang = "";
+    private string? _replaced;
+    private bool _check1, _check2;
+    private int _number = 1;
+    private float _cropL = 18, _cropR = 18, _cropT = 18, _cropB = 18;
+    private WebSettings _settings = new();
+    private PersonalProfile? _profile;
+    private DotNetObjectReference<DialogHost>? _self;
+    private bool _mindMapHooked;
     private PdfMetadataInfo _meta = new();
     private WatermarkOptions _wm = new();
     private string _wmFamily = "Helvetica", _wmColor = "#808080";
@@ -1062,7 +1585,12 @@
     private static readonly (string, string)[] Shortcuts =
     [
         ("Ctrl+O", "Open"), ("Ctrl+S", "Save (download)"), ("Ctrl+P", "Print"), ("Ctrl+Z", "Undo"), ("Ctrl+Y", "Redo"),
-        ("Ctrl+F", "Find"), ("Ctrl++ / Ctrl+-", "Zoom in / out"), ("Ctrl+0", "Actual size"), ("Esc", "Back to Select / close"),
+        ("Ctrl+X / C / V", "Cut, copy, paste (paste a picture from another app too)"), ("Del", "Delete what's selected"),
+        ("Ctrl+F", "Find"), ("Ctrl++ / Ctrl+-", "Zoom in / out"), ("Ctrl+0", "Actual size"),
+        ("Ctrl+] / Ctrl+[", "Rotate the page clockwise / anticlockwise"), ("Ctrl+→ / Ctrl+←", "Next / previous page"),
+        ("Ctrl+Shift+= / −", "UI scale larger / smaller"),
+        ("V · H · Z", "Select, Hand, Zoom"), ("T · D · S · M", "Add Text, Date, Sign, Stamp"), ("I · W", "Highlight, Draw"),
+        ("E", "Edit Fields"), ("F1", "These shortcuts"), ("Esc", "Back to Select / close"),
     ];
 
     private static string Version =>
@@ -1075,8 +1603,33 @@
         _files = [];
         _range = "";
         _sigPadReady = false;
+        _text1 = ""; _text2 = ""; _replaced = null; _check1 = false; _check2 = false; _mindMapHooked = false;
         switch (_shown)
         {
+            case DialogKind.FindHighlight:
+                _text2 = Editor.HighlightColors[0].Hex;
+                break;
+            case DialogKind.AddBookmark:
+                _number = Ed.CurrentPage + 1;
+                break;
+            case DialogKind.Settings:
+                var cur = Ed.Settings;
+                _settings = new WebSettings
+                {
+                    AuthorName = cur.AuthorName, DateFormat = cur.DateFormat, DefaultFontSize = cur.DefaultFontSize, DefaultTextColour = cur.DefaultTextColour,
+                    OpenFitWidth = cur.OpenFitWidth, HighlightFields = cur.HighlightFields, UiScale = cur.UiScale, ShowTipsAtStart = cur.ShowTipsAtStart,
+                };
+                break;
+            case DialogKind.Accessibility when Ed.Doc != null:
+                _axTitle = string.IsNullOrWhiteSpace(Ed.Doc.Metadata.Title) ? Path.GetFileNameWithoutExtension(Ed.Doc.FileName) : Ed.Doc.Metadata.Title;
+                _axLang = System.Globalization.CultureInfo.CurrentUICulture.Name is { Length: > 0 } lang ? lang : "en-GB";
+                break;
+            case DialogKind.Profiles:
+                _profile = Ed.CurrentProfile is { } cp ? CopyProfile(cp) : Ed.Profiles.Count > 0 ? CopyProfile(Ed.Profiles[0]) : new PersonalProfile();
+                break;
+            case DialogKind.Link:
+                _linkKind = "url"; _check1 = false;
+                break;
             case DialogKind.Password:
                 _password = "";
                 break;
@@ -1126,6 +1679,12 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (Ed.Dialog == DialogKind.MindMap && !_mindMapHooked)
+        {
+            _mindMapHooked = true;
+            _self ??= DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("pdfedit.mindMapLinks", _self);
+        }
         if (Ed.Dialog == DialogKind.Signature && !_sigTyped && !_sigPadReady)
         {
             _sigPadReady = true;
@@ -1300,7 +1859,8 @@
 
     private Task ApplyNUp()
     {
-        var (c, r) = _nup switch { 4 => (2, 2), 6 => (2, 3), 9 => (3, 3), _ => (2, 1) };
+        if (_nup == 0) return Do(Ed.BookletAsync);
+        var (c, r) = _nup switch { 4 => (2, 2), 6 => (2, 3), 9 => (3, 3), 16 => (4, 4), _ => (2, 1) };
         return Do(() => Ed.NUpAsync(c, r, _nupBorders));
     }
 
@@ -1346,4 +1906,102 @@
         Ed.UseNewSignature(Convert.FromBase64String(dataUrl[(dataUrl.IndexOf(',') + 1)..]));
         Close();
     }
+
+    // ── The new dialogs' actions ─────────────────────────────────────────────
+
+    private Task AddBookmark() =>
+        Do(() => Ed.AddBookmarkAsync(string.IsNullOrWhiteSpace(_text1) ? $"Page {_number}" : _text1, Math.Clamp(_number, 1, Ed.PageCount)));
+
+    private string LinkPlaceholder => _linkKind switch
+    {
+        "email" => "name@example.com", "phone" => "+44 20 7946 0000", "page" => $"1 – {Ed.PageCount}", _ => "https://example.com",
+    };
+
+    private void Act(Action action)
+    {
+        action();
+        Ed.Refresh();
+    }
+
+    private void CloseStamps()
+    {
+        Ed.EditingStamp = null;
+        Close();
+    }
+
+    private void ReplaceInFields()
+    {
+        int n = Ed.FindReplaceInFields(_text1, _text2, _check1, _check2);
+        _replaced = n == 0 ? $"“{_text1}” isn't in any field." : $"Replaced in {n} field{(n == 1 ? "" : "s")}. Apply Changes or Download keeps it.";
+        Ed.Refresh();
+    }
+
+    private async Task AttachChosen()
+    {
+        var files = new List<IBrowserFile>();
+        foreach (var f in _files) files.Add(await BufferedFile.ReadAsync(f));
+        _files = [];
+        await ActAsync(() => Ed.AttachFilesAsync(files));
+    }
+
+    private async Task SearchFiles()
+    {
+        var files = new List<IBrowserFile>();
+        foreach (var f in _files.Where(f => f.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))) files.Add(await BufferedFile.ReadAsync(f));
+        await ActAsync(() => Ed.SearchFilesAsync(files, _text1));
+    }
+
+    private async Task AskAcross()
+    {
+        var files = new List<IBrowserFile>();
+        foreach (var f in _files) files.Add(await BufferedFile.ReadAsync(f));
+        await ActAsync(() => Ed.AskAcrossAsync(files, _text1));
+    }
+
+    private static PersonalProfile CopyProfile(PersonalProfile p) =>
+        System.Text.Json.JsonSerializer.Deserialize<PersonalProfile>(System.Text.Json.JsonSerializer.Serialize(p))!;
+
+    private void PickProfile(ChangeEventArgs e)
+    {
+        if (Ed.Profiles.FirstOrDefault(p => p.Id == e.Value?.ToString()) is { } p) _profile = CopyProfile(p);
+    }
+
+    private void NewProfile() => _profile = new PersonalProfile { DisplayName = "My Profile" };
+
+    private void DeleteProfile()
+    {
+        if (_profile == null) return;
+        Ed.DeleteProfile(_profile);
+        _profile = Ed.Profiles.Count > 0 ? CopyProfile(Ed.Profiles[0]) : null;
+        Ed.Refresh();
+    }
+
+    private void SaveProfile()
+    {
+        if (_profile == null) return;
+        Ed.SaveProfile(CopyProfile(_profile));
+        Ed.Refresh();
+    }
+
+    [JSInvokable]
+    public async Task MindMapPage(int page)
+    {
+        await Ed.MindMapGoAsync(page);
+        _shown = DialogKind.None;
+        Ed.Refresh();
+    }
+
+    private void ToggleTipsAtStart(ChangeEventArgs e)
+    {
+        Ed.Settings.ShowTipsAtStart = e.Value is true;
+        Ed.SaveSettings();
+    }
+
+    private void CancelLink()
+    {
+        Ed.CancelLink();
+        _shown = DialogKind.None;
+        Ed.Refresh();
+    }
+
 }

@@ -5,7 +5,7 @@
     <div class="pe-props">
         <label>Page size</label>
         <select class="form-select form-select-sm" value="@Ed.Design.PageSize" @onchange="PageSizeChanged">
-            <option>A4</option><option>Letter</option><option>A3</option>
+            <option>A4</option><option>Letter</option><option>A3</option><option value="Custom">Custom (@((int)Ed.DesignSize.W) × @((int)Ed.DesignSize.H) pt)</option>
         </select>
         <label>Background</label>
         <input type="color" class="form-control form-control-color" value="@DesignColor.ToRgb(Ed.Design.BgColor, "#ffffff")" @onchange="BackgroundChanged" />

@@ -17,7 +17,7 @@ public static class PdfEndpoints
         });
 
         // The current version of the document, as a PDF.
-        // ?inline=1 shows it in the browser (to print) instead of downloading it.
+        // ?inline=true shows it in the browser (to print) instead of downloading it.
         app.MapGet("/documents/{id}/file", (string id, bool? inline, PdfDocumentStore store) =>
         {
             var session = store.Get(id);

@@ -5,7 +5,7 @@
 
 <PageTitle>@(Doc == null ? "PdfEdit" : $"{Doc.FileName} — PdfEdit")</PageTitle>
 
-<div class="pe-app @ThemeClass" data-bs-theme="@(ThemeIsLight ? "light" : "dark")">
+<div class="pe-app @ThemeClass" data-bs-theme="@(ThemeIsLight ? "light" : "dark")" style="@(UiScale != 1 ? $"zoom:{Css(UiScale)}" : null)">
 
     @* ── Title bar ─────────────────────────────────────────────────────── *@
     <div class="pe-titlebar">
@@ -41,17 +41,53 @@
                 <RibbonGroup Title="File">
                     <RibbonButton Large Icon="bi-folder2-open" Label="Open" Title="Open a PDF (Ctrl+O)" OnClick="() => OpenBackstage(Backstage.Open)" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
-                        <RibbonButton Icon="bi-download" Label="Save" Title="Download the PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
-                        <RibbonButton Icon="bi-printer" Label="Print" Title="Open the PDF to print it (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
+                        <RibbonButton Icon="bi-camera" Label="Scan" Title="Scan with your camera, or make a PDF from photos of pages (scanners can't be reached from a browser)" OnClick="() => ShowDialog(DialogKind.ScanCamera)" />
+                        <RibbonButton Icon="bi-magic" Label="Clean Up Scans" Title="Remove blank pages, straighten crooked scans, split two-page spreads" Disabled="NoDoc" OnClick="ShowCleanupAsync" />
+                        <RibbonButton Icon="bi-file-earmark-word" Label="From Office" Title="Make a PDF from Word, Excel, PowerPoint, text, Markdown or HTML files" OnClick="() => ShowDialog(DialogKind.Combine)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-cloud-arrow-down" Label="Open from Cloud" Title="Open a PDF from Google Drive or OneDrive" OnClick="() => ShowCloudAsync(save: false)" />
-                        <RibbonButton Icon="bi-cloud-arrow-up" Label="Save to Cloud" Title="Save to Google Drive or OneDrive" Disabled="NoDoc" OnClick="() => ShowCloudAsync(save: true)" />
+                        <RibbonButton Icon="bi-google" Label="From Google Docs" Title="Paste a Google Docs, Sheets or Slides link to import it as a PDF" OnClick="() => ShowDialog(DialogKind.GoogleLink)" />
+                        <RibbonButton Icon="bi-cloud-arrow-down" Label="Import from Cloud" Title="Open a PDF, Word file or Google Doc from Google Drive or OneDrive" OnClick="() => ShowCloudAsync(save: false)" />
                         @if (Doc?.CloudFile != null)
                         {
                             <RibbonButton Icon="bi-cloud-check" Label="Save Back" Title="@($"Replace {CloudFileName}")" OnClick="SaveBackToCloudAsync" />
                         }
+                        else
+                        {
+                            <RibbonButton Icon="bi-cloud-arrow-up" Label="Save to Cloud" Title="Save this PDF to Google Drive or OneDrive" Disabled="NoDoc" OnClick="() => ShowCloudAsync(save: true)" />
+                        }
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-download" Label="Save" Title="Download the PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
+                        <RibbonButton Icon="bi-save2" Label="Save As" Title="Save a copy: flattened, PDF/A or password-protected" Disabled="NoDoc" OnClick="() => OpenBackstage(Backstage.SaveAs)" />
+                        <RibbonButton Icon="bi-printer" Label="Print" Title="Print the document (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
+                        <RibbonButton Icon="bi-x-square" Label="Close" Title="Close the current document (Ctrl+W)" Disabled="NoDoc" OnClick="CloseCurrentAsync" />
+                        <RibbonButton Icon="bi-gear" Label="Settings" Title="Settings and preferences" OnClick="() => ShowDialog(DialogKind.Settings)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Clipboard">
+                    <RibbonButton Large Icon="bi-clipboard" Label="Paste" Title="Paste (Ctrl+V) — what you copied, or a picture copied from another app" Disabled="NoDoc" OnClick="PasteAsync" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-scissors" Label="Cut" Title="Cut (Ctrl+X)" Disabled="!CanCopy" OnClick="CutAsync" />
+                        <RibbonButton Icon="bi-copy" Label="Copy" Title="Copy (Ctrl+C)" Disabled="!CanCopy" OnClick="CopyAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Navigation">
+                    <div class="pe-stack">
+                        <div class="pe-row">
+                            <RibbonButton Compact Icon="bi-chevron-bar-left" Label="First" Title="Go to the first page" Disabled="@(NoDoc || _page == 0)" OnClick="() => GoToPageAsync(0)" />
+                            <RibbonButton Compact Icon="bi-chevron-left" Label="Previous" Title="Previous page (Ctrl+Left)" Disabled="@(NoDoc || _page == 0)" OnClick="() => GoToPageAsync(_page - 1)" />
+                            <RibbonButton Compact Icon="bi-chevron-right" Label="Next" Title="Next page (Ctrl+Right)" Disabled="@(NoDoc || _page >= PageCount - 1)" OnClick="() => GoToPageAsync(_page + 1)" />
+                            <RibbonButton Compact Icon="bi-chevron-bar-right" Label="Last" Title="Go to the last page" Disabled="@(NoDoc || _page >= PageCount - 1)" OnClick="() => GoToPageAsync(PageCount - 1)" />
+                        </div>
+                        <div class="pe-field-inline">
+                            <span>Page</span>
+                            <input type="number" min="1" max="@PageCount" value="@(_page + 1)" @onchange="PageBoxChangedAsync" disabled="@NoDoc" aria-label="Go to page" style="width:52px" />
+                            <span>of @PageCount</span>
+                        </div>
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Search">
@@ -60,226 +96,304 @@
                             <input type="search" placeholder="Find text" aria-label="Find text" @bind="_searchText" @bind:event="oninput"
                                    @onkeydown="SearchKeyAsync" disabled="@NoDoc" style="width:120px" />
                         </div>
-                        <RibbonButton Icon="bi-search" Label="Find" Disabled="NoDoc" OnClick="SearchAsync" />
+                        <RibbonButton Icon="bi-search" Label="Search" Title="Search the text, fields and comments (Ctrl+F)" Disabled="NoDoc" OnClick="SearchAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Pages">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Rotate Left" Disabled="NoDoc" OnClick="() => RotateAsync(-90)" />
-                        <RibbonButton Icon="bi-arrow-clockwise" Label="Rotate Right" Disabled="NoDoc" OnClick="() => RotateAsync(90)" />
+                        <RibbonButton Icon="bi-trash" Label="Delete Page" Title="Delete the current page" Disabled="@(NoDoc || PageCount < 2)" OnClick="DeletePageAsync" />
+                        <RibbonButton Icon="bi-file-earmark-arrow-up" Label="Insert Before" Title="Insert a blank page before the current page" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: true)" />
+                        <RibbonButton Icon="bi-copy" Label="Duplicate Page" Title="Duplicate the current page and insert it right after" Disabled="NoDoc" OnClick="DuplicatePageAsync" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-trash" Label="Delete Page" Disabled="@(NoDoc || PageCount < 2)" OnClick="DeletePageAsync" />
-                        <RibbonButton Icon="bi-file-earmark-arrow-up" Label="Insert Before" Title="Insert a blank page before this one" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: true)" />
-                        <RibbonButton Icon="bi-file-earmark-arrow-down" Label="Insert After" Title="Insert a blank page after this one" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: false)" />
+                        <RibbonButton Icon="bi-file-earmark-arrow-down" Label="Insert After" Title="Insert a blank page after the current page" Disabled="NoDoc" OnClick="() => InsertBlankAsync(before: false)" />
+                        <RibbonButton Icon="bi-arrow-up" Label="Move Up" Title="Move this page one position earlier" Disabled="@(NoDoc || _page == 0)" OnClick="() => MovePageAsync(-1)" />
+                        <RibbonButton Icon="bi-arrow-down" Label="Move Down" Title="Move this page one position later" Disabled="@(NoDoc || _page >= PageCount - 1)" OnClick="() => MovePageAsync(1)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-copy" Label="Duplicate Page" Disabled="NoDoc" OnClick="DuplicatePageAsync" />
-                        <RibbonButton Icon="bi-arrow-up" Label="Move Up" Disabled="@(NoDoc || _page == 0)" OnClick="() => MovePageAsync(-1)" />
-                        <RibbonButton Icon="bi-arrow-down" Label="Move Down" Disabled="@(NoDoc || _page >= PageCount - 1)" OnClick="() => MovePageAsync(1)" />
+                        <RibbonButton Icon="bi-box-arrow-up-right" Label="Extract Page" Title="Save the current page as a separate PDF" Disabled="NoDoc" OnClick="ExtractThisPageAsync" />
+                        <RibbonButton Icon="bi-image" Label="Export as Image" Title="Download the current page as a PNG" Disabled="NoDoc" OnClick="ExportPageImageAsync" />
+                        <RibbonButton Icon="bi-layout-split" Label="Split PDF" Title="Every page as a separate PDF, in a ZIP" Disabled="NoDoc" OnClick="SplitAsync" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-box-arrow-up-right" Label="Extract Pages" Title="Save some pages as a new PDF" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.ExtractRange)" />
-                        <RibbonButton Icon="bi-scissors" Label="Delete Pages" Title="Delete a range of pages" Disabled="@(NoDoc || PageCount < 2)" OnClick="() => ShowDialog(DialogKind.DeleteRange)" />
-                        <RibbonButton Icon="bi-image" Label="Export as Image" Title="Download this page as a PNG" Disabled="NoDoc" OnClick="ExportPageImageAsync" />
+                        <RibbonButton Icon="bi-files" Label="Merge PDFs" Title="Combine this PDF with other PDFs, appending them at the end" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Merge)" />
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="Insert PDF" Title="Insert another PDF at the start or after the current page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.InsertPdf)" />
+                        <RibbonButton Icon="bi-scissors" Label="Delete Range" Title="Delete a range of pages" Disabled="@(NoDoc || PageCount < 2)" OnClick="() => ShowDialog(DialogKind.DeleteRange)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-layout-split" Label="Split PDF" Title="One PDF per page, in a ZIP" Disabled="NoDoc" OnClick="SplitAsync" />
-                        <RibbonButton Icon="bi-files" Label="Merge PDFs" Title="Add other PDFs or images to the end" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Merge)" />
-                        <RibbonButton Icon="bi-file-earmark-plus" Label="Insert PDF" Title="Insert another PDF after this page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.InsertPdf)" />
+                        <RibbonButton Icon="bi-box-arrow-up" Label="Extract Range" Title="Save a range of pages as a new PDF" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.ExtractRange)" />
+                        <RibbonButton Icon="bi-layout-split" Label="Compare PDFs" Title="Compare this PDF with another file page by page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.CompareUpload)" />
+                        <RibbonButton Icon="bi-layout-sidebar" Label="Thumbnails" Title="Show or hide the page thumbnails" Active="_showLeft" OnClick="() => _showLeft = !_showLeft" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-droplet-half" Label="Watermark" Title="Watermark &amp; background — text or a picture, behind or over the page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Watermark)" />
+                        <RibbonButton Icon="bi-droplet" Label="Remove Watermark" Title="Remove watermarks added by PdfEdit (Undo brings them back)" Disabled="NoDoc" OnClick="RemoveWatermarkAsync" />
+                        <RibbonButton Icon="bi-123" Label="Page Numbers" Title="Add 'Page N of M' to every page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.PageNumbers)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-zip" Label="Compress" Title="Make the file smaller" Disabled="NoDoc" OnClick="CompressAsync" />
+                        <RibbonButton Icon="bi-images" Label="Export as Images" Title="Every page as a PNG, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Images)" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Document">
-                    <RibbonButton Large Icon="bi-info-circle" Label="Properties" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Properties)" />
+                    <RibbonButton Large Icon="bi-info-circle" Label="Properties" Title="Title, author, subject and keywords" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Properties)" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-droplet-half" Label="Watermark" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Watermark)" />
-                        <RibbonButton Icon="bi-droplet" Label="Remove Watermark" Disabled="NoDoc" OnClick="RemoveWatermarkAsync" />
-                        <RibbonButton Icon="bi-123" Label="Page Numbers" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.PageNumbers)" />
+                        <RibbonButton Icon="bi-copy" Label="Duplicate Page" Title="Duplicate the current page" Disabled="NoDoc" OnClick="DuplicatePageAsync" />
+                        <RibbonButton Icon="bi-layout-text-window" Label="Header / Footer" Title="Add header and footer text to every page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.HeaderFooter)" />
+                        <RibbonButton Icon="bi-hash" Label="Bates Numbers" Title="Sequential Bates numbers with a prefix and suffix" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Bates)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-layout-text-window" Label="Header / Footer" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.HeaderFooter)" />
-                        <RibbonButton Icon="bi-hash" Label="Bates Numbers" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Bates)" />
-                        <RibbonButton Icon="bi-file-zip" Label="Compress" Disabled="NoDoc" OnClick="CompressAsync" />
+                        <RibbonButton Icon="bi-crop" Label="Crop Pages" Title="Trim the page margins" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Crop)" />
+                        <RibbonButton Icon="bi-aspect-ratio" Label="Resize Pages" Title="Change the paper size (A4, Letter …); content is scaled to fit" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Resize)" />
+                        <RibbonButton Icon="bi-grid" Label="Pages per Sheet" Title="2, 4, 6, 9 or 16 pages on each sheet, or a booklet to fold" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.NUp)" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-aspect-ratio" Label="Resize Pages" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Resize)" />
-                        <RibbonButton Icon="bi-grid" Label="Pages per Sheet" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.NUp)" />
-                        <RibbonButton Icon="bi-circle-half" Label="Greyscale" Disabled="NoDoc" OnClick="GreyscaleAsync" />
+                        <RibbonButton Icon="bi-circle-half" Label="Greyscale" Title="Convert text, drawings and pictures to shades of grey" Disabled="NoDoc" OnClick="GreyscaleAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Security">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-lock" Label="Password Protect" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Protect)" />
+                        <RibbonButton Icon="bi-lock" Label="Password Protect" Title="Encrypt with an open password and set permissions" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Protect)" />
+                        <RibbonButton Icon="bi-unlock" Label="Remove Password" Title="Remove the password and encryption (the PDF must be open)" Disabled="NoDoc" OnClick="RemovePasswordAsync" />
                         <RibbonButton Icon="bi-eraser" Label="Remove Hidden Info" Title="Remove metadata, scripts, attachments and other hidden data" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Sanitize)" />
                     </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Automate">
+                    <RibbonButton Large Icon="bi-collection-play" Label="Batch Process" Title="Run steps (OCR, compress, watermark, numbering, password …) over many PDFs" OnClick="ShowBatch" />
+                    <RibbonButton Large Icon="bi-table" Label="Bulk Fill" Title="One filled copy of this form for each row of a CSV or Excel file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ShowBulkFillAsync" />
                 </RibbonGroup>
                 break;
 
             case RibbonTab.FillSign:
                 <RibbonGroup Title="Select">
-                    <RibbonButton Large Icon="bi-cursor" Label="Select" Title="Fill in fields and select things (Esc)" Active="_tool == Tool.Select" OnClick="() => SetTool(Tool.Select)" />
+                    @ToolButton(Tool.Select, "bi-cursor", "Select", "Select — click fields to fill them, click placed text to edit (V)", large: true)
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Hand, "bi-hand-index", "Hand", "Hand — drag to pan the page (H)")
+                        @ToolButton(Tool.Zoom, "bi-zoom-in", "Zoom", "Marquee zoom — drag a rectangle to zoom in (Z)")
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Add Content">
-                    <RibbonButton Large Icon="bi-fonts" Label="Add Text" Title="Click on the page to type" Disabled="NoDoc" Active="_tool == Tool.Text" OnClick="() => SetTool(Tool.Text)" />
-                    <RibbonButton Large Icon="bi-calendar-event" Label="Date" Title="Click to add today's date" Disabled="NoDoc" Active="_tool == Tool.Date" OnClick="() => SetTool(Tool.Date)" />
+                    @ToolButton(Tool.Text, "bi-fonts", "Add Text", "Add Text — click anywhere on the page to type (T)", large: true)
+                    @ToolButton(Tool.Date, "bi-calendar-event", "Date", "Date — click the page to stamp today's date (D)", large: true)
                     <div class="pe-stack">
-                        <div class="pe-field-inline">
-                            <span>Size</span>
-                            <select @bind="_fontSize" aria-label="Text size">
-                                @foreach (var s in new[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36 })
-                                {
-                                    <option value="@s">@s</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="pe-field-inline">
-                            <span>Colour</span>
-                            <input type="color" @bind="_textColor" aria-label="Text colour" />
-                        </div>
+                        @ToolButton(Tool.VerticalText, "bi-type", "Vertical Text", "Vertical text — click the page to type text running bottom to top")
+                        <RibbonButton Icon="bi-input-cursor-text" Label="Fill Field" Title="Fill text field — click a form field to type in it (F)" Disabled="NoDoc" OnClick="FillFieldTool" />
+                        <RibbonButton Icon="bi-check2-square" Label="Checkbox" Title="Toggle check box / radio button — click one to tick it" Disabled="NoDoc" OnClick="FillFieldTool" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Marks">
-                    <RibbonButton Large Icon="bi-check-lg" Label="Tick" Disabled="NoDoc" Active="_tool == Tool.Check" OnClick="() => SetTool(Tool.Check)" />
-                    <RibbonButton Large Icon="bi-x-lg" Label="Cross" Disabled="NoDoc" Active="_tool == Tool.Cross" OnClick="() => SetTool(Tool.Cross)" />
-                    <RibbonButton Large Icon="bi-circle-fill" Label="Dot" Disabled="NoDoc" Active="_tool == Tool.Dot" OnClick="() => SetTool(Tool.Dot)" />
+                    @ToolButton(Tool.Check, "bi-check-lg", "Check", "Checkmark — click the page to place ✓ (K)", large: true)
+                    @ToolButton(Tool.Cross, "bi-x-lg", "Cross", "Cross — click the page to place ✕", large: true)
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Dot, "bi-circle-fill", "Dot", "Dot — click the page to place a filled dot ●")
+                        @ToolButton(Tool.LineMark, "bi-dash-lg", "Line", "Line — click the page to place a short line —")
+                        @ToolButton(Tool.Circle, "bi-circle", "Circle", "Circle — click the page to place a circle ○")
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Text">
+                    @TextFormatControls(colours: true)
                 </RibbonGroup>
                 <RibbonGroup Title="Sign">
-                    <RibbonButton Large Icon="bi-pen" Label="Signature" Title="Draw or type your signature, then click to place it" Disabled="NoDoc" Active="_tool == Tool.Signature" OnClick="SignatureToolAsync" />
+                    <RibbonButton Large Icon="bi-pen" Label="Sign" Title="Sign — click a signature field or the page to place your signature (S)" Disabled="NoDoc" Active="_tool == Tool.Signature" OnClick="SignatureToolAsync" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-pencil-square" Label="New Signature" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Signature)" />
-                        <RibbonButton Icon="bi-patch-check" Label="Sign with Certificate" Title="Digital signature with a Digital ID (.pfx)" Disabled="NoDoc" OnClick="() => { PrepareCertSign(); ShowDialog(DialogKind.CertSign); }" />
-                        <RibbonButton Icon="bi-shield-check" Label="Check Signatures" Disabled="NoDoc" OnClick="CheckSignaturesAsync" />
+                        <RibbonButton Icon="bi-pencil-square" Label="New Signature…" Title="Draw, type or import a new signature, then click the page to place it" Disabled="NoDoc" OnClick="() => NewSignature(initials: false)" />
+                        <RibbonButton Icon="bi-type-italic" Label="New Initials…" Title="Create your initials, then click the page to place them" Disabled="NoDoc" OnClick="() => NewSignature(initials: true)" />
+                        <RibbonButton Icon="bi-patch-check" Label="Certificate…" Title="Sign with a certificate (Digital ID) — proves who signed and that nothing changed afterwards" Disabled="NoDoc" OnClick="() => { PrepareCertSign(); ShowDialog(DialogKind.CertSign); }" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-shield-check" Label="Signatures" Title="Check the digital signatures in this PDF" Disabled="NoDoc" OnClick="CheckSignaturesAsync" />
+                    </div>
+                    @ToolButton(Tool.Stamp, "bi-postage", "Stamp", "Stamp — click the page to place the chosen stamp (M)", large: true)
+                    <div class="pe-stack">
+                        @StampPicker()
+                        <RibbonButton Icon="bi-collection" Label="Stamps…" Title="Choose the stamp; create, edit or delete your own" OnClick="() => ShowDialog(DialogKind.Stamps)" />
+                        <RibbonButton Icon="bi-plus-square" Label="New Stamp…" Title="Create a stamp with your own text and colour" OnClick="NewCustomStamp" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Fields">
+                    <RibbonButton Large Icon="bi-ui-checks" Label="Highlight Fields" Title="Show a coloured highlight over all fillable form fields" Active="HighlightFields" OnClick="() => HighlightFields = !HighlightFields" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-eraser" Label="Clear All" Title="Clear the values of all form fields" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ClearAllFields" />
+                        <RibbonButton Icon="bi-x-square" Label="Delete Field" Title="Delete the selected form field (select it with Edit Fields)" Disabled="@(SelectedFieldInfo == null)" OnClick="DeleteFieldAnyMode" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Comment">
-                    <RibbonButton Large Icon="bi-sticky" Label="Sticky Note" Disabled="NoDoc" Active="_tool == Tool.Note" OnClick="() => SetTool(Tool.Note)" />
-                    <RibbonButton Large Icon="bi-highlighter" Label="Highlight" Title="Drag over an area to highlight it" Disabled="NoDoc" Active="_tool == Tool.Highlight" OnClick="() => SetTool(Tool.Highlight)" />
-                    <RibbonButton Large Icon="bi-brush" Label="Draw" Title="Draw freehand on the page" Disabled="NoDoc" Active="_tool == Tool.Ink" OnClick="() => SetTool(Tool.Ink)" />
-                </RibbonGroup>
-                <RibbonGroup Title="Stamp">
-                    <RibbonButton Large Icon="bi-postage" Label="Stamp" Title="Click on the page to stamp it" Disabled="NoDoc" Active="_tool == Tool.Stamp" OnClick="() => SetTool(Tool.Stamp)" />
+                    @ToolButton(Tool.Note, "bi-sticky", "Sticky Note", "Sticky note — click the page to add a comment", large: true)
+                    @ToolButton(Tool.Highlight, "bi-highlighter", "Highlight", "Highlight text — drag over text (I)", large: true)
+                    @ToolButton(Tool.Ink, "bi-brush", "Draw", "Draw freehand — sign or annotate with the pen (W)", large: true)
                     <div class="pe-stack">
-                        <select class="pe-stamp-pick" value="@_stampKey" @onchange="e => PickStamp(e.Value?.ToString() ?? _stampKey)" aria-label="Stamp" disabled="@NoDoc">
-                            @foreach (var g in StampGroups)
-                            {
-                                <optgroup label="@g.Key">
-                                    @foreach (var d in g)
-                                    {
-                                        <option value="@StampCatalog.KeyOf(d)">@d.Title</option>
-                                    }
-                                </optgroup>
-                            }
-                        </select>
-                        <div class="pe-field-inline" title="Dynamic stamps add who stamped it and when">
-                            <span>Name</span>
-                            <input type="text" @bind="_stampAuthor" placeholder="Your name" aria-label="Name on dynamic stamps" style="width:110px" />
-                        </div>
+                        @ToolButton(Tool.Eraser, "bi-eraser", "Eraser", "Eraser — click a drawing or comment to remove it")
+                        @ToolButton(Tool.Link, "bi-link-45deg", "Link", "Link — drag a rectangle to add a link to a web page, email or page")
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Finish">
                     <RibbonButton Large Icon="bi-check2-circle" Label="Apply Changes" Title="Write everything you've added into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-download" Label="Download" Disabled="NoDoc" OnClick="SaveAsync" />
-                        <RibbonButton Icon="bi-layers" Label="Flatten &amp; Download" Title="Download with the fields turned into plain page content" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
+                        <RibbonButton Icon="bi-download" Label="Save" Title="Download the filled and signed PDF (Ctrl+S)" Disabled="NoDoc" OnClick="SaveAsync" />
+                        <RibbonButton Icon="bi-layers" Label="Flatten &amp; Save" Title="Make fields and comments part of the page so they can't be changed, then download" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
+                        <RibbonButton Icon="bi-printer" Label="Print" Title="Print the document (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo (Ctrl+Z)" Disabled="!CanUndo" OnClick="UndoAsync" />
                         <RibbonButton Icon="bi-x-circle" Label="Discard Changes" Title="Remove what you've added since the last Apply" Disabled="@(NoDoc || !HasPending)" OnClick="DiscardPending" />
                     </div>
                 </RibbonGroup>
                 break;
 
             case RibbonTab.Edit:
+                <RibbonGroup Title="Clipboard">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-scissors" Label="Cut" Title="Cut (Ctrl+X)" Disabled="!CanCopy" OnClick="CutAsync" />
+                        <RibbonButton Icon="bi-copy" Label="Copy" Title="Copy (Ctrl+C)" Disabled="!CanCopy" OnClick="CopyAsync" />
+                        <RibbonButton Icon="bi-clipboard" Label="Paste" Title="Paste (Ctrl+V)" Disabled="NoDoc" OnClick="PasteAsync" />
+                    </div>
+                </RibbonGroup>
                 <RibbonGroup Title="History">
-                    <RibbonButton Large Icon="bi-arrow-counterclockwise" Label="Undo" Disabled="!CanUndo" OnClick="UndoAsync" />
-                    <RibbonButton Large Icon="bi-arrow-clockwise" Label="Redo" Disabled="!CanRedo" OnClick="RedoAsync" />
-                </RibbonGroup>
-                <RibbonGroup Title="Prepare Form">
-                    <RibbonButton Large Icon="bi-ui-checks-grid" Label="Prepare Form" Title="Add, move, resize and change form fields" Disabled="NoDoc" Active="PrepareMode" OnClick="TogglePrepareMode" />
-                    <RibbonButton Large Icon="bi-magic" Label="Detect Fields" Title="Find the boxes and blank lines of a flat form and make them fillable" Disabled="NoDoc" OnClick="DetectFieldsAsync" />
-                    <RibbonButton Large Icon="bi-check2-circle" Label="Apply Changes" Title="Write the moved, resized, changed and deleted fields into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
-                </RibbonGroup>
-                <RibbonGroup Title="Add Form Field">
+                    <RibbonButton Large Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo the last change (Ctrl+Z)" Disabled="!CanUndo" OnClick="UndoAsync" />
+                    <RibbonButton Large Icon="bi-arrow-clockwise" Label="Redo" Title="Redo what was undone (Ctrl+Y)" Disabled="!CanRedo" OnClick="RedoAsync" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-input-cursor-text" Label="Text Field" Disabled="NoDoc" Active="_tool == Tool.FieldText" OnClick="() => SetTool(Tool.FieldText)" />
-                        <RibbonButton Icon="bi-check2-square" Label="Checkbox" Disabled="NoDoc" Active="_tool == Tool.FieldCheckbox" OnClick="() => SetTool(Tool.FieldCheckbox)" />
-                        <RibbonButton Icon="bi-record-circle" Label="Radio Button" Disabled="NoDoc" Active="_tool == Tool.FieldRadio" OnClick="() => SetTool(Tool.FieldRadio)" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo Ann." Title="Take back the last thing added on the page" Disabled="@(_items.Count == 0)" OnClick="UndoAnnotation" />
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="Redo Ann." Title="Put back what Undo Ann. took off" Disabled="@(_itemRedo.Count == 0)" OnClick="RedoAnnotation" />
                     </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Annotations">
+                    <RibbonButton Large Icon="bi-trash" Label="Delete" Title="Delete the selected comment, drawing or text (Del)" Disabled="@(SelectedItem == null)" OnClick="DeleteSelectedItem" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-menu-button-wide" Label="Dropdown" Disabled="NoDoc" Active="_tool == Tool.FieldCombo" OnClick="() => SetTool(Tool.FieldCombo)" />
-                        <RibbonButton Icon="bi-list-ul" Label="List Box" Disabled="NoDoc" Active="_tool == Tool.FieldList" OnClick="() => SetTool(Tool.FieldList)" />
-                        <RibbonButton Icon="bi-calendar-date" Label="Date Field" Disabled="NoDoc" Active="_tool == Tool.FieldDate" OnClick="() => SetTool(Tool.FieldDate)" />
-                    </div>
-                    <div class="pe-stack">
-                        <RibbonButton Icon="bi-pen" Label="Signature Field" Disabled="NoDoc" Active="_tool == Tool.FieldSignature" OnClick="() => SetTool(Tool.FieldSignature)" />
-                        <RibbonButton Icon="bi-sliders" Label="Field Properties" Disabled="@(SelectedFieldInfo == null)" OnClick="() => ShowRight(RightTab.Properties)" />
-                        <RibbonButton Icon="bi-x-square" Label="Delete Field" Disabled="@(!PrepareMode || SelectedFieldInfo == null)" OnClick="DeleteSelectedField" />
+                        <RibbonButton Icon="bi-highlighter" Label="Find &amp; Highlight" Title="Search for text and highlight every match" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.FindHighlight)" />
+                        <RibbonButton Icon="bi-eraser" Label="Clear All Fields" Title="Clear every form field's value" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ClearAllFields" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Form Data">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-box-arrow-up" Label="Export Data" Title="Download the field values as a tab-separated file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ExportDataAsync" />
                         <RibbonButton Icon="bi-box-arrow-in-down" Label="Import Data" Title="Fill the fields from an exported data file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="() => ShowDialog(DialogKind.ImportData)" />
+                        <RibbonButton Icon="bi-filetype-json" Label="Import from JSON" Title="Fill the fields from a JSON file of {field name: value} pairs" Disabled="@(NoDoc || FieldCount == 0)" OnClick="() => ShowDialog(DialogKind.ImportData)" />
+                        <RibbonButton Icon="bi-box-arrow-up" Label="Export Data" Title="Download the field values as a tab-separated file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ExportDataAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-layers" Label="Flatten &amp; Save" Title="Download with the fields turned into plain page content" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
                         <RibbonButton Icon="bi-arrow-repeat" Label="Reset Form" Title="Put every field back as it was when last applied" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ResetForm" />
                     </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Tools">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-ui-checks" Label="Fields Panel" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
-                        <RibbonButton Icon="bi-asterisk" Label="Check Required" Title="Find required fields that are still empty" Disabled="@(NoDoc || FieldCount == 0)" OnClick="CheckRequired" />
-                        <RibbonButton Icon="bi-table" Label="Bulk Fill" Title="One filled copy of this form for each row of a spreadsheet" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ShowBulkFillAsync" />
+                        <RibbonButton Icon="bi-search" Label="Find &amp; Replace" Title="Find and replace text in the form's field values" Disabled="@(NoDoc || FieldCount == 0)" OnClick="() => ShowDialog(DialogKind.FindReplace)" />
+                        <RibbonButton Icon="bi-asterisk" Label="Validate Required" Title="Check that every required field is filled in" Disabled="@(NoDoc || FieldCount == 0)" OnClick="CheckRequired" />
+                        <RibbonButton Icon="bi-archive" Label="Archive (PDF/A)" Title="Download an archive-friendly PDF/A copy" Disabled="NoDoc" OnClick="PdfAAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-text" Label="Export Text" Title="All the text as a .txt file" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Text)" />
+                        <RibbonButton Icon="bi-file-earmark-word" Label="Export to Word" Title="The text of every page as a Word document" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Word)" />
+                        <RibbonButton Icon="bi-file-earmark-excel" Label="Export to Excel" Title="The tables and columns as an Excel workbook" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Excel)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-slides" Label="Export to PowerPoint" Title="One slide per page" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.PowerPoint)" />
+                        <RibbonMenu Icon="bi-file-earmark-arrow-down" Label="Export to Other" Title="The text with its headings and lists as a web page, Markdown or an e-book" Disabled="NoDoc">
+                            <button role="menuitem" @onclick="() => ExportAsync(ExportFormat.Html)"><i class="bi bi-filetype-html"></i> Web page (.html)</button>
+                            <button role="menuitem" @onclick="() => ExportAsync(ExportFormat.Markdown)"><i class="bi bi-markdown"></i> Markdown (.md)</button>
+                            <button role="menuitem" @onclick="() => ExportAsync(ExportFormat.Epub)"><i class="bi bi-book"></i> E-book (.epub)</button>
+                        </RibbonMenu>
+                        <RibbonButton Icon="bi-file-image" Label="Extract Images" Title="Every picture in the PDF, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Pictures)" />
                     </div>
                 </RibbonGroup>
-                <RibbonGroup Title="Redact">
-                    <RibbonButton Large Icon="bi-eraser-fill" Label="Mark for Redaction" Title="Drag over what to remove for good" Disabled="NoDoc" Active="_tool == Tool.Redact" OnClick="() => SetTool(Tool.Redact)" />
-                    <RibbonButton Large Icon="bi-shield-check" Label="Apply Redactions" Title="Remove the marked areas from the PDF" Disabled="@(NoDoc || !_items.Any(i => i.Kind == ItemKind.Redact))" OnClick="CommitAsync" />
+                <RibbonGroup Title="Add Form Field">
+                    <RibbonButton Large Icon="bi-magic" Label="Detect Fields" Title="Find the boxes, squares and blank lines of a flat form and make them fillable fields" Disabled="NoDoc" OnClick="DetectFieldsAsync" />
+                    <RibbonButton Large Icon="bi-ui-checks-grid" Label="Edit Fields" Title="Edit Fields (E) — click a field to select it (Ctrl+click for more), drag to move, drag the corner to resize" Disabled="NoDoc" Active="PrepareMode" OnClick="TogglePrepareMode" />
+                    <div class="pe-stack">
+                        @ToolButton(Tool.FieldText, "bi-input-cursor-text", "Text Field", "Add Text Field — drag a rectangle on the page")
+                        @ToolButton(Tool.FieldCheckbox, "bi-check2-square", "Checkbox", "Add Checkbox — click where the box should go")
+                        @ToolButton(Tool.FieldCombo, "bi-menu-button-wide", "Combo Box", "Add Combo Box — drag a rectangle for a dropdown")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.FieldRadio, "bi-record-circle", "Radio Button", "Add Radio Button — click where it should go")
+                        @ToolButton(Tool.FieldList, "bi-list-ul", "List Box", "Add List Box — drag a rectangle")
+                        @ToolButton(Tool.FieldDate, "bi-calendar-date", "Date Field", "Add Date Field — drag a rectangle")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.FieldSignature, "bi-pen", "Signature Field", "Add Signature Field — drag a rectangle")
+                        <RibbonButton Icon="bi-sliders" Label="Field Properties" Title="Name, tooltip, required, read only, format …" Disabled="@(SelectedFieldInfo == null)" OnClick="() => ShowRight(RightTab.Properties)" />
+                        <RibbonButton Icon="bi-check2-circle" Label="Apply Changes" Title="Write the moved, resized, changed and deleted fields into the PDF" Disabled="@(NoDoc || !HasPending)" OnClick="CommitAsync" />
+                    </div>
                 </RibbonGroup>
-                <RibbonGroup Title="Drawing">
-                    <RibbonButton Large Icon="bi-square" Label="Rectangle" Disabled="NoDoc" Active="_tool == Tool.Rectangle" OnClick="() => SetTool(Tool.Rectangle)" />
-                    <RibbonButton Large Icon="bi-circle" Label="Ellipse" Disabled="NoDoc" Active="_tool == Tool.Ellipse" OnClick="() => SetTool(Tool.Ellipse)" />
-                    <div class="pe-stack">
-                        <RibbonButton Icon="bi-slash-lg" Label="Line" Disabled="NoDoc" Active="_tool == Tool.Line" OnClick="() => SetTool(Tool.Line)" />
-                        <RibbonButton Icon="bi-arrow-up-right" Label="Arrow" Disabled="NoDoc" Active="_tool == Tool.Arrow" OnClick="() => SetTool(Tool.Arrow)" />
-                        <RibbonButton Icon="bi-brush" Label="Draw" Title="Draw freehand on the page" Disabled="NoDoc" Active="_tool == Tool.Ink" OnClick="() => SetTool(Tool.Ink)" />
-                    </div>
-                    <div class="pe-stack">
-                        <div class="pe-field-inline">
-                            <span>Colour</span>
-                            <input type="color" @bind="_strokeColor" aria-label="Line colour" />
-                        </div>
-                        <div class="pe-field-inline">
-                            <span>Pen</span>
-                            <select @bind="_inkWidth" aria-label="Pen width">
-                                @foreach (var pw in new[] { 1.0, 2.0, 3.0, 5.0, 8.0 })
-                                {
-                                    <option value="@pw">@pw pt</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
+                <RibbonGroup Title="Arrange Fields">
+                    @ArrangeButtons(op => ArrangeFields(op), NoDoc || SelectedWidgets.Count == 0)
                 </RibbonGroup>
                 break;
 
             case RibbonTab.View:
                 <RibbonGroup Title="Zoom">
-                    <RibbonButton Large Icon="bi-zoom-in" Label="Zoom In" Disabled="NoDoc" OnClick="() => Zoom(1.25)" />
-                    <RibbonButton Large Icon="bi-zoom-out" Label="Zoom Out" Disabled="NoDoc" OnClick="() => Zoom(0.8)" />
+                    <RibbonButton Large Icon="bi-zoom-in" Label="Zoom In" Title="Zoom in (Ctrl++)" Disabled="NoDoc" OnClick="() => Zoom(1.25)" />
+                    <RibbonButton Large Icon="bi-zoom-out" Label="Zoom Out" Title="Zoom out (Ctrl+-)" Disabled="NoDoc" OnClick="() => Zoom(0.8)" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-1-square" Label="Actual Size" Disabled="NoDoc" OnClick="() => SetZoom(1)" />
-                        <RibbonButton Icon="bi-arrows-expand-vertical" Label="Fit Width" Disabled="NoDoc" OnClick="FitWidthAsync" />
-                        <RibbonButton Icon="bi-fullscreen" Label="Fit Page" Disabled="NoDoc" OnClick="FitPageAsync" />
+                        <RibbonButton Icon="bi-fullscreen" Label="Fit Page" Title="Fit the whole page in the window" Disabled="NoDoc" OnClick="FitPageAsync" />
+                        <RibbonButton Icon="bi-arrows-expand-vertical" Label="Fit Width" Title="Fit the page width to the window" Disabled="NoDoc" OnClick="FitWidthAsync" />
+                        <RibbonButton Icon="bi-1-square" Label="100%" Title="Actual size (Ctrl+0)" Disabled="NoDoc" OnClick="() => SetZoom(1)" />
+                    </div>
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Zoom %</span>
+                            <input type="number" min="25" max="400" step="5" value="@((int)Math.Round(_zoom * 100))" @onchange="ZoomBoxChanged" disabled="@NoDoc" aria-label="Zoom percent" style="width:58px" />
+                        </div>
                     </div>
                 </RibbonGroup>
-                <RibbonGroup Title="Panels">
-                    <RibbonButton Large Icon="bi-layout-sidebar" Label="Thumbnails" Active="_showLeft" OnClick="() => _showLeft = !_showLeft" />
-                    <RibbonButton Large Icon="bi-layout-sidebar-reverse" Label="Side Panel" Active="_showRight" OnClick="() => _showRight = !_showRight" />
+                <RibbonGroup Title="Rotate Page">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-bookmark" Label="Bookmarks" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Bookmarks)" />
-                        <RibbonButton Icon="bi-chat-left-text" Label="Comments" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Comments)" />
-                        <RibbonButton Icon="bi-ui-checks" Label="Fields" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Fields)" />
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="Rotate CW" Title="Rotate the current page 90° clockwise (Ctrl+])" Disabled="NoDoc" OnClick="() => RotateAsync(90)" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Rotate CCW" Title="Rotate the current page 90° anticlockwise (Ctrl+[)" Disabled="NoDoc" OnClick="() => RotateAsync(-90)" />
+                        <RibbonButton Icon="bi-arrow-repeat" Label="Reset Rotation" Title="Turn the current page back upright" Disabled="@(NoDoc || Rotation(_page) == 0)" OnClick="ResetRotationAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="All Pages CW" Title="Rotate every page 90° clockwise" Disabled="NoDoc" OnClick="() => RotateAllAsync(90)" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="All Pages CCW" Title="Rotate every page 90° anticlockwise" Disabled="NoDoc" OnClick="() => RotateAllAsync(-90)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Reading">
+                    <RibbonButton Large Icon="bi-easel" Label="Slide Show" Title="Full screen, one page at a time (arrows to move, Esc to leave)" Disabled="NoDoc" OnClick="StartSlideShowAsync" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-book" Label="Two Pages" Title="Show the next page beside this one" Disabled="NoDoc" Active="TwoPages" OnClick="() => TwoPages = !TwoPages" />
+                        <RibbonButton Icon="bi-chevron-double-down" Label="Auto Scroll" Title="Scroll through the document by itself; click again to stop" Disabled="NoDoc" Active="AutoScrolling" OnClick="ToggleAutoScrollAsync" />
+                        <RibbonButton Icon="bi-moon-stars" Label="Night Mode" Title="Dark pages for reading at night (colours keep their hue)" Disabled="NoDoc" Active="NightMode" OnClick="() => NightMode = !NightMode" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Theme">
+                    <RibbonMenu Large Icon="@ThemeIcon(_theme)" Label="Theme" Title="Light, Dark, High Contrast, or follow your device">
+                        @foreach (var th in Themes)
+                        {
+                            var id = th;
+                            <button role="menuitemradio" class="@(_theme == id ? "active" : "")" title="@ThemeHint(id)" @onclick="() => SetThemeAsync(id)"><i class="bi @ThemeIcon(id)"></i> @ThemeName(id)</button>
+                        }
+                    </RibbonMenu>
+                </RibbonGroup>
+                <RibbonGroup Title="Display">
+                    <RibbonButton Large Icon="bi-ui-checks" Label="Highlight Fields" Title="Show or hide the form field highlight" Active="HighlightFields" OnClick="() => HighlightFields = !HighlightFields" />
+                </RibbonGroup>
+                <RibbonGroup Title="UI Scale">
+                    <div class="pe-stack">
+                        <div class="pe-row">
+                            <RibbonButton Compact Glyph="−" Label="Smaller" Title="Make the window's text and buttons smaller (Ctrl+Shift+−)" Disabled="@(UiScale <= 0.8)" OnClick="() => ChangeUiScaleAsync(-0.1)" />
+                            <RibbonButton Compact Glyph="+" Label="Larger" Title="Make the window's text and buttons larger (Ctrl+Shift+=)" Disabled="@(UiScale >= 1.6)" OnClick="() => ChangeUiScaleAsync(0.1)" />
+                        </div>
+                        <span class="pe-field-inline" style="justify-content:center">@((int)Math.Round(UiScale * 100))%</span>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Bookmarks">
+                    <RibbonButton Large Icon="bi-bookmark-plus" Label="Add Bookmark" Title="Add a bookmark for the current page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.AddBookmark)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Attachments">
+                    <RibbonButton Large Icon="bi-paperclip" Label="Attach File" Title="Attach a file to this PDF, or see the files attached" Disabled="NoDoc" OnClick="ShowAttachmentsAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Annotations">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-box-arrow-up" Label="Export XFDF" Title="All comments and markup as an XFDF file — opens in Acrobat and Foxit" Disabled="NoDoc" OnClick="ExportXfdfAsync" />
+                        <RibbonButton Icon="bi-box-arrow-in-down" Label="Import XFDF" Title="Bring in comments from an XFDF file another PDF viewer exported" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.ImportXfdf)" />
+                        <RibbonButton Icon="bi-filetype-csv" Label="Ann. Summary" Title="A CSV summary of every comment, for review" Disabled="NoDoc" OnClick="AnnotationSummaryAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Read Aloud">
-                    <RibbonButton Large Icon="bi-volume-up" Label="Read Page" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(false)" />
-                    <RibbonButton Large Icon="bi-soundwave" Label="Read to End" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(true)" />
+                    <RibbonButton Large Icon="bi-volume-up" Label="Read Page" Title="Read this page aloud with your browser's voice" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(false)" />
+                    <RibbonButton Large Icon="bi-soundwave" Label="Read to End" Title="Read from this page to the end" Disabled="@(NoDoc || Reading)" OnClick="() => ReadAloudAsync(true)" />
                     <div class="pe-stack">
                         <RibbonButton Icon="@(ReadingPaused ? "bi-play-fill" : "bi-pause-fill")" Label="@(ReadingPaused ? "Resume" : "Pause")" Disabled="!Reading" OnClick="PauseReadingAsync" />
-                        <RibbonButton Icon="bi-stop-fill" Label="Stop" Disabled="!Reading" OnClick="StopReadingAsync" />
+                        <RibbonButton Icon="bi-stop-fill" Label="Stop Reading" Disabled="!Reading" OnClick="StopReadingAsync" />
                         <div class="pe-field-inline">
                             <span>Speed</span>
                             <select @bind="ReadRate" aria-label="Reading speed">
@@ -298,48 +412,84 @@
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Find &amp; Compare">
-                    <RibbonButton Large Icon="bi-layout-split" Label="Compare PDFs" Title="Compare this PDF with another version: text and pictures" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.CompareUpload)" />
-                </RibbonGroup>
-                <RibbonGroup Title="Theme">
-                    @foreach (var th in Themes)
-                    {
-                        var id = th;
-                        <RibbonButton Large Icon="@ThemeIcon(id)" Label="@ThemeName(id)" Title="@ThemeHint(id)" Active="_theme == id" OnClick="() => SetThemeAsync(id)" />
-                    }
+                    <RibbonButton Large Icon="bi-folder2-open" Label="Search PDFs" Title="Find text in a folder of PDFs (choose the folder or the files)" OnClick="() => ShowDialog(DialogKind.SearchFolder)" />
+                    <RibbonButton Large Icon="bi-intersect" Label="Visual Compare" Title="Compare two PDFs page by page — added, removed and changed content in colour" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.CompareUpload)" />
                 </RibbonGroup>
                 <RibbonGroup Title="Document">
-                    <RibbonButton Large Icon="bi-bar-chart-line" Label="Statistics" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Statistics)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-bar-chart-line" Label="Document Statistics" Title="Pages, words, comments and file size" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Statistics)" />
+                        <RibbonButton Icon="bi-universal-access" Label="Accessibility Check" Title="Check the PDF works with screen readers and keyboards, and fix the common problems" Disabled="NoDoc" OnClick="AccessibilityCheckAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Panels">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-layout-sidebar-reverse" Label="Side Panel" Active="_showRight" OnClick="() => _showRight = !_showRight" />
+                        <RibbonButton Icon="bi-bookmark" Label="Bookmarks" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Bookmarks)" />
+                        <RibbonButton Icon="bi-chat-left-text" Label="Comments" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Comments)" />
+                    </div>
                 </RibbonGroup>
                 break;
 
             case RibbonTab.Tools:
-                <RibbonGroup Title="Export">
-                    <RibbonButton Large Icon="bi-file-earmark-word" Label="Word" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Word)" />
-                    <RibbonButton Large Icon="bi-file-earmark-excel" Label="Excel" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Excel)" />
-                    <RibbonButton Large Icon="bi-file-earmark-slides" Label="PowerPoint" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.PowerPoint)" />
+                <RibbonGroup Title="Active Tool">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-filetype-html" Label="HTML" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Html)" />
-                        <RibbonButton Icon="bi-markdown" Label="Markdown" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Markdown)" />
-                        <RibbonButton Icon="bi-book" Label="ePub" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Epub)" />
+                        @ToolButton(Tool.Hand, "bi-hand-index", "Hand", "Hand / pan tool (H)")
+                        @ToolButton(Tool.Select, "bi-cursor", "Select", "Selection tool (V) — click form fields to fill them in")
+                        <RibbonButton Icon="bi-input-cursor-text" Label="Text Fill" Title="Text fill — click a form field to type in it" Disabled="NoDoc" OnClick="FillFieldTool" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-file-text" Label="Text" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Text)" />
-                        <RibbonButton Icon="bi-images" Label="Page Images" Title="Every page as a PNG, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Images)" />
-                        <RibbonButton Icon="bi-file-image" Label="Pictures" Title="The pictures inside the PDF, in a ZIP" Disabled="NoDoc" OnClick="() => ExportAsync(ExportFormat.Pictures)" />
+                        @ToolButton(Tool.Zoom, "bi-zoom-in", "Zoom", "Zoom tool — drag a rectangle to zoom in (Z)")
+                        @ToolButton(Tool.SelectText, "bi-textarea-t", "Select Text", "Select text or an area to copy, highlight, snapshot or ask the AI about (Shift+S)")
+                        @ToolButton(Tool.EditImages, "bi-image-alt", "Edit Images", "Edit Images — click a picture in the PDF to move, resize, replace, save or delete it")
                     </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Snapshot, "bi-camera", "Snapshot", "Snapshot — drag a box round any area, then copy it or save it as a picture")
+                        @ToolButton(Tool.Highlight, "bi-highlighter", "Highlight", "Highlight — drag over text (I)")
+                        @ToolButton(Tool.Underline, "bi-type-underline", "Underline", "Underline — drag over text")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Squiggly, "bi-water", "Squiggly", "Squiggly underline — drag under text")
+                        @ToolButton(Tool.Strikeout, "bi-type-strikethrough", "Strikethrough", "Strikethrough — drag over text")
+                        @ToolButton(Tool.Redact, "bi-eraser-fill", "Redact", "Mark for redaction — drag over what to remove for good")
+                    </div>
+                    <RibbonButton Large Icon="bi-shield-check" Label="Apply Redactions" Title="Permanently remove the marked areas from the PDF" Disabled="@(NoDoc || !_items.Any(i => i.Kind == ItemKind.Redact))" OnClick="CommitAsync" />
                 </RibbonGroup>
-                <RibbonGroup Title="Scan &amp; OCR">
-                    <RibbonButton Large Icon="bi-textarea-resize" Label="Recognise Text" Title="OCR: make scanned pages searchable and copyable" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Ocr)" />
-                    <RibbonButton Large Icon="bi-camera" Label="Scan with Camera" Title="Take photos of paper pages (or choose pictures) and make a PDF" OnClick="() => ShowDialog(DialogKind.ScanCamera)" />
-                </RibbonGroup>
-                <RibbonGroup Title="Batch">
-                    <RibbonButton Large Icon="bi-collection-play" Label="Batch Process" Title="Run steps (OCR, compress, watermark, numbering, password …) over many PDFs" OnClick="ShowBatch" />
-                    <RibbonButton Large Icon="bi-table" Label="Bulk Fill" Title="One filled copy of this form for each row of a spreadsheet" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ShowBulkFillAsync" />
+                <RibbonGroup Title="Drawing">
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Ink, "bi-brush", "Freehand", "Freehand draw — drag to draw ink strokes")
+                        @ToolButton(Tool.Link, "bi-link-45deg", "Link", "Link — drag a rectangle to add a link (web page, email, phone or page)")
+                        <RibbonButton Icon="bi-x-circle" Label="Remove Links" Title="Remove every link from this PDF (Undo brings them back)" Disabled="NoDoc" OnClick="RemoveLinksAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Note, "bi-sticky", "Sticky Note", "Sticky note — click the page to place a comment")
+                        @ToolButton(Tool.InsertText, "bi-caret-up", "Insert Text", "Insert text — click where text is missing and type what to insert")
+                        @ToolButton(Tool.ReplaceText, "bi-input-cursor", "Replace Text", "Replace text — drag across the words, then type the replacement")
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-chat-left-text" Label="Comments" Title="Show the Comments list" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Comments)" />
+                        @ToolButton(Tool.Rectangle, "bi-square", "Rectangle", "Rectangle — drag to draw")
+                        @ToolButton(Tool.Ellipse, "bi-circle", "Ellipse", "Ellipse — drag to draw")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Arrow, "bi-arrow-up-right", "Arrow", "Arrow — drag to draw")
+                        @ToolButton(Tool.Callout, "bi-chat-square-text", "Callout", "Callout — drag a box, then type")
+                        @ToolButton(Tool.Line, "bi-slash-lg", "Line", "Line — drag to draw a straight line")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Cloud, "bi-cloud", "Cloud", "Cloud — drag to draw a revision cloud")
+                        @ToolButton(Tool.Polygon, "bi-pentagon", "Polygon", "Polygon — click the corners, double-click or Enter to close")
+                        @ToolButton(Tool.Polyline, "bi-bezier2", "Polyline", "Polyline — click the points, double-click or Enter to finish")
+                    </div>
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Eraser, "bi-eraser", "Eraser", "Eraser — click a comment or drawing to remove it")
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Measure">
-                    <RibbonButton Large Icon="bi-rulers" Label="Distance" Title="Drag between two points" Disabled="NoDoc" Active="_tool == Tool.Distance" OnClick="() => SetTool(Tool.Distance)" />
-                    <RibbonButton Large Icon="bi-bezier2" Label="Perimeter" Title="Click each point, double-click to finish" Disabled="NoDoc" Active="_tool == Tool.Perimeter" OnClick="() => SetTool(Tool.Perimeter)" />
-                    <RibbonButton Large Icon="bi-pentagon" Label="Area" Title="Click each corner, double-click to finish" Disabled="NoDoc" Active="_tool == Tool.Area" OnClick="() => SetTool(Tool.Area)" />
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Distance, "bi-rulers", "Distance", "Distance — drag between two points")
+                        @ToolButton(Tool.Perimeter, "bi-bezier2", "Perimeter", "Perimeter — click the points, double-click or Enter to finish")
+                        @ToolButton(Tool.Area, "bi-pentagon", "Area", "Area — click the corners, double-click or Enter to finish")
+                    </div>
                     <div class="pe-stack">
                         <div class="pe-field-inline">
                             <span>Units</span>
@@ -352,31 +502,138 @@
                         </div>
                     </div>
                 </RibbonGroup>
-                <RibbonGroup Title="Convert">
-                    <RibbonButton Large Icon="bi-archive" Label="PDF/A" Title="Make an archive-friendly copy" Disabled="NoDoc" OnClick="PdfAAsync" />
-                    <RibbonButton Large Icon="bi-book-half" Label="Booklet" Title="Two pages per sheet, in folding order" Disabled="NoDoc" OnClick="BookletAsync" />
+                <RibbonGroup Title="Sign &amp; Date">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-pen" Label="Signature" Title="Signature — click a signature field or the page (S)" Disabled="NoDoc" Active="_tool == Tool.Signature" OnClick="SignatureToolAsync" />
+                        @ToolButton(Tool.Date, "bi-calendar-event", "Date Stamp", "Date stamp — click the page to place today's date (D)")
+                        @ToolButton(Tool.Stamp, "bi-postage", "Stamp", "Rubber stamp — click the page to place it (M)")
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-collection" Label="Stamps…" Title="Choose the stamp; create, edit or delete your own" OnClick="() => ShowDialog(DialogKind.Stamps)" />
+                        <RibbonButton Icon="bi-plus-square" Label="New Stamp" Title="Create a custom stamp with your own text and colour" OnClick="NewCustomStamp" />
+                        <RibbonButton Icon="bi-dash-square" Label="Remove Custom" Title="Remove the chosen custom stamp" Disabled="@(SelectedCustomStamp == null)" OnClick="RemoveSelectedCustomStampAsync" />
+                    </div>
                 </RibbonGroup>
-                <RibbonGroup Title="Create">
-                    <RibbonButton Large Icon="bi-file-earmark-plus" Label="Blank PDF" OnClick="NewBlankAsync" />
-                    <RibbonButton Large Icon="bi-file-earmark-image" Label="From Images" Title="Make a PDF from pictures or other files" OnClick="() => ShowDialog(DialogKind.Combine)" />
-                    <RibbonButton Large Icon="bi-file-earmark-word" Label="From Office" Title="Make a PDF from Word, Excel, PowerPoint, OpenDocument, text or web pages" OnClick="() => ShowDialog(DialogKind.Combine)" />
+                <RibbonGroup Title="Marks">
+                    <div class="pe-stack">
+                        <div class="pe-row">
+                            @ToolButton(Tool.Check, "bi-check-lg", "Check", "Checkmark ✓", compact: true)
+                            @ToolButton(Tool.Cross, "bi-x-lg", "Cross", "Cross ✕", compact: true)
+                        </div>
+                        <div class="pe-row">
+                            @ToolButton(Tool.Dot, "bi-circle-fill", "Dot", "Dot ●", compact: true)
+                            @ToolButton(Tool.Circle, "bi-circle", "Circle", "Circle ○", compact: true)
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Highlight Color">
+                    <div class="pe-stack">
+                        @Swatches(HighlightColors, _highlightColor, c => _highlightColor = c)
+                        <div class="pe-field-inline" title="Highlight opacity (10%–100%)">
+                            <span>Opacity</span>
+                            <input type="number" min="10" max="100" step="10" @bind="HighlightOpacityPercent" aria-label="Highlight opacity percent" style="width:52px" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Stroke Width">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline" title="Stroke width for shapes, arrows and freehand drawing">
+                            <select @bind="_inkWidth" aria-label="Stroke width">
+                                @foreach (var pw in new[] { 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 12.0 })
+                                {
+                                    <option value="@pw">@pw pt</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Drawing Color">
+                    <div class="pe-stack">
+                        @Swatches(InkColors, _strokeColor, c => _strokeColor = c)
+                        <div class="pe-field-inline">
+                            <span>Other</span>
+                            <input type="color" @bind="_strokeColor" aria-label="Drawing colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Annotations">
+                    <div class="pe-stack">
+                        @ToolButton(Tool.Text, "bi-fonts", "Add Text", "Add Text — click anywhere to place horizontal text")
+                        @ToolButton(Tool.VerticalText, "bi-type", "Vertical Text", "Vertical Text — click anywhere to place text running bottom to top")
+                        <RibbonButton Icon="bi-trash" Label="Delete" Title="Delete the selected comment, drawing or text" Disabled="@(SelectedItem == null)" OnClick="DeleteSelectedItem" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Text Format">
+                    @TextFormatControls(colours: false)
+                </RibbonGroup>
+                <RibbonGroup Title="Color">
+                    <div class="pe-stack">
+                        @Swatches(TextColours, _textColor, SetTextColour)
+                        <div class="pe-field-inline">
+                            <span>Other</span>
+                            <input type="color" value="@_textColor" @onchange="e => SetTextColour(e.Value?.ToString() ?? _textColor)" aria-label="Text colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Recognise Text">
+                    <RibbonButton Large Icon="bi-textarea-resize" Label="OCR" Title="Recognise Text: make scanned pages searchable and copyable" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Ocr)" />
+                </RibbonGroup>
+                break;
+
+            case RibbonTab.Forms:
+                <RibbonGroup Title="Fields">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-eraser" Label="Clear All" Title="Clear the values of all form fields" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ClearAllFields" />
+                        <RibbonButton Icon="bi-x-square" Label="Delete Field" Title="Delete the selected form field" Disabled="@(SelectedFieldInfo == null)" OnClick="DeleteFieldAnyMode" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-box-arrow-in-down" Label="Import Data" Title="Fill the fields from an exported data or JSON file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="() => ShowDialog(DialogKind.ImportData)" />
+                        <RibbonButton Icon="bi-box-arrow-up" Label="Export Data" Title="Download the field values as a tab-separated file" Disabled="@(NoDoc || FieldCount == 0)" OnClick="ExportDataAsync" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Save Options">
+                    <RibbonButton Large Icon="bi-download" Label="Save Filled PDF" Title="Download the PDF with its form fields still fillable" Disabled="NoDoc" OnClick="SaveAsync" />
+                    <RibbonButton Large Icon="bi-layers" Label="Flatten &amp; Save" Title="Download with the fields baked in (no longer fillable)" Disabled="NoDoc" OnClick="SaveFlattenedAsync" />
                 </RibbonGroup>
                 break;
 
             case RibbonTab.AI:
                 <RibbonGroup Title="Assist">
-                    <RibbonButton Large Icon="bi-chat-dots" Label="Chat" Title="Ask about the open PDF" OnClick="() => ShowRight(RightTab.AI)" />
-                    <RibbonButton Large Icon="bi-trash3" Label="Clear Chat" Disabled="@(AiHistory.Count == 0)" OnClick="ClearAiChat" />
+                    @ToolButton(Tool.SelectText, "bi-textarea-t", "Select Text", "Drag over text or an area, then Explain, Summarise, Rewrite, Translate or Ask (Shift+S)", large: true)
+                    <RibbonButton Large Icon="bi-list-nested" Label="Outline" Title="A summary outline with key points and page links" Disabled="@(NoDoc || AiRunning)" OnClick="AiOutlineAsync" />
+                    <RibbonMenu Large Icon="bi-pencil" Label="Write" Title="Write something from this document" Disabled="@(NoDoc || AiRunning)">
+                        @foreach (var (key, label) in WritePresets)
+                        {
+                            var k = key;
+                            <button role="menuitem" @onclick="() => AiWriteAsync(k)">@label</button>
+                        }
+                    </RibbonMenu>
+                    <RibbonButton Large Icon="@(Listening ? "bi-mic-fill" : "bi-mic")" Label="Ask by Voice" Title="Click, then speak your question" Active="Listening" OnClick="AskByVoiceAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Documents">
+                    <RibbonButton Large Icon="bi-globe2" Label="Translate PDF" Title="A translated copy that keeps the layout" Disabled="@(NoDoc || AiRunning)" OnClick="ShowTranslate" />
+                    <RibbonButton Large Icon="bi-files" Label="Ask Across PDFs" Title="Ask one question about several PDFs; answers cite file and page" Disabled="AiRunning" OnClick="() => ShowDialog(DialogKind.AskAcross)" />
+                    <RibbonButton Large Icon="bi-magic" Label="Design Form with AI" Title="Describe the form you need and the AI lays it out on the design canvas" Disabled="AiRunning" OnClick="() => ShowDialog(DialogKind.DesignAi)" />
+                    <RibbonButton Large Icon="bi-diagram-3" Label="Mind Map" Title="The document as a mind map; click a topic to go to its page" Disabled="@(NoDoc || AiRunning)" OnClick="MindMapAsync" />
+                </RibbonGroup>
+                <RibbonGroup Title="Chat">
+                    <RibbonButton Large Icon="bi-chat-dots" Label="Open Chat" Title="Show the AI chat panel" OnClick="() => ShowRight(RightTab.AI)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-trash3" Label="Clear Chat" Title="Clear the AI chat history" Disabled="@(AiHistory.Count == 0)" OnClick="ClearAiChat" />
+                        <RibbonButton Icon="bi-ui-checks" Label="Fill Fields" Title="Fill the form using what you typed in the chat box" Disabled="@(NoDoc || AiRunning || FieldCount == 0)" OnClick="AiFillFromChatAsync" />
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Document AI">
-                    @foreach (var (type, label, icon) in AiPresets)
-                    {
-                        var t = type;
-                        <RibbonButton Large Icon="@icon" Label="@label" Disabled="@(NoDoc || AiRunning)" OnClick="() => RunAiPresetAsync(t)" />
-                    }
-                </RibbonGroup>
-                <RibbonGroup Title="Translate">
-                    <RibbonButton Large Icon="bi-globe2" Label="Translate PDF" Title="A translated copy of the whole PDF (or this page) that keeps the layout" Disabled="@(NoDoc || AiRunning)" OnClick="ShowTranslate" />
+                    <RibbonButton Large Icon="bi-magic" Label="Smart Fill" Title="The AI reads the document and fills every form field" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("smartfill"))" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-card-text" Label="Summarize" Title="Parties, dates and key points" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("summarize"))" />
+                        <RibbonButton Icon="bi-table" Label="Extract Data" Title="Names, dates, addresses, amounts and reference numbers" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("extract"))" />
+                        <RibbonButton Icon="bi-translate" Label="Translate" Title="Translate the text in the chat" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("translate"))" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-briefcase" Label="Contract" Title="Parties, obligations, risks and missing clauses" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("contract"))" />
+                        <RibbonButton Icon="bi-person-badge" Label="Find PII" Title="Personal information that should be redacted" Disabled="@(NoDoc || AiRunning)" OnClick="@(() => RunAiPresetAsync("pii"))" />
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Provider">
                     <div class="pe-stack">
@@ -395,84 +652,229 @@
                         <span class="pe-field-inline" style="color:var(--pe-dim)">@(AiReady ? "✓ Ready" : "No API key")</span>
                     </div>
                 </RibbonGroup>
+                <RibbonGroup Title="Profiles">
+                    <RibbonButton Large Icon="bi-person-vcard" Label="Manage Profiles" Title="Store your name, address and more for filling forms in one click" OnClick="() => ShowDialog(DialogKind.Profiles)" />
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-lightning-charge" Label="Quick Fill" Title="Fill the matching form fields from the chosen profile" Disabled="@(NoDoc || FieldCount == 0 || CurrentProfile == null)" OnClick="QuickFill" />
+                        <div class="pe-field-inline">
+                            <span>Profile</span>
+                            <select @bind="ProfileId" aria-label="Profile" style="max-width:130px">
+                                @if (Profiles.Count == 0) { <option value="">(none yet)</option> }
+                                @foreach (var pr in Profiles) { <option value="@pr.Id">@pr.DisplayName</option> }
+                            </select>
+                        </div>
+                    </div>
+                </RibbonGroup>
                 <RibbonGroup Title="Setup">
-                    <RibbonButton Large Icon="bi-key" Label="API Keys" OnClick="() => ShowDialog(DialogKind.AiSettings)" />
+                    <RibbonButton Large Icon="bi-key" Label="API Keys" Title="Add your Claude, OpenAI or GitHub key for this session" OnClick="() => ShowDialog(DialogKind.AiSettings)" />
                 </RibbonGroup>
                 break;
 
             case RibbonTab.Design:
+                var sel = SelectedDesignItem;
+                bool noSel = sel == null;
                 <RibbonGroup Title="View Mode">
-                    <RibbonButton Large Icon="bi-file-earmark-text" Label="Live View" Active="!DesignMode" OnClick="() => SetDesignMode(false)" />
-                    <RibbonButton Large Icon="bi-pencil-square" Label="Design" Active="DesignMode" OnClick="() => SetDesignMode(true)" />
+                    <RibbonButton Large Icon="bi-file-earmark-text" Label="PDF View" Title="Back to the PDF" Active="!DesignMode" OnClick="() => SetDesignMode(false)" />
+                    <RibbonButton Large Icon="bi-pencil-square" Label="Design View" Title="The design canvas" Active="DesignMode" OnClick="() => SetDesignMode(true)" />
+                </RibbonGroup>
+                <RibbonGroup Title="AI">
+                    <RibbonButton Large Icon="bi-magic" Label="Design Form with AI" Title="Describe the form you need and the AI lays it out" Disabled="AiRunning" OnClick="() => ShowDialog(DialogKind.DesignAi)" />
+                </RibbonGroup>
+                <RibbonGroup Title="Canvas">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-plus" Label="New Design" Title="A blank design page" OnClick="NewDesignPage" />
+                        <RibbonButton Icon="bi-file-earmark-pdf" Label="Export PDF" Title="Download the design as a fillable PDF" OnClick="ExportDesignAsync" />
+                        <RibbonButton Icon="bi-box-arrow-in-right" Label="Open as PDF" Title="Make the PDF and open it in the PDF view" OnClick="OpenDesignAsPdfAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-file-earmark-arrow-down" Label="Import PDF Page" Title="Replace the canvas with an editable copy of the current PDF page (text, pictures and boxes)" Disabled="NoDoc" OnClick="ImportPdfPageAsync" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo (Ctrl+Z)" Disabled="!CanUndoDesign" OnClick="UndoDesign" />
+                        <RibbonButton Icon="bi-arrow-clockwise" Label="Redo" Title="Redo (Ctrl+Y)" Disabled="!CanRedoDesign" OnClick="RedoDesign" />
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Design File">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-file-earmark-plus" Label="New Design" OnClick="NewDesignPage" />
                         <RibbonButton Icon="bi-download" Label="Save Design" Title="Download the design (.pdfdesign) to open later here or in the Windows app" OnClick="SaveDesignAsync" />
-                        <RibbonButton Icon="bi-folder2-open" Label="Open Design" OnClick="() => ShowDialog(DialogKind.OpenDesign)" />
+                        <RibbonButton Icon="bi-folder2-open" Label="Load Design" Title="Open a .pdfdesign file" OnClick="() => ShowDialog(DialogKind.OpenDesign)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Templates">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-receipt" Label="Invoice" Title="A professional invoice" OnClick="@(() => LoadTemplate("Invoice"))" />
+                        <RibbonButton Icon="bi-envelope-paper" Label="Letter" Title="A formal letter" OnClick="@(() => LoadTemplate("Letter"))" />
+                        <RibbonButton Icon="bi-ui-radios" Label="Form" Title="A general form" OnClick="@(() => LoadTemplate("Form"))" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-file-earmark-pdf" Label="Export PDF" Title="Download the design as a fillable PDF" OnClick="ExportDesignAsync" />
-                        <RibbonButton Icon="bi-box-arrow-in-right" Label="Open as PDF" Title="Make the PDF and open it in Live View to fill in or sign" OnClick="OpenDesignAsPdfAsync" />
+                        <RibbonButton Icon="bi-award" Label="Cert." Title="A certificate" OnClick="@(() => LoadTemplate("Certificate"))" />
+                        <RibbonButton Icon="bi-person-badge" Label="Business Card" Title="A business card (85 × 54 mm)" OnClick="@(() => LoadTemplate("BusinessCard"))" />
+                        <RibbonButton Icon="bi-file-person" Label="Resume" Title="A resumé / CV" OnClick="@(() => LoadTemplate("Resume"))" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-megaphone" Label="Flyer" Title="A promotional flyer" OnClick="@(() => LoadTemplate("Flyer"))" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Insert">
-                    <RibbonButton Large Icon="bi-cursor" Label="Select" Active="_designTool == DesignTool.Select" OnClick="() => { SetDesignMode(true); SetDesignTool(DesignTool.Select); }" />
+                    @DesignToolButton(DesignTool.Select, "bi-cursor", "Select", "Select and move elements (Ctrl+click to select more)", large: true)
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-fonts" Label="Text" Active="_designTool == DesignTool.Text" OnClick="() => StartDesignTool(DesignTool.Text)" />
-                        <RibbonButton Icon="bi-square" Label="Rectangle" Active="_designTool == DesignTool.Rectangle" OnClick="() => StartDesignTool(DesignTool.Rectangle)" />
-                        <RibbonButton Icon="bi-circle" Label="Ellipse" Active="_designTool == DesignTool.Ellipse" OnClick="() => StartDesignTool(DesignTool.Ellipse)" />
+                        @DesignToolButton(DesignTool.Text, "bi-fonts", "Text Box", "Add a text block")
+                        @DesignToolButton(DesignTool.Rectangle, "bi-square", "Rectangle", "Draw a rectangle")
+                        @DesignToolButton(DesignTool.Ellipse, "bi-circle", "Ellipse", "Draw an ellipse or circle")
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-slash-lg" Label="Line" Active="_designTool == DesignTool.Line" OnClick="() => StartDesignTool(DesignTool.Line)" />
-                        <RibbonButton Icon="bi-arrow-up-right" Label="Arrow" Active="_designTool == DesignTool.Arrow" OnClick="() => StartDesignTool(DesignTool.Arrow)" />
-                        <RibbonButton Icon="bi-table" Label="Table" Active="_designTool == DesignTool.Table" OnClick="() => StartDesignTool(DesignTool.Table)" />
+                        @DesignToolButton(DesignTool.Table, "bi-table", "Table", "Insert a table")
+                        @DesignToolButton(DesignTool.Line, "bi-slash-lg", "Line", "Draw a straight line")
+                        @DesignToolButton(DesignTool.Arrow, "bi-arrow-up-right", "Arrow", "Draw an arrow")
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-image" Label="Picture" OnClick="() => { SetDesignMode(true); ShowDialog(DialogKind.DesignPicture); }" />
-                        <RibbonButton Icon="bi-check-lg" Label="Tick" Active="_designTool == DesignTool.Check" OnClick="() => StartDesignTool(DesignTool.Check)" />
-                        <RibbonButton Icon="bi-x-lg" Label="Cross" Active="_designTool == DesignTool.Cross" OnClick="() => StartDesignTool(DesignTool.Cross)" />
+                        @DesignToolButton(DesignTool.Pen, "bi-pen", "Pen", "Freehand drawing")
+                        <RibbonButton Icon="bi-image" Label="Image" Title="Insert a picture" OnClick="() => { SetDesignMode(true); ShowDialog(DialogKind.DesignPicture); }" />
+                        @DesignToolButton(DesignTool.Check, "bi-check-lg", "Check ✓", "Insert a checkmark")
+                    </div>
+                    <div class="pe-stack">
+                        @DesignToolButton(DesignTool.Cross, "bi-x-lg", "X Mark ✗", "Insert an X mark")
+                        <RibbonButton Icon="bi-vector-pen" Label="Signature" Title="Your signature as a picture" OnClick="AddDesignSignature" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Form Fields">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-input-cursor-text" Label="Text Field" Active="_designTool == DesignTool.TextField" OnClick="() => StartDesignTool(DesignTool.TextField)" />
-                        <RibbonButton Icon="bi-textarea-t" Label="Multi-line" Active="_designTool == DesignTool.Memo" OnClick="() => StartDesignTool(DesignTool.Memo)" />
-                        <RibbonButton Icon="bi-check2-square" Label="Checkbox" Active="_designTool == DesignTool.Checkbox" OnClick="() => StartDesignTool(DesignTool.Checkbox)" />
+                        @DesignToolButton(DesignTool.TextField, "bi-input-cursor-text", "Text Field", "A one-line text field")
+                        @DesignToolButton(DesignTool.Memo, "bi-textarea-t", "Multi-line", "A multi-line text field")
+                        @DesignToolButton(DesignTool.Checkbox, "bi-check2-square", "Checkbox", "A check box")
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-record-circle" Label="Radio" Active="_designTool == DesignTool.Radio" OnClick="() => StartDesignTool(DesignTool.Radio)" />
-                        <RibbonButton Icon="bi-menu-button-wide" Label="Dropdown" Active="_designTool == DesignTool.ComboBox" OnClick="() => StartDesignTool(DesignTool.ComboBox)" />
-                        <RibbonButton Icon="bi-pen" Label="Signature" Active="_designTool == DesignTool.Signature" OnClick="() => StartDesignTool(DesignTool.Signature)" />
+                        @DesignToolButton(DesignTool.Radio, "bi-record-circle", "Radio", "An option button (same name = same group)")
+                        @DesignToolButton(DesignTool.ComboBox, "bi-menu-button-wide", "Dropdown", "A dropdown list")
+                        @DesignToolButton(DesignTool.Signature, "bi-pen", "Signature Field", "A signature field")
                     </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Text Format">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <select value="@(sel?.FontFamily ?? "Helvetica")" @onchange="e => DesignFormat(x => x.FontFamily = e.Value?.ToString())" disabled="@noSel" aria-label="Font" style="width:104px">
+                                @foreach (var f in DesignFonts) { <option value="@f">@f</option> }
+                            </select>
+                            <input type="number" min="4" max="144" value="@Css(sel?.FontSize > 0 ? sel.FontSize : 12)" @onchange="e => DesignFormat(x => x.FontSize = Num(e, x.FontSize))" disabled="@noSel" aria-label="Font size" style="width:46px" />
+                        </div>
+                        <div class="pe-row">
+                            <RibbonButton Compact Glyph="B" GlyphStyle="font-weight:800" Label="Bold" Disabled="noSel" Active="@(sel?.Bold == true)" OnClick="() => DesignFormat(x => x.Bold = !x.Bold)" />
+                            <RibbonButton Compact Glyph="I" GlyphStyle="font-style:italic;font-family:serif" Label="Italic" Disabled="noSel" Active="@(sel?.Italic == true)" OnClick="() => DesignFormat(x => x.Italic = !x.Italic)" />
+                            <RibbonButton Compact Glyph="U" GlyphStyle="text-decoration:underline" Label="Underline" Disabled="noSel" Active="@(sel?.Underline == true)" OnClick="() => DesignFormat(x => x.Underline = !x.Underline)" />
+                            <RibbonButton Compact Icon="bi-text-wrap" Label="Wrap" Title="Wrap text within the element's width (text, text fields and multi-line fields)" Disabled="noSel" Active="@(sel?.Wrap == true)" OnClick="() => DesignFormat(x => x.Wrap = !x.Wrap)" />
+                        </div>
+                        <div class="pe-row">
+                            <RibbonButton Compact Icon="bi-text-left" Label="Left" Disabled="noSel" Active="@(sel?.Alignment is null or "Left")" OnClick="@(() => DesignFormat(x => x.Alignment = "Left"))" />
+                            <RibbonButton Compact Icon="bi-text-center" Label="Center" Disabled="noSel" Active="@(sel?.Alignment == "Center")" OnClick="@(() => DesignFormat(x => x.Alignment = "Center"))" />
+                            <RibbonButton Compact Icon="bi-text-right" Label="Right" Disabled="noSel" Active="@(sel?.Alignment == "Right")" OnClick="@(() => DesignFormat(x => x.Alignment = "Right"))" />
+                        </div>
+                    </div>
+                    <div class="pe-stack">
+                        <div class="pe-field-inline" title="Text colour">
+                            <span>Text</span>
+                            <input type="color" value="@DesignColor.ToCss(sel?.Color, "#000000")" @onchange="e => DesignFormat(x => x.Color = Argb(e))" disabled="@noSel" aria-label="Text colour" />
+                        </div>
+                        <div class="pe-field-inline" title="Text highlight / background colour">
+                            <span>Highlight</span>
+                            <input type="color" value="@DesignColor.ToCss(sel?.BgColor, "#ffffff")" @onchange="e => DesignFormat(x => x.BgColor = Argb(e))" disabled="@noSel" aria-label="Highlight colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Shape Format">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline"><span>Line Width</span><input type="number" min="0" max="20" step="0.5" value="@Css(sel?.StrokeThick ?? 1)" @onchange="e => DesignFormat(x => x.StrokeThick = Num(e, x.StrokeThick))" disabled="@noSel" aria-label="Line width" style="width:46px" /></div>
+                        <div class="pe-field-inline"><span>Corner Radius</span><input type="number" min="0" max="100" value="@Css(sel?.CornerRadius ?? 0)" @onchange="e => DesignFormat(x => x.CornerRadius = Num(e, x.CornerRadius))" disabled="@noSel" aria-label="Corner radius" style="width:46px" /></div>
+                        <div class="pe-field-inline"><span>Opacity %</span><input type="number" min="0" max="100" step="5" value="@((int)Math.Round((sel?.Opacity ?? 1) * 100))" @onchange="e => DesignFormat(x => x.Opacity = Math.Clamp(Num(e, x.Opacity * 100) / 100, 0, 1))" disabled="@noSel" aria-label="Opacity percent" style="width:46px" /></div>
+                    </div>
+                    <div class="pe-stack">
+                        <div class="pe-field-inline"><span>Fill</span><input type="color" value="@DesignColor.ToCss(sel?.FillColor, "#ffffff")" @onchange="e => DesignFormat(x => x.FillColor = Argb(e))" disabled="@noSel" aria-label="Fill colour" /></div>
+                        <div class="pe-field-inline"><span>Stroke</span><input type="color" value="@DesignColor.ToCss(sel?.StrokeColor, "#000000")" @onchange="e => DesignFormat(x => x.StrokeColor = Argb(e))" disabled="@noSel" aria-label="Stroke colour" /></div>
+                        <RibbonButton Icon="@(sel?.IsLocked == true ? "bi-lock-fill" : "bi-unlock")" Label="Lock" Title="Lock the element so it can't be moved by accident" Disabled="noSel" Active="@(sel?.IsLocked == true)" OnClick="() => DesignFormat(x => x.IsLocked = !x.IsLocked)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Field">
+                    @{ bool notField = sel?.Type != "field"; }
+                    <div class="pe-stack">
+                        <div class="pe-row">
+                            <RibbonButton Compact Icon="bi-box-arrow-in-left" Label="Left" Title="Label to the left of the field" Disabled="notField" Active="@(sel?.LabelPosition is null or "Left")" OnClick="@(() => DesignFormat(x => x.LabelPosition = "Left"))" />
+                            <RibbonButton Compact Icon="bi-box-arrow-in-right" Label="Right" Title="Label to the right of the field" Disabled="notField" Active="@(sel?.LabelPosition == "Right")" OnClick="@(() => DesignFormat(x => x.LabelPosition = "Right"))" />
+                            <RibbonButton Compact Icon="bi-input-cursor" Label="Inside" Title="Label shown as a hint inside the field" Disabled="notField" Active="@(sel?.LabelPosition == "Placeholder")" OnClick="@(() => DesignFormat(x => x.LabelPosition = "Placeholder"))" />
+                            <RibbonButton Compact Icon="bi-slash-circle" Label="None" Title="No label" Disabled="notField" Active="@(sel?.LabelPosition == "None")" OnClick="@(() => DesignFormat(x => x.LabelPosition = "None"))" />
+                        </div>
+                        <div class="pe-field-inline"><span>Label Gap</span><input type="number" min="0" max="60" value="@Css(sel?.LabelOffset ?? 6)" @onchange="e => DesignFormat(x => x.LabelOffset = Num(e, x.LabelOffset))" disabled="@notField" aria-label="Label gap" style="width:46px" /></div>
+                        <RibbonButton Icon="bi-asterisk" Label="Required" Title="Mark this field as required" Disabled="notField" Active="@(sel?.Required == true)" OnClick="() => DesignFormat(x => x.Required = !x.Required)" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Pen Format">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline"><span>Pen Size</span><input type="number" min="0.5" max="20" step="0.5" @bind="DesignPenWidth" aria-label="Pen size" style="width:46px" /></div>
+                        <div class="pe-field-inline"><span>Pen Color</span><input type="color" @bind="DesignPenColor" aria-label="Pen colour" /></div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Align">
+                    @ArrangeButtons(op => ArrangeDesign(op), SelectedDesignIds.Count == 0)
                 </RibbonGroup>
                 <RibbonGroup Title="Arrange">
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-front" Label="Bring to Front" Disabled="@(SelectedDesignItem == null)" OnClick="BringToFront" />
-                        <RibbonButton Icon="bi-back" Label="Send to Back" Disabled="@(SelectedDesignItem == null)" OnClick="SendToBack" />
-                        <RibbonButton Icon="bi-copy" Label="Duplicate" Disabled="@(SelectedDesignItem == null)" OnClick="DuplicateDesignItem" />
+                        <RibbonButton Icon="bi-layer-forward" Label="Bring Forward" Title="One layer up" Disabled="noSel" OnClick="() => MoveDesignLayer(1)" />
+                        <RibbonButton Icon="bi-layer-backward" Label="Send Backward" Title="One layer down" Disabled="noSel" OnClick="() => MoveDesignLayer(-1)" />
+                        <RibbonButton Icon="bi-front" Label="To Front" Title="In front of everything" Disabled="noSel" OnClick="BringToFront" />
                     </div>
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-trash" Label="Delete" Disabled="@(SelectedDesignItem == null)" OnClick="DeleteDesignItem" />
-                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Disabled="!CanUndoDesign" OnClick="UndoDesign" />
-                        <RibbonButton Icon="bi-arrow-clockwise" Label="Redo" Disabled="!CanRedoDesign" OnClick="RedoDesign" />
+                        <RibbonButton Icon="bi-back" Label="To Back" Title="Behind everything" Disabled="noSel" OnClick="SendToBack" />
+                        <RibbonButton Icon="bi-copy" Label="Duplicate" Title="Duplicate (Ctrl+D)" Disabled="noSel" OnClick="DuplicateDesignItem" />
+                        <RibbonButton Icon="bi-trash" Label="Delete" Title="Delete (Del)" Disabled="noSel" OnClick="DeleteDesignItem" />
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Page">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline">
+                            <span>Page Size</span>
+                            <select value="@Design.PageSize" @onchange="e => SetDesignPage(e.Value?.ToString() ?? Design.PageSize)" aria-label="Page size">
+                                @foreach (var ps in new[] { "A4", "Letter", "A3", "Custom" }) { <option value="@ps">@ps</option> }
+                            </select>
+                        </div>
+                        <div class="pe-row">
+                            <RibbonButton Compact Icon="bi-grid-3x3" Label="Grid" Title="Show the grid" Active="DesignGrid" OnClick="() => DesignGrid = !DesignGrid" />
+                            <RibbonButton Compact Icon="bi-magnet" Label="Snap" Title="Snap to the grid while moving" Active="DesignSnap" OnClick="() => DesignSnap = !DesignSnap" />
+                            <RibbonButton Compact Icon="bi-zoom-in" Label="Zoom In" OnClick="() => Zoom(1.25)" />
+                            <RibbonButton Compact Icon="bi-zoom-out" Label="Zoom Out" OnClick="() => Zoom(0.8)" />
+                            <RibbonButton Compact Icon="bi-arrows-angle-contract" Label="Fit" Title="Fit the page in the window" OnClick="FitDesignAsync" />
+                        </div>
+                        <div class="pe-field-inline">
+                            <span>Bg Color</span>
+                            <input type="color" value="@DesignColor.ToCss(Design.BgColor, "#ffffff")" @onchange="@(e => SetDesignBackground(e.Value?.ToString() ?? "#ffffff"))" aria-label="Page colour" />
+                        </div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Position &amp; Size">
+                    <div class="pe-stack">
+                        <div class="pe-field-inline"><span>X</span><input type="number" value="@Css(Math.Round(sel?.X ?? 0))" @onchange="e => DesignFormat(x => x.X = Num(e, x.X))" disabled="@noSel" aria-label="X position" style="width:52px" /><span>Y</span><input type="number" value="@Css(Math.Round(sel?.Y ?? 0))" @onchange="e => DesignFormat(x => x.Y = Num(e, x.Y))" disabled="@noSel" aria-label="Y position" style="width:52px" /></div>
+                        <div class="pe-field-inline"><span>W</span><input type="number" min="1" value="@Css(Math.Round(sel?.W ?? 0))" @onchange="e => DesignFormat(x => x.W = Math.Max(1, Num(e, x.W)))" disabled="@noSel" aria-label="Width" style="width:52px" /><span>H</span><input type="number" min="1" value="@Css(Math.Round(sel?.H ?? 0))" @onchange="e => DesignFormat(x => x.H = Math.Max(1, Num(e, x.H)))" disabled="@noSel" aria-label="Height" style="width:52px" /></div>
+                    </div>
+                </RibbonGroup>
+                <RibbonGroup Title="Export Image">
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-filetype-png" Label="PNG" Title="Download the design as a PNG picture" OnClick="@(() => ExportDesignImageAsync("png"))" />
+                        <RibbonButton Icon="bi-filetype-jpg" Label="JPEG" Title="Download the design as a JPEG picture" OnClick="@(() => ExportDesignImageAsync("jpeg"))" />
                     </div>
                 </RibbonGroup>
                 break;
 
             case RibbonTab.Help:
+                <RibbonGroup Title="Updates">
+                    <RibbonButton Large Icon="bi-stars" Label="What's New" Title="Release notes for every version, on GitHub" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases"))" />
+                    <RibbonButton Large Icon="bi-windows" Label="Windows App" Title="Download the full Windows app" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases/latest"))" />
+                </RibbonGroup>
                 <RibbonGroup Title="Learn">
-                    <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
+                    <RibbonButton Large Icon="bi-lightbulb" Label="Tip of the Day" Title="A useful tip about PdfEdit, one at a time" OnClick="ShowTip" />
+                    <RibbonButton Large Icon="bi-signpost-split" Label="Take the Tour" Title="A quick walk round the main parts of the window" OnClick="StartTour" />
+                    <RibbonButton Large Icon="bi-keyboard" Label="Shortcuts" Title="Every keyboard shortcut (F1)" OnClick="() => ShowDialog(DialogKind.Shortcuts)" />
                 </RibbonGroup>
                 <RibbonGroup Title="Support">
-                    <div class="pe-stack">
-                        <RibbonButton Icon="bi-bug" Label="Report a Problem" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/issues/new"))" />
-                        <RibbonButton Icon="bi-github" Label="PdfEdit on GitHub" OnClick="() => OpenUrlAsync(GitHubUrl)" />
-                        <RibbonButton Icon="bi-windows" Label="Windows App" Title="Download the full Windows app" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases/latest"))" />
-                    </div>
+                    <RibbonButton Large Icon="bi-bug" Label="Report a Problem" Title="Tell us about a bug or ask for a feature on GitHub" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/issues/new"))" />
+                    <RibbonButton Large Icon="bi-github" Label="PdfEdit on GitHub" Title="The project page: source code, releases and documentation" OnClick="() => OpenUrlAsync(GitHubUrl)" />
                 </RibbonGroup>
                 <RibbonGroup Title="About">
-                    <RibbonButton Large Icon="bi-info-square" Label="About PdfEdit" OnClick="() => ShowDialog(DialogKind.About)" />
+                    <RibbonButton Large Icon="bi-info-square" Label="About PdfEdit" Title="Version, licence and links" OnClick="() => ShowDialog(DialogKind.About)" />
                 </RibbonGroup>
                 break;
         }
@@ -542,7 +944,7 @@
                         @if (_designTool == DesignTool.Pen)
                         {
                             <div class="pe-tool-layer" title="Draw with the mouse, pen or finger" data-sketch="ink" data-page="-1" @onclick:stopPropagation="true"
-                                 data-ptw="@Css(dw)" data-pth="@Css(dh)" data-color="#000000" data-width="2" data-unit="in"></div>
+                                 data-ptw="@Css(dw)" data-pth="@Css(dh)" data-color="@DesignPenColor" data-width="@Css(DesignPenWidth)" data-unit="in"></div>
                         }
                         else if (_designTool != DesignTool.Select)
                         {
@@ -559,7 +961,7 @@
             }
             else
             {
-                <div class="pe-pages">
+                <div class="pe-pages @(TwoPages ? "two" : "") @(NightMode ? "night" : "") @(HighlightFields ? "" : "no-field-hl")">
                     @for (int p = 0; p < PageCount; p++)
                     {
                         int pg = p;
@@ -590,6 +992,26 @@
                                 <PageItemView Ed="this" Item="item" PageW="w" PageH="h" />
                             }
 
+                            @if (EditingImage is { } img && img.PageNumber == pg + 1)
+                            {
+                                var ir = ImageRect;
+                                <div class="pe-image-edit" style="@ViewStyle(pg, ir.Left, ir.Bottom, ir.Width, ir.Height)" data-drag="img:@img.Index">
+                                    <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+                                    <div class="pe-image-bar" @onmousedown:stopPropagation="true">
+                                        @if (ImageMove != null)
+                                        {
+                                            <button class="pe-btn primary" title="Move the picture here" @onclick="ApplyImageMoveAsync"><i class="bi bi-check-lg"></i> Apply</button>
+                                        }
+                                        <label class="pe-btn" title="Replace with another picture"><i class="bi bi-arrow-repeat"></i> Replace
+                                            <InputFile accept="image/png,image/jpeg" OnChange="e => ReplaceImageAsync(e.File)" style="display:none" />
+                                        </label>
+                                        <button class="pe-btn" title="Download the picture" @onclick="SaveImageAsync"><i class="bi bi-download"></i></button>
+                                        <button class="pe-btn" title="Delete the picture" @onclick="DeleteImageAsync"><i class="bi bi-trash"></i></button>
+                                        <button class="pe-btn" title="Done" @onclick="CloseImageEdit"><i class="bi bi-x-lg"></i></button>
+                                    </div>
+                                </div>
+                            }
+
                             @if (SketchMode is { } sketch)
                             {
                                 <div class="pe-tool-layer" title="@ToolHint" data-sketch="@sketch" data-page="@pg"
@@ -616,7 +1038,7 @@
                     @foreach (var t in Enum.GetValues<RightTab>())
                     {
                         var tab = t;
-                        <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@(tab == RightTab.AI ? "AI" : tab.ToString())</button>
+                        <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@(tab switch { RightTab.AI => "AI", RightTab.AllTools => "All tools", _ => tab.ToString() })</button>
                     }
                 </div>
                 <div class="pe-panel-body"><SidePanel Ed="this" /></div>
@@ -646,6 +1068,36 @@
         }
     </div>
 
+    @if (SlidePage is { } slide && Doc != null)
+    {
+        <div id="pe-slideshow" class="pe-slideshow" tabindex="0" @onkeydown="SlideKeyAsync" @onclick="() => SlideTo(slide + 1)" role="dialog" aria-label="Slide show">
+            <img src="@PageUrl(slide, 2.5)" alt="Page @(slide + 1)" draggable="false" />
+            <div class="pe-slide-bar" @onclick:stopPropagation="true">
+                <button title="Previous (←)" aria-label="Previous page" disabled="@(slide == 0)" @onclick="() => SlideTo(slide - 1)"><i class="bi bi-chevron-left"></i></button>
+                <span>@(slide + 1) / @PageCount</span>
+                <button title="Next (→)" aria-label="Next page" disabled="@(slide >= PageCount - 1)" @onclick="() => SlideTo(slide + 1)"><i class="bi bi-chevron-right"></i></button>
+                <button title="Leave the slide show (Esc)" aria-label="Leave the slide show" @onclick="EndSlideShowAsync"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
+    }
+    @if (TourIndex is { } ti)
+    {
+        var step = TourSteps[ti];
+        <div class="pe-tour" role="dialog" aria-modal="true" aria-label="Tour: @step.Title" data-target="@step.Target" @key="ti">
+            <div class="pe-tour-ring"></div>
+            <div class="pe-tour-card">
+                <div class="pe-tour-title">@step.Title</div>
+                <p>@step.Text</p>
+                <div class="pe-tour-foot">
+                    <span>@(ti + 1) of @TourSteps.Length</span>
+                    <span class="pe-spacer"></span>
+                    <button class="pe-btn" disabled="@(ti == 0)" @onclick="() => TourGo(ti - 1)">Back</button>
+                    <button class="pe-btn primary" @onclick="() => TourGo(ti + 1)">@(ti == TourSteps.Length - 1 ? "Finish" : "Next")</button>
+                    <button class="pe-btn" title="Close the tour (Esc)" aria-label="Close the tour" @onclick="EndTour"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+        </div>
+    }
     @if (_backstage != null) { <BackstageView Ed="this" /> }
     @if (_dialog != DialogKind.None) { <DialogHost Ed="this" /> }
     @if (_toast != null)
@@ -653,3 +1105,83 @@
         <div class="pe-toast @_toastKind" role="alert" @onclick="() => _toast = null">@_toast</div>
     }
 </div>
+
+@code {
+    // Ribbon helpers: a tool button, a design-tool button, colour swatches, the text format
+    // controls and the Arrange buttons (shared by several tabs, as in the Windows app).
+    private RenderFragment ToolButton(Tool tool, string icon, string label, string title, bool large = false, bool compact = false) =>
+        @<RibbonButton Large="large" Compact="compact" Icon="@icon" Label="@label" Title="@title" Disabled="NoDoc" Active="_tool == tool" OnClick="() => SetTool(tool)" />;
+
+    private RenderFragment DesignToolButton(DesignTool tool, string icon, string label, string title, bool large = false) =>
+        @<RibbonButton Large="large" Icon="@icon" Label="@label" Title="@title" Active="DesignMode && _designTool == tool" OnClick="() => StartDesignTool(tool)" />;
+
+    private RenderFragment Swatches((string Hex, string Name)[] colours, string current, Action<string> pick) =>
+        @<div class="pe-swatch-row" role="radiogroup">
+            @foreach (var (hex, name) in colours)
+            {
+                var h = hex;
+                <button type="button" class="pe-mini-swatch @(string.Equals(current, h, StringComparison.OrdinalIgnoreCase) ? "active" : "")" style="background:@h"
+                        title="@name" aria-label="@name" role="radio" aria-checked="@(string.Equals(current, h, StringComparison.OrdinalIgnoreCase) ? "true" : "false")" @onclick="() => pick(h)"></button>
+            }
+        </div>;
+
+    private RenderFragment TextFormatControls(bool colours) =>
+        @<text>
+            <div class="pe-stack">
+                <div class="pe-field-inline">
+                    <span>Size</span>
+                    <select value="@_fontSize" @onchange="FontSizeChanged" aria-label="Text size">
+                        @foreach (var s in new[] { 6, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72 })
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                    <RibbonButton Compact Glyph="A-" Label="Smaller text" OnClick="() => StepFontSize(-1)" />
+                    <RibbonButton Compact Glyph="A+" Label="Larger text" OnClick="() => StepFontSize(1)" />
+                </div>
+                <div class="pe-row">
+                    <RibbonButton Compact Glyph="B" GlyphStyle="font-weight:800" Label="Bold" Active="_bold" OnClick="ToggleBold" />
+                    <RibbonButton Compact Glyph="I" GlyphStyle="font-style:italic;font-family:serif" Label="Italic" Active="_italic" OnClick="ToggleItalic" />
+                    <RibbonButton Compact Glyph="U" GlyphStyle="text-decoration:underline" Label="Underline" Active="_underline" OnClick="ToggleUnderline" />
+                    @if (!colours)
+                    {
+                        <RibbonButton Compact Icon="bi-text-left" Label="Align left" Active="@(_textAlign == TextAlign.Left)" OnClick="() => SetTextAlign(TextAlign.Left)" />
+                        <RibbonButton Compact Icon="bi-text-center" Label="Centre" Active="@(_textAlign == TextAlign.Center)" OnClick="() => SetTextAlign(TextAlign.Center)" />
+                        <RibbonButton Compact Icon="bi-text-right" Label="Align right" Active="@(_textAlign == TextAlign.Right)" OnClick="() => SetTextAlign(TextAlign.Right)" />
+                        <RibbonButton Compact Glyph="AA" Label="Force UPPERCASE text" Active="_upper" OnClick="ToggleUpper" />
+                    }
+                </div>
+                @if (colours)
+                {
+                    @Swatches(TextColours, _textColor, SetTextColour)
+                }
+            </div>
+        </text>;
+
+    private RenderFragment ArrangeButtons(Action<ArrangeOp> run, bool disabled) =>
+        @<text>
+            @foreach (var chunk in Arrange.Commands.Chunk(3))
+            {
+                <div class="pe-stack">
+                    @foreach (var c in chunk)
+                    {
+                        var op = c.Op;
+                        <RibbonButton Icon="@c.Icon" Label="@c.Label" Title="@c.Hint" Disabled="disabled" OnClick="() => run(op)" />
+                    }
+                </div>
+            }
+        </text>;
+
+    private RenderFragment StampPicker() =>
+        @<select class="pe-stamp-pick" value="@_stampKey" @onchange="e => PickStamp(e.Value?.ToString() ?? _stampKey)" aria-label="Choose a stamp" disabled="@NoDoc">
+            @foreach (var g in StampGroups)
+            {
+                <optgroup label="@g.Key">
+                    @foreach (var d in g)
+                    {
+                        <option value="@StampCatalog.KeyOf(d)">@d.Title</option>
+                    }
+                </optgroup>
+            }
+        </select>;
+}

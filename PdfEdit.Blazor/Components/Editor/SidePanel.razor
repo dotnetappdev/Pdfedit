@@ -3,6 +3,10 @@
 {
     <AiPanel Ed="Ed" />
 }
+else if (Ed.RightPanelTab == RightTab.AllTools)
+{
+    <AllToolsPanel Ed="Ed" />
+}
 else if (Ed.DesignMode && Ed.RightPanelTab == RightTab.Properties)
 {
     <DesignProps Ed="Ed" />

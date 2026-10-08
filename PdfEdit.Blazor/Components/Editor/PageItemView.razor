@@ -2,13 +2,16 @@
 @{
     var i = Item;
     var style = Editor.OverlayStyle(i.Left, PageH - i.Top - i.Height, i.Width, i.Height, PageW, PageH);
+    var textStyle = $"font-weight:{(i.Bold ? 700 : 400)};font-style:{(i.Italic ? "italic" : "normal")};text-decoration:{(i.Underline ? "underline" : "none")};" +
+                    $"text-transform:{(i.Upper ? "uppercase" : "none")};text-align:{i.Align.ToString().ToLowerInvariant()}";
 }
+<div class="pe-item-wrap @(Ed.SelectedItemId == i.Id ? "sel" : "")" @onpointerdown="() => Ed.SelectItem(Item)">
 @switch (i.Kind)
 {
     case ItemKind.Text:
         <div class="pe-item text @(i.Vertical ? "vertical" : "")" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
             <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
-            <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here"
+            <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here" style="@textStyle"
                       @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
             <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove text" @onclick="Remove">✕</button>
@@ -21,9 +24,9 @@
             <button class="pe-x" title="Remove" aria-label="Remove mark" @onclick="Remove">✕</button>
         </div>
         break;
-    case ItemKind.Signature:
-        <div class="pe-item signature" style="@style" title="Signature" data-drag="i:@i.Id">
-            <img src="@i.ImageUrl" alt="Signature" draggable="false" />
+    case ItemKind.Signature or ItemKind.Picture:
+        <div class="pe-item signature" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
+            <img src="@i.ImageUrl" alt="@i.Describe()" draggable="false" />
             <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove signature" @onclick="Remove">✕</button>
         </div>
@@ -135,6 +138,7 @@
         </div>
         break;
 }
+</div>
 
 @code {
     [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;

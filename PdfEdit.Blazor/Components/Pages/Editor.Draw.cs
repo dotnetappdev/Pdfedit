@@ -14,11 +14,10 @@ public partial class Editor
     private double _inkWidth = 2;
     private string? _timeZone;
 
-    public static IEnumerable<IGrouping<string, StampDefinition>> StampGroups =>
-        StampCatalog.BuiltIn.GroupBy(d => d.Category);
+    public IEnumerable<IGrouping<string, StampDefinition>> StampGroups => AllStamps.GroupBy(d => d.Category);
 
     private StampDefinition SelectedStamp =>
-        StampCatalog.BuiltIn.FirstOrDefault(d => StampCatalog.KeyOf(d) == _stampKey) ?? StampCatalog.BuiltIn[0];
+        AllStamps.FirstOrDefault(d => StampCatalog.KeyOf(d) == _stampKey) ?? StampCatalog.BuiltIn[0];
 
     public string StampKey => _stampKey;
     public string MeasureUnit { get => _measureUnit; set => _measureUnit = value; }
@@ -42,7 +41,7 @@ public partial class Editor
     };
 
     private string? MeasureMode => _tool switch { Tool.Area => "area", Tool.Distance or Tool.Perimeter => "length", _ => null };
-    private double SketchWidth => _tool == Tool.Ink ? _inkWidth : _tool is Tool.Line or Tool.Arrow or Tool.Polygon or Tool.Polyline ? 2 : 1.5;
+    private double SketchWidth => _tool is Tool.Distance or Tool.Perimeter or Tool.Area ? 1.5 : _inkWidth;
 
     private string SketchColor => _tool is Tool.Distance or Tool.Perimeter or Tool.Area ? MeasureColor : _strokeColor;
     private const string MeasureColor = "#1F4FB5";

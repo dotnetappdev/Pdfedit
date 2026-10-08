@@ -1,8 +1,8 @@
 namespace PdfEdit.Blazor.Components.Editor;
 
-public enum RibbonTab { Home, FillSign, Edit, View, Tools, AI, Design, Help }
+public enum RibbonTab { Home, FillSign, Edit, View, Tools, Forms, AI, Design, Help }
 
-public enum RightTab { Properties, Fields, Comments, Bookmarks, Search, AI }
+public enum RightTab { Properties, Fields, Comments, Bookmarks, Search, AI, AllTools }
 
 public enum Backstage { Info, New, Open, SaveAs, Export, Close }
 
@@ -15,6 +15,8 @@ public enum Tool
     // The floating toolbox's extra tools (as in the Windows app's quick-tools rail)
     Hand, Zoom, Callout, InsertText, ReplaceText, Underline, Squiggly, Strikeout, Cloud, Polygon, Polyline,
     Eraser, Circle, LineMark, VerticalText, Initials,
+    // Tools tab: links, select text, edit the PDF's pictures, snapshot
+    Link, SelectText, EditImages, Snapshot,
     // Prepare Form: add a form field
     FieldText, FieldCheckbox, FieldRadio, FieldCombo, FieldList, FieldDate, FieldSignature,
 }
@@ -24,6 +26,8 @@ public enum DialogKind
     None, Password, Properties, Watermark, PageNumbers, HeaderFooter, Bates, Protect, Sanitize,
     Resize, NUp, Signature, Note, Merge, InsertPdf, Combine, ExtractRange, DeleteRange, ImportData,
     Statistics, Shortcuts, About, AiSettings, DetectFields, OpenDesign, DesignPicture, Ocr, ScanCamera, CompareUpload, Compare, CertSign, Signatures, Cloud, Batch, BulkFill, Translate,
+    GoogleLink, Settings, Crop, Stamps, FindHighlight, FindReplace, AddBookmark, ImportXfdf, SearchFolder,
+    AskAcross, DesignAi, Profiles, Attachments, Accessibility, Cleanup, MindMap, Tip, Snapshot, ImageEdit, Link, SelectedText,
 }
 
 /// <summary>What a click (or drag) on the design page does.</summary>
@@ -41,6 +45,8 @@ public enum ItemKind
     Text, Mark, Signature, Note, Highlight, Redact, Rectangle, Ellipse,
     Stamp, Ink, Line, Arrow, Distance, Perimeter, Area,
     Callout, InsertText, ReplaceText, Cloud, Polygon, Polyline,
+    /// <summary>A picture pasted or added on the page (saved like a signature).</summary>
+    Picture,
 }
 
 /// <summary>
@@ -74,6 +80,22 @@ public sealed class PageItem
     public PdfEdit.Models.HighlightKind Markup { get; set; } = PdfEdit.Models.HighlightKind.Highlight;
     /// <summary>Text that reads upwards (the toolbox's Vertical text).</summary>
     public bool Vertical { get; set; }
+    public bool Bold { get; set; }
+    public bool Italic { get; set; }
+    public bool Underline { get; set; }
+    public bool Upper { get; set; }
+    public PdfEdit.Models.TextAlign Align { get; set; } = PdfEdit.Models.TextAlign.Left;
+    /// <summary>Highlight opacity (0.1–1).</summary>
+    public double Opacity { get; set; } = 0.4;
+
+    /// <summary>A copy (new Id) for Copy / Paste.</summary>
+    public PageItem Copy() => new()
+    {
+        Kind = Kind, Page = Page, Left = Left, Top = Top, Width = Width, Height = Height, Text = Text, FontSize = FontSize,
+        Color = Color, Image = Image, ImageUrl = ImageUrl, Subtitle = Subtitle, LineWidth = LineWidth, Unit = Unit,
+        Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Vertical = Vertical,
+        Bold = Bold, Italic = Italic, Underline = Underline, Upper = Upper, Align = Align, Opacity = Opacity,
+    };
 
     /// <summary>The measurement shown on a Distance, Perimeter or Area item.</summary>
     public string MeasureLabel()
@@ -93,6 +115,7 @@ public sealed class PageItem
         ItemKind.Text => string.IsNullOrWhiteSpace(Text) ? "Text (empty)" : $"Text: {Text}",
         ItemKind.Mark => $"Mark {Text}",
         ItemKind.Signature => "Signature",
+        ItemKind.Picture => "Picture",
         ItemKind.Note => string.IsNullOrWhiteSpace(Text) ? "Sticky note" : $"Note: {Text}",
         ItemKind.Highlight => Markup switch
         {

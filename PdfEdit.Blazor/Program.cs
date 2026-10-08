@@ -5,7 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    // Pictures pasted with Ctrl+V come over the connection; the default 32 KB limit drops it.
+    .AddHubOptions(o => o.MaximumReceiveMessageSize = 16 * 1024 * 1024);
 
 // Uploaded PDFs, read and filled with PdfEdit.Core and drawn with PdfEdit.Render (Pdfium).
 builder.Services.AddSingleton<PdfDocumentStore>();
@@ -16,6 +18,7 @@ builder.Services.AddScoped<CloudConnections>();
 builder.Services.AddSingleton<CloudSignIns>();
 // Saved signatures and initials: SQLite in the app's folder (pdfedit.db, or PdfEdit:Database).
 builder.Services.AddSingleton<SavedSignatures>();
+builder.Services.AddSingleton<UserPrefs>();
 
 // Office-to-PDF uses LibreOffice on the server; PdfEdit:Office:LibreOfficePath if it isn't on the PATH.
 if (builder.Configuration["PdfEdit:Office:LibreOfficePath"] is { Length: > 0 } soffice)

@@ -2,7 +2,7 @@
 @{
     var e = Item;
     var (pw, ph) = (PageW, PageH);
-    var selected = Ed.SelectedDesignId == e.Id;
+    var selected = Ed.SelectedDesignId == e.Id || Ed.SelectedDesignIds.Contains(e.Id);
     string Pct(double v, double of) => Editor.Css(v / of * 100);
     string Cqw(double pt) => Editor.Css(pt / pw * 100) + "cqw";
     var box = $"left:{Pct(e.X, pw)}%;top:{Pct(e.Y, ph)}%;width:{Pct(e.W, pw)}%;height:{Pct(e.H, ph)}%;opacity:{Editor.Css(e.Opacity)}";
@@ -93,10 +93,12 @@
     [Parameter] public double PageW { get; set; }
     [Parameter] public double PageH { get; set; }
 
-    private void Select()
+    // Ctrl (or Shift) + click adds to the selection, for Align.
+    private void Select(MouseEventArgs e)
     {
-        if (Ed.SelectedDesignId == Item.Id) return;
-        Ed.SelectedDesignId = Item.Id;
+        bool add = e.CtrlKey || e.ShiftKey || e.MetaKey;
+        if (!add && Ed.SelectedDesignId == Item.Id && Ed.SelectedDesignIds.Count <= 1) return;
+        Ed.SelectDesign(Item.Id, add);
         Ed.ShowRight(RightTab.Properties);
         Ed.Refresh();
     }

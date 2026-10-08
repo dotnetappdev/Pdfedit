@@ -90,7 +90,7 @@ public static class XfdfService
         var xdoc = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),
             new XElement(Ns + "xfdf",
-                new XAttribute("xml:space", "preserve"),
+                new XAttribute(XNamespace.Xml + "space", "preserve"),
                 annotsEl,
                 new XElement(Ns + "f",
                     new XAttribute("href", System.IO.Path.GetFileName(pdfFileName)))));

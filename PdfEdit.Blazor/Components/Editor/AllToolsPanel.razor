@@ -1,0 +1,49 @@
+@* The Windows app's All tools pane: every feature grouped by task, with a search box. *@
+<div class="pe-alltools">
+    <h5>All tools</h5>
+    <input type="search" class="form-control form-control-sm mb-2" placeholder="Find a tool" aria-label="Find a tool" @bind="_find" @bind:event="oninput" />
+    @foreach (var c in Ed.AllTools)
+    {
+        var cat = c;
+        var actions = string.IsNullOrWhiteSpace(_find) ? cat.Actions
+            : cat.Actions.Where(a => Matches(a.Label) || Matches(a.Tip) || Matches(cat.Title)).ToList();
+        if (actions.Count == 0) continue;
+        bool open = !string.IsNullOrWhiteSpace(_find) || _open.Contains(cat.Title);
+        <div class="pe-alltools-cat">
+            <button class="pe-alltools-head" aria-expanded="@(open ? "true" : "false")" @onclick="() => Toggle(cat.Title)">
+                <i class="bi @cat.Icon"></i>
+                <span><b>@cat.Title</b><small>@cat.Description</small></span>
+                <i class="bi @(open ? "bi-chevron-up" : "bi-chevron-down") pe-alltools-chev"></i>
+            </button>
+            @if (open)
+            {
+                <ul>
+                    @foreach (var a in actions)
+                    {
+                        var act = a;
+                        <li><button title="@act.Tip" disabled="@(act.NeedsDoc && Ed.NoDoc)" @onclick="() => RunAsync(act)">@act.Label</button></li>
+                    }
+                </ul>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    private string _find = "";
+    private readonly HashSet<string> _open = new();
+
+    private bool Matches(string? text) => text != null && text.Contains(_find.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private void Toggle(string title)
+    {
+        if (!_open.Remove(title)) _open.Add(title);
+    }
+
+    private async Task RunAsync(Editor.ToolAction action)
+    {
+        await action.Run();
+        Ed.Refresh();
+    }
+}

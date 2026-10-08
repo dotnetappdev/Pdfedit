@@ -1,9 +1,10 @@
 @* A form field in Prepare Form: a box to select (click), move (drag) and resize (drag the corner). *@
 @{
     var selected = Ed.SelectedWidget is { } sw && sw.Name == Field.Name && sw.Widget == Field.WidgetIndex;
+    var multi = !selected && Ed.IsWidgetSelected(Field);
     var key = $"f:{Uri.EscapeDataString(Field.Name)}|{Field.WidgetIndex}";
 }
-<div class="pe-fbox @(selected ? "selected" : "") @Kind" style="@Style" data-drag="@key" title="@Ed.FieldLabel(Field) (@Field.FieldType)"
+<div class="pe-fbox @(selected ? "selected" : "") @(multi ? "also" : "") @Kind" style="@Style" data-drag="@key" title="@Ed.FieldLabel(Field) (@Field.FieldType)"
      tabindex="0" role="button" aria-label="Field @Ed.FieldLabel(Field)" aria-pressed="@selected"
      @onclick="Select" @ondblclick="Properties">
     <span class="pe-fbox-label"><i class="bi @Icon"></i> @Ed.FieldLabel(Field)</span>
@@ -29,15 +30,16 @@
         _ => "bi-square",
     };
 
-    private void Select()
+    // Ctrl (or Shift) + click adds to the selection, for Arrange Fields.
+    private void Select(MouseEventArgs e)
     {
-        Ed.SelectWidget(Field);
+        Ed.SelectWidgetMulti(Field, e.CtrlKey || e.ShiftKey || e.MetaKey);
         Ed.Refresh();
     }
 
     private void Properties()
     {
-        Ed.SelectWidget(Field);
+        Ed.SelectWidgetMulti(Field, false);
         Ed.ShowRight(RightTab.Properties);
         Ed.Refresh();
     }

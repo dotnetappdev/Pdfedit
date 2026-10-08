@@ -74,14 +74,14 @@
 
     <div class="pe-ai-input">
         <textarea class="form-control" rows="2" placeholder="Ask about this PDF…" aria-label="Message to the AI"
-                  @bind="_input" @bind:event="oninput" @onkeydown="Key" @onkeydown:preventDefault="_preventEnter"></textarea>
+                  @bind="Ed.AiDraft" @bind:event="oninput" @onkeydown="Key" @onkeydown:preventDefault="_preventEnter"></textarea>
         @if (Ed.AiRunning)
         {
             <button class="pe-btn" title="Stop" aria-label="Stop" @onclick="() => Act(Ed.StopAi)"><i class="bi bi-stop-fill"></i></button>
         }
         else
         {
-            <button class="pe-btn primary" title="Send (Enter)" aria-label="Send" disabled="@string.IsNullOrWhiteSpace(_input)" @onclick="Send"><i class="bi bi-send"></i></button>
+            <button class="pe-btn primary" title="Send (Enter)" aria-label="Send" disabled="@string.IsNullOrWhiteSpace(Ed.AiDraft)" @onclick="Send"><i class="bi bi-send"></i></button>
         }
     </div>
 </div>
@@ -89,7 +89,7 @@
 @code {
     [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
 
-    private string _input = "";
+
     private bool _preventEnter;
 
     private async Task Key(KeyboardEventArgs e)
@@ -101,9 +101,9 @@
 
     private async Task Send()
     {
-        var text = _input;
+        var text = Ed.AiDraft;
         if (string.IsNullOrWhiteSpace(text)) return;
-        _input = "";
+        Ed.AiDraft = "";
         await ActAsync(() => Ed.SendAiAsync(text));
     }
 

@@ -1,5 +1,11 @@
-@* A ribbon group: buttons, with the group's name underneath. *@
+@* A ribbon group: buttons, with the group's name underneath. When the window is too narrow the
+   ribbon collapses groups from the right into one button that drops the group down (as the
+   Windows app's Fluent ribbon does); pdfedit.ribbonFit decides which. *@
 <div class="pe-group" role="group" aria-label="@Title">
+    <button type="button" class="pe-group-collapsed pe-rbtn large" aria-haspopup="true" title="@Title" tabindex="-1">
+        <i class="bi bi-three-dots" aria-hidden="true"></i>
+        <span>@Title <i class="bi bi-chevron-down pe-rmenu-caret" aria-hidden="true"></i></span>
+    </button>
     <div class="pe-group-body">@ChildContent</div>
     <div class="pe-group-title">@Title</div>
 </div>

@@ -68,7 +68,7 @@
                                     <div class="pe-flyout-sep"></div>
                                     <label class="pe-flyout-label">Stamp</label>
                                     <select class="form-select form-select-sm pe-flyout-select" value="@Ed.StampKey" aria-label="Stamp" @onchange="PickStamp">
-                                        @foreach (var sg in Editor.StampGroups)
+                                        @foreach (var sg in Ed.StampGroups)
                                         {
                                             <optgroup label="@sg.Key">@foreach (var d in sg) { <option value="@StampCatalog.KeyOf(d)">@d.Title</option> }</optgroup>
                                         }

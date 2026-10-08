@@ -78,6 +78,234 @@
     --pe-shadow: 0 0 0 1px #FFFFFF;
 }
 /* Every control has a visible edge and a thick yellow focus ring; selected things are outlined. */
+
+/* The Windows app's other themes (PdfEdit/Services/ThemeCatalog.cs). */
+.pe-theme-office {
+    --pe-accent: #185ABD;
+    --pe-accent-hover: #103F91;
+    --pe-accent-muted: #D0E0F7;
+    --pe-app-bg: #F3F2F1;
+    --pe-panel-bg: #FFFFFF;
+    --pe-sidebar-bg: #F3F2F1;
+    --pe-content-bg: #E1DFDD;
+    --pe-fg: #323130;
+    --pe-dim: #605E5C;
+    --pe-border: #E1DFDD;
+    --pe-input-bg: #FFFFFF;
+    --pe-input-border: #8A8886;
+    --pe-hover: #EDEBE9;
+    --pe-active: #DEECF9;
+    --pe-status-bg: #185ABD;
+    --pe-status-fg: #FFFFFF;
+    --pe-toast-bg: #2D2D2D;
+    --pe-toast-fg: #FFFFFF;
+    --pe-button-bg: #FFFFFF;
+    --pe-button-border: #8A8886;
+    --pe-focus: #185ABD;
+    --pe-shadow: 0 1px 4px rgba(0, 0, 0, .28);
+    color-scheme: light;
+}
+.pe-theme-officeblack {
+    --pe-accent: #4FA3F7;
+    --pe-accent-hover: #78B9FA;
+    --pe-accent-muted: #1E3A5C;
+    --pe-app-bg: #1F1F1F;
+    --pe-panel-bg: #292929;
+    --pe-sidebar-bg: #262626;
+    --pe-content-bg: #3B3B3B;
+    --pe-fg: #F3F3F3;
+    --pe-dim: #ABABAB;
+    --pe-border: #3F3F3F;
+    --pe-input-bg: #333333;
+    --pe-input-border: #5C5C5C;
+    --pe-hover: #3D3D3D;
+    --pe-active: #2E4B6F;
+    --pe-status-bg: #1F1F1F;
+    --pe-status-fg: #C8C8C8;
+    --pe-toast-bg: #3D3D3D;
+    --pe-toast-fg: #F3F3F3;
+    --pe-button-bg: #333333;
+    --pe-button-border: #5C5C5C;
+    --pe-focus: #4FA3F7;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-dracula {
+    --pe-accent: #BD93F9;
+    --pe-accent-hover: #FF79C6;
+    --pe-accent-muted: #44475A;
+    --pe-app-bg: #21222C;
+    --pe-panel-bg: #282A36;
+    --pe-sidebar-bg: #21222C;
+    --pe-content-bg: #191A21;
+    --pe-fg: #F8F8F2;
+    --pe-dim: #9AA5CE;
+    --pe-border: #44475A;
+    --pe-input-bg: #21222C;
+    --pe-input-border: #6272A4;
+    --pe-hover: #343746;
+    --pe-active: #44475A;
+    --pe-status-bg: #191A21;
+    --pe-status-fg: #F8F8F2;
+    --pe-toast-bg: #343746;
+    --pe-toast-fg: #F8F8F2;
+    --pe-button-bg: #343746;
+    --pe-button-border: #6272A4;
+    --pe-focus: #BD93F9;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-nord {
+    --pe-accent: #5E81AC;
+    --pe-accent-hover: #81A1C1;
+    --pe-accent-muted: #3B4F66;
+    --pe-app-bg: #2E3440;
+    --pe-panel-bg: #3B4252;
+    --pe-sidebar-bg: #2E3440;
+    --pe-content-bg: #434C5E;
+    --pe-fg: #ECEFF4;
+    --pe-dim: #A3ABB9;
+    --pe-border: #4C566A;
+    --pe-input-bg: #2E3440;
+    --pe-input-border: #4C566A;
+    --pe-hover: #434C5E;
+    --pe-active: #4C566A;
+    --pe-status-bg: #3B4252;
+    --pe-status-fg: #D8DEE9;
+    --pe-toast-bg: #434C5E;
+    --pe-toast-fg: #ECEFF4;
+    --pe-button-bg: #434C5E;
+    --pe-button-border: #4C566A;
+    --pe-focus: #5E81AC;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-onedark {
+    --pe-accent: #4D8FE0;
+    --pe-accent-hover: #61AFEF;
+    --pe-accent-muted: #2C3E52;
+    --pe-app-bg: #21252B;
+    --pe-panel-bg: #282C34;
+    --pe-sidebar-bg: #21252B;
+    --pe-content-bg: #3A3F4B;
+    --pe-fg: #D7DAE0;
+    --pe-dim: #7F848E;
+    --pe-border: #181A1F;
+    --pe-input-bg: #1D1F23;
+    --pe-input-border: #3E4451;
+    --pe-hover: #2C313A;
+    --pe-active: #3E4451;
+    --pe-status-bg: #21252B;
+    --pe-status-fg: #9DA5B4;
+    --pe-toast-bg: #2C313A;
+    --pe-toast-fg: #D7DAE0;
+    --pe-button-bg: #2C313A;
+    --pe-button-border: #3E4451;
+    --pe-focus: #4D8FE0;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-monokai {
+    --pe-accent: #F92672;
+    --pe-accent-hover: #FD971F;
+    --pe-accent-muted: #49483E;
+    --pe-app-bg: #1E1F1C;
+    --pe-panel-bg: #272822;
+    --pe-sidebar-bg: #1E1F1C;
+    --pe-content-bg: #3E3D32;
+    --pe-fg: #F8F8F2;
+    --pe-dim: #A59F85;
+    --pe-border: #3E3D32;
+    --pe-input-bg: #1E1F1C;
+    --pe-input-border: #75715E;
+    --pe-hover: #3E3D32;
+    --pe-active: #49483E;
+    --pe-status-bg: #1E1F1C;
+    --pe-status-fg: #CFCFC2;
+    --pe-toast-bg: #3E3D32;
+    --pe-toast-fg: #F8F8F2;
+    --pe-button-bg: #3E3D32;
+    --pe-button-border: #75715E;
+    --pe-focus: #F92672;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-solarizedlight {
+    --pe-accent: #268BD2;
+    --pe-accent-hover: #1F6FA8;
+    --pe-accent-muted: #D5E6F2;
+    --pe-app-bg: #EEE8D5;
+    --pe-panel-bg: #FDF6E3;
+    --pe-sidebar-bg: #EEE8D5;
+    --pe-content-bg: #E4DCC5;
+    --pe-fg: #073642;
+    --pe-dim: #657B83;
+    --pe-border: #DDD6C1;
+    --pe-input-bg: #FDF6E3;
+    --pe-input-border: #C9C1AA;
+    --pe-hover: #E6DFC9;
+    --pe-active: #D9E8F0;
+    --pe-status-bg: #EEE8D5;
+    --pe-status-fg: #586E75;
+    --pe-toast-bg: #2D2D2D;
+    --pe-toast-fg: #FFFFFF;
+    --pe-button-bg: #FDF6E3;
+    --pe-button-border: #C9C1AA;
+    --pe-focus: #268BD2;
+    --pe-shadow: 0 1px 4px rgba(0, 0, 0, .28);
+    color-scheme: light;
+}
+.pe-theme-solarizeddark {
+    --pe-accent: #268BD2;
+    --pe-accent-hover: #2AA198;
+    --pe-accent-muted: #0F4A63;
+    --pe-app-bg: #002B36;
+    --pe-panel-bg: #073642;
+    --pe-sidebar-bg: #002B36;
+    --pe-content-bg: #0A4252;
+    --pe-fg: #EEE8D5;
+    --pe-dim: #93A1A1;
+    --pe-border: #0E4553;
+    --pe-input-bg: #002B36;
+    --pe-input-border: #586E75;
+    --pe-hover: #0B4452;
+    --pe-active: #164C5A;
+    --pe-status-bg: #00212B;
+    --pe-status-fg: #93A1A1;
+    --pe-toast-bg: #0B4452;
+    --pe-toast-fg: #EEE8D5;
+    --pe-button-bg: #0B4452;
+    --pe-button-border: #586E75;
+    --pe-focus: #268BD2;
+    --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+}
+.pe-theme-githublight {
+    --pe-accent: #0969DA;
+    --pe-accent-hover: #0550AE;
+    --pe-accent-muted: #DDF4FF;
+    --pe-app-bg: #F6F8FA;
+    --pe-panel-bg: #FFFFFF;
+    --pe-sidebar-bg: #F6F8FA;
+    --pe-content-bg: #E7EBEF;
+    --pe-fg: #1F2328;
+    --pe-dim: #656D76;
+    --pe-border: #D0D7DE;
+    --pe-input-bg: #FFFFFF;
+    --pe-input-border: #D0D7DE;
+    --pe-hover: #EAEEF2;
+    --pe-active: #DDF4FF;
+    --pe-status-bg: #F6F8FA;
+    --pe-status-fg: #57606A;
+    --pe-toast-bg: #2D2D2D;
+    --pe-toast-fg: #FFFFFF;
+    --pe-button-bg: #F6F8FA;
+    --pe-button-border: #D0D7DE;
+    --pe-focus: #0969DA;
+    --pe-shadow: 0 1px 4px rgba(0, 0, 0, .28);
+    color-scheme: light;
+}
+
 .pe-theme-hc :focus-visible { outline: 3px solid var(--pe-focus) !important; outline-offset: 1px; }
 .pe-theme-hc .pe-rbtn.active, .pe-theme-hc .pe-panel-tab.active, .pe-theme-hc .pe-tab.active,
 .pe-theme-hc .pe-list li.selected { outline: 2px solid var(--pe-accent); color: #000 !important; background: var(--pe-accent) !important; }
@@ -239,6 +467,63 @@ html, body {
     text-align: left;
 }
 .pe-rbtn.small i { font-size: 13px; width: 14px; text-align: center; }
+.pe-rbtn.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    padding: 0;
+}
+.pe-rbtn.icon i { font-size: 13px; }
+.pe-glyph { font-size: 12px; line-height: 1; }
+.pe-rbtn.large .pe-glyph { font-size: 20px; }
+.pe-row { display: flex; gap: 1px; align-items: center; }
+.pe-rmenu { position: relative; }
+.pe-rmenu-caret { font-size: 9px !important; width: auto !important; }
+.pe-rmenu-list {
+    position: fixed;
+    z-index: 48;
+    min-width: 190px;
+    padding: 4px;
+    background: var(--pe-panel-bg);
+    color: var(--pe-fg);
+    border: 1px solid var(--pe-border);
+    border-radius: 6px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .22);
+    display: flex;
+    flex-direction: column;
+}
+.pe-rmenu-list button {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+.pe-rmenu-list button:hover { background: var(--pe-hover); }
+.pe-rmenu-list button.active { font-weight: 600; color: var(--pe-accent); }
+.pe-rmenu-list hr { margin: 4px 0; border-color: var(--pe-border); }
+.pe-ribbon .pe-swatch-row { display: flex; gap: 2px; align-items: center; }
+.pe-ribbon .pe-mini-swatch {
+    width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--pe-border); padding: 0; cursor: pointer;
+}
+.pe-ribbon .pe-mini-swatch.active { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+.pe-ribbon input[type=number], .pe-ribbon input[type=text] {
+    background: var(--pe-input-bg);
+    color: var(--pe-fg);
+    border: 1px solid var(--pe-input-border);
+    border-radius: 3px;
+    height: 22px;
+    font-size: 12px;
+    padding: 0 4px;
+}
 
 .pe-ribbon .pe-field-inline {
     display: flex;
@@ -880,11 +1165,11 @@ html, body {
     font-size: 12.5px;
 }
 .pe-viewswitch button.active { color: var(--pe-fg); font-weight: 600; border-bottom-color: var(--pe-accent); }
-.pe-design-page { outline: 1px solid var(--pe-border); }
+.pe-design-page { outline: 1px solid var(--pe-border); overflow: hidden; }
 .pe-ditem { position: absolute; box-sizing: border-box; cursor: move; touch-action: none; user-select: none; z-index: 5; }
 .pe-ditem:hover { outline: 1px dashed rgba(10, 132, 255, .6); }
 .pe-ditem.selected { outline: 2px solid var(--pe-accent); z-index: 6; }
-.pe-dtext { width: 100%; height: 100%; overflow: hidden; line-height: 1.2; font-family: Helvetica, Arial, sans-serif; }
+.pe-dtext { width: 100%; height: 100%; overflow: visible; line-height: 1.2; font-family: Helvetica, Arial, sans-serif; }
 .pe-dshape { width: 100%; height: 100%; box-sizing: border-box; }
 .pe-dsvg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .pe-dimg { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
@@ -1130,3 +1415,157 @@ html, body {
     border-radius: 18px;
 }
 .pe-rail.design .pe-rail-sep, .pe-rail.design .pe-rail-grip { display: none; }
+
+/* ── Matching the Windows app's ribbon: selection, reading modes, edit images, slide show, tour ── */
+.pe-item-wrap { display: contents; }
+.pe-item-wrap.sel > .pe-item { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+.pe-fbox.also { border: 2px dashed var(--pe-accent); background: rgba(10, 132, 255, .16); }
+
+/* Highlight Fields off: fields look like the page until clicked. */
+.pe-pages.no-field-hl .pe-field:not(:focus) { background: transparent; border-color: transparent; }
+
+/* Two Pages: the next page beside this one. */
+.pe-pages.two { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; max-width: 100%; }
+.pe-pages.two .pe-page { flex: none; }
+
+/* Night Mode: dark pages, colours keep their hue. */
+.pe-pages.night .pe-page-img { filter: invert(1) hue-rotate(180deg) brightness(.92); }
+.pe-pages.night .pe-page { background: #111; }
+
+/* Edit Images: the selected picture, with its buttons. */
+.pe-image-edit {
+    position: absolute;
+    border: 2px solid var(--pe-accent);
+    background: rgba(10, 132, 255, .12);
+    cursor: move;
+    z-index: 35;   /* above the Edit Images tool layer, so it can be dragged */
+}
+.pe-image-edit .pe-item-handle { display: block; }
+.pe-image-bar {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 6px);
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--pe-panel-bg);
+    border: 1px solid var(--pe-border);
+    border-radius: 6px;
+    box-shadow: var(--pe-shadow);
+    white-space: nowrap;
+    cursor: default;
+}
+.pe-image-bar .pe-btn { padding: 3px 8px; font-size: 12px; }
+
+/* Slide Show */
+.pe-slideshow {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    cursor: pointer;
+}
+.pe-slideshow img { max-width: 100vw; max-height: 100vh; object-fit: contain; background: #fff; box-shadow: 0 0 40px rgba(0, 0, 0, .6); }
+.pe-slide-bar {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: rgba(30, 30, 30, .78);
+    color: #fff;
+    opacity: .25;
+    transition: opacity .2s;
+    cursor: default;
+    font-size: 13px;
+}
+.pe-slideshow:hover .pe-slide-bar { opacity: 1; }
+.pe-slide-bar button { border: 0; background: transparent; color: #fff; font-size: 16px; padding: 2px 8px; cursor: pointer; }
+.pe-slide-bar button:disabled { opacity: .35; cursor: default; }
+
+/* Take the Tour */
+.pe-tour { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .55); }
+.pe-tour-ring {
+    position: fixed;
+    border: 2.5px solid var(--pe-accent);
+    border-radius: 8px;
+    box-shadow: 0 0 0 4000px rgba(0, 0, 0, .1), 0 0 18px var(--pe-accent);
+    pointer-events: none;
+}
+.pe-tour-card {
+    position: fixed;
+    width: min(460px, calc(100vw - 16px));
+    padding: 18px 22px 14px;
+    border-radius: 10px;
+    background: var(--pe-panel-bg);
+    color: var(--pe-fg);
+    border: 1px solid var(--pe-border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .4);
+}
+.pe-tour-title { font-size: 18px; font-weight: 600; }
+.pe-tour-card p { margin: 10px 0 14px; font-size: 14px; line-height: 1.55; }
+.pe-tour-foot { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--pe-dim); }
+
+/* Dialog bits for the new commands */
+.pe-mindmap { max-height: 62vh; overflow: auto; border: 1px solid var(--pe-border); border-radius: 6px; background: var(--pe-input-bg); }
+.pe-mindmap svg { display: block; max-width: none; }
+.pe-mindmap [data-page] { cursor: pointer; }
+.pe-snapshot { max-width: 100%; max-height: 50vh; display: block; margin: 0 auto 10px; border: 1px solid var(--pe-border); background: #fff; }
+.pe-selected-text { white-space: pre-wrap; max-height: 30vh; overflow: auto; padding: 8px; border: 1px solid var(--pe-border); border-radius: 4px; background: var(--pe-input-bg); font-size: 13px; }
+.pe-checklist { list-style: none; padding: 0; margin: 0; max-height: 46vh; overflow: auto; }
+.pe-checklist li { display: grid; grid-template-columns: 22px 1fr; gap: 2px 6px; padding: 6px 4px; border-bottom: 1px solid var(--pe-border); font-size: 13px; }
+.pe-checklist li small { grid-column: 2; color: var(--pe-dim); }
+.pe-hits { list-style: none; padding: 0; margin: 8px 0 0; max-height: 40vh; overflow: auto; font-size: 13px; }
+.pe-hits li { padding: 5px 2px; border-bottom: 1px solid var(--pe-border); }
+.pe-hits b { color: var(--pe-accent); }
+.pe-stamp-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 36vh; overflow: auto; margin-bottom: 10px; }
+.pe-stamp-chip {
+    border: 2px solid currentColor; border-radius: 5px; padding: 3px 8px; font-weight: 700; font-size: 12px; background: transparent; cursor: pointer;
+}
+.pe-stamp-chip.active { box-shadow: 0 0 0 3px var(--pe-accent); }
+.pe-answer { max-height: 40vh; overflow: auto; padding: 8px; border: 1px solid var(--pe-border); border-radius: 4px; background: var(--pe-input-bg); font-size: 13px; }
+
+/* All tools (side panel) */
+.pe-alltools h5 { font-size: 16px; font-weight: 600; margin: 2px 0 8px; }
+.pe-alltools-cat { border-bottom: 1px solid var(--pe-border); }
+.pe-alltools-head {
+    display: grid; grid-template-columns: 22px 1fr 14px; gap: 6px; align-items: center; width: 100%;
+    border: 0; background: transparent; color: var(--pe-fg); text-align: left; padding: 7px 2px; cursor: pointer;
+}
+.pe-alltools-head:hover { background: var(--pe-hover); }
+.pe-alltools-head i:first-child { font-size: 16px; color: var(--pe-accent); }
+.pe-alltools-head small { display: block; color: var(--pe-dim); font-size: 11px; }
+.pe-alltools-chev { font-size: 11px; color: var(--pe-dim); }
+.pe-alltools ul { list-style: none; margin: 0 0 6px; padding: 0 0 0 28px; }
+.pe-alltools li button {
+    border: 0; background: transparent; color: var(--pe-fg); padding: 3px 4px; font-size: 12.5px; text-align: left; width: 100%; border-radius: 3px; cursor: pointer;
+}
+.pe-alltools li button:hover:not(:disabled) { background: var(--pe-hover); color: var(--pe-accent); }
+.pe-alltools li button:disabled { opacity: .45; cursor: default; }
+
+/* Collapsed ribbon groups (the window is too narrow for them): one button that drops the group down. */
+.pe-group > .pe-group-collapsed.pe-rbtn { display: none; }
+.pe-group.collapsed > .pe-group-collapsed.pe-rbtn { display: flex; }
+.pe-group.collapsed > .pe-group-body { display: none; }
+.pe-group.collapsed.open > .pe-group-body {
+    display: flex;
+    position: fixed;
+    z-index: 46;
+    padding: 6px;
+    background: var(--pe-sidebar-bg);
+    border: 1px solid var(--pe-border);
+    border-radius: 6px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .25);
+}
+.pe-group.collapsed.open .pe-group-collapsed { background: var(--pe-active); }
+
+/* Seven tabs on the right-hand panel: let them wrap rather than hide behind a scroll. */
+.pe-panel.right .pe-panel-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }

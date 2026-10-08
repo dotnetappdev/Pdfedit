@@ -38,7 +38,7 @@ public partial class Editor
     private int _page;
     private ElementReference _viewer;
     private DotNetObjectReference<Editor>? _self;
-    private bool _observePages;
+    private bool _observePages, _fitOnOpen;
 
     // ── Status and messages ──────────────────────────────────────────────────
     private string _status = "Ready";
@@ -99,13 +99,23 @@ public partial class Editor
             await JS.InvokeVoidAsync("pdfedit.listenKeys", _self);
             await JS.InvokeVoidAsync("pdfedit.listenDrag", _self);
             await JS.InvokeVoidAsync("pdfedit.listenSketch", _self);
+            await JS.InvokeVoidAsync("pdfedit.ribbonFit");
             await LoadThemeAsync();
             await LoadSavedSignaturesAsync();
+            LoadPrefs();
+            StateHasChanged();
         }
         if (_observePages && Doc != null)
         {
             _observePages = false;
             await JS.InvokeVoidAsync("pdfedit.observePages", _self, _viewer);
+        }
+        if (TourIndex != null) await JS.InvokeVoidAsync("pdfedit.placeTour");
+        if (_fitOnOpen && Doc != null)
+        {
+            _fitOnOpen = false;
+            await FitWidthAsync();
+            StateHasChanged();
         }
         if (_restoreScroll is { } top && Doc != null)
         {
@@ -293,8 +303,9 @@ public partial class Editor
                 PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
                 Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) - (i.Vertical ? 90 : 0),
                 FontColor = i.Color, FontFamily = "Helvetica", GrowToFit = true,
+                IsBold = i.Bold, IsItalic = i.Italic, IsUnderline = i.Underline, ForceUpperCase = i.Upper, TextAlignment = i.Align,
             }).Concat(StampAndInkAnnotations()).ToList();
-        var signatures = _items.Where(i => i.Kind == ItemKind.Signature && i.Image != null)
+        var signatures = _items.Where(i => i.Kind is ItemKind.Signature or ItemKind.Picture && i.Image != null)
             .Select(i => new PlacedSignature
             {
                 PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
@@ -311,14 +322,14 @@ public partial class Editor
             {
                 PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
                 Color = i.Color,
-                Kind = i.Markup, Opacity = i.Markup == HighlightKind.Highlight ? 0.4f : 1f,
+                Kind = i.Markup, Opacity = i.Markup == HighlightKind.Highlight ? (float)i.Opacity : 1f,
             }).ToList();
         var shapes = _items.Where(i => i.Kind is ItemKind.Rectangle or ItemKind.Ellipse)
             .Select(i => new ShapeAnnotation
             {
                 PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
                 X1 = U(i).L, Y1 = U(i).B, X2 = U(i).L + U(i).W, Y2 = U(i).B + U(i).H,
-                StrokeColor = i.Color, FillColor = "", LineWidth = 2,
+                StrokeColor = i.Color, FillColor = "", LineWidth = i.LineWidth,
             }).Concat(LineAndMeasureShapes()).Concat(ToolboxShapes()).ToList();
         var textEdits = ToolboxTextEdits().ToList();
         var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
@@ -537,18 +548,27 @@ public partial class Editor
             return;
         }
 
+        switch (_tool)
+        {
+            case Tool.Link: StartLink(page, left, top, width, height); return;
+            case Tool.Snapshot: await SnapshotAsync(page, left, top, width, height); return;
+            case Tool.SelectText: await SelectTextAsync(page, left, top, width, height); return;
+            case Tool.EditImages: await PickImageAsync(page, x, y); return;
+        }
+
         PageItem? added = null;
         switch (_tool)
         {
             case Tool.Text:
             case Tool.Date:
                 double size = _fontSize;
-                string text = _tool == Tool.Date ? DateTime.Today.ToString("d MMMM yyyy", CultureInfo.CurrentCulture) : "";
+                string text = _tool == Tool.Date ? DateText(DateTime.Today) : "";
                 added = new PageItem
                 {
                     Kind = ItemKind.Text, Page = page, Left = x, Top = y - size * 0.6,
                     Width = _tool == Tool.Date ? Math.Max(60, text.Length * size * 0.55) : 160, Height = size * 1.45,
                     FontSize = size, Color = _textColor, Text = text,
+                    Bold = _bold, Italic = _italic, Underline = _underline, Upper = _upper, Align = _textAlign,
                 };
                 break;
             case Tool.Check or Tool.Cross or Tool.Dot:
@@ -583,6 +603,7 @@ public partial class Editor
                     Kind = _tool switch { Tool.Highlight => ItemKind.Highlight, Tool.Redact => ItemKind.Redact, Tool.Ellipse => ItemKind.Ellipse, _ => ItemKind.Rectangle },
                     Page = page, Left = left, Top = top, Width = width, Height = height,
                     Color = _tool == Tool.Highlight ? _highlightColor : _strokeColor,
+                    LineWidth = _inkWidth, Opacity = _highlightOpacity,
                 };
                 break;
             default:
@@ -593,6 +614,8 @@ public partial class Editor
         added.Left = Math.Clamp(added.Left, 0, Math.Max(0, pw - added.Width));
         added.Top = Math.Clamp(added.Top, 0, Math.Max(0, ph - added.Height));
         _items.Add(added);
+        _itemRedo.Clear();
+        SelectedItemId = added.Id;
         _page = page;
         Status(added.Describe() + " added — Apply Changes or Download writes it into the PDF");
 
@@ -649,8 +672,22 @@ public partial class Editor
             case "Ctrl+=" or "Ctrl++": Zoom(1.25); break;
             case "Ctrl+-": Zoom(0.8); break;
             case "Ctrl+0": SetZoom(1); break;
+            case "Ctrl+c": if (CanCopy) await CopyAsync(); break;
+            case "Ctrl+x": if (CanCopy) await CutAsync(); break;
+            case "Ctrl+v": await PasteAsync(); break;
+            case "Ctrl+w": await CloseCurrentAsync(); break;
+            case "Shift+Ctrl+_" or "Shift+Ctrl+-": await ChangeUiScaleAsync(-0.1); break;
+            case "Shift+Ctrl++" or "Shift+Ctrl+=": await ChangeUiScaleAsync(0.1); break;
+            case "Ctrl+]": await RotateAsync(90); break;
+            case "Ctrl+[": await RotateAsync(-90); break;
+            case "Ctrl+ArrowRight": await GoToPageAsync(_page + 1); break;
+            case "Ctrl+ArrowLeft": await GoToPageAsync(_page - 1); break;
+            case "F1": ShowDialog(DialogKind.Shortcuts); break;
             case "Escape":
-                if (_dialog != DialogKind.None) CloseDialog();
+                if (TourIndex != null) EndTour();
+                else if (SlidePage != null) await EndSlideShowAsync();
+                else if (EditingImage != null) CloseImageEdit();
+                else if (_dialog != DialogKind.None) CloseDialog();
                 else if (_backstage != null) _backstage = null;
                 else if (DesignMode && _designTool != DesignTool.Select) SetDesignTool(DesignTool.Select);
                 else if (DesignMode) SelectedDesignId = null;

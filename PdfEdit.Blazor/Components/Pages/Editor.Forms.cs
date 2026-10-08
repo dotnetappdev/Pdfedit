@@ -80,6 +80,11 @@ public partial class Editor
             return InvokeAsync(StateHasChanged);
         }
         if (Doc == null) return Task.CompletedTask;
+        if (key.StartsWith("img:"))
+        {
+            ImageBoxMoved(leftPct, topPct, widthPct, heightPct);
+            return InvokeAsync(StateHasChanged);
+        }
         if (key.StartsWith("f:"))
         {
             var parts = key[2..].Split('|');
@@ -93,7 +98,7 @@ public partial class Editor
             double left = Math.Clamp(leftPct / 100 * pw, 0, pw - w), top = Math.Clamp(topPct / 100 * ph, 0, ph - h);
             var u = ToUser(fp, left, top, w, h);
             _bounds[(name, widget)] = new FieldBounds(u.Left, u.Bottom, u.Width, u.Height);
-            SelectWidget(f);
+            if (!IsWidgetSelected(f)) SelectWidgetMulti(f, false);
             Status($"Moved “{name}” — Apply Changes writes it into the PDF");
         }
         else if (key.StartsWith("i:"))
@@ -254,6 +259,7 @@ public partial class Editor
     {
         if (DesignMode && SelectedDesignItem != null) { DeleteDesignItem(); return InvokeAsync(StateHasChanged); }
         if (PrepareMode && SelectedWidget != null) { DeleteSelectedField(); return InvokeAsync(StateHasChanged); }
+        if (!PrepareMode && SelectedItem != null) { DeleteSelectedItem(); return InvokeAsync(StateHasChanged); }
         return Task.CompletedTask;
     }
 }

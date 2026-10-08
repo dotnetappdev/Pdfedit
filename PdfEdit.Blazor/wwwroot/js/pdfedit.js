@@ -31,6 +31,62 @@ window.pdfedit = (() => {
 
         focus(id) { document.getElementById(id)?.focus(); },
 
+        // Fits the ribbon to the window like the Fluent ribbon: groups collapse from the right into a
+        // button that drops the group down, and come back as the window widens.
+        ribbonFit() {
+            const ribbon = document.querySelector('.pe-ribbon');
+            if (!ribbon || ribbon.__peFit) return;
+            ribbon.__peFit = true;
+            const fit = () => {
+                const groups = [...ribbon.querySelectorAll(':scope > .pe-group')];
+                groups.forEach(g => g.classList.remove('collapsed', 'open'));
+                for (let i = groups.length - 1; i >= 0 && ribbon.scrollWidth > ribbon.clientWidth + 1; i--) {
+                    const g = groups[i];
+                    const icon = g.querySelector('.pe-group-body i.bi')?.className.match(/bi-[\w-]+/g)?.find(c => c !== 'bi');
+                    const ci = g.querySelector('.pe-group-collapsed > i');
+                    if (icon && ci) ci.className = 'bi ' + icon;
+                    g.classList.add('collapsed');
+                }
+            };
+            let pending = 0;
+            const later = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(fit); };
+            new ResizeObserver(later).observe(ribbon);
+            new MutationObserver(m => { if (m.some(r => r.type === 'childList' && r.target === ribbon)) later(); })
+                .observe(ribbon, { childList: true, subtree: true });
+            ribbon.addEventListener('click', e => {
+                const toggle = e.target.closest('.pe-group-collapsed');
+                if (toggle) {
+                    const g = toggle.parentElement, open = !g.classList.contains('open');
+                    ribbon.querySelectorAll('.pe-group.open').forEach(x => x.classList.remove('open'));
+                    if (open) {
+                        g.classList.add('open');
+                        const r = toggle.getBoundingClientRect(), body = g.querySelector('.pe-group-body');
+                        body.style.top = r.bottom + 2 + 'px';
+                        body.style.left = Math.max(4, Math.min(r.left, window.innerWidth - body.offsetWidth - 8)) + 'px';
+                    }
+                    return;
+                }
+                // A command in a dropped-down group closes it (not the inputs and pickers).
+                if (e.target.closest('.pe-group.open .pe-group-body .pe-rbtn:not([aria-haspopup])')) {
+                    setTimeout(() => ribbon.querySelectorAll('.pe-group.open').forEach(x => x.classList.remove('open')), 0);
+                }
+            });
+            document.addEventListener('mousedown', e => {
+                if (!e.target.closest('.pe-group.open, .pe-rmenu-list, .pe-flyout-backdrop'))
+                    ribbon.querySelectorAll('.pe-group.open').forEach(x => x.classList.remove('open'));
+            });
+            fit();
+        },
+
+        // A ribbon drop-down's menu, placed under its button (the ribbon itself scrolls and clips).
+        placeMenu(root) {
+            const button = root?.querySelector('.pe-rbtn'), list = root?.querySelector('.pe-rmenu-list');
+            if (!button || !list) return;
+            const r = button.getBoundingClientRect();
+            list.style.top = r.bottom + 2 + 'px';
+            list.style.left = Math.max(4, Math.min(r.left, window.innerWidth - list.offsetWidth - 4)) + 'px';
+        },
+
         viewerWidth(viewer) { return viewer ? viewer.clientWidth : 1000; },
 
         // Each document tab remembers where it was scrolled to.
@@ -301,14 +357,25 @@ window.pdfedit = (() => {
 
         // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc, Delete).
         listenKeys(dotnet) {
+            window.__peDotnet = dotnet;
             document.addEventListener('keydown', e => {
                 const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
                 const k = e.key.toLowerCase();
+                const selecting = !!window.getSelection()?.toString();
                 if (e.ctrlKey || e.metaKey) {
-                    if (['o', 's', 'z', 'y', 'f', 'p', '=', '+', '-', '0'].includes(k) && !(inField && ['z', 'y'].includes(k))) {
+                    if (['o', 's', 'z', 'y', 'f', 'p', '=', '+', '-', '_', '0', '[', ']'].includes(k) && !(inField && ['z', 'y'].includes(k))) {
                         e.preventDefault();
                         dotnet.invokeMethodAsync('OnShortcut', (e.shiftKey ? 'Shift+' : '') + 'Ctrl+' + k);
+                    } else if (['c', 'x'].includes(k) && !inField && !selecting) {
+                        // Copy / cut what's selected on the page (text selected in the page keeps the browser's copy).
+                        dotnet.invokeMethodAsync('OnShortcut', 'Ctrl+' + k);
+                    } else if ((k === 'arrowleft' || k === 'arrowright') && !inField) {
+                        e.preventDefault();
+                        dotnet.invokeMethodAsync('OnShortcut', 'Ctrl+' + (k === 'arrowleft' ? 'ArrowLeft' : 'ArrowRight'));
                     }
+                } else if (k === 'f1') {
+                    e.preventDefault();
+                    dotnet.invokeMethodAsync('OnShortcut', 'F1');
                 } else if (k === 'escape') {
                     dotnet.invokeMethodAsync('OnShortcut', 'Escape');
                 } else if (k === 'delete' && !inField) {
@@ -319,6 +386,138 @@ window.pdfedit = (() => {
                     dotnet.invokeMethodAsync('OnShortcut', 'Key:' + k);
                 }
             });
+            // Ctrl+V: a picture from another app is pasted onto the page; otherwise what was copied in PdfEdit.
+            document.addEventListener('paste', e => {
+                if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable) return;
+                if (document.querySelector('.pe-modal, .pe-backstage')) return;
+                const file = [...(e.clipboardData?.items || [])].find(i => i.kind === 'file' && i.type.startsWith('image/'))?.getAsFile();
+                e.preventDefault();
+                if (!file) { dotnet.invokeMethodAsync('OnShortcut', 'Ctrl+v'); return; }
+                const reader = new FileReader();
+                reader.onload = () => dotnet.invokeMethodAsync('OnPastePicture', reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+        },
+
+        // ── Clipboard ──
+        async copyText(text) { try { await navigator.clipboard.writeText(text); } catch { } },
+        async copyImage(base64) {
+            try {
+                const blob = await (await fetch('data:image/png;base64,' + base64)).blob();
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                return true;
+            } catch { return false; }
+        },
+        // The Paste button: a picture (as PNG base64) or text from the computer's clipboard.
+        async readClipboard() {
+            try {
+                for (const item of await navigator.clipboard.read()) {
+                    const type = item.types.find(t => t.startsWith('image/'));
+                    if (type) {
+                        const blob = await item.getType(type);
+                        const url = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); });
+                        return { image: url.split(',')[1], text: null };
+                    }
+                }
+            } catch { }
+            try { return { image: null, text: await navigator.clipboard.readText() }; } catch { return null; }
+        },
+
+        // ── Reading: auto scroll, full screen ──
+        autoScroll(viewer, speed) {
+            clearInterval(window.__peAutoScroll);
+            viewer?.removeEventListener('wheel', window.__peAutoStop);
+            if (!viewer || !speed) return;
+            let last = performance.now();
+            window.__peAutoStop = () => { clearInterval(window.__peAutoScroll); window.__peDotnet?.invokeMethodAsync('OnAutoScrollStopped'); };
+            viewer.addEventListener('wheel', window.__peAutoStop, { once: true });
+            window.__peAutoScroll = setInterval(() => {
+                const now = performance.now();
+                viewer.scrollTop += speed * (now - last) / 1000;
+                last = now;
+                if (viewer.scrollTop + viewer.clientHeight >= viewer.scrollHeight - 1) window.__peAutoStop();
+            }, 30);
+        },
+        fullscreen(id) {
+            const el = document.getElementById(id);
+            el?.focus();
+            el?.requestFullscreen?.().catch(() => { });
+        },
+        exitFullscreen() { if (document.fullscreenElement) document.exitFullscreen().catch(() => { }); },
+
+        // ── A picture downloaded as JPEG (made from a PNG in the browser) ──
+        downloadAsJpeg(base64, name) {
+            const img = new Image();
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth; c.height = img.naturalHeight;
+                const g = c.getContext('2d');
+                g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+                g.drawImage(img, 0, 0);
+                c.toBlob(b => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(b); a.download = name;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+                }, 'image/jpeg', 0.92);
+            };
+            img.src = 'data:image/png;base64,' + base64;
+        },
+
+        // ── Ask by voice (the browser's speech recognition: Chrome, Edge, Safari) ──
+        voice: {
+            listen(dotnet) {
+                const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!R) return false;
+                const r = new R();
+                r.lang = navigator.language || 'en-GB';
+                r.interimResults = false;
+                r.maxAlternatives = 1;
+                let done = false;
+                const finish = (text, err) => { if (done) return; done = true; dotnet.invokeMethodAsync('OnVoiceResult', text, err); };
+                r.onresult = e => finish(e.results[0][0].transcript, null);
+                r.onerror = e => finish(null, e.error);
+                r.onend = () => finish(null, null);
+                window.__peVoice = r;
+                r.start();
+                return true;
+            },
+            stop() { window.__peVoice?.stop(); },
+        },
+
+        // Mind map topics that have a page: clicking one goes there.
+        mindMapLinks(dotnet) {
+            document.querySelector('.pe-mindmap')?.addEventListener('click', e => {
+                const a = e.target.closest('[data-page]');
+                if (!a) return;
+                e.preventDefault();
+                dotnet.invokeMethodAsync('MindMapPage', +a.dataset.page);
+            });
+        },
+
+        // ── Take the Tour: the ring round the part being described, and the card beside it ──
+        placeTour() {
+            const tour = document.querySelector('.pe-tour');
+            if (!tour) return;
+            const ring = tour.querySelector('.pe-tour-ring'), card = tour.querySelector('.pe-tour-card');
+            const target = tour.dataset.target ? document.querySelector(tour.dataset.target) : null;
+            const W = window.innerWidth, H = window.innerHeight, cw = card.offsetWidth, ch = card.offsetHeight, gap = 14;
+            if (!target) {
+                ring.style.display = 'none';
+                card.style.left = (W - cw) / 2 + 'px'; card.style.top = (H - ch) / 2 + 'px';
+                return;
+            }
+            const t = target.getBoundingClientRect();
+            ring.style.display = '';
+            Object.assign(ring.style, { left: t.left - 4 + 'px', top: t.top - 4 + 'px', width: t.width + 8 + 'px', height: t.height + 8 + 'px' });
+            let x, y;
+            if (t.bottom + gap + ch <= H) { x = t.left + 24; y = t.bottom + gap; }
+            else if (t.top - gap - ch >= 0) { x = t.left + 24; y = t.top - gap - ch; }
+            else if (t.right + gap + cw <= W) { x = t.right + gap; y = t.top + 24; }
+            else if (t.left - gap - cw >= 0) { x = t.left - gap - cw; y = t.top + 24; }
+            else { x = t.left + (t.width - cw) / 2; y = t.top + (t.height - ch) / 2; }
+            card.style.left = Math.max(8, Math.min(x, W - cw - 8)) + 'px';
+            card.style.top = Math.max(8, Math.min(y, H - ch - 8)) + 'px';
         },
 
         // ── Read Aloud: the browser's speech synthesis ──────────────────────

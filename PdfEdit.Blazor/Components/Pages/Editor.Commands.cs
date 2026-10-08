@@ -35,7 +35,7 @@ public partial class Editor
         {
             await CommitPendingAsync();
             // The browser's PDF viewer prints it.
-            await JS.InvokeVoidAsync("pdfedit.openInNewTab", $"/documents/{Doc.Id}/file?inline=1&v={Doc.Version}");
+            await JS.InvokeVoidAsync("pdfedit.openInNewTab", $"/documents/{Doc.Id}/file?inline=true&v={Doc.Version}");
             Status("Opened the PDF in a new tab: print it from there");
         });
     }
@@ -265,7 +265,7 @@ public partial class Editor
                 landscape ? a4.Height : a4.Width, landscape ? a4.Width : a4.Height, borders));
         });
 
-    private Task BookletAsync() =>
+    public Task BookletAsync() =>
         ChangeAsync("Making a booklet…", "Booklet made: print double-sided, flip on the short edge", (src, dest) =>
         {
             var a4 = PageLayoutService.PaperSizes.First(p => p.Name == "A4");
@@ -303,10 +303,11 @@ public partial class Editor
         try
         {
             var path = (await SaveUploadsAsync([file], folder))[0];
-            var data = Store.Forms.ImportFormData(path);
             int n = 0;
-            foreach (var (name, value) in data)
-                if (Values.ContainsKey(name)) { Values[name] = value; n++; }
+            if (file.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) n = ImportJson(await File.ReadAllTextAsync(path));
+            else
+                foreach (var (name, value) in Store.Forms.ImportFormData(path))
+                    if (Values.ContainsKey(name)) { Values[name] = value; n++; }
             Toast(n == 0 ? "None of the names in that file match this form's fields." : $"Filled {n} field{(n == 1 ? "" : "s")}.", n == 0 ? "error" : "success");
         }
         catch (Exception ex) { Toast("Couldn't read that file: " + ex.Message, "error"); }
