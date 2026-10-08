@@ -1,0 +1,274 @@
+@* The Comments panel, as in the Windows app (and Acrobat): every comment and mark with its author and
+   date, filters by type, review status and reviewer, a search, and for each one a checkmark, a review
+   status, a note and a reply thread. Replies, status and checkmarks are saved in the PDF. *@
+@using PdfEdit.Models
+<div class="pe-cm">
+    <div class="pe-cm-head">
+        <h3>Comments</h3>
+        <button class="pe-btn" title="Add a sticky note — then click the page" @onclick="AddNote"><i class="bi bi-sticky"></i> Add note</button>
+    </div>
+
+    <div class="pe-cm-filters">
+        <input type="search" class="form-control form-control-sm" placeholder="Search comment text, replies and authors" aria-label="Search comments"
+               @bind="_query" @bind:event="oninput" />
+        <div class="pe-cm-selects">
+            <select class="form-select form-select-sm" aria-label="Show comments of one type" title="Show comments of one type" @bind="_type">
+                @foreach (var t in Types) { <option value="@t">@t</option> }
+            </select>
+            <select class="form-select form-select-sm" aria-label="Show comments with a review status" title="Show comments with a review status" @bind="_status">
+                @foreach (var s in Statuses) { <option value="@s">@s</option> }
+            </select>
+            <select class="form-select form-select-sm" aria-label="Show one reviewer's comments" title="Show one reviewer's comments" @bind="_author">
+                <option value="">Everyone</option>
+                @foreach (var a in Authors()) { <option value="@a">@a</option> }
+            </select>
+            <select class="form-select form-select-sm" aria-label="Sort by" title="Sort by" @bind="_sort">
+                @foreach (var s in Sorts) { <option value="@s">@s</option> }
+            </select>
+        </div>
+    </div>
+
+    @if (Ed.HasPending)
+    {
+        <div class="pe-cm-pending">
+            <span><i class="bi bi-pencil"></i> @Ed.PendingItems.Count() change@(Ed.PendingItems.Count() == 1 ? "" : "s") not in the PDF yet</span>
+            <button class="pe-btn primary" @onclick="ApplyAsync">Apply changes</button>
+            <button class="pe-btn" @onclick="Discard">Discard</button>
+        </div>
+    }
+
+    @{ var shown = Shown(); }
+    @if (shown.Count == 0)
+    {
+        <p class="pe-hint">@(Ed.Items.Count == 0 && Others().Count == 0 ? "No comments or marks yet. Add a note, highlight or drawing and it shows here." : "No comments match the filters.")</p>
+    }
+    @foreach (var i in shown)
+    {
+        var item = i;
+        var c = i.Comment;
+        bool pending = Editor.IsDirty(i);
+        bool sel = Ed.SelectedItemId == i.Id;
+        <div class="pe-cm-card @(sel ? "sel" : "") @(c.Checked ? "checked" : "")" @onclick="() => GoTo(item)">
+            <div class="pe-cm-title">
+                <input type="checkbox" class="form-check-input" title="Checkmark" aria-label="Checkmark" checked="@c.Checked"
+                       @onclick:stopPropagation="true" @onchange="e => Change(item, () => c.Checked = e.Value is true)" />
+                <i class="bi @Icon(i.Kind) pe-cm-icon"></i>
+                <span class="pe-cm-kind">@Kind(i)</span>
+                @if (c.Status != CommentStatus.None) { <span class="pe-cm-status @c.Status.ToString().ToLowerInvariant()">@c.Status</span> }
+                @if (pending) { <span class="pe-cm-badge" title="Apply changes writes it into the PDF">Not applied</span> }
+                <span class="pe-cm-page">p.@(i.Page + 1)</span>
+            </div>
+            <div class="pe-cm-by">@(string.IsNullOrWhiteSpace(i.Author) ? Ed.CommentAuthor : i.Author) · @When(c.Created)</div>
+            @if (!string.IsNullOrWhiteSpace(Body(i)))
+            {
+                <div class="pe-cm-body">@Body(i)</div>
+            }
+            @if (HasOwnNote(i))
+            {
+                <textarea class="form-control form-control-sm pe-cm-note" rows="1" placeholder="Add a note…" aria-label="Note" value="@c.Note"
+                          @onclick:stopPropagation="true" @onchange="e => Change(item, () => c.Note = e.Value?.ToString() ?? string.Empty)"></textarea>
+            }
+            @if (c.Replies.Count > 0)
+            {
+                <ul class="pe-cm-replies">
+                    @foreach (var r in c.Replies.ToList())
+                    {
+                        var reply = r;
+                        <li>
+                            <div class="pe-cm-by"><b>@r.Author</b> · @When(r.Created)
+                                <button class="pe-icon-btn" title="Delete reply" aria-label="Delete reply" @onclick:stopPropagation="true"
+                                        @onclick="() => Change(item, () => c.Replies.Remove(reply))"><i class="bi bi-x"></i></button>
+                            </div>
+                            <div>@r.Text</div>
+                        </li>
+                    }
+                </ul>
+            }
+            <div class="pe-cm-actions" @onclick:stopPropagation="true">
+                @if (_replyTo == i.Id)
+                {
+                    <div class="pe-cm-replybox">
+                        <input class="form-control form-control-sm" placeholder="Write a reply" aria-label="Reply" @bind="_reply" @bind:event="oninput"
+                               @onkeydown="e => ReplyKey(e, item)" />
+                        <button class="pe-btn primary" disabled="@string.IsNullOrWhiteSpace(_reply)" @onclick="() => PostReply(item)">Reply</button>
+                        <button class="pe-btn" @onclick="() => _replyTo = null">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <button class="pe-link" @onclick="() => { _replyTo = item.Id; _reply = string.Empty; }">Reply</button>
+                    <select class="pe-cm-statussel" aria-label="Review status" title="Set review status" value="@c.Status"
+                            @onchange="e => Change(item, () => c.Status = Enum.Parse<CommentStatus>(e.Value?.ToString() ?? nameof(CommentStatus.None)))">
+                        @foreach (var s in Enum.GetValues<CommentStatus>()) { <option value="@s">@(s == CommentStatus.None ? "Status…" : s.ToString())</option> }
+                    </select>
+                    <button class="pe-link danger" disabled="@i.Locked" @onclick="() => Delete(item)">Delete</button>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Others() is { Count: > 0 } others)
+    {
+        <h4 class="mt-3">Other comments in the PDF</h4>
+        <p class="pe-hint">Added by other apps; shown here, not changed.</p>
+        <ul class="pe-list">
+            @foreach (var a in others)
+            {
+                var ann = a;
+                <li @onclick="() => Ed.GoToPageAsync(ann.PageNumber - 1)" title="@a.Text">
+                    <i class="bi bi-chat-left-text pe-type"></i>
+                    <span class="text-truncate">@a.Kind@(string.IsNullOrWhiteSpace(a.Author) ? "" : " — " + a.Author)@(string.IsNullOrWhiteSpace(a.Text) ? "" : ": " + a.Text)</span>
+                    <span class="pe-meta">p.@a.PageNumber</span>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private static readonly string[] Types = ["All types", "Text", "Notes", "Highlights", "Drawings", "Stamps & marks", "Measurements", "Text edits", "Redactions"];
+    private static readonly string[] Statuses = ["Any status", "None", "Accepted", "Rejected", "Cancelled", "Completed", "Checked", "Unchecked"];
+    private static readonly string[] Sorts = ["Page", "Date", "Author", "Type"];
+
+    private string _query = "", _type = Types[0], _status = Statuses[0], _author = "", _sort = "Page";
+    private string? _replyTo;
+    private string _reply = "";
+
+    private static string TypeOf(ItemKind k) => k switch
+    {
+        ItemKind.Text or ItemKind.Callout => "Text",
+        ItemKind.Note => "Notes",
+        ItemKind.Highlight => "Highlights",
+        ItemKind.Ink or ItemKind.Rectangle or ItemKind.Ellipse or ItemKind.Line or ItemKind.Arrow or ItemKind.Polygon or ItemKind.Polyline or ItemKind.Cloud => "Drawings",
+        ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area => "Measurements",
+        ItemKind.InsertText or ItemKind.ReplaceText => "Text edits",
+        ItemKind.Redact => "Redactions",
+        _ => "Stamps & marks",
+    };
+
+    private List<PageItem> Shown()
+    {
+        IEnumerable<PageItem> list = Ed.Items;
+        if (_type != Types[0]) list = list.Where(i => TypeOf(i.Kind) == _type);
+        list = _status switch
+        {
+            "Any status" => list,
+            "Checked" => list.Where(i => i.Comment.Checked),
+            "Unchecked" => list.Where(i => !i.Comment.Checked),
+            _ => list.Where(i => i.Comment.Status.ToString() == _status),
+        };
+        if (_author.Length > 0) list = list.Where(i => AuthorOf(i) == _author);
+        if (!string.IsNullOrWhiteSpace(_query))
+        {
+            string q = _query.Trim();
+            bool M(string? s) => s?.Contains(q, StringComparison.OrdinalIgnoreCase) == true;
+            list = list.Where(i => M(i.Text) || M(i.Subtitle) || M(i.Comment.Note) || M(AuthorOf(i)) || M(Kind(i))
+                                   || i.Comment.Replies.Any(r => M(r.Text) || M(r.Author)));
+        }
+        return (_sort switch
+        {
+            "Date" => list.OrderByDescending(i => i.Comment.Created),
+            "Author" => list.OrderBy(i => AuthorOf(i)).ThenBy(i => i.Page),
+            "Type" => list.OrderBy(i => TypeOf(i.Kind)).ThenBy(i => i.Page),
+            _ => list.OrderBy(i => i.Page).ThenBy(i => i.Top),
+        }).ToList();
+    }
+
+    private string AuthorOf(PageItem i) => string.IsNullOrWhiteSpace(i.Author) ? Ed.CommentAuthor : i.Author!;
+
+    private IEnumerable<string> Authors() =>
+        Ed.Items.Select(AuthorOf).Concat(Ed.Items.SelectMany(i => i.Comment.Replies.Select(r => r.Author)))
+            .Where(a => a.Length > 0).Distinct().OrderBy(a => a);
+
+    private List<PdfEdit.Blazor.Services.PdfAnnotationItem> Others() => Ed.Doc?.Annotations ?? [];
+
+    private static string Kind(PageItem i) => i.Describe().Split(':')[0];
+
+    /// <summary>What the comment says on the page (text, a note's words, a stamp's title, a measurement).</summary>
+    private static string? Body(PageItem i) => i.Kind switch
+    {
+        ItemKind.Text or ItemKind.Callout or ItemKind.Note or ItemKind.InsertText or ItemKind.ReplaceText => i.Text,
+        ItemKind.Stamp => i.Text + (string.IsNullOrEmpty(i.Subtitle) ? "" : " — " + i.Subtitle),
+        ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area => i.MeasureLabel(),
+        _ => null,
+    };
+
+    /// <summary>Kinds whose note is separate from what they show (drawings, highlights, shapes).</summary>
+    private static bool HasOwnNote(PageItem i) => i.Kind is ItemKind.Highlight or ItemKind.Ink or ItemKind.Rectangle or ItemKind.Ellipse
+        or ItemKind.Line or ItemKind.Arrow or ItemKind.Polygon or ItemKind.Polyline or ItemKind.Cloud;
+
+    private static string Icon(ItemKind k) => k switch
+    {
+        ItemKind.Text or ItemKind.Callout => "bi-fonts",
+        ItemKind.Note => "bi-sticky",
+        ItemKind.Highlight => "bi-highlighter",
+        ItemKind.Ink => "bi-pencil",
+        ItemKind.Stamp => "bi-postage",
+        ItemKind.Mark => "bi-check2",
+        ItemKind.Signature or ItemKind.Picture => "bi-pen",
+        ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area => "bi-rulers",
+        ItemKind.InsertText or ItemKind.ReplaceText => "bi-cursor-text",
+        ItemKind.Redact => "bi-eraser",
+        _ => "bi-square",
+    };
+
+    private static string When(DateTime d)
+    {
+        var days = (DateTime.Now.Date - d.Date).Days;
+        return days switch { 0 => "today " + d.ToString("HH:mm"), 1 => "yesterday " + d.ToString("HH:mm"), _ => d.ToString("d MMM yyyy") };
+    }
+
+    private void Change(PageItem item, Action change)
+    {
+        change();
+        Ed.Refresh();
+    }
+
+    private void PostReply(PageItem item)
+    {
+        if (string.IsNullOrWhiteSpace(_reply)) return;
+        item.Comment.Replies.Add(new CommentReply { Author = Ed.CommentAuthor, Text = _reply.Trim(), Created = DateTime.Now });
+        _replyTo = null;
+        _reply = "";
+        Ed.Refresh();
+    }
+
+    private void ReplyKey(KeyboardEventArgs e, PageItem item)
+    {
+        if (e.Key == "Enter") PostReply(item);
+        else if (e.Key == "Escape") _replyTo = null;
+    }
+
+    private async Task GoTo(PageItem item)
+    {
+        Ed.SelectItem(item);
+        await Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.ViewSize(item.Page).H * 100);
+        Ed.Refresh();
+    }
+
+    private void Delete(PageItem item)
+    {
+        Ed.RemoveItem(item);
+        Ed.Refresh();
+    }
+
+    private void AddNote()
+    {
+        Ed.SetTool(Tool.Note);
+        Ed.Refresh();
+    }
+
+    private async Task ApplyAsync()
+    {
+        await Ed.CommitAsync();
+        Ed.Refresh();
+    }
+
+    private void Discard()
+    {
+        Ed.DiscardPending();
+        Ed.Refresh();
+    }
+}

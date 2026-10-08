@@ -159,55 +159,7 @@ else
         break;
 
     case RightTab.Comments:
-        <h3>Comments</h3>
-        @if (Ed.PendingItems.Any())
-        {
-            <h4>Not applied yet</h4>
-            <ul class="pe-list">
-                @foreach (var i in Ed.PendingItems.ToList())
-                {
-                    var item = i;
-                    <li @onclick="() => ActAsync(() => Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.ViewSize(item.Page).H * 100))">
-                        <i class="bi @ItemIcon(i.Kind) pe-type"></i>
-                        <span class="text-truncate">@i.Describe()</span>
-                        <span class="pe-meta">p.@(i.Page + 1)</span>
-                        <button class="pe-icon-btn" title="Remove" aria-label="Remove" @onclick="() => Act(() => Ed.RemoveItem(item))" @onclick:stopPropagation="true"><i class="bi bi-x"></i></button>
-                    </li>
-                }
-            </ul>
-            <div class="d-flex gap-2 mt-2">
-                <button class="pe-btn primary" @onclick="() => ActAsync(Ed.CommitAsync)">Apply changes</button>
-                <button class="pe-btn" @onclick="() => Act(Ed.DiscardPending)">Discard</button>
-            </div>
-        }
-        <h4>In the PDF</h4>
-        @if (doc.Annotations.Count == 0 && !Ed.SavedItems.Any())
-        {
-            <p class="pe-hint">No comments or marks yet.</p>
-        }
-        <ul class="pe-list">
-            @foreach (var i in Ed.SavedItems.ToList())
-            {
-                var item = i;
-                @* Added with PdfEdit: still editable on the page. *@
-                <li @onclick="() => { Ed.SelectItem(item); return ActAsync(() => Ed.ScrollToSpotAsync(item.Page, item.Top / Ed.ViewSize(item.Page).H * 100)); }"
-                    title="@(string.IsNullOrWhiteSpace(i.Text) ? i.Describe() : i.Text)">
-                    <i class="bi @ItemIcon(i.Kind) pe-type"></i>
-                    <span class="text-truncate">@i.Describe()</span>
-                    <span class="pe-meta">p.@(i.Page + 1)</span>
-                    <button class="pe-icon-btn" title="Remove" aria-label="Remove" @onclick="() => Act(() => Ed.RemoveItem(item))" @onclick:stopPropagation="true"><i class="bi bi-x"></i></button>
-                </li>
-            }
-            @foreach (var a in doc.Annotations)
-            {
-                var ann = a;
-                <li @onclick="() => ActAsync(() => Ed.GoToPageAsync(ann.PageNumber - 1))" title="@a.Text">
-                    <i class="bi bi-chat-left-text pe-type"></i>
-                    <span class="text-truncate">@a.Kind@(string.IsNullOrWhiteSpace(a.Text) ? "" : ": " + a.Text)</span>
-                    <span class="pe-meta">p.@a.PageNumber</span>
-                </li>
-            }
-        </ul>
+        <CommentsPanel Ed="Ed" />
         break;
 
     case RightTab.Bookmarks:

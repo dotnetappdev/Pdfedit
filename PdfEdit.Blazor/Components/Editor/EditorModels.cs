@@ -67,7 +67,9 @@ public sealed class PageItem
     /// <summary>Can't be moved, resized, edited or deleted until unlocked (text is saved with the PDF's Locked flag).</summary>
     public bool Locked { get; set; }
     /// <summary>Who added it (kept when an annotation from the PDF is written again).</summary>
-    public string? Author { get; set; }
+    public string? Author { get => Comment.Author is { Length: > 0 } a ? a : null; set => Comment.Author = value ?? ""; }
+    /// <summary>The review thread (Comments panel): note, replies, status, checkmark, dates. Its Id is the item's.</summary>
+    public PdfEdit.Models.CommentInfo Comment { get; set; } = new() { Author = "" };
     public ItemKind Kind { get; init; }
     public int Page { get; set; }
     public double Left { get; set; }
@@ -116,7 +118,7 @@ public sealed class PageItem
         Kind = Kind, Page = Page, Left = Left, Top = Top, Width = Width, Height = Height, Text = Text, FontSize = FontSize,
         Color = Color, Image = Image, ImageUrl = ImageUrl, Subtitle = Subtitle, LineWidth = LineWidth, Unit = Unit,
         Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Rotation = Rotation, CharSpacing = CharSpacing, Fit = Fit, DateValue = DateValue, DateFormat = DateFormat,
-        Locked = Locked,
+        Locked = Locked, Comment = new() { Author = Comment.Author, Note = Comment.Note },
         Bold = Bold, Italic = Italic, Underline = Underline, Upper = Upper, Align = Align, Opacity = Opacity,
     };
 

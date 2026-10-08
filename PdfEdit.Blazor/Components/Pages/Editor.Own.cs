@@ -14,8 +14,19 @@ namespace PdfEdit.Blazor.Components.Pages;
 public partial class Editor
 {
     /// <summary>The annotation's comment, carrying the item's id so a later save replaces it.</summary>
-    private CommentInfo CommentFor(PageItem i, string? note = null, string? author = null) =>
-        new() { Id = i.Id, Author = author ?? i.Author ?? "PdfEdit web", Note = note ?? "" };
+    private CommentInfo CommentFor(PageItem i, string? note = null, string? author = null)
+    {
+        var c = i.Comment;
+        return new()
+        {
+            Id = i.Id, Author = author ?? i.Author ?? CommentAuthor, Note = note ?? c.Note,
+            Created = c.Created, Modified = i.Baseline == null || IsDirty(i) ? DateTime.Now : c.Modified,
+            Replies = c.Replies.ToList(), Status = c.Status, Checked = c.Checked,
+        };
+    }
+
+    /// <summary>The name put on new comments and replies (Settings → Your name).</summary>
+    public string CommentAuthor => string.IsNullOrWhiteSpace(Settings.AuthorName) ? "PdfEdit web" : Settings.AuthorName.Trim();
 
     /// <summary>Everything about an item that's written into the PDF.</summary>
     private static string Signature(PageItem i) => string.Join('|', new object?[]
@@ -23,6 +34,7 @@ public partial class Editor
         i.Kind, i.Page, R(i.Left), R(i.Top), R(i.Width), R(i.Height), i.Text, R(i.FontSize), i.Color, i.Subtitle, R(i.LineWidth),
         i.Markup, i.Rotation, R(i.CharSpacing), i.Fit, i.Bold, i.Italic, i.Underline, i.Upper, i.Align, R(i.Opacity), i.DateFormat,
         i.Points == null ? "" : string.Join(';', i.Points.Select(p => R(p.X) + "," + R(p.Y))), i.Unit, i.Locked,
+        i.Comment.Note, i.Comment.Status, i.Comment.Checked, string.Join('\u001f', i.Comment.Replies.Select(r => r.Author + ":" + r.Text)),
     });
 
     private static string R(double v) => Math.Round(v, 2).ToString(CultureInfo.InvariantCulture);
@@ -112,7 +124,7 @@ public partial class Editor
             LineWidth = item.LineWidth, Markup = item.Markup, Rotation = item.Rotation, CharSpacing = item.CharSpacing,
             Fit = item.Fit, Bold = item.Bold, Italic = item.Italic, Opacity = item.Opacity,
             Unit = item.Unit, Author = string.IsNullOrWhiteSpace(o.Author) ? null : o.Author,
-            Locked = o.Kind == "Text" && o.Locked,
+            Locked = o.Kind == "Text" && o.Locked, Comment = o.Comment,
         };
         // Lines and measurements: the box is worked out from the points, as when they're drawn.
         if (placed.Kind is ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Polygon

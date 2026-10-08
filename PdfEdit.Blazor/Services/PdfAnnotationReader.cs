@@ -46,6 +46,8 @@ public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
     public string Unit { get; init; } = "in";
     public string Author { get; init; } = "";
     public bool Locked { get; init; }
+    /// <summary>The review thread: note, replies, status and checkmark (read from the PDF's reply annotations).</summary>
+    public CommentInfo Comment { get; init; } = new();
 }
 
 /// <summary>Lists the annotations already saved in a PDF (not form fields or links).</summary>
@@ -64,12 +66,15 @@ public static class PdfAnnotationReader
         try
         {
             using var doc = new PdfDocument(new PdfReader(path));
+            var threads = ReadThreads(doc);
             for (int p = 1; p <= doc.GetNumberOfPages(); p++)
             {
                 foreach (var a in doc.GetPage(p).GetAnnotations())
                 {
                     var o = a.GetPdfObject();
                     if (PdfEdit.Services.PdfFormService.TrackedId(o) is not { } id) continue;
+                    // Replies, review states and a Replace's caret belong to the comment they answer.
+                    if (o.ContainsKey(PdfName.IRT)) continue;
                     string intent = o.GetAsName(new PdfName("IT"))?.GetValue() ?? "";
                     bool cloudy = o.ContainsKey(new PdfName("BE"));
                     var r = a.GetRectangle()?.ToRectangle();
@@ -85,8 +90,14 @@ public static class PdfAnnotationReader
                         Colour = colour.Length > 0 ? colour : "#000000", Rotate = rotate, Author = author, LineWidth = width,
                         Opacity = o.GetAsNumber(PdfName.CA)?.DoubleValue() ?? 1,
                         Locked = (a.GetFlags() & PdfAnnotation.LOCKED) != 0,
+                        Comment = Thread(id, author, o, threads),
                     };
                     var inner = Inner(o, r);
+                    // Drawings and markup keep their comment note in /Contents (text, notes and stamps show theirs).
+                    string sub = a.GetSubtype()?.GetValue() ?? "";
+                    if (intent.Length == 0 && sub is "Ink" or "Highlight" or "Underline" or "StrikeOut" or "Squiggly" or "Square"
+                        or "Circle" or "Line" or "Polygon" or "PolyLine")
+                        own.Comment.Note = contents;
                     switch (a.GetSubtype()?.GetValue())
                     {
                         case "FreeText" when intent == "FreeTextCallout":
@@ -125,7 +136,6 @@ public static class PdfAnnotationReader
                             list.Add(own with { Kind = "Replace", Text = contents });
                             break;
                         case "Caret":
-                            if (o.ContainsKey(PdfName.IRT)) continue;   // the caret of a Replace: part of its strikeout
                             list.Add(own with { Kind = "Insert", Text = contents });
                             break;
                         case "Line":
@@ -183,6 +193,52 @@ public static class PdfAnnotationReader
         }
         catch { /* unreadable: nothing editable */ }
         return list;
+    }
+
+    /// <summary>Replies and review states, by the id of the comment they answer.</summary>
+    private static Dictionary<string, List<PdfDictionary>> ReadThreads(PdfDocument doc)
+    {
+        var threads = new Dictionary<string, List<PdfDictionary>>();
+        for (int p = 1; p <= doc.GetNumberOfPages(); p++)
+            foreach (var a in doc.GetPage(p).GetAnnotations())
+            {
+                var o = a.GetPdfObject();
+                if (o.GetAsDictionary(PdfName.IRT) is not { } parent || PdfEdit.Services.PdfFormService.TrackedId(parent) is not { } pid) continue;
+                if (!PdfName.Text.Equals(o.GetAsName(PdfName.Subtype))) continue;   // a Replace's caret, not a reply
+                (threads.TryGetValue(pid, out var l) ? l : threads[pid] = new()).Add(o);
+            }
+        return threads;
+    }
+
+    /// <summary>The comment's thread as PdfEdit keeps it: author, dates, note, replies, status and checkmark.</summary>
+    private static CommentInfo Thread(string id, string author, PdfDictionary o, Dictionary<string, List<PdfDictionary>> threads)
+    {
+        DateTime? Date(PdfDictionary d, PdfName key)
+        {
+            var s = d.GetAsString(key)?.ToUnicodeString();
+            if (s == null) return null;
+            try { return PdfDate.Decode(s); } catch { return null; }
+        }
+        var c = new CommentInfo
+        {
+            Id = id, Author = author,
+            Created = Date(o, PdfName.CreationDate) ?? Date(o, PdfName.M) ?? DateTime.Now,
+            Modified = Date(o, PdfName.M) ?? DateTime.Now,
+        };
+        foreach (var r in threads.GetValueOrDefault(id) ?? [])
+        {
+            string model = r.GetAsString(new PdfName("StateModel"))?.ToUnicodeString() ?? "";
+            string state = r.GetAsString(new PdfName("State"))?.ToUnicodeString() ?? "";
+            if (model == "Review" && Enum.TryParse<CommentStatus>(state, out var status)) c.Status = status;
+            else if (model == "Marked") c.Checked = state == "Marked";
+            else c.Replies.Add(new CommentReply
+            {
+                Author = r.GetAsString(PdfName.T)?.ToUnicodeString() ?? "",
+                Text = r.GetAsString(PdfName.Contents)?.ToUnicodeString() ?? "",
+                Created = Date(r, PdfName.M) ?? DateTime.Now,
+            });
+        }
+        return c;
     }
 
     /// <summary>The box inside an annotation's /Rect that /RD describes (a cloud's or callout's own box).</summary>
