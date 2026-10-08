@@ -508,6 +508,23 @@
             <div class="pe-viewswitch" role="tablist" aria-label="View">
                 <button class="@(DesignMode ? "" : "active")" role="tab" aria-selected="@(!DesignMode)" @onclick="() => SetDesignMode(false)"><i class="bi bi-file-earmark-text"></i> Live View</button>
                 <button class="@(DesignMode ? "active" : "")" role="tab" aria-selected="@DesignMode" @onclick="() => SetDesignMode(true)"><i class="bi bi-pencil-square"></i> Design</button>
+                @if (Tabs.Count > 0)
+                {
+                    <div class="pe-doctabs" role="tablist" aria-label="Open documents">
+                        @foreach (var t in Tabs)
+                        {
+                            var tab = t;
+                            bool shown = tab == ActiveTab && !DesignMode;
+                            <div class="pe-doctab @(shown ? "active" : "")" title="@tab.Session.FileName">
+                                <button class="pe-doctab-name" role="tab" aria-selected="@shown" @onclick="() => SwitchTabAsync(tab)">
+                                    <i class="bi bi-file-earmark-pdf"></i> <span>@tab.Session.FileName</span>@if (TabHasChanges(tab)) { <span class="pe-dirty" title="Not saved">•</span> }
+                                </button>
+                                <button class="pe-doctab-x" title="Close" aria-label="Close @tab.Session.FileName" @onclick="() => CloseTabAsync(tab)"><i class="bi bi-x"></i></button>
+                            </div>
+                        }
+                        <button class="pe-doctab-add" title="Open another document" aria-label="Open another document" @onclick="() => OpenBackstage(Backstage.Open)"><i class="bi bi-plus-lg"></i></button>
+                    </div>
+                }
             </div>
             @if (DesignMode)
             {

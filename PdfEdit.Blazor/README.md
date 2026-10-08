@@ -23,7 +23,7 @@ offered on the start page.
 | Document | Properties, watermark (add/remove), page numbers, header/footer, Bates numbers, compress, resize pages, pages per sheet, booklet, greyscale |
 | Security | Password protect, remove hidden information, redaction (mark, then apply) |
 | Edit | Undo/Redo for everything, export/import form data, reset form, check required fields, rectangles and ellipses |
-| View | Zoom, fit width/page, thumbnails, side panel, bookmarks, comments, search with highlights, light/dark theme, statistics |
+| View | Several documents open at once as tabs above the pages (each keeps its unsaved work and place; closing one with changes asks first), zoom, fit width/page, thumbnails, side panel, bookmarks, comments, search with highlights, light/dark theme, statistics |
 | Export | Word, Excel, PowerPoint, HTML, Markdown, ePub, text, page images, pictures |
 | Prepare Form | Detect Fields on flat forms (named from their printed labels), add text, checkbox, radio, dropdown, list, date and signature fields by drawing them, select, drag to move, drag the corner to resize, Delete key, field properties (name, tooltip, required, read only, multi-line, alignment, font size, max characters, date and number formats) |
 | Design | Live View / Design switch like the Windows app: design a form page from text, rectangles, ellipses, lines, arrows, tables, pictures, ticks and crosses, and text, multi-line, checkbox, radio, dropdown and signature fields; drag to move, drag the corner to resize, properties for each element, front/back, duplicate, delete, undo/redo; save and open .pdfdesign files (the same format as the Windows app), export a fillable PDF or open it straight in Live View |
@@ -106,5 +106,5 @@ by PdfEdit's own converter, and text, Markdown and web pages always are.
 
 ## Not in the web version yet
 
-Scanning straight from a scanner (browsers can't reach TWAIN scanners — use Scan with Camera or
-pictures instead) and several documents open at once.
+Scanning straight from a scanner: browsers can't reach TWAIN scanners, so use Scan with Camera or
+pictures instead.

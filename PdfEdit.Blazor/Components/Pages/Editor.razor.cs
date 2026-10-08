@@ -25,7 +25,6 @@ public partial class Editor
     [Inject] private IConfiguration Config { get; set; } = default!;
     [Inject] private IWebHostEnvironment Env { get; set; } = default!;
 
-    public PdfSession? Doc { get; private set; }
 
     // ── View state ───────────────────────────────────────────────────────────
     private RibbonTab _tab = RibbonTab.Home;
@@ -48,10 +47,10 @@ public partial class Editor
     private CancellationTokenSource? _toastTimer;
 
     // ── Form fields and things added on the page ─────────────────────────────
-    public Dictionary<string, string> Values { get; } = new();
-    private readonly Dictionary<string, string> _original = new();
+    public Dictionary<string, string> Values { get; private set; } = new();
+    private Dictionary<string, string> _original = new();
     public List<PageItem> Items => _items;
-    private readonly List<PageItem> _items = new();
+    private List<PageItem> _items = new();
     public string? SelectedField { get; set; }
     public PageItem? EditingNote { get; set; }
 
@@ -106,11 +105,18 @@ public partial class Editor
             _observePages = false;
             await JS.InvokeVoidAsync("pdfedit.observePages", _self, _viewer);
         }
+        if (_restoreScroll is { } top && Doc != null)
+        {
+            _restoreScroll = null;
+            if (top >= 0) await JS.InvokeVoidAsync("pdfedit.setScrollTop", _viewer, top);
+            else if (_page > 0) await JS.InvokeVoidAsync("pdfedit.scrollToPage", _page, false);
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (Doc != null) Store.Close(Doc);
+        foreach (var tab in Tabs) Store.Close(tab.Session);
+        _keepAlive?.Dispose();
         SigningCert?.Dispose();
         _self?.Dispose();
         _batchCts?.Cancel();
@@ -233,38 +239,6 @@ public partial class Editor
             }
             finally { try { Directory.Delete(folder, true); } catch { } }
         });
-    }
-
-    private void SetDocument(PdfSession session)
-    {
-        if (Doc != null && Doc != session) Store.Close(Doc);
-        Doc = session;
-        _page = 0;
-        _items.Clear();
-        _searchHits = new();
-        HitIndex = -1;
-        SelectedField = null;
-        _tool = Tool.Select;
-        _backstage = null;
-        ClearFieldChanges();
-        PrepareMode = false;
-        LoadValues();
-        _observePages = true;
-        if (FieldCount > 0) _right = RightTab.Fields;
-    }
-
-    public void CloseDocument()
-    {
-        if (Doc != null) Store.Close(Doc);
-        Doc = null;
-        _items.Clear();
-        Values.Clear();
-        _original.Clear();
-        ClearFieldChanges();
-        PrepareMode = false;
-        _searchHits = new();
-        _backstage = null;
-        Status("Ready");
     }
 
     private void LoadValues()

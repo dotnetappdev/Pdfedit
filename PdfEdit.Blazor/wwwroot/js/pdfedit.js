@@ -33,6 +33,10 @@ window.pdfedit = (() => {
 
         viewerWidth(viewer) { return viewer ? viewer.clientWidth : 1000; },
 
+        // Each document tab remembers where it was scrolled to.
+        scrollTop(viewer) { return viewer ? viewer.scrollTop : 0; },
+        setScrollTop(viewer, top) { if (viewer) requestAnimationFrame(() => { viewer.scrollTop = top; }); },
+
         download(url) {
             const a = document.createElement('a');
             a.href = url;

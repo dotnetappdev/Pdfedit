@@ -16,9 +16,9 @@ public partial class Editor
     public bool PrepareMode { get; private set; }
     public (string Name, int Widget)? SelectedWidget { get; private set; }
 
-    private readonly Dictionary<(string Name, int WidgetIndex), FieldBounds> _bounds = new();
-    private readonly Dictionary<string, FormFieldInfo> _edits = new();
-    private readonly HashSet<string> _deleted = new();
+    private Dictionary<(string Name, int WidgetIndex), FieldBounds> _bounds = new();
+    private Dictionary<string, FormFieldInfo> _edits = new();
+    private HashSet<string> _deleted = new();
 
     public List<NewField>? DetectedFields { get; private set; }
 
