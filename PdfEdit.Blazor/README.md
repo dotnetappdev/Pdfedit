@@ -17,6 +17,11 @@ offered on the start page.
 
 <table>
   <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/tools-tab.png" alt="Tools tab with markup on the page"><br>Tools tab and toolbox</td>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-comment.png" alt="Comment flyout"><br>Comment tools</td>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-highlight.png" alt="Highlight flyout"><br>Highlight tools</td>
+  </tr>
+  <tr>
     <td align="center"><img src="../docs/screenshots/blazor/ribbon-collapsed.png" alt="Ribbon with a collapsed group"><br>Ribbon (groups fold into drop-downs)</td>
     <td align="center"><img src="../docs/screenshots/blazor/all-tools-dracula.png" alt="All tools, Dracula theme"><br>All tools, Dracula theme</td>
     <td align="center"><img src="../docs/screenshots/blazor/theme-office.png" alt="Office theme"><br>Office theme</td>

@@ -44,6 +44,38 @@ Google Drive and OneDrive, Office files to PDF, several documents open at once, 
 floating toolbox beside the pages.
 How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
 
+**The Tools tab and the floating toolbox: highlight, underline, strikethrough, rectangle, arrow, cloud, callout, sticky note, stamp and a measurement on a page**
+
+![The Tools tab with comments and markup placed on the page](docs/screenshots/blazor/tools-tab.png)
+
+**Floating toolbox: Draw tools with ink colours**
+
+![Floating toolbox with the Draw flyout open](docs/screenshots/blazor/toolbox-draw.png)
+
+**Comment tools: sticky note, callout, insert and replace text, stamps**
+
+![The Comment flyout](docs/screenshots/blazor/toolbox-comment.png)
+
+**Highlight tools: highlight, underline, squiggly, strikethrough, with colours**
+
+![The Highlight flyout](docs/screenshots/blazor/toolbox-highlight.png)
+
+**Sign: saved signatures and initials, or sign with a certificate**
+
+![The Sign flyout with a saved signature and initials](docs/screenshots/blazor/toolbox-sign.png)
+
+**More tools: measure, navigate, fill, shapes and form fields**
+
+![The More flyout](docs/screenshots/blazor/toolbox-more.png)
+
+**Toolbox tools on a page: callout, insert and replace text, highlights, clouds, polygons, marks, vertical text and initials**
+
+![Callouts, text edits, markup, clouds, polygons, marks and initials placed with the toolbox](docs/screenshots/blazor/toolbox-tools.png)
+
+**Design toolbox with the grid on, and an invoice template**
+
+![The design toolbox with the grid turned on](docs/screenshots/blazor/toolbox-design.png)
+
 **The ribbon, tab by tab, as in the Windows app**
 
 ![Home tab](docs/screenshots/blazor/ribbon-home.png)
@@ -85,26 +117,6 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 **Take the Tour**
 
 ![The tour](docs/screenshots/blazor/tour.png)
-
-**Floating toolbox: Draw tools with ink colours**
-
-![Floating toolbox with the Draw flyout open](docs/screenshots/blazor/toolbox-draw.png)
-
-**Toolbox tools on a page: callout, insert and replace text, highlights, clouds, polygons, marks, vertical text and initials**
-
-![Callouts, text edits, markup, clouds, polygons, marks and initials placed with the toolbox](docs/screenshots/blazor/toolbox-tools.png)
-
-**Saved signatures and initials**
-
-![The Sign flyout with a saved signature and initials](docs/screenshots/blazor/toolbox-sign.png)
-
-**More tools: measure, navigate, fill, shapes and form fields**
-
-![The More flyout](docs/screenshots/blazor/toolbox-more.png)
-
-**Design toolbox with grid and snap**
-
-![The design toolbox with the grid turned on](docs/screenshots/blazor/toolbox-design.png)
 
 **Fill in and sign forms — Light theme**
 
