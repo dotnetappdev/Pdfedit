@@ -39,7 +39,19 @@ It uses whichever AI provider is selected (Claude, Copilot, ChatGPT or a local m
 
 ## Templates
 
-Invoice, Letter, Form, Certificate, Business Card, Résumé and Flyer are all ready to edit.
+**All Templates** on the Design tab (or **File → New from Template**; **File → New** in the web version) opens a gallery of 70 templates in nine categories, with search and a large preview:
+
+- **Business**: invoices, a quote, a receipt, a purchase order, a price list, a letterhead, proposal and report covers, a project status report
+- **Forms**: job and rental applications, event registration, contact details, a feedback survey, an order form, consent and release, a time-off request, an expense report, a timesheet, an incident report and a sign-in sheet
+- **Agreements**: an NDA, a service agreement, a rental agreement and a bill of sale
+- **Letters & office**: a letter, a memo, a fax cover, a meeting agenda and minutes, and a press release
+- **Resumes**: three resumes and a matching cover letter
+- **Marketing & events**: flyers, posters, a menu, a newsletter, a tri-fold brochure, an invitation and a property flyer
+- **Certificates & cards**: certificates, a gift certificate, a business card, a thank-you card, a ticket and name badges
+- **Education**: a lesson plan, a worksheet, class attendance, lined, graph and dot-grid paper, and Cornell notes
+- **Planning & personal**: daily and weekly planners, monthly and year calendars, a checklist, a budget, a goal planner, a meal planner and a travel itinerary
+
+**Customise in Design** puts the template on the canvas to change. **Open as PDF** makes it a PDF straight away. Templates marked *Fillable* have real form fields, so the PDF is ready to fill in, sign and send. The Windows app and the web version use the same templates. The classic seven (Invoice, Letter, Form, Certificate, Business Card, Résumé and Flyer) still have their own buttons on the Design tab.
 
 ## Getting a PDF out
 

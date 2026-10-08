@@ -44,3 +44,16 @@ Press F1 in the app to see the shortcuts in use. Single-letter shortcuts are ign
 | Table | B | Select text (Live view) | Shift+S |
 | Cross / Fill text field | X / F | Highlight / Draw / Sticky note | I / W / N |
 | Slide show | F5 | | |
+
+## Web version
+
+The web version has the same shortcuts where a browser allows them. It also adds:
+
+| Action | Keys |
+|--------|------|
+| Go to a page | Ctrl+G |
+| Save As | Ctrl+Shift+S |
+| Close the document | Ctrl+W |
+| Next / previous open document | Alt+Page Down / Alt+Page Up (browsers keep Ctrl+Tab for their own tabs) |
+| Nudge what's selected on the page | Arrow keys (Shift for bigger steps) |
+| Menu for what's under the pointer | Right-click |

@@ -88,6 +88,16 @@ PdfEdit in the browser ([PdfEdit.Blazor](../PdfEdit.Blazor/README.md)): the same
 
 | | |
 |---|---|
+| <img src="screenshots/blazor/templates-gallery.png" width="480" alt="The template gallery (File → New)"> | <img src="screenshots/blazor/templates-preview.png" width="480" alt="A template in the preview"> |
+| Templates (File → New) | Template preview |
+| <img src="screenshots/blazor/start-page.png" width="480" alt="Start page with recent files and templates"> | <img src="screenshots/blazor/item-toolbar.png" width="480" alt="The floating toolbar over selected text"> |
+| Recent files and featured templates | Floating toolbar on anything you add |
+| <img src="screenshots/blazor/right-click-menu.png" width="480" alt="Right-click menu on a stamp"> | <img src="screenshots/blazor/properties-panel.png" width="480" alt="Properties of the selected item"> |
+| Right-click menus | Properties and Lock |
+| <img src="screenshots/blazor/comments-panel.png" width="480" alt="Comments panel with review status and replies"> | <img src="screenshots/blazor/field-menu.png" width="480" alt="Field menu in Edit Fields"> |
+| Comments: status, checkmarks, replies | Edit Fields: align, space, size |
+| <img src="screenshots/blazor/thumbnail-menu.png" width="480" alt="Thumbnail menu"> | <img src="screenshots/blazor/date-format.png" width="480" alt="Date format popover"> |
+| Thumbnail menu, rotate, drag to reorder | Date format, day, month, year |
 | <img src="screenshots/blazor/theme-light.png" width="480" alt="Filling a form in the web version, Light theme"> | <img src="screenshots/blazor/theme-dark.png" width="480" alt="Dark theme"> |
 | Light | Dark |
 | <img src="screenshots/blazor/theme-high-contrast.png" width="480" alt="High contrast theme"> | <img src="screenshots/blazor/draw-measure.png" width="480" alt="A stamp, freehand drawing, an arrow and a distance measurement"> |

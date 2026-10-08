@@ -44,6 +44,48 @@ Google Drive and OneDrive, Office files to PDF, several documents open at once, 
 floating toolbox beside the pages.
 How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
 
+**Templates: 70 to start from, in a gallery like Office's (File → New)**
+
+![The template gallery](docs/screenshots/blazor/templates-gallery.png)
+
+![A template opened in the preview, ready to customise or open as a PDF](docs/screenshots/blazor/templates-preview.png)
+
+**The start page: recent files and featured templates**
+
+![The start page](docs/screenshots/blazor/start-page.png)
+
+**Everything you add has the Windows app's floating toolbar: smaller, larger, delete, rotate, spacing, fit and colours**
+
+![The floating toolbar over selected text, with character spacing open](docs/screenshots/blazor/item-toolbar.png)
+
+**Dates change format, day, month and year in place**
+
+![The date format popover](docs/screenshots/blazor/date-format.png)
+
+**Right-click anything on the page**
+
+![The right-click menu on a stamp](docs/screenshots/blazor/right-click-menu.png)
+
+**Properties for the selected item, with Lock**
+
+![Properties of the selected text](docs/screenshots/blazor/properties-panel.png)
+
+**Comments: review status, checkmarks, notes and replies, saved in the PDF**
+
+![The Comments panel with a review thread](docs/screenshots/blazor/comments-panel.png)
+
+**Thumbnails: rotate and delete on hover, a right-click menu, and drag to reorder**
+
+![The thumbnail menu](docs/screenshots/blazor/thumbnail-menu.png)
+
+**Edit Fields: align, space and size fields from the right-click menu**
+
+![The field menu in Edit Fields](docs/screenshots/blazor/field-menu.png)
+
+**The File menu follows the dark theme**
+
+![The File menu in the dark theme](docs/screenshots/blazor/file-menu-dark.png)
+
 **The Tools tab and the floating toolbox: highlight, underline, strikethrough, rectangle, arrow, cloud, callout, sticky note, stamp and a measurement on a page**
 
 ![The Tools tab with comments and markup placed on the page](docs/screenshots/blazor/tools-tab.png)
@@ -90,7 +132,7 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![A collapsed ribbon group dropped down](docs/screenshots/blazor/ribbon-collapsed.png)
 
-**All tools pane, in the Dracula theme**
+**All tools pane, docked on the left beside the thumbnails as in the Windows app (Dracula theme)**
 
 ![All tools pane in the Dracula theme](docs/screenshots/blazor/all-tools-dracula.png)
 
