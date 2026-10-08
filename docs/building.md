@@ -32,6 +32,11 @@ WebKitGTK (`sudo apt install libwebkit2gtk-4.1-0` on Ubuntu and Debian). Save an
 system's Save dialog, Print opens the PDF in your PDF viewer, and links open in your browser.
 Signatures, stamps and settings are kept in your app data folder (`PdfEdit/pdfedit-desktop.db`).
 
+A few things depend on what the system's web view offers: Share opens the system share sheet with
+WebView2 and WebKit (Windows, macOS) and falls back to the Save dialog where there's none (Linux);
+Dictate needs speech recognition (WebView2 and WebKit on macOS; not WebKitGTK); On Phone needs
+PdfEdit on a server your phone can reach, so it isn't for the desktop app.
+
 To run the tests:
 
 ```powershell

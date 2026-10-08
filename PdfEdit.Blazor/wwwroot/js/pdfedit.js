@@ -1033,17 +1033,15 @@ window.pdfeditLaunch = (() => {
         };
         look();
     });
-    // Hands files to the start page's Open area one at a time (each opens in its own tab).
+    // Hands the files to the app's own file box, all at once (each opens in its own tab).
     async function openFiles(files) {
-        for (const file of files) {
-            const input = await waitFor('#pe-launch-input');
-            if (!input) return;
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            input.files = dt.files;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-            await new Promise(r => setTimeout(r, 1500));
-        }
+        if (!files.length) return;
+        const input = await waitFor('#pe-launch-input');
+        if (!input) return;
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     }
     if ('launchQueue' in window) {
         window.launchQueue.setConsumer(async params => {

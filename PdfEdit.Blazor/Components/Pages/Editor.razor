@@ -1330,7 +1330,7 @@
     @if (_backstage != null) { <BackstageView Ed="this" /> }
     @if (_dialog != DialogKind.None) { <DialogHost Ed="this" /> }
     @* PDFs opened with the installed app ("Open with PdfEdit") arrive here, whatever is on screen. *@
-    <InputFile id="pe-launch-input" style="display:none" OnChange="e => OpenUploadAsync(e.File)" />
+    <InputFile id="pe-launch-input" style="display:none" multiple OnChange="e => OpenUploadsAsync(e.GetMultipleFiles(20))" />
     @if (_toast != null)
     {
         <div class="pe-toast @_toastKind" role="alert" @onclick="() => _toast = null">@_toast</div>

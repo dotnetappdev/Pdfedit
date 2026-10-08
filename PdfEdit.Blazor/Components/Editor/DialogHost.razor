@@ -116,8 +116,8 @@
     case DialogKind.HeaderFooter:
         <Modal Title="Header and Footer" OnClose="Close">
             <ChildContent>
-                <div class="mb-2"><label>Header</label><input class="form-control" @bind="_header" placeholder="e.g. Confidential" /></div>
-                <div class="mb-2"><label>Footer</label><input class="form-control" @bind="_footer" placeholder="e.g. Acme Ltd" /></div>
+                <div class="mb-2"><label>Header</label><input class="form-control" @bind="_header" @bind:event="oninput" placeholder="e.g. Confidential" /></div>
+                <div class="mb-2"><label>Footer</label><input class="form-control" @bind="_footer" @bind:event="oninput" placeholder="e.g. Acme Ltd" /></div>
                 <div class="row g-2">
                     <div class="col-6">
                         <label>Alignment</label>
@@ -619,7 +619,7 @@
                     else
                     {
                         <div class="row g-2">
-                            <div class="col-6"><label>Name</label><input class="form-control" @bind="_idName" /></div>
+                            <div class="col-6"><label>Name</label><input class="form-control" @bind="_idName" @bind:event="oninput" /></div>
                             <div class="col-6"><label>Email</label><input class="form-control" @bind="_idEmail" /></div>
                             <div class="col-6"><label>Organisation (optional)</label><input class="form-control" @bind="_idOrg" /></div>
                             <div class="col-6"><label>Password for the ID</label><input class="form-control" type="password" autocomplete="new-password" @bind="_idPw" @bind:event="oninput" /></div>
@@ -1107,10 +1107,10 @@
             <ChildContent>
                 <p class="pe-hint">Trim this much from the edge of every page, in points (72 points = 1 inch, about 2.5 cm).</p>
                 <div class="row g-2">
-                    <div class="col-3"><label>Left</label><input class="form-control" type="number" min="0" @bind="_cropL" /></div>
-                    <div class="col-3"><label>Right</label><input class="form-control" type="number" min="0" @bind="_cropR" /></div>
-                    <div class="col-3"><label>Top</label><input class="form-control" type="number" min="0" @bind="_cropT" /></div>
-                    <div class="col-3"><label>Bottom</label><input class="form-control" type="number" min="0" @bind="_cropB" /></div>
+                    <div class="col-3"><label>Left</label><input class="form-control" type="number" min="0" @bind="_cropL" @bind:event="oninput" /></div>
+                    <div class="col-3"><label>Right</label><input class="form-control" type="number" min="0" @bind="_cropR" @bind:event="oninput" /></div>
+                    <div class="col-3"><label>Top</label><input class="form-control" type="number" min="0" @bind="_cropT" @bind:event="oninput" /></div>
+                    <div class="col-3"><label>Bottom</label><input class="form-control" type="number" min="0" @bind="_cropB" @bind:event="oninput" /></div>
                 </div>
                 <p class="pe-hint mt-2 mb-0">Undo brings the margins back.</p>
             </ChildContent>

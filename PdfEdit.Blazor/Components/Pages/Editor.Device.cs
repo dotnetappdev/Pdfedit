@@ -29,9 +29,11 @@ public partial class Editor
                     Status("Sharing cancelled");
                     break;
                 case "unsupported":
-                    await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}");
+                    if (!await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}")) break;
                     Doc.IsModified = false;
-                    Toast("This browser can't share files, so the PDF was downloaded instead.");
+                    Toast(PdfEditWebHost.Desktop != null
+                        ? "Sharing isn't available here, so you can save the PDF and send it from there."
+                        : "This browser can't share files, so the PDF was downloaded instead.");
                     break;
                 default:
                     Toast("Couldn't share the PDF. Try Save to download it.", "error");

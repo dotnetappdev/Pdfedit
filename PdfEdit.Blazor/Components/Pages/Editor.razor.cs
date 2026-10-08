@@ -536,7 +536,13 @@ public partial class Editor
         }
     }
 
-    public void Status(string text) => _status = text;
+    public void Status(string text)
+    {
+        // In the desktop app files are saved with the Save dialog, not downloaded.
+        if (PdfEditWebHost.Desktop != null && text.StartsWith("Downloaded ", StringComparison.Ordinal))
+            text = _desktopSaveCancelled ? "Not saved" : "Saved " + text["Downloaded ".Length..];
+        _status = text;
+    }
 
     public void Toast(string text, string kind = "")
     {
@@ -950,16 +956,21 @@ public partial class Editor
     /// Hands a file the server made (the PDF, an export, a ZIP…) to the user: a browser download on the
     /// web; the system's Save dialog in the desktop app.
     /// </summary>
-    public async Task DownloadUrlAsync(string url)
+    public async Task<bool> DownloadUrlAsync(string url)
     {
         if (PdfEditWebHost.Desktop is { } desktop && FileForUrl(url) is { } file)
         {
             var saved = await desktop.SaveFileAsync(file.Name, file.Path);
-            if (saved != null) Status($"Saved {Path.GetFileName(saved)}");
-            return;
+            _desktopSaveCancelled = saved == null;
+            _status = saved != null ? $"Saved {Path.GetFileName(saved)}" : "Not saved";
+            return saved != null;
         }
         await JS.InvokeVoidAsync("pdfedit.download", url);
+        return true;
     }
+
+    /// <summary>The last Save dialog (desktop app) was cancelled: "Downloaded …" messages say so instead.</summary>
+    private bool _desktopSaveCancelled;
 
     /// <summary>The file on the server behind one of its download addresses.</summary>
     private (string Path, string Name)? FileForUrl(string url)

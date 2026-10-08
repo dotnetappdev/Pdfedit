@@ -275,9 +275,8 @@ public static class PdfAnnotationReader
         int w = (int)xobject.GetWidth(), h = (int)xobject.GetHeight();
         var filter = image.Get(PdfName.Filter);
         bool jpeg = PdfName.DCTDecode.Equals(filter) || filter is PdfArray fa && fa.Contains(PdfName.DCTDecode);
-        var cs = image.GetAsName(PdfName.ColorSpace);
         int bpc = image.GetAsNumber(PdfName.BitsPerComponent)?.IntValue() ?? 8;
-        int channels = PdfName.DeviceRGB.Equals(cs) ? 3 : PdfName.DeviceGray.Equals(cs) ? 1 : 0;
+        int channels = Channels(image.Get(PdfName.ColorSpace));
         if (jpeg || channels == 0 || bpc != 8 || w <= 0 || h <= 0)
             return xobject.GetImageBytes(true);   // as stored (JPEG), or iText's PNG of other colour spaces
 
@@ -298,6 +297,22 @@ public static class PdfAnnotationReader
             bgra[i * 4 + 3] = alpha?[i] ?? 255;
         }
         return PngEncoder.FromBgra(bgra, w, h, alpha: alpha != null);
+    }
+
+    /// <summary>
+    /// Colour channels for the colour spaces a picture's pixels can be copied from as they are: device
+    /// RGB and grey, and their calibrated and ICC forms (pictures with a colour profile — from Safari,
+    /// macOS or a photo editor — are stored as CalRGB or ICCBased). 0 for anything else.
+    /// </summary>
+    private static int Channels(PdfObject? cs)
+    {
+        if (cs is PdfName name) return PdfName.DeviceRGB.Equals(name) ? 3 : PdfName.DeviceGray.Equals(name) ? 1 : 0;
+        if (cs is not PdfArray array || array.Size() < 1) return 0;
+        var family = array.GetAsName(0);
+        if (PdfName.CalRGB.Equals(family)) return 3;
+        if (PdfName.CalGray.Equals(family)) return 1;
+        if (PdfName.ICCBased.Equals(family) && array.GetAsStream(1)?.GetAsNumber(PdfName.N)?.IntValue() is int n and (1 or 3)) return n;
+        return 0;
     }
 
     /// <summary>The box inside an annotation's /Rect that /RD describes (a cloud's or callout's own box).</summary>

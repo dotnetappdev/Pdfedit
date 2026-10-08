@@ -22,7 +22,7 @@ public partial class Editor
         await RunAsync("Saving…", async () =>
         {
             await CommitPendingAsync();
-            await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}");
+            if (!await DownloadUrlAsync($"/documents/{Doc.Id}/file?v={Doc.Version}")) return;
             Doc.IsModified = false;
             Status($"Downloaded {Doc.FileName}");
         });
