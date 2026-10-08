@@ -44,17 +44,16 @@
 
   // The same sorting of files as tools/update-releases.mjs, for when the JSON isn't there.
   const RULES = [
-    [/^pdfedit-desktop-setup-.*\.exe$/i, 'desktop', 'windows', 'Installer', 'installer'],
-    [/^pdfedit-desktop-.*-win-x64\.zip$/i, 'desktop', 'windows', 'Portable ZIP', 'portable'],
     [/^pdfedit-desktop-.*-mac-arm64\.dmg$/i, 'desktop', 'mac', 'Apple silicon (M1 and later)', 'arm64'],
     [/^pdfedit-desktop-.*-mac-x64\.dmg$/i, 'desktop', 'mac', 'Intel Mac', 'x64'],
+    [/^pdfedit-desktop-/i, null], // the desktop app's Windows builds aren't listed
     [/^pdfeditsetup-.*\.exe$/i, 'windows', 'windows', 'Installer', 'installer'],
     [/^pdfedit-.*-win-x64-portable\.zip$/i, 'windows', 'windows', 'Portable ZIP (no install)', 'portable'],
     [/^pdfedit-.*-win-x64\.zip$/i, 'windows', 'windows', 'ZIP (needs .NET 10 Desktop Runtime)', 'zip'],
     [/^pdfedit-.*\.msix$/i, 'windows', 'windows', 'MSIX package', 'msix'],
     [/\.cer$/i, 'windows', 'windows', 'Test certificate for the MSIX', 'cert'],
   ];
-  const classify = name => { for (const [re, product, platform, label, kind] of RULES) if (re.test(name)) return { product, platform, label, kind }; return null; };
+  const classify = name => { for (const [re, product, platform, label, kind] of RULES) if (re.test(name)) return product ? { product, platform, label, kind } : null; return null; };
   const changesOf = body => {
     const m = (body || '').match(/###\s*What's new\s*\n([\s\S]*?)(\n---|\n#{1,3}\s|$)/i);
     return m ? m[1].split('\n').map(l => l.trim()).filter(l => l.startsWith('- ')).map(l => ({
@@ -66,7 +65,11 @@
   async function loadReleases() {
     try {
       const r = await fetch('data/releases.json', { cache: 'no-cache' });
-      if (r.ok) return await r.json();
+      if (r.ok) {
+        const data = await r.json();
+        data.releases.forEach(x => x.assets = x.assets.filter(a => !(a.product === 'desktop' && a.platform !== 'mac')));
+        return data;
+      }
     } catch { /* fall through to GitHub */ }
     const repo = 'dotnetappdev/pdfedit';
     const r = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=30`, { headers: { Accept: 'application/vnd.github+json' } });

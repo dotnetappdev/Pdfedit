@@ -25,10 +25,9 @@ for (let page = 1; page <= 5; page++) {
 function classify(name) {
   const n = name.toLowerCase();
   const rules = [
-    [/^pdfedit-desktop-setup-.*\.exe$/, 'desktop', 'windows', 'Installer', 'installer'],
-    [/^pdfedit-desktop-.*-win-x64\.zip$/, 'desktop', 'windows', 'Portable ZIP', 'portable'],
     [/^pdfedit-desktop-.*-mac-arm64\.dmg$/, 'desktop', 'mac', 'Apple silicon (M1 and later)', 'arm64'],
     [/^pdfedit-desktop-.*-mac-x64\.dmg$/, 'desktop', 'mac', 'Intel Mac', 'x64'],
+    [/^pdfedit-desktop-/, null], // the desktop app's Windows builds aren't listed: Windows has PdfEdit for Windows
     [/^pdfeditsetup-.*\.exe$/, 'windows', 'windows', 'Installer', 'installer'],
     [/^pdfedit-.*-win-x64-portable\.zip$/, 'windows', 'windows', 'Portable ZIP (no install)', 'portable'],
     [/^pdfedit-.*-win-x64\.zip$/, 'windows', 'windows', 'ZIP (needs .NET 10 Desktop Runtime)', 'zip'],
@@ -36,7 +35,7 @@ function classify(name) {
     [/\.cer$/, 'windows', 'windows', 'Test certificate for the MSIX', 'cert'],
   ];
   for (const [re, product, platform, label, kind] of rules)
-    if (re.test(n)) return { product, platform, label, kind };
+    if (re.test(n)) return product ? { product, platform, label, kind } : null;
   return null;
 }
 

@@ -16,7 +16,7 @@ tools/             update-releases.mjs and build.mjs
 
 `tools/update-releases.mjs` reads the GitHub releases and writes `data/releases.json`: each version,
 its date, the changes from the release's *What's new* list, and its files sorted by product
-(PdfEdit for Windows, PdfEdit Desktop) and platform. The pages fill in the version, the download
+(PdfEdit for Windows, PdfEdit for Mac) and platform. The pages fill in the version, the download
 tables, the news and the release history from it, and the big download button picks the file for
 the visitor's computer. If the file is missing, the pages ask GitHub directly.
 

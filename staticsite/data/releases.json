@@ -1,6 +1,6 @@
 {
  "repo": "dotnetappdev/pdfedit",
- "updated": "2026-10-08T20:50:37.078Z",
+ "updated": "2026-10-08T20:54:57.158Z",
  "releases": [
   {
    "version": "1.4.0",
@@ -100,26 +100,6 @@
      "platform": "mac",
      "label": "Intel Mac",
      "kind": "x64"
-    },
-    {
-     "name": "PdfEdit-Desktop-1.4.0-win-x64.zip",
-     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-Desktop-1.4.0-win-x64.zip",
-     "size": 81747036,
-     "downloads": 0,
-     "product": "desktop",
-     "platform": "windows",
-     "label": "Portable ZIP",
-     "kind": "portable"
-    },
-    {
-     "name": "PdfEdit-Desktop-Setup-1.4.0.exe",
-     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-Desktop-Setup-1.4.0.exe",
-     "size": 58014343,
-     "downloads": 0,
-     "product": "desktop",
-     "platform": "windows",
-     "label": "Installer",
-     "kind": "installer"
     },
     {
      "name": "PdfEdit-TestCert.cer",
