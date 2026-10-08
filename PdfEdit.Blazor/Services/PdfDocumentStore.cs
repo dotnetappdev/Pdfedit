@@ -29,6 +29,8 @@ public sealed class PdfSession : IDisposable
     public PdfiumRenderEngine Renderer { get; set; } = new();
     public List<BookmarkItem> Bookmarks { get; set; } = new();
     public List<PdfAnnotationItem> Annotations { get; set; } = new();
+    /// <summary>PdfEdit's own annotations, shown on the page as editable items (and left out of the page image).</summary>
+    public List<OwnAnnotation> Own { get; set; } = new();
     public PdfMetadataInfo Metadata { get; set; } = new();
     /// <summary>Signature fields that have been signed (their appearance stays on the page).</summary>
     public HashSet<string> SignedFields { get; set; } = new();
@@ -233,7 +235,10 @@ public sealed class PdfDocumentStore : IDisposable
 
         session.Info = info;
         session.Bookmarks = await Task.Run(() => { try { return forms.GetBookmarks(path); } catch { return new List<BookmarkItem>(); } });
-        session.Annotations = await Task.Run(() => PdfAnnotationReader.Read(path));
+        session.Own = await Task.Run(() => PdfAnnotationReader.ReadOwn(path));
+        var own = session.Own.Select(o => o.Id).ToHashSet();
+        session.Annotations = (await Task.Run(() => PdfAnnotationReader.Read(path)))
+            .Where(a => a.Id == null || !own.Contains(a.Id)).ToList();
         session.Metadata = await Task.Run(() => { try { return forms.GetMetadata(path); } catch { return new PdfMetadataInfo(); } });
         session.SignedFields = await Task.Run(() =>
         {
@@ -248,11 +253,12 @@ public sealed class PdfDocumentStore : IDisposable
 
         // Draw the pages without the form's own widgets: the page shows its fields as HTML inputs
         // on top, and the PDF's appearances (old values) would show through them.
+        // PdfEdit's own annotations are drawn as editable items on the page, so they're left out too.
         var renderPath = path;
-        if (info.FormFields.Count > 0)
+        if (info.FormFields.Count > 0 || own.Count > 0)
         {
             renderPath = Path.ChangeExtension(path, ".render.pdf");
-            if (!File.Exists(renderPath)) await Task.Run(() => CopyWithoutWidgets(path, renderPath));
+            if (!File.Exists(renderPath)) await Task.Run(() => CopyWithoutWidgets(path, renderPath, own));
         }
         var renderer = new PdfiumRenderEngine();
         await renderer.LoadAsync(renderPath);
@@ -263,15 +269,19 @@ public sealed class PdfDocumentStore : IDisposable
         session.Version++;
     }
 
-    private static void CopyWithoutWidgets(string source, string dest)
+    private static void CopyWithoutWidgets(string source, string dest, ISet<string> own)
     {
         using var doc = new PdfDocument(new PdfReader(source), new PdfWriter(dest));
         for (int i = 1; i <= doc.GetNumberOfPages(); i++)
         {
             var page = doc.GetPage(i);
             foreach (var annot in page.GetAnnotations().ToList())
+            {
                 if (PdfName.Widget.Equals(annot.GetSubtype()) && !IsSignedSignature(annot.GetPdfObject()))
                     page.RemoveAnnotation(annot);
+                else if (PdfFormService.TrackedId(annot.GetPdfObject()) is { } id && own.Contains(id))
+                    page.RemoveAnnotation(annot);
+            }
         }
     }
 

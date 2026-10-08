@@ -178,7 +178,7 @@ public partial class Editor
                 yield return new ShapeAnnotation
                 {
                     PageNumber = i.Page + 1, Kind = ShapeKind.Cloud, X1 = l, Y1 = b, X2 = l + w, Y2 = b + h,
-                    StrokeColor = i.Color, FillColor = "", LineWidth = 1.5, Comment = new CommentInfo { Author = "PdfEdit web" },
+                    StrokeColor = i.Color, FillColor = "", LineWidth = 1.5, Comment = CommentFor(i),
                 };
             else if (i.Kind == ItemKind.Callout && !string.IsNullOrWhiteSpace(i.Text))
             {
@@ -187,7 +187,7 @@ public partial class Editor
                 {
                     PageNumber = i.Page + 1, Kind = ShapeKind.Callout, X1 = l, Y1 = b, X2 = l + w, Y2 = b + h,
                     StrokeColor = i.Color, FillColor = "#FFFDE7", LineWidth = 1, CalloutText = i.Text, Points = [tip],
-                    Comment = new CommentInfo { Author = "PdfEdit web", Note = i.Text },
+                    Comment = CommentFor(i, i.Text),
                 };
             }
         }
@@ -201,7 +201,7 @@ public partial class Editor
             {
                 PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.InsertText ? TextEditKind.Insert : TextEditKind.Replace,
                 Left = l, Bottom = b, Width = w, Height = h, Color = i.Color,
-                Comment = new CommentInfo { Author = "PdfEdit web", Note = i.Text },
+                Comment = CommentFor(i, i.Text),
             };
         });
 

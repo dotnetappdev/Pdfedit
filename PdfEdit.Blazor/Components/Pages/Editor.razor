@@ -254,7 +254,7 @@
                     <RibbonButton Large Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo the last change (Ctrl+Z)" Disabled="!CanUndo" OnClick="UndoAsync" />
                     <RibbonButton Large Icon="bi-arrow-clockwise" Label="Redo" Title="Redo what was undone (Ctrl+Y)" Disabled="!CanRedo" OnClick="RedoAsync" />
                     <div class="pe-stack">
-                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo Ann." Title="Take back the last thing added on the page" Disabled="@(_items.Count == 0)" OnClick="UndoAnnotation" />
+                        <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo Ann." Title="Take back the last thing added on the page" Disabled="@(!_items.Any(i => i.Baseline == null))" OnClick="UndoAnnotation" />
                         <RibbonButton Icon="bi-arrow-clockwise" Label="Redo Ann." Title="Put back what Undo Ann. took off" Disabled="@(_itemRedo.Count == 0)" OnClick="RedoAnnotation" />
                     </div>
                 </RibbonGroup>
@@ -887,6 +887,81 @@
 
     @* ── Workspace ─────────────────────────────────────────────────────── *@
     <div class="pe-workspace">
+        @if (PageMenuOpen)
+        {
+            var mi = _menuItem;
+            <div class="pe-ctx-backdrop" @onclick="CloseMenu" @oncontextmenu="CloseMenu" @oncontextmenu:preventDefault="true"></div>
+            <div class="pe-ctxmenu" role="menu" aria-label="@(mi?.Describe() ?? $"Page {_menuPage + 1}")" style="left:@Css(_menuX)px;top:@Css(_menuY)px">
+                @if (mi != null)
+                {
+                    <button role="menuitem" @onclick="() => MenuAsync(CutAsync)"><i class="bi bi-scissors"></i>Cut</button>
+                    <button role="menuitem" @onclick="() => MenuAsync(CopyAsync)"><i class="bi bi-copy"></i>Copy</button>
+                    <button role="menuitem" @onclick="PasteHereAsync"><i class="bi bi-clipboard"></i>Paste</button>
+                    <button role="menuitem" @onclick="() => MenuAct(DeleteSelectedItem)"><i class="bi bi-trash3"></i>Delete @mi.Describe().Split(':')[0]</button>
+                    @if (Editor.CanRotate(mi))
+                    {
+                        <hr />
+                        <button role="menuitem" @onclick="() => MenuAct(() => RotateItem(mi))"><i class="bi bi-arrow-clockwise"></i>Rotate 90° Clockwise</button>
+                        <button role="menuitem" @onclick="() => MenuAct(() => { RotateItem(mi); RotateItem(mi); RotateItem(mi); })"><i class="bi bi-arrow-counterclockwise"></i>Rotate 90° Counter-clockwise</button>
+                    }
+                    @if (mi.Kind == ItemKind.Text)
+                    {
+                        <hr />
+                        <button role="menuitemradio" aria-checked="@(mi.Fit == TextFit.Auto)" @onclick="() => MenuAct(() => SetItemFit(mi, TextFit.Auto))"><i class="bi @(mi.Fit == TextFit.Auto ? "bi-check2" : "")"></i>Auto-size box to text</button>
+                        <button role="menuitemradio" aria-checked="@(mi.Fit == TextFit.Wrap)" @onclick="() => MenuAct(() => SetItemFit(mi, TextFit.Wrap))"><i class="bi @(mi.Fit == TextFit.Wrap ? "bi-check2" : "")"></i>Wrap text, grow box to fit</button>
+                        <button role="menuitemradio" aria-checked="@(mi.Fit == TextFit.Fixed)" @onclick="() => MenuAct(() => SetItemFit(mi, TextFit.Fixed))"><i class="bi @(mi.Fit == TextFit.Fixed ? "bi-check2" : "")"></i>Fixed box size</button>
+                        <button role="menuitem" @onclick="() => MenuAct(() => GrowText(mi, now: true))"><i class="bi bi-arrows-angle-contract"></i>Fit box to text now</button>
+                    }
+                    @if (Editor.HasColor(mi))
+                    {
+                        <hr />
+                        <div class="pe-ctxmenu-row" role="group" aria-label="Colour">
+                            <span>Colour</span>
+                            @foreach (var (hex, name) in Editor.SwatchColors.Concat([("#0A84FF", "Blue"), ("#FFEB3B", "Yellow")]))
+                            {
+                                <button class="pe-ctxmenu-swatch @(string.Equals(mi.Color, hex, StringComparison.OrdinalIgnoreCase) ? "on" : "")" style="background:@hex" title="@name" aria-label="Colour: @name"
+                                        @onclick="() => MenuAct(() => SetItemColor(mi, hex))"></button>
+                            }
+                        </div>
+                    }
+                    @if (mi.Kind is ItemKind.Ink or ItemKind.Rectangle or ItemKind.Ellipse or ItemKind.Line or ItemKind.Arrow or ItemKind.Polygon or ItemKind.Polyline)
+                    {
+                        <div class="pe-ctxmenu-row" role="group" aria-label="Line width">
+                            <span>Line width</span>
+                            @foreach (var lw in new[] { 1.0, 2, 3, 5 })
+                            {
+                                <button class="pe-ctxmenu-chip @(Math.Abs(mi.LineWidth - lw) < 0.01 ? "on" : "")" @onclick="() => MenuAct(() => SetLineWidth(mi, lw))">@lw</button>
+                            }
+                        </div>
+                    }
+                    @if (mi.Kind == ItemKind.Highlight && mi.Markup == HighlightKind.Highlight)
+                    {
+                        <div class="pe-ctxmenu-row" role="group" aria-label="Opacity">
+                            <span>Opacity</span>
+                            @foreach (var op in new[] { 0.25, 0.4, 0.6, 1.0 })
+                            {
+                                <button class="pe-ctxmenu-chip @(Math.Abs(mi.Opacity - op) < 0.01 ? "on" : "")" @onclick="() => MenuAct(() => mi.Opacity = op)">@((int)(op * 100))%</button>
+                            }
+                        </div>
+                    }
+                    <hr />
+                    <button role="menuitem" @onclick="() => MenuAct(() => ShowInComments(mi))"><i class="bi bi-chat-left-text"></i>Show in Comments panel</button>
+                    <button role="menuitem" @onclick="() => MenuAct(() => ShowProperties(mi))"><i class="bi bi-sliders"></i>Properties…</button>
+                }
+                else
+                {
+                    <button role="menuitem" @onclick="PasteHereAsync"><i class="bi bi-clipboard"></i>Paste here</button>
+                    <hr />
+                    <button role="menuitem" @onclick="() => AddHereAsync(Tool.Text)"><i class="bi bi-type"></i>Add text here</button>
+                    <button role="menuitem" @onclick="() => AddHereAsync(Tool.Date)"><i class="bi bi-calendar-event"></i>Add today's date here</button>
+                    <button role="menuitem" @onclick="() => AddHereAsync(Tool.Check)"><i class="bi bi-check-lg"></i>Add a check mark here</button>
+                    <button role="menuitem" @onclick="() => AddHereAsync(Tool.Note)"><i class="bi bi-sticky"></i>Add a sticky note here</button>
+                    <hr />
+                    <button role="menuitem" @onclick="() => MenuAsync(() => RotateAsync(90))"><i class="bi bi-arrow-clockwise"></i>Rotate page clockwise</button>
+                    <button role="menuitem" @onclick="() => MenuAsync(() => RotateAsync(-90))"><i class="bi bi-arrow-counterclockwise"></i>Rotate page anticlockwise</button>
+                }
+            </div>
+        }
         @if (_showTools || _showLeft)
         {
             @* Docked like the Windows app: All tools, then the page thumbnails. *@
@@ -1107,7 +1182,7 @@
         {
             <button title="Previous page" aria-label="Previous page" disabled="@(_page == 0)" @onclick="() => GoToPageAsync(_page - 1)"><i class="bi bi-chevron-left"></i></button>
             <span>Page</span>
-            <input aria-label="Page number" value="@(_page + 1)" @onchange="PageBoxChangedAsync" />
+            <input id="pe-pagebox" aria-label="Page number (Ctrl+G)" value="@(_page + 1)" @onchange="PageBoxChangedAsync" />
             <span>of @PageCount</span>
             <button title="Next page" aria-label="Next page" disabled="@(_page >= PageCount - 1)" @onclick="() => GoToPageAsync(_page + 1)"><i class="bi bi-chevron-right"></i></button>
             <span>·</span>

@@ -115,6 +115,21 @@ window.pdfedit = (() => {
         // field boxes, things placed on a page). Moves are shown live and reported to .NET at the end
         // as percentages of the page.
         listenDrag(dotnet) {
+            // Right-click: the item under the pointer, or the page. Text being selected or edited and
+            // form fields keep the browser's own menu (copy, paste, spelling).
+            document.addEventListener('contextmenu', e => {
+                const t = e.target;
+                if (t.closest('input, select, [contenteditable="true"], .pe-ctxmenu')) return;
+                if (t.tagName === 'TEXTAREA' && t.selectionStart !== t.selectionEnd) return;
+                const item = t.closest('[data-drag^="i:"]');
+                const page = t.closest('.pe-page[data-page]');
+                if (!item && !page) return;
+                e.preventDefault();
+                const r = page?.getBoundingClientRect();
+                dotnet.invokeMethodAsync('OnContextMenu', item ? item.dataset.drag.slice(2) : '', page ? +page.dataset.page : -1,
+                    r ? (e.clientX - r.left) / r.width * 100 : 0, r ? (e.clientY - r.top) / r.height * 100 : 0, e.clientX, e.clientY,
+                    window.innerWidth, window.innerHeight);
+            });
             document.addEventListener('pointerdown', e => {
                 const box = e.target.closest?.('[data-drag]');
                 if (!box || e.button !== 0) return;
@@ -370,7 +385,7 @@ window.pdfedit = (() => {
                 const k = e.key.toLowerCase();
                 const selecting = !!window.getSelection()?.toString();
                 if (e.ctrlKey || e.metaKey) {
-                    if (['o', 's', 'z', 'y', 'f', 'p', '=', '+', '-', '_', '0', '[', ']'].includes(k) && !(inField && ['z', 'y'].includes(k))) {
+                    if (['o', 's', 'z', 'y', 'f', 'p', 'g', '=', '+', '-', '_', '0', '[', ']'].includes(k) && !(inField && ['z', 'y'].includes(k))) {
                         e.preventDefault();
                         dotnet.invokeMethodAsync('OnShortcut', (e.shiftKey ? 'Shift+' : '') + 'Ctrl+' + k);
                     } else if (['c', 'x'].includes(k) && !inField && !selecting) {
@@ -385,6 +400,13 @@ window.pdfedit = (() => {
                     dotnet.invokeMethodAsync('OnShortcut', 'F1');
                 } else if (k === 'escape') {
                     dotnet.invokeMethodAsync('OnShortcut', 'Escape');
+                } else if (k.startsWith('arrow') && !inField && document.querySelector('.pe-item-wrap.sel')
+                           && !document.querySelector('.pe-modal, .pe-backstage')) {
+                    // Nudge the selected item (Shift: ten points).
+                    e.preventDefault();
+                    const step = e.shiftKey ? 10 : 1;
+                    dotnet.invokeMethodAsync('OnNudge', k === 'arrowleft' ? -step : k === 'arrowright' ? step : 0,
+                        k === 'arrowup' ? -step : k === 'arrowdown' ? step : 0);
                 } else if (k === 'delete' && !inField) {
                     dotnet.invokeMethodAsync('OnDeleteKey');
                 } else if (!inField && !e.altKey && /^[a-z]$/.test(k) && !document.querySelector('.pe-modal, .pe-backstage')

@@ -33,6 +33,6 @@ public sealed class DocTab
 
     /// <summary>Has changes that aren't downloaded or saved yet.</summary>
     public bool HasChanges =>
-        Session.IsModified || Items.Count > 0 || Bounds.Count + Edits.Count + Deleted.Count > 0
+        Session.IsModified || Items.Any(Pages.Editor.IsDirty) || Session.Own.Any(o => Items.All(i => i.Id != o.Id)) || Bounds.Count + Edits.Count + Deleted.Count > 0
         || Values.Any(kv => Original.GetValueOrDefault(kv.Key) != kv.Value);
 }

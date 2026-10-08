@@ -1815,3 +1815,10 @@ html, body {
 .pe-itembar-pop.date .form-select, .pe-itembar-pop.date .form-control { background-color: #2A2A2A; color: #E8E8E8; border-color: #3E3E3E; }
 .pe-itembar-pop.date .pe-btn { background: #2B2B2B; color: #E8E8E8; border-color: #5A5A5A; }
 .pe-itembar-pop.date .pe-date-editor { margin-bottom: 0; }
+.pe-ctxmenu-row { display: flex; align-items: center; gap: 4px; padding: 4px 14px 4px 34px; }
+.pe-ctxmenu-row > span { width: 64px; color: var(--pe-dim); }
+.pe-ctxmenu .pe-ctxmenu-swatch { width: 16px; height: 16px; padding: 0; border: 1px solid var(--pe-border); border-radius: 3px; }
+.pe-ctxmenu .pe-ctxmenu-swatch.on { box-shadow: 0 0 0 2px var(--pe-accent); }
+.pe-ctxmenu .pe-ctxmenu-chip { padding: 2px 7px; border: 1px solid var(--pe-border); border-radius: 3px; font-size: 11px; }
+.pe-ctxmenu .pe-ctxmenu-chip.on { border-color: var(--pe-accent); color: var(--pe-accent); }
+.pe-ctxmenu { max-height: calc(100vh - 16px); overflow-y: auto; }

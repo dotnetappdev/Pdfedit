@@ -7,7 +7,7 @@
                     $"letter-spacing:{Editor.Css(i.CharSpacing / PageW * 100)}cqw;white-space:{(i.Fit == TextFit.Auto ? "pre" : "pre-wrap")}";
     var rot = i.Rotation != 0 ? $"rot{i.Rotation}" : "";
 }
-<div class="pe-item-wrap @(Ed.SelectedItemId == i.Id ? "sel" : "")" @onpointerdown="() => Ed.SelectItem(Item)">
+<div class="pe-item-wrap @(Ed.SelectedItemId == i.Id ? "sel" : "")" @onpointerdown="Select">
 @switch (i.Kind)
 {
     case ItemKind.Text:
@@ -232,6 +232,14 @@
             ItemKind.Area => (p.Average(q => q.X), p.Average(q => q.Y) + 3),
             _ => (p[^1].X, p[^1].Y - 5),
         };
+    }
+
+    // Selecting redraws the page too, so the item selected before loses its outline and toolbar.
+    private void Select()
+    {
+        if (Ed.SelectedItemId == Item.Id) return;
+        Ed.SelectItem(Item);
+        Ed.Refresh();
     }
 
     private void Remove()

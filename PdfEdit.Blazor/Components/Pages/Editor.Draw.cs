@@ -163,7 +163,7 @@ public partial class Editor
                 {
                     PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h, RotationAngle = i.Rotation - Rotation(i.Page),
                     Text = i.Text, IsStamp = true, StampSubtitle = i.Subtitle, FontColor = i.Color,
-                    Comment = new CommentInfo { Author = string.IsNullOrWhiteSpace(_stampAuthor) ? "PdfEdit web" : _stampAuthor.Trim() },
+                    Comment = CommentFor(i, author: string.IsNullOrWhiteSpace(_stampAuthor) ? null : _stampAuthor.Trim()),
                 };
             }
             else if (i.Kind == ItemKind.Ink && i.Points is { Count: > 0 } pts)
@@ -176,7 +176,7 @@ public partial class Editor
                 {
                     PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h,
                     Text = $"__INK__:{i.Color.ToUpperInvariant()}|{i.LineWidth.ToString("0.##", inv)}:{path}",
-                    Comment = new CommentInfo { Author = "PdfEdit web" },
+                    Comment = CommentFor(i),
                 };
             }
         }
@@ -206,7 +206,7 @@ public partial class Editor
                 X2 = poly ? pts.Max(p => p.X) : pts[^1].X, Y2 = poly ? pts.Max(p => p.Y) : pts[^1].Y,
                 Points = poly ? pts : null,
                 StrokeColor = i.Color, LineWidth = i.LineWidth, FillColor = "", MeasureUnit = i.Unit,
-                Comment = new CommentInfo { Author = "PdfEdit web" },
+                Comment = CommentFor(i),
             };
             yield return shape;
         }

@@ -137,9 +137,10 @@ public partial class Editor
 
     private void UndoAnnotation()
     {
-        if (_items.Count == 0) return;
-        var last = _items[^1];
-        _items.RemoveAt(_items.Count - 1);
+        // The last thing added (not one already in the PDF).
+        var last = _items.LastOrDefault(i => i.Baseline == null);
+        if (last == null) return;
+        _items.Remove(last);
         _itemRedo.Push(last);
         Status($"Took off {last.Describe().ToLowerInvariant()}");
     }

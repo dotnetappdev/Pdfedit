@@ -58,7 +58,14 @@ public enum TextFit { Auto, Wrap, Fixed }
 
 public sealed class PageItem
 {
-    public string Id { get; } = Guid.NewGuid().ToString("N")[..8];
+    public string Id { get; init; } = Guid.NewGuid().ToString("N")[..8];
+    /// <summary>
+    /// For an item read back from the PDF (one of PdfEdit's own annotations): how it was when read, so
+    /// only changed items are written again. Null for something added since.
+    /// </summary>
+    public string? Baseline { get; set; }
+    /// <summary>Who added it (kept when an annotation from the PDF is written again).</summary>
+    public string? Author { get; set; }
     public ItemKind Kind { get; init; }
     public int Page { get; set; }
     public double Left { get; set; }

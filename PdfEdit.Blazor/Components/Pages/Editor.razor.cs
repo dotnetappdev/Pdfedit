@@ -76,7 +76,7 @@ public partial class Editor
     public int PageCount => Doc?.Info.PageCount ?? 0;
     public int CurrentPage => _page;
     public int FieldCount => Doc?.Info.FormFields.Select(f => f.Name).Distinct().Count() ?? 0;
-    public bool HasPending => _items.Count > 0 || ChangedValues().Count > 0 || FieldChangeCount > 0;
+    public bool HasPending => PendingItems.Any() || RemovedOwnIds().Count > 0 || ChangedValues().Count > 0 || FieldChangeCount > 0;
     private bool CanUndo => Doc != null && (Doc.UndoStack.Count > 0 || HasPending);
     private bool CanRedo => Doc != null && Doc.RedoStack.Count > 0;
 
@@ -255,6 +255,7 @@ public partial class Editor
 
     private void LoadValues()
     {
+        SyncOwnItems();
         Values.Clear();
         _original.Clear();
         if (Doc == null) return;
@@ -297,69 +298,91 @@ public partial class Editor
         (double L, double B, double W, double H) U(PageItem i) => ToUser(i.Page, i.Left, i.Top, i.Width, i.Height);
         double Turn(PageItem i) => -Rotation(i.Page);
 
-        var texts = _items.Where(i => i.Kind is ItemKind.Text or ItemKind.Mark && !string.IsNullOrWhiteSpace(i.Text))
-            .Select(i => new FreeTextAnnotation
-            {
-                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) + i.Rotation,
-                FontColor = i.Color, FontFamily = "Helvetica", CharacterSpacing = i.CharSpacing,
-                AutoSize = i.Kind == ItemKind.Text && i.Fit == TextFit.Auto, GrowToFit = i.Fit != TextFit.Fixed,
-                IsBold = i.Bold, IsItalic = i.Italic, IsUnderline = i.Underline, ForceUpperCase = i.Upper, TextAlignment = i.Align,
-            }).Concat(StampAndInkAnnotations()).ToList();
-        var signatures = _items.Where(i => i.Kind is ItemKind.Signature or ItemKind.Picture && i.Image != null)
-            .Select(i => new PlacedSignature
-            {
-                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                ImageBytes = i.Image!, Rotation = Rotation(i.Page),
-            }).ToList();
-        var notes = _items.Where(i => i.Kind == ItemKind.Note)
-            .Select(i => new StickyNoteAnnotation
-            {
-                PageNumber = i.Page + 1, Left = ToUserPoint(i.Page, i.Left, i.Top).X, Bottom = ToUserPoint(i.Page, i.Left, i.Top).Y, Text = i.Text,
-                Comment = new CommentInfo { Author = "PdfEdit web", Note = i.Text },
-            }).ToList();
-        var highlights = _items.Where(i => i.Kind == ItemKind.Highlight)
-            .Select(i => new HighlightAnnotation
-            {
-                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                Color = i.Color,
-                Kind = i.Markup, Opacity = i.Markup == HighlightKind.Highlight ? (float)i.Opacity : 1f,
-            }).ToList();
-        var shapes = _items.Where(i => i.Kind is ItemKind.Rectangle or ItemKind.Ellipse)
-            .Select(i => new ShapeAnnotation
-            {
-                PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
-                X1 = U(i).L, Y1 = U(i).B, X2 = U(i).L + U(i).W, Y2 = U(i).B + U(i).H,
-                StrokeColor = i.Color, FillColor = "", LineWidth = i.LineWidth,
-            }).Concat(LineAndMeasureShapes()).Concat(ToolboxShapes()).ToList();
-        var textEdits = ToolboxTextEdits().ToList();
-        var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
-            .Select(i => (i.Page + 1, (float)U(i).L, (float)U(i).B, (float)U(i).W, (float)U(i).H))
-            .ToList();
-
-        var deleted = _deleted.ToList();
-        var bounds = new Dictionary<(string Name, int WidgetIndex), FieldBounds>(_bounds);
-        var edits = _edits.Values.Where(e => !_deleted.Contains(e.Name)).ToList();
-
-        await Store.ApplyAsync(doc, (src, dest) =>
+        // Only what's new or changed is written; PdfEdit annotations whose items were deleted are removed.
+        var allItems = _items;
+        var removedIds = RemovedOwnIds();
+        _items = allItems.Where(IsDirty).ToList();
+        try
         {
-            bool annotate = values.Count > 0 || texts.Count > 0 || signatures.Count > 0 || notes.Count > 0
-                            || highlights.Count > 0 || shapes.Count > 0 || deleted.Count > 0 || bounds.Count > 0 || edits.Count > 0
-                            || textEdits.Count > 0;
-            var step = src;
-            if (annotate)
+            var texts = _items.Where(i => i.Kind is ItemKind.Text or ItemKind.Mark && !string.IsNullOrWhiteSpace(i.Text))
+                .Select(i => new FreeTextAnnotation
+                {
+                    PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                    Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) + i.Rotation,
+                    FontColor = i.Color, FontFamily = "Helvetica", CharacterSpacing = i.CharSpacing,
+                    AutoSize = i.Kind == ItemKind.Text && i.Fit == TextFit.Auto, GrowToFit = i.Fit != TextFit.Fixed,
+                    IsBold = i.Bold, IsItalic = i.Italic, IsUnderline = i.Underline, ForceUpperCase = i.Upper, TextAlignment = i.Align,
+                    DateValue = i.DateValue, DateFormat = i.DateFormat, Comment = CommentFor(i),
+                }).Concat(StampAndInkAnnotations()).ToList();
+            var signatures = _items.Where(i => i.Kind is ItemKind.Signature or ItemKind.Picture && i.Image != null)
+                .Select(i => new PlacedSignature
+                {
+                    PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                    ImageBytes = i.Image!, Rotation = Rotation(i.Page), Id = i.Id,
+                }).ToList();
+            var notes = _items.Where(i => i.Kind == ItemKind.Note)
+                .Select(i => new StickyNoteAnnotation
+                {
+                    PageNumber = i.Page + 1, Left = ToUserPoint(i.Page, i.Left, i.Top).X, Bottom = ToUserPoint(i.Page, i.Left, i.Top).Y, Text = i.Text,
+                    Comment = CommentFor(i, i.Text),
+                }).ToList();
+            var highlights = _items.Where(i => i.Kind == ItemKind.Highlight)
+                .Select(i => new HighlightAnnotation
+                {
+                    PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                    Color = i.Color,
+                    Kind = i.Markup, Opacity = i.Markup == HighlightKind.Highlight ? (float)i.Opacity : 1f, Comment = CommentFor(i),
+                }).ToList();
+            var shapes = _items.Where(i => i.Kind is ItemKind.Rectangle or ItemKind.Ellipse)
+                .Select(i => new ShapeAnnotation
+                {
+                    PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
+                    X1 = U(i).L, Y1 = U(i).B, X2 = U(i).L + U(i).W, Y2 = U(i).B + U(i).H,
+                    StrokeColor = i.Color, FillColor = "", LineWidth = i.LineWidth, Comment = CommentFor(i),
+                }).Concat(LineAndMeasureShapes()).Concat(ToolboxShapes()).ToList();
+            var textEdits = ToolboxTextEdits().ToList();
+            var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
+                .Select(i => (i.Page + 1, (float)U(i).L, (float)U(i).B, (float)U(i).W, (float)U(i).H))
+                .ToList();
+
+            var deleted = _deleted.ToList();
+            var bounds = new Dictionary<(string Name, int WidgetIndex), FieldBounds>(_bounds);
+            var edits = _edits.Values.Where(e => !_deleted.Contains(e.Name)).ToList();
+            _items = allItems;
+
+            await Store.ApplyAsync(doc, (src, dest) =>
             {
-                step = redactions.Count > 0 ? dest + ".tmp" : dest;
-                Store.Forms.SaveFull(src, step, values, new Dictionary<int, int>(), texts, signatures,
-                    flatten: false, deletedFieldNames: deleted, fieldExportValues: onValues, highlightAnnotations: highlights,
-                    stickyNotes: notes, shapeAnnotations: shapes, fieldBounds: bounds, fieldEdits: edits, textEdits: textEdits);
-            }
-            if (redactions.Count > 0)
-            {
-                Store.Forms.ApplyRedactions(step, dest, redactions);
-                if (step != src) File.Delete(step);
-            }
-        });
+                bool annotate = values.Count > 0 || texts.Count > 0 || signatures.Count > 0 || notes.Count > 0
+                                || highlights.Count > 0 || shapes.Count > 0 || deleted.Count > 0 || bounds.Count > 0 || edits.Count > 0
+                                || textEdits.Count > 0;
+                // Each step writes the next file; the last one writes dest.
+                var step = src;
+                int n = 0;
+                string Next(bool last) => last ? dest : $"{dest}.{++n}.tmp";
+                void Done(string next) { if (step != src) File.Delete(step); step = next; }
+                if (annotate)
+                {
+                    var next = Next(removedIds.Count == 0 && redactions.Count == 0);
+                    Store.Forms.SaveFull(step, next, values, new Dictionary<int, int>(), texts, signatures,
+                        flatten: false, deletedFieldNames: deleted, fieldExportValues: onValues, highlightAnnotations: highlights,
+                        stickyNotes: notes, shapeAnnotations: shapes, fieldBounds: bounds, fieldEdits: edits, textEdits: textEdits);
+                    Done(next);
+                }
+                if (removedIds.Count > 0)
+                {
+                    var next = Next(redactions.Count == 0);
+                    using (var pdf = new iText.Kernel.Pdf.PdfDocument(new iText.Kernel.Pdf.PdfReader(step), new iText.Kernel.Pdf.PdfWriter(next)))
+                        PdfFormService.RemoveTrackedAnnotations(pdf, removedIds);
+                    Done(next);
+                }
+                if (redactions.Count > 0)
+                {
+                    Store.Forms.ApplyRedactions(step, dest, redactions);
+                    Done(dest);
+                }
+            });
+        }
+        finally { _items = allItems; }
         _items.Clear();
         ClearFieldChanges();
         LoadValues();
@@ -667,6 +690,8 @@ public partial class Editor
                 break;
             case "Ctrl+o": OpenBackstage(Backstage.Open); break;
             case "Ctrl+s": await SaveAsync(); break;
+            case "Shift+Ctrl+s": if (Doc != null) OpenBackstage(Backstage.SaveAs); break;
+            case "Ctrl+g": await JS.InvokeVoidAsync("pdfedit.focus", "pe-pagebox"); break;
             case "Ctrl+p": await PrintAsync(); break;
             case "Ctrl+z": if (DesignMode) UndoDesign(); else await UndoAsync(); break;
             case "Ctrl+y" or "Shift+Ctrl+z": if (DesignMode) RedoDesign(); else await RedoAsync(); break;
