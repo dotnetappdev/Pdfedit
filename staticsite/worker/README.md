@@ -6,11 +6,12 @@ in three ways, and visitors can choose in its ⚙ settings:
 | | Who pays | Set up |
 |---|---|---|
 | **The site's assistant** (this Worker) | the project's Anthropic key | once, below |
+| **Free AI in the browser** (WebLLM) | free | nothing: a small open model runs on the visitor's GPU after a one-time download |
 | **The visitor's own key** (Claude or OpenAI) | the visitor | nothing: they paste their key; it stays in their browser |
 | **A local model** (Ollama, LM Studio) | free | the visitor runs it with `OLLAMA_ORIGINS=<site origin>` |
 | **No AI** | — | the chat shows the matching guide sections |
 
-Until a Worker address is set, the chat offers only the last three.
+Until a Worker address is set, the chat uses the free in-browser AI where the browser supports WebGPU, and the matching sections elsewhere.
 
 ## How it answers
 

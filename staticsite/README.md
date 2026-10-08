@@ -70,9 +70,15 @@ box.
 Every page has an **Ask the guide** button (`assets/js/ask.js`). It answers questions from the user
 guide and tutorials: the build cuts them into passages (`data/chunks.json`, one per heading), the
 page picks the best ones for each question and an LLM answers from those only, citing them as
-links. Visitors choose who answers in its ⚙ settings: the site's own assistant, their own Claude or
-OpenAI key (kept in their browser), a local model (Ollama, LM Studio), or no AI (the matching
-sections). The site's assistant is a small Cloudflare Worker that keeps the API key secret; see
+links. Visitors choose who answers in its ⚙ settings: the site's own assistant, a **free AI that runs
+in their browser** (the default when no site assistant is set up), their own Claude or OpenAI key
+(kept in their browser), a local model (Ollama, LM Studio), or no AI (the matching sections).
+
+The free AI is [WebLLM](https://github.com/mlc-ai/web-llm) running a small open model (Qwen 2.5 1.5B
+by default; Llama 3.2 1B and Qwen 2.5 3B in settings) on the visitor's GPU through WebGPU, in a
+worker (`assets/js/ask-llm-worker.js`). It asks before the one-time download (about 1 GB), then
+loads from the browser's cache; nothing the visitor asks leaves their computer. It needs WebGPU
+(Chrome or Edge 113+, Safari 26); elsewhere the chat falls back to the matching sections. The site's assistant is a small Cloudflare Worker that keeps the API key secret; see
 [`worker/README.md`](worker/README.md) to deploy it and set `ASK_ENDPOINT`. `?ask=question` on any
 page opens the chat with that question.
 

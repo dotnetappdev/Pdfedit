@@ -382,6 +382,13 @@ footer .legal { border-top: 1px solid var(--border); padding-top: 16px; color: v
 .ask-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
 .ask-settings label:not(.ask-opt) { display: block; margin: 12px 0 0; font-weight: 600; font-size: .86rem; }
 .ask-settings input:not([type="radio"]), .ask-settings select { display: block; width: 100%; margin-top: 4px; font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); }
+.ask-progress { height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; margin: 6px 0; }
+.ask-progress span { display: block; height: 100%; background: var(--go); }
+@media (prefers-reduced-motion: no-preference) { .ask-progress span { transition: width .3s; } }
+.ask-msg .ask-row { margin-top: 10px; justify-content: flex-start; flex-wrap: wrap; }
+.ask-opt.off { opacity: .6; cursor: default; flex-wrap: wrap; }
+.ask-opt.off small { flex-basis: 100%; color: var(--muted); font-size: .78rem; padding-left: 22px; }
+.ask-settings > .btn, .ask-settings [data-ask-fields] .btn { cursor: pointer; font: inherit; font-size: .86rem; font-weight: 600; }
 .ask-note { font-size: .82rem; color: var(--muted); margin: 10px 0; }
 .ask-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; }
 .ask-row .btn { cursor: pointer; font: inherit; font-weight: 600; font-size: .88rem; }

@@ -5,6 +5,8 @@
 //     that holds the key; visitors need nothing;
 //   • the visitor's own Claude or OpenAI key, sent straight from their browser to that provider and
 //     kept only in this browser;
+//   • a free open model running in the visitor's browser on their GPU (WebLLM + WebGPU): no key, no
+//     server; it downloads once (about 1 GB) when they agree, then loads from the browser's cache;
 //   • a local model (Ollama, LM Studio…) on their own computer;
 //   • none: the matching passages are shown instead.
 (() => {
@@ -15,6 +17,7 @@
 
   const PROVIDERS = {
     site: { name: 'PdfEdit assistant', needs: [] },
+    browser: { name: 'Free AI in your browser (no key)', needs: ['browserModel'] },
     claude: { name: 'Claude (your key)', needs: ['key', 'model'], models: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'], keyHint: 'sk-ant-…  from console.anthropic.com' },
     openai: { name: 'OpenAI (your key)', needs: ['key', 'model'], models: ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o'], keyHint: 'sk-…  from platform.openai.com' },
     local: { name: 'Local model (Ollama, LM Studio…)', needs: ['endpoint', 'model'], models: [], endpoint: 'http://localhost:11434/v1', model: 'llama3.2' },
@@ -28,10 +31,50 @@
   let prefs = load();
   const provider = () => {
     const p = prefs.provider;
-    if (p && PROVIDERS[p] && (p !== 'site' || site.chatEndpoint)) return p;
-    return site.chatEndpoint ? 'site' : 'none';
+    if (p && PROVIDERS[p] && (p !== 'site' || site.chatEndpoint) && (p !== 'browser' || gpu.ok)) return p;
+    return site.chatEndpoint ? 'site' : gpu.ok ? 'browser' : 'none';
   };
   const configured = p => p === 'claude' || p === 'openai' ? !!prefs[p + 'Key'] : true;
+
+  // ── The free AI in the browser (WebLLM) ────────────────────────────────────
+  const WEBLLM = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm';
+  const BROWSER_MODELS = [
+    { id: 'Qwen2.5-1.5B-Instruct', label: 'Standard — Qwen 2.5 1.5B', size: 'about 1 GB' },
+    { id: 'Llama-3.2-1B-Instruct', label: 'Quick — Llama 3.2 1B', size: 'about 700 MB' },
+    { id: 'Qwen2.5-3B-Instruct', label: 'Best answers — Qwen 2.5 3B', size: 'about 1.8 GB' },
+  ];
+  let gpu = { ok: false, f16: false };
+  const checkGpu = async () => {
+    try {
+      const adapter = navigator.gpu && await navigator.gpu.requestAdapter();
+      gpu = { ok: !!adapter, f16: !!adapter?.features?.has('shader-f16') };
+    } catch { gpu = { ok: false, f16: false }; }
+  };
+  /** The chosen model, in the build this GPU can run (16-bit maths if it has it). */
+  const browserModel = () => {
+    const m = BROWSER_MODELS.find(x => x.id === prefs.browserModel) ?? BROWSER_MODELS[0];
+    return { ...m, full: `${m.id}-${gpu.f16 ? 'q4f16_1' : 'q4f32_1'}-MLC` };
+  };
+  let webllm = null, engine = null, engineModel = null, starting = null;
+  const lib = () => webllm ??= import(WEBLLM);
+  const isDownloaded = async () => { try { return await (await lib()).hasModelInCache(browserModel().full); } catch { return false; } };
+  /** Loads the model (downloading it the first time), reporting progress. */
+  function startEngine(onProgress) {
+    const model = browserModel().full;
+    if (engine && engineModel === model) return Promise.resolve(engine);
+    return starting ??= (async () => {
+      const { CreateWebWorkerMLCEngine } = await lib();
+      if (engine) {
+        engine.setInitProgressCallback(onProgress);
+        await engine.reload(model);
+      } else {
+        const worker = new Worker(new URL(ROOT + 'assets/js/ask-llm-worker.js', location.href), { type: 'module' });
+        engine = await CreateWebWorkerMLCEngine(worker, model, { initProgressCallback: onProgress });
+      }
+      engineModel = model;
+      return engine;
+    })().finally(() => { starting = null; });
+  }
 
   // ── Finding the passages a question needs ──────────────────────────────────
   const STOP = new Set('a an and are as at be but by can do does for from how i if in into is it its me my of on or so that the then there these this to was what when where which who why will with you your pdfedit please want need get'.split(' '));
@@ -84,6 +127,9 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 - If the Windows app and the Mac/web versions differ, say how for each.
 - If the excerpts don't cover the question, say you couldn't find it in the guide and suggest searching the guide or reporting it on GitHub. Never invent buttons, menus or features.
 - Only help with PdfEdit and PDFs. Politely decline anything unrelated.`;
+
+  // A shorter brief for the small in-browser models, which have less room.
+  const SYSTEM_SMALL = `You answer questions about PdfEdit, a free PDF editor for Windows, Mac and the web, using ONLY the numbered excerpts from its user guide. Give short numbered steps with button names in bold. After each step or sentence, cite the excerpt it came from like [1]. If the excerpts don't answer the question, say "I couldn't find that in the guide." Never make up buttons or features.`;
 
   const contextBlock = passages => passages.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' › ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
 
@@ -140,6 +186,24 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
         if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') onText(j.delta.text);
         else if (j.type === 'error') throw new Error(j.error?.message ?? 'The AI service stopped with an error.');
       });
+      return;
+    }
+    if (p === 'browser') {
+      // Small context window: four passages, shortened, and only the last question and answer.
+      const brief = passages.slice(0, 4).map(x => ({ ...x, x: x.x.slice(0, 900) }));
+      const chunks = await engine.chat.completions.create({
+        stream: true, temperature: 0.2, max_tokens: 700,
+        messages: [
+          { role: 'system', content: SYSTEM_SMALL },
+          ...history.slice(-2).map(m => ({ role: m.role, content: m.content.slice(0, 600) })),
+          { role: 'user', content: `Excerpts from the PdfEdit guide:\n\n${contextBlock(brief)}\n\nQuestion: ${question}` },
+        ],
+      });
+      const stop = () => engine.interruptGenerate();
+      signal.addEventListener('abort', stop);
+      try { for await (const c of chunks) { const t = c.choices[0]?.delta?.content; if (t) onText(t); } }
+      finally { signal.removeEventListener('abort', stop); }
+      if (signal.aborted) throw new DOMException('Stopped', 'AbortError');
       return;
     }
     // OpenAI and local servers speak the same chat-completions protocol.
@@ -236,13 +300,16 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 
   function showVia() {
     const p = provider();
-    $('[data-ask-via]').textContent = p === 'none' ? 'Showing matching sections · ⚙ to add an AI'
+    $('[data-ask-via]').textContent = p === 'browser'
+      ? (engine ? `Free AI in your browser · ${browserModel().label.split(' — ')[1]}` : 'Free AI in your browser · no key needed')
+      : p === 'none' ? 'Showing matching sections · ⚙ to add an AI'
       : configured(p) ? `Answered by ${PROVIDERS[p].name.replace(' (your key)', '')}` : `${PROVIDERS[p].name}: add your key in ⚙`;
   }
 
   function welcome() {
     log.innerHTML = `
       <div class="ask-msg bot"><p>Hi! Ask me how to do something in PdfEdit, and I'll answer from the user guide and tutorials with links to the pages.</p>
+      ${provider() === 'browser' && !engine ? `<p class="muted">Answers are written by a free AI that runs in your browser — nothing you ask leaves your computer. The first time, it downloads ${browserModel().size} (once). Prefer something else? Open ⚙.</p>` : ''}
       ${provider() === 'none' ? '<p class="muted">No AI is connected, so I\'ll show the sections that match your question. Open ⚙ to use the site\'s assistant, your own Claude or OpenAI key, or a model on your computer.</p>' : ''}
       <div class="ask-suggest">${SUGGESTIONS.map(s => `<button type="button">${esc(s)}</button>`).join('')}</div></div>`;
     log.querySelectorAll('.ask-suggest button').forEach(b => b.addEventListener('click', () => { input.value = b.textContent; submit(); }));
@@ -265,6 +332,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
     if (!show) { showVia(); return; }
     const p = provider();
     const option = id => (id === 'site' && !site.chatEndpoint) ? '' :
+      id === 'browser' && !gpu.ok ? `<label class="ask-opt off"><input type="radio" disabled> ${esc(PROVIDERS[id].name)}<small>Needs WebGPU: Chrome or Edge 113+, or Safari 26</small></label>` :
       `<label class="ask-opt"><input type="radio" name="ask-provider" value="${id}"${p === id ? ' checked' : ''}> ${esc(PROVIDERS[id].name)}</label>`;
     settingsView.innerHTML = `
       <h3>Who answers</h3>
@@ -284,7 +352,20 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
           ? `<label>Model<select data-f="${id}Model">${def.models.map(m => `<option${(prefs[id + 'Model'] || def.models[0]) === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>`
           : `<label>Model<input data-f="localModel" value="${esc(prefs.localModel || def.model)}" spellcheck="false"></label>`) : '',
         id === 'site' ? '<p class="ask-note">The PdfEdit site\'s own assistant. Nothing to set up.</p>' : '',
+        id === 'browser' ? `<label>Model<select data-f="browserModel">${BROWSER_MODELS.map(m => `<option value="${m.id}"${browserModel().id === m.id ? ' selected' : ''}>${esc(m.label)} (${m.size})</option>`).join('')}</select></label>
+          <p class="ask-note">Runs on your computer's graphics chip. It downloads once, then loads from your browser's storage. Nothing you ask is sent anywhere. <span data-ask-dl></span></p>
+          <button type="button" class="btn small" data-ask-remove hidden>Remove the downloaded AI</button>` : '',
       ].join('');
+      if (id === 'browser') {
+        const status = fields.querySelector('[data-ask-dl]'), remove = fields.querySelector('[data-ask-remove]');
+        const refresh = () => isDownloaded().then(yes => { status.textContent = yes ? 'This model is downloaded.' : 'Not downloaded yet.'; remove.hidden = !yes; });
+        refresh();
+        fields.querySelector('[data-f="browserModel"]').addEventListener('change', () => setTimeout(refresh));
+        remove.addEventListener('click', async () => {
+          try { if (engineModel === browserModel().full) { await engine?.unload(); engineModel = null; } await (await lib()).deleteModelAllInfoInCache(browserModel().full); } catch { /* already gone */ }
+          refresh();
+        });
+      }
       fields.querySelectorAll('[data-f]').forEach(el => el.addEventListener('change', () => { prefs[el.dataset.f] = el.value.trim(); save(prefs); }));
     };
     settingsView.querySelectorAll('input[name="ask-provider"]').forEach(r => r.addEventListener('change', () => { prefs.provider = r.value; save(prefs); drawFields(); }));
@@ -321,13 +402,57 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
     const passages = await retrieve(`${question} ${question.split(/\s+/).length < 6 ? lastQuestion : ''}`).catch(() => []);
     const p = provider();
 
+    if (p === 'browser' && !(engine && engineModel === browserModel().full)) {
+      if (!prefs.browserAgreed && !(await isDownloaded())) {
+        // Ask before downloading a gigabyte; show what the guide says meanwhile.
+        answer.innerHTML = `<p>I can write an answer with a free AI that runs in your browser. It needs a one-time download of ${browserModel().size}, then works without sending anything anywhere.</p>
+          <div class="ask-row"><button type="button" class="btn go small" data-ask-download>Download and answer</button><button type="button" class="btn small" data-ask-sections>Just show the guide</button></div>`;
+        answer.querySelector('[data-ask-download]').addEventListener('click', () => {
+          prefs.browserAgreed = true; save(prefs);
+          respond(question, answer, passages, p);
+        });
+        answer.querySelector('[data-ask-sections]').addEventListener('click', () => showPassages(answer, passages, 'Here\'s what the guide says:'));
+        log.scrollTop = log.scrollHeight;
+        return;
+      }
+    }
     if (p === 'none' || !configured(p)) {
-      answer.innerHTML = passages.length
-        ? `<p>${p === 'none' ? 'Here\'s what the guide says:' : 'Add your key in ⚙ for a written answer. Meanwhile, here\'s what the guide says:'}</p>` +
-          passages.slice(0, 4).map((x, i) => `<div class="ask-passage"><a href="${ROOT}${esc(x.u)}"><b>${i + 1}</b>${esc(x.t)}${x.h ? ' › ' + esc(x.h) : ''}</a><p>${esc(x.x.length > 320 ? x.x.slice(0, 320) + '…' : x.x)}</p></div>`).join('')
-        : '<p>I couldn\'t find that in the guide. Try other words, browse the <a href="' + ROOT + 'docs/index.html">user guide</a>, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>';
-      log.scrollTop = log.scrollHeight;
+      showPassages(answer, passages, p === 'none' ? 'Here\'s what the guide says:' : 'Add your key in ⚙ for a written answer. Meanwhile, here\'s what the guide says:');
       return;
+    }
+    await respond(question, answer, passages, p);
+  }
+
+  function showPassages(answer, passages, intro) {
+    answer.innerHTML = passages.length
+      ? `<p>${intro}</p>` +
+        passages.slice(0, 4).map((x, i) => `<div class="ask-passage"><a href="${ROOT}${esc(x.u)}"><b>${i + 1}</b>${esc(x.t)}${x.h ? ' › ' + esc(x.h) : ''}</a><p>${esc(x.x.length > 320 ? x.x.slice(0, 320) + '…' : x.x)}</p></div>`).join('')
+      : '<p>I couldn\'t find that in the guide. Try other words, browse the <a href="' + ROOT + 'docs/index.html">user guide</a>, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>';
+    log.scrollTop = log.scrollHeight;
+  }
+
+  /** Writes the answer into the bubble: loads the in-browser AI if needed, then streams. */
+  async function respond(question, answer, passages, p) {
+    if (busy) return;
+    if (p === 'browser' && !(engine && engineModel === browserModel().full)) {
+      answer.innerHTML = '<p>Starting the free AI…</p><div class="ask-progress"><span style="width:2%"></span></div><p class="ask-note" data-ask-progress></p>';
+      const bar = answer.querySelector('.ask-progress span'), note = answer.querySelector('[data-ask-progress]');
+      try {
+        await startEngine(r => {
+          bar.style.width = `${Math.max(2, Math.round(r.progress * 100))}%`;
+          // WebLLM says "Fetching param cache[3/22]: 120MB fetched. 15% completed…" while downloading
+          // and "Loading model from cache[3/22]…" once it's stored.
+          const t = r.text;
+          note.textContent = /^Loading model from cache/i.test(t) ? 'Loading the AI from this browser…'
+            : /^Fetching param cache/i.test(t) ? 'Downloading (once): ' + (t.match(/([\d.]+\s*MB)\s+fetched/i)?.[1] ?? '') + (t.match(/(\d+)%\s+completed/i) ? `, ${t.match(/(\d+)%\s+completed/i)[1]}%` : '')
+            : t.replace(/\[.*?\]\s*/g, '').slice(0, 120);
+        });
+        showVia();
+      } catch (e) {
+        showPassages(answer, passages, `The free AI couldn't start on this computer (${esc(String(e.message || e).slice(0, 160))}). Here's what the guide says instead:`);
+        return;
+      }
+      answer.innerHTML = '<p class="ask-typing"><span></span><span></span><span></span></p>';
     }
 
     busy = new AbortController();
@@ -346,7 +471,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       history.push({ role: 'user', content: question, q: question }, { role: 'assistant', content: text });
       history = history.slice(-8);   // the last four questions and answers
     } catch (e) {
-      if (e.name === 'AbortError') answer.innerHTML = render(text || '_Stopped._', passages);
+      if (e.name === 'AbortError') answer.innerHTML = render(text || '*Stopped.*', passages);
       else if (e.message === 'nothing') answer.innerHTML = '<p>I couldn\'t find anything about that in the guide. Try other words, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>';
       else answer.innerHTML = `<p class="ask-error">${esc(e.message || 'Something went wrong.')}</p>` + sourcesHtml(passages, new Set());
     } finally {
@@ -371,7 +496,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   // ?ask=… opens the chat with a question (the apps' Help can link straight to an answer).
   const asked = new URLSearchParams(location.search).get('ask');
 
-  fetch(ROOT + 'data/site.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(s => {
+  Promise.all([fetch(ROOT + 'data/site.json').then(r => r.ok ? r.json() : {}).catch(() => ({})), checkGpu()]).then(([s]) => {
     site = s ?? {};
     showVia();
     if (asked) { open(); input.value = asked.slice(0, 1000); submit(); }
