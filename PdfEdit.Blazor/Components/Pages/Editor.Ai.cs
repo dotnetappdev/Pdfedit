@@ -102,7 +102,7 @@ public partial class Editor
         var docText = await DocumentTextAsync();
         if (string.IsNullOrWhiteSpace(docText) && type != "smartfill")
         {
-            Toast("This PDF has no text to read (it may be scanned). OCR isn't in the web version yet.", "error");
+            Toast("This PDF has no text to read (it may be scanned). Run Tools → Recognise Text first.", "error");
             return;
         }
         if (type == "smartfill") { await SmartFillAsync(docText); return; }

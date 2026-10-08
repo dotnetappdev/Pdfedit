@@ -371,6 +371,9 @@
                         <RibbonButton Large Icon="@icon" Label="@label" Disabled="@(NoDoc || AiRunning)" OnClick="() => RunAiPresetAsync(t)" />
                     }
                 </RibbonGroup>
+                <RibbonGroup Title="Translate">
+                    <RibbonButton Large Icon="bi-globe2" Label="Translate PDF" Title="A translated copy of the whole PDF (or this page) that keeps the layout" Disabled="@(NoDoc || AiRunning)" OnClick="ShowTranslate" />
+                </RibbonGroup>
                 <RibbonGroup Title="Provider">
                     <div class="pe-stack">
                         <div class="pe-field-inline">

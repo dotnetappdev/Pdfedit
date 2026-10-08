@@ -150,29 +150,63 @@ public static class TranslateService
         pdf.GetDocumentInfo().SetTitle($"{System.IO.Path.GetFileNameWithoutExtension(sourcePath)} ({language})");
     }
 
-    /// <summary>A Windows font that has the letters of the target language.</summary>
+    /// <summary>
+    /// A font that has the letters of the target language: Windows fonts, or the usual Linux / macOS
+    /// ones (DejaVu, Liberation, Noto, WenQuanYi) on a server. Falls back to Helvetica (Latin only).
+    /// </summary>
     private static PdfFont FontFor(string language)
     {
-        string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
         string l = language.ToLowerInvariant();
         string[] candidates =
-            l.Contains("chinese") || l.StartsWith("zh") ? new[] { "msyh.ttc,0", "simsun.ttc,0" }
-            : l.Contains("japanese") || l.StartsWith("ja") ? new[] { "YuGothM.ttc,0", "msgothic.ttc,0", "meiryo.ttc,0" }
-            : l.Contains("korean") || l.StartsWith("ko") ? new[] { "malgun.ttf" }
-            : l.Contains("thai") ? new[] { "leelawad.ttf", "tahoma.ttf" }
-            : l.Contains("hindi") || l.Contains("marathi") || l.Contains("nepali") ? new[] { "Nirmala.ttf", "mangal.ttf" }
-            : new[] { "arial.ttf", "segoeui.ttf", "tahoma.ttf" };
+            l.Contains("chinese") || l.StartsWith("zh")
+                ? (l.Contains("traditional") || l.Contains("taiwan") || l.Contains("hong kong")
+                    ? new[] { "msjh.ttc,0", "mingliu.ttc,0", "NotoSansCJK-Regular.ttc,3", "NotoSansTC-Regular.otf", "wqy-microhei.ttc,0" }
+                    : new[] { "msyh.ttc,0", "simsun.ttc,0", "NotoSansCJK-Regular.ttc,2", "NotoSansSC-Regular.otf", "wqy-microhei.ttc,0", "wqy-zenhei.ttc,0" })
+            : l.Contains("japanese") || l.StartsWith("ja") ? new[] { "YuGothM.ttc,0", "msgothic.ttc,0", "meiryo.ttc,0", "NotoSansCJK-Regular.ttc,0", "NotoSansJP-Regular.otf" }
+            : l.Contains("korean") || l.StartsWith("ko") ? new[] { "malgun.ttf", "NotoSansCJK-Regular.ttc,1", "NotoSansKR-Regular.otf" }
+            : l.Contains("thai") ? new[] { "leelawad.ttf", "tahoma.ttf", "NotoSansThai-Regular.ttf" }
+            : l.Contains("hindi") || l.Contains("marathi") || l.Contains("nepali") ? new[] { "Nirmala.ttf", "mangal.ttf", "NotoSansDevanagari-Regular.ttf" }
+            : new[] { "arial.ttf", "segoeui.ttf", "tahoma.ttf", "DejaVuSans.ttf", "LiberationSans-Regular.ttf", "NotoSans-Regular.ttf" };
         foreach (var c in candidates)
         {
-            string file = c.Split(',')[0];
-            if (!File.Exists(System.IO.Path.Combine(fonts, file))) continue;
+            var parts = c.Split(',');
+            if (FindFont(parts[0]) is not { } path) continue;
             try
             {
-                return PdfFontFactory.CreateFont(System.IO.Path.Combine(fonts, c), PdfEncodings.IDENTITY_H,
+                return PdfFontFactory.CreateFont(parts.Length > 1 ? $"{path},{parts[1]}" : path, PdfEncodings.IDENTITY_H,
                     PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             }
             catch { }
         }
         return PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+    }
+
+    private static Dictionary<string, string>? _fontFiles;
+
+    /// <summary>A font file by name, from the system's font folders (searched once).</summary>
+    private static string? FindFont(string fileName)
+    {
+        if (_fontFiles == null)
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var folders = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.Fonts),
+                "/usr/share/fonts", "/usr/local/share/fonts", System.IO.Path.Combine(home, ".fonts"),
+                System.IO.Path.Combine(home, ".local", "share", "fonts"), "/System/Library/Fonts", "/Library/Fonts",
+            };
+            foreach (var folder in folders.Where(f => f.Length > 0 && Directory.Exists(f)))
+            {
+                try
+                {
+                    foreach (var f in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
+                        map.TryAdd(System.IO.Path.GetFileName(f), f);
+                }
+                catch { }
+            }
+            _fontFiles = map;
+        }
+        return _fontFiles.TryGetValue(fileName, out var path) ? path : null;
     }
 }

@@ -42,6 +42,8 @@ public sealed class PdfSession : IDisposable
 
     public Stack<string> UndoStack { get; } = new();
     public Stack<string> RedoStack { get; } = new();
+    /// <summary>The file name each version had, so Undo / Redo bring a renamed document's name back (Translate).</summary>
+    public Dictionary<string, string> NameOfVersion { get; } = new();
     public SemaphoreSlim Lock { get; } = new(1, 1);
     public ConcurrentDictionary<(int Page, double Scale, int Version), byte[]> PageCache { get; } = new();
 
@@ -188,6 +190,7 @@ public sealed class PdfDocumentStore : IDisposable
             await Task.Run(() => change(session.CurrentPath, dest));
             if (!File.Exists(dest)) throw new InvalidOperationException("The change didn't produce a file.");
             session.UndoStack.Push(session.CurrentPath);
+            session.NameOfVersion[session.CurrentPath] = session.FileName;
             session.RedoStack.Clear();
             session.CurrentPath = dest;
             session.IsModified = true;
@@ -207,7 +210,9 @@ public sealed class PdfDocumentStore : IDisposable
         {
             if (from.Count == 0) return false;
             to.Push(session.CurrentPath);
+            session.NameOfVersion[session.CurrentPath] = session.FileName;
             session.CurrentPath = from.Pop();
+            if (session.NameOfVersion.TryGetValue(session.CurrentPath, out var name)) session.FileName = name;
             session.IsModified = true;
             await ReloadAsync(session);
             return true;
