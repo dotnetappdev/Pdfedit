@@ -395,6 +395,10 @@ window.pdfedit = (() => {
                         e.preventDefault();
                         dotnet.invokeMethodAsync('OnShortcut', 'Ctrl+' + (k === 'arrowleft' ? 'ArrowLeft' : 'ArrowRight'));
                     }
+                } else if (e.altKey && (k === 'pagedown' || k === 'pageup')) {
+                    // Next / previous open document (the browser keeps Ctrl+Tab for its own tabs).
+                    e.preventDefault();
+                    dotnet.invokeMethodAsync('OnShortcut', k === 'pagedown' ? 'Alt+PageDown' : 'Alt+PageUp');
                 } else if (k === 'f1') {
                     e.preventDefault();
                     dotnet.invokeMethodAsync('OnShortcut', 'F1');
@@ -637,6 +641,81 @@ window.pdfedit = (() => {
                 ctx.fillText(text, 12, 50);
                 return c.toDataURL('image/png');
             },
+        },
+    };
+})();
+
+// ── Recent files ─────────────────────────────────────────────────────────────
+// Files opened from this computer are kept in this browser (IndexedDB) so File → Open can list them
+// and open them again, like the Windows app's recent files. Nothing leaves the browser for this.
+window.pdfeditRecent = (() => {
+    const MAX_FILES = 10, MAX_SIZE = 50 * 1024 * 1024;
+    const db = () => new Promise((ok, fail) => {
+        const req = indexedDB.open('pdfedit', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('recent', { keyPath: 'id' });
+        req.onsuccess = () => ok(req.result);
+        req.onerror = () => fail(req.error);
+    });
+    const tx = async (mode, work) => {
+        const d = await db();
+        return new Promise((ok, fail) => {
+            const t = d.transaction('recent', mode), store = t.objectStore('recent');
+            const result = work(store);
+            t.oncomplete = () => { d.close(); ok(result?.result ?? result); };
+            t.onerror = () => { d.close(); fail(t.error); };
+        });
+    };
+    const all = async () => (await tx('readonly', s => s.getAll())) || [];
+    const keyOf = f => `${f.name}|${f.size}`;
+    // "today 14:05", "yesterday", "Monday" or "3 Oct 2026", in the viewer's own time.
+    const when = ms => {
+        const d = new Date(ms), today = new Date(); today.setHours(0, 0, 0, 0);
+        const days = Math.round((today - new Date(d).setHours(0, 0, 0, 0)) / 864e5);
+        if (days <= 0) return 'today ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (days === 1) return 'yesterday';
+        if (days < 7) return d.toLocaleDateString([], { weekday: 'long' });
+        return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    async function add(file) {
+        if (!file || file.size > MAX_SIZE) return;
+        try {
+            const items = await all();
+            const id = keyOf(file);
+            await tx('readwrite', s => {
+                s.put({ id, name: file.name, size: file.size, type: file.type, opened: Date.now(), blob: file });
+                items.filter(i => i.id !== id).sort((a, b) => b.opened - a.opened).slice(MAX_FILES - 1).forEach(i => s.delete(i.id));
+            });
+        } catch { /* private window or storage blocked: no recent list */ }
+    }
+
+    // Anything chosen or dropped on an Open area (.pe-drop) is remembered.
+    document.addEventListener('change', e => {
+        const input = e.target;
+        if (input?.type === 'file' && (input.closest('.pe-drop') || input.id === 'pe-recent-input') && input.files?.length) add(input.files[0]);
+    }, true);
+
+    return {
+        async list() {
+            try {
+                return (await all()).sort((a, b) => b.opened - a.opened)
+                    .map(i => ({ id: i.id, name: i.name, size: i.size, when: when(i.opened) }));
+            } catch { return []; }
+        },
+        async remove(id) { try { await tx('readwrite', s => s.delete(id)); } catch { } },
+        async clear() { try { await tx('readwrite', s => s.clear()); } catch { } },
+        // Hands the stored file to the page's hidden file input, as if it had just been chosen.
+        async open(id, inputId) {
+            try {
+                const item = (await all()).find(i => i.id === id);
+                const input = document.getElementById(inputId);
+                if (!item || !input) return false;
+                const dt = new DataTransfer();
+                dt.items.add(new File([item.blob], item.name, { type: item.type || 'application/pdf' }));
+                input.files = dt.files;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                return true;
+            } catch { return false; }
         },
     };
 })();

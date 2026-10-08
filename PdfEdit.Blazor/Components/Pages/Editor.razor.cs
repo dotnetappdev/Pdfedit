@@ -691,6 +691,8 @@ public partial class Editor
             case "Ctrl+o": OpenBackstage(Backstage.Open); break;
             case "Ctrl+s": await SaveAsync(); break;
             case "Shift+Ctrl+s": if (Doc != null) OpenBackstage(Backstage.SaveAs); break;
+            case "Alt+PageDown": await CycleTabAsync(1); break;
+            case "Alt+PageUp": await CycleTabAsync(-1); break;
             case "Ctrl+g": await JS.InvokeVoidAsync("pdfedit.focus", "pe-pagebox"); break;
             case "Ctrl+p": await PrintAsync(); break;
             case "Ctrl+z": if (DesignMode) UndoDesign(); else await UndoAsync(); break;

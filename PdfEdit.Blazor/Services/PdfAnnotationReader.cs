@@ -18,7 +18,8 @@ public sealed record PdfAnnotationItem(int PageNumber, int Index, string Kind, s
 
 /// <summary>
 /// One of PdfEdit's own annotations (/NM "pdfedit:&lt;id&gt;") read back so it can be edited again on the
-/// page, in the PDF's coordinates. Kind is Text, Mark, Stamp, Ink, Highlight, Note, Rectangle or Ellipse.
+/// page, in the PDF's coordinates. Kind is Text, Mark, Stamp, Ink, Highlight, Note, Rectangle, Ellipse,
+/// Line, Arrow, Distance, Polygon, Area, Polyline, Perimeter, Cloud, Callout, Insert or Replace.
 /// </summary>
 public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
 {
@@ -39,6 +40,10 @@ public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
     public double Opacity { get; init; } = 1;
     public HighlightKind Markup { get; init; } = HighlightKind.Highlight;
     public List<PointD>? Points { get; init; }
+    /// <summary>A callout's tip.</summary>
+    public PointD? Tip { get; init; }
+    /// <summary>A measurement's unit (in, mm, cm or pt).</summary>
+    public string Unit { get; init; } = "in";
     public string Author { get; init; } = "";
 }
 
@@ -49,8 +54,8 @@ public static class PdfAnnotationReader
 
     /// <summary>
     /// PdfEdit's own annotations that the page can show as editable items: text, marks, stamps, ink,
-    /// highlights / underlines, sticky notes, rectangles and ellipses. Signatures, callouts, clouds,
-    /// lines and measurements stay part of the page.
+    /// highlights / underlines, sticky notes, shapes, lines, measurements, clouds, callouts and the
+    /// insert / replace text marks. Placed signatures (locked) stay part of the page.
     /// </summary>
     public static List<OwnAnnotation> ReadOwn(string path)
     {
@@ -64,7 +69,8 @@ public static class PdfAnnotationReader
                 {
                     var o = a.GetPdfObject();
                     if (PdfEdit.Services.PdfFormService.TrackedId(o) is not { } id) continue;
-                    if (o.ContainsKey(new PdfName("IT")) || o.ContainsKey(new PdfName("BE"))) continue;   // callouts, text edits, measures, clouds
+                    string intent = o.GetAsName(new PdfName("IT"))?.GetValue() ?? "";
+                    bool cloudy = o.ContainsKey(new PdfName("BE"));
                     var r = a.GetRectangle()?.ToRectangle();
                     if (r == null) continue;
                     string contents = a.GetContents()?.ToUnicodeString() ?? "";
@@ -78,8 +84,19 @@ public static class PdfAnnotationReader
                         Colour = colour.Length > 0 ? colour : "#000000", Rotate = rotate, Author = author, LineWidth = width,
                         Opacity = o.GetAsNumber(PdfName.CA)?.DoubleValue() ?? 1,
                     };
+                    var inner = Inner(o, r);
                     switch (a.GetSubtype()?.GetValue())
                     {
+                        case "FreeText" when intent == "FreeTextCallout":
+                            var cl = o.GetAsArray(PdfName.CL);
+                            list.Add(own with
+                            {
+                                Kind = "Callout", Text = contents, Left = inner.L, Bottom = inner.B, Width = inner.W, Height = inner.H,
+                                Tip = cl is { } c && c.Size() >= 2 ? new PointD(c.GetAsNumber(0).DoubleValue(), c.GetAsNumber(1).DoubleValue()) : null,
+                            });
+                            break;
+                        case "FreeText" when intent.Length > 0:
+                            continue;
                         case "FreeText":
                             var da = ParseDa(o.GetAsString(PdfName.DA)?.ToUnicodeString());
                             bool mark = Marks.Contains(contents.Trim());
@@ -102,6 +119,41 @@ public static class PdfAnnotationReader
                                 points.Add(new PointD(pts.GetAsNumber(k).DoubleValue(), pts.GetAsNumber(k + 1).DoubleValue()));
                             list.Add(own with { Kind = "Ink", Points = points });
                             break;
+                        case "StrikeOut" when intent == "StrikeOutTextEdit":
+                            list.Add(own with { Kind = "Replace", Text = contents });
+                            break;
+                        case "Caret":
+                            if (o.ContainsKey(PdfName.IRT)) continue;   // the caret of a Replace: part of its strikeout
+                            list.Add(own with { Kind = "Insert", Text = contents });
+                            break;
+                        case "Line":
+                            var l = o.GetAsArray(PdfName.L);
+                            if (l == null || l.Size() < 4) continue;
+                            bool arrow = o.GetAsArray(PdfName.LE)?.GetAsName(1)?.GetValue() is "OpenArrow" or "ClosedArrow";
+                            list.Add(own with
+                            {
+                                Kind = intent == "LineDimension" ? "Distance" : arrow ? "Arrow" : "Line", Unit = UnitOf(contents),
+                                Points = [new PointD(l.GetAsNumber(0).DoubleValue(), l.GetAsNumber(1).DoubleValue()),
+                                          new PointD(l.GetAsNumber(2).DoubleValue(), l.GetAsNumber(3).DoubleValue())],
+                            });
+                            break;
+                        case "Polygon" or "PolyLine":
+                            var vs = o.GetAsArray(PdfName.Vertices);
+                            if (vs == null || vs.Size() < 4 || o.GetAsArray(PdfName.IC) != null) continue;
+                            var verts = new List<PointD>();
+                            for (int k = 0; k + 1 < vs.Size(); k += 2)
+                                verts.Add(new PointD(vs.GetAsNumber(k).DoubleValue(), vs.GetAsNumber(k + 1).DoubleValue()));
+                            bool closed = a.GetSubtype()!.GetValue() == "Polygon";
+                            list.Add(own with
+                            {
+                                Kind = closed ? (intent == "PolygonDimension" ? "Area" : "Polygon") : (intent == "PolyLineDimension" ? "Perimeter" : "Polyline"),
+                                Points = verts, Unit = UnitOf(contents),
+                            });
+                            break;
+                        case "Square" when cloudy:
+                            if (o.GetAsArray(PdfName.IC) != null) continue;
+                            list.Add(own with { Kind = "Cloud", Left = inner.L, Bottom = inner.B, Width = inner.W, Height = inner.H });
+                            break;
                         case "Highlight" or "Underline" or "StrikeOut" or "Squiggly":
                             list.Add(own with
                             {
@@ -120,7 +172,7 @@ public static class PdfAnnotationReader
                             list.Add(own with { Kind = "Note", Text = contents });
                             break;
                         case "Square" or "Circle":
-                            if (o.GetAsArray(PdfName.IC) != null) continue;   // filled toolbox shapes stay as drawn
+                            if (o.GetAsArray(PdfName.IC) != null || intent.Length > 0) continue;   // filled toolbox shapes stay as drawn
                             list.Add(own with { Kind = a.GetSubtype()!.GetValue() == "Circle" ? "Ellipse" : "Rectangle" });
                             break;
                     }
@@ -129,6 +181,23 @@ public static class PdfAnnotationReader
         }
         catch { /* unreadable: nothing editable */ }
         return list;
+    }
+
+    /// <summary>The box inside an annotation's /Rect that /RD describes (a cloud's or callout's own box).</summary>
+    private static (double L, double B, double W, double H) Inner(PdfDictionary o, iText.Kernel.Geom.Rectangle r)
+    {
+        var rd = o.GetAsArray(new PdfName("RD"));
+        if (rd == null || rd.Size() < 4) return (r.GetX(), r.GetY(), r.GetWidth(), r.GetHeight());
+        double dl = rd.GetAsNumber(0).DoubleValue(), db = rd.GetAsNumber(1).DoubleValue(),
+               dr = rd.GetAsNumber(2).DoubleValue(), dt = rd.GetAsNumber(3).DoubleValue();
+        return (r.GetX() + dl, r.GetY() + db, Math.Max(1, r.GetWidth() - dl - dr), Math.Max(1, r.GetHeight() - db - dt));
+    }
+
+    /// <summary>The unit at the end of a measurement's label ("2.35 in", "4.10 sq cm").</summary>
+    private static string UnitOf(string label)
+    {
+        var last = label.Trim().Split(' ').LastOrDefault() ?? "";
+        return last is "in" or "mm" or "cm" or "pt" ? last : "in";
     }
 
     /// <summary>Font size, bold / italic, character spacing and colour from a /DA string ("/Helv 12.0 Tf 1.50 Tc 0 0 0 rg").</summary>

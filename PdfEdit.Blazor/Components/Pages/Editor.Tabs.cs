@@ -37,6 +37,14 @@ public partial class Editor
         }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
     }
 
+    /// <summary>The next or previous open document (Alt+Page Down / Up — the browser keeps Ctrl+Tab).</summary>
+    private async Task CycleTabAsync(int by)
+    {
+        if (Tabs.Count < 2) return;
+        int i = _active == null ? 0 : Tabs.IndexOf(_active);
+        await SwitchTabAsync(Tabs[((i + by) % Tabs.Count + Tabs.Count) % Tabs.Count]);
+    }
+
     public async Task SwitchTabAsync(DocTab tab)
     {
         if (tab == _active) { if (DesignMode) SetDesignMode(false); return; }

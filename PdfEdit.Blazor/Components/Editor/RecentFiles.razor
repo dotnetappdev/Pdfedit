@@ -1,0 +1,68 @@
+@* Files opened recently from this computer, kept in this browser (the Windows app's recent files). *@
+@inject IJSRuntime JS
+@if (_files is { Count: > 0 })
+{
+    <div class="pe-recent">
+        <div class="pe-recent-head">
+            <h4 class="pe-hint">Recent</h4>
+            <button class="pe-link" title="Forget the recent files kept in this browser" @onclick="ClearAsync">Clear</button>
+        </div>
+        <ul class="pe-recent-list">
+            @foreach (var f in _files)
+            {
+                var file = f;
+                <li>
+                    <button class="pe-recent-open" title="Open @f.Name again" @onclick="() => OpenAsync(file)">
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                        <span class="pe-recent-name">@f.Name</span>
+                        <span class="pe-recent-meta">@Size(f.Size) · @f.When</span>
+                    </button>
+                    <button class="pe-icon-btn" title="Remove from the list" aria-label="Remove @f.Name from recent files" @onclick="() => RemoveAsync(file)"><i class="bi bi-x"></i></button>
+                </li>
+            }
+        </ul>
+        <p class="pe-hint pe-recent-note">Kept in this browser only.</p>
+    </div>
+}
+@* The stored file is handed to this input, then opened like any other upload. *@
+<InputFile id="pe-recent-input" style="display:none" OnChange="OnFile" />
+
+@code {
+    [Parameter, EditorRequired] public Func<IBrowserFile, Task> Open { get; set; } = default!;
+
+    private sealed record RecentFile(string Id, string Name, long Size, string When);
+    private List<RecentFile>? _files;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try { _files = await JS.InvokeAsync<List<RecentFile>>("pdfeditRecent.list"); }
+        catch { _files = []; }
+        StateHasChanged();
+    }
+
+    private async Task OpenAsync(RecentFile f)
+    {
+        if (!await JS.InvokeAsync<bool>("pdfeditRecent.open", f.Id, "pe-recent-input"))
+        {
+            await RemoveAsync(f);
+        }
+    }
+
+    private Task OnFile(InputFileChangeEventArgs e) => Open(e.File);
+
+    private async Task RemoveAsync(RecentFile f)
+    {
+        await JS.InvokeVoidAsync("pdfeditRecent.remove", f.Id);
+        _files?.Remove(f);
+    }
+
+    private async Task ClearAsync()
+    {
+        await JS.InvokeVoidAsync("pdfeditRecent.clear");
+        _files = [];
+    }
+
+    private static string Size(long bytes) =>
+        bytes >= 1024 * 1024 ? $"{bytes / 1024.0 / 1024:0.#} MB" : $"{Math.Max(1, bytes / 1024)} KB";
+}

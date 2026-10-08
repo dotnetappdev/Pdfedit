@@ -1822,3 +1822,21 @@ html, body {
 .pe-ctxmenu .pe-ctxmenu-chip { padding: 2px 7px; border: 1px solid var(--pe-border); border-radius: 3px; font-size: 11px; }
 .pe-ctxmenu .pe-ctxmenu-chip.on { border-color: var(--pe-accent); color: var(--pe-accent); }
 .pe-ctxmenu { max-height: calc(100vh - 16px); overflow-y: auto; }
+
+/* Recent files (start page and File → Open) */
+.pe-recent { margin: 4px 0 16px; }
+.pe-recent-head { display: flex; align-items: baseline; gap: 10px; }
+.pe-recent-head h4 { font-weight: 600; margin: 0 0 6px; }
+.pe-link { border: 0; background: transparent; color: var(--pe-accent); font-size: 12px; padding: 0; cursor: pointer; }
+.pe-link:hover { text-decoration: underline; }
+.pe-recent-list { list-style: none; margin: 0; padding: 0; }
+.pe-recent-list li { display: flex; align-items: center; gap: 4px; }
+.pe-recent-open {
+    flex: 1; min-width: 0; display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px;
+    border: 0; background: transparent; color: var(--pe-fg); text-align: left; padding: 6px 8px; border-radius: 6px; cursor: pointer;
+}
+.pe-recent-open:hover { background: var(--pe-hover); }
+.pe-recent-open i { color: #D32F2F; font-size: 16px; }
+.pe-recent-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pe-recent-meta { color: var(--pe-dim); font-size: 11px; white-space: nowrap; }
+.pe-recent-note { font-size: 11px; margin: 4px 8px 0; }

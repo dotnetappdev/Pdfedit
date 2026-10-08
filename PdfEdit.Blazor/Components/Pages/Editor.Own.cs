@@ -22,7 +22,7 @@ public partial class Editor
     {
         i.Kind, i.Page, R(i.Left), R(i.Top), R(i.Width), R(i.Height), i.Text, R(i.FontSize), i.Color, i.Subtitle, R(i.LineWidth),
         i.Markup, i.Rotation, R(i.CharSpacing), i.Fit, i.Bold, i.Italic, i.Underline, i.Upper, i.Align, R(i.Opacity), i.DateFormat,
-        i.Points == null ? "" : string.Join(';', i.Points.Select(p => R(p.X) + "," + R(p.Y))),
+        i.Points == null ? "" : string.Join(';', i.Points.Select(p => R(p.X) + "," + R(p.Y))), i.Unit,
     });
 
     private static string R(double v) => Math.Round(v, 2).ToString(CultureInfo.InvariantCulture);
@@ -89,6 +89,19 @@ public partial class Editor
             "Note" => new PageItem { Kind = ItemKind.Note, Text = o.Text, Color = o.Colour },
             "Rectangle" => new PageItem { Kind = ItemKind.Rectangle, Color = o.Colour, LineWidth = o.LineWidth },
             "Ellipse" => new PageItem { Kind = ItemKind.Ellipse, Color = o.Colour, LineWidth = o.LineWidth },
+            "Line" or "Arrow" or "Distance" or "Polygon" or "Area" or "Polyline" or "Perimeter" => new PageItem
+            {
+                Kind = Enum.Parse<ItemKind>(o.Kind), Color = o.Colour, LineWidth = o.LineWidth, Unit = o.Unit,
+                Points = o.Points!.Select(p => ToViewPoint(page, p.X, p.Y)).ToList(),
+            },
+            "Cloud" => new PageItem { Kind = ItemKind.Cloud, Color = o.Colour, LineWidth = o.LineWidth },
+            "Callout" => new PageItem
+            {
+                Kind = ItemKind.Callout, Text = o.Text, Color = o.Colour, FontSize = 10,
+                Points = o.Tip is { } tip ? [ToViewPoint(page, tip.X, tip.Y)] : null,
+            },
+            "Insert" => new PageItem { Kind = ItemKind.InsertText, Text = o.Text, Color = o.Colour },
+            "Replace" => new PageItem { Kind = ItemKind.ReplaceText, Text = o.Text, Color = o.Colour },
             _ => null,
         };
         if (item == null) return null;
@@ -98,8 +111,12 @@ public partial class Editor
             Text = item.Text, FontSize = item.FontSize, Color = item.Color, Subtitle = item.Subtitle, Points = item.Points,
             LineWidth = item.LineWidth, Markup = item.Markup, Rotation = item.Rotation, CharSpacing = item.CharSpacing,
             Fit = item.Fit, Bold = item.Bold, Italic = item.Italic, Opacity = item.Opacity,
-            Author = string.IsNullOrWhiteSpace(o.Author) ? null : o.Author,
+            Unit = item.Unit, Author = string.IsNullOrWhiteSpace(o.Author) ? null : o.Author,
         };
+        // Lines and measurements: the box is worked out from the points, as when they're drawn.
+        if (placed.Kind is ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Polygon
+            or ItemKind.Area or ItemKind.Polyline or ItemKind.Perimeter && placed.Points is { Count: > 1 })
+            FitSketchBox(placed);
         if (placed.Kind == ItemKind.Note)
         {
             // A note is drawn from its top-left corner: the 20-point icon's PDF box starts there.
