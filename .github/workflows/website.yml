@@ -33,10 +33,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  publish:
+  # Builds the site, and publishes it to gh-pages unless Pages deploys from Actions. No environment
+  # here: with "Deploy from a branch", GitHub lets only gh-pages use the github-pages environment.
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
+    outputs:
+      type: ${{ steps.mode.outputs.type }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -76,20 +78,11 @@ jobs:
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Set up GitHub Pages
-        if: steps.mode.outputs.type == 'workflow'
-        uses: actions/configure-pages@v5
-
       - name: Upload the site for Pages
         if: steps.mode.outputs.type == 'workflow'
         uses: actions/upload-pages-artifact@v3
         with:
           path: staticsite/_site
-
-      - name: Publish on GitHub Pages
-        id: deployment
-        if: steps.mode.outputs.type == 'workflow'
-        uses: actions/deploy-pages@v4
 
       - name: Publish to the gh-pages branch
         if: steps.mode.outputs.type != 'workflow'
@@ -105,7 +98,7 @@ jobs:
         run: |
           type="${{ steps.mode.outputs.type }}"; branch="${{ steps.mode.outputs.branch }}"
           if [[ "$type" == "workflow" ]]; then
-            echo "Published: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Built; the deploy job publishes it with GitHub Actions." >> "$GITHUB_STEP_SUMMARY"
           elif [[ "$branch" == "gh-pages" ]]; then
             echo "Pushed to **gh-pages**; GitHub Pages publishes it at ${{ steps.mode.outputs.url }} in a minute or two." >> "$GITHUB_STEP_SUMMARY"
           else
@@ -116,3 +109,17 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::warning::GitHub Pages is set to '${branch:-off}', not gh-pages. Choose gh-pages / (root) in Settings → Pages."
           fi
+
+  # Pages set to "GitHub Actions": deploy the built site.
+  deploy:
+    needs: build
+    if: needs.build.outputs.type == 'workflow'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publish on GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
