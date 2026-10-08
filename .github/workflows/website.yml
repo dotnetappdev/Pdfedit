@@ -3,7 +3,10 @@ name: Website
 # Builds the PdfEdit website (staticsite/) and publishes it on GitHub Pages. The downloads and
 # "What's new" come from the GitHub releases, fetched fresh on every build — so the site updates
 # itself after each release (when Build & Release finishes), daily, and whenever the site changes.
-# One-time set-up: repository Settings → Pages → Source: GitHub Actions.
+#
+# Publishing: through GitHub Pages' Actions deployment when Pages is on (Settings → Pages → Source:
+# GitHub Actions; the workflow also asks for it to be turned on). If it isn't, the site is pushed to
+# the gh-pages branch instead — choose Settings → Pages → Deploy from a branch: gh-pages / (root).
 on:
   workflow_run:
     workflows: ["Build & Release"]
@@ -19,7 +22,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # the gh-pages fallback
   pages: write
   id-token: write
 
@@ -28,30 +31,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Fetch the latest releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node staticsite/tools/update-releases.mjs
+
       - name: Build the site
         run: node staticsite/tools/build.mjs
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+
+      # ── GitHub Pages (Actions deployment) ──
+      - name: Set up GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        continue-on-error: true
+        with:
+          enablement: true
+
+      - name: Upload the site for Pages
+        if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: staticsite/_site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
+      - name: Publish on GitHub Pages
+        id: deployment
+        if: steps.pages.outcome == 'success'
         uses: actions/deploy-pages@v4
+
+      # ── Fallback: the gh-pages branch ──
+      - name: Publish to the gh-pages branch (Pages isn't set to GitHub Actions)
+        if: steps.pages.outcome != 'success'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: staticsite/_site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 'Website ${{ github.sha }}'
+
+      - name: Where the site is
+        run: |
+          if [[ "${{ steps.pages.outcome }}" == "success" ]]; then
+            echo "Published: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "The site was pushed to the **gh-pages** branch."
+              echo "To put it online: Settings → Pages → Build and deployment → Source: *Deploy from a branch*, Branch: **gh-pages** / (root)."
+              echo "Or choose Source: *GitHub Actions* and this workflow deploys it directly next time."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

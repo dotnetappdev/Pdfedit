@@ -21,8 +21,15 @@ tables, the news and the release history from it, and the big download button pi
 the visitor's computer. If the file is missing, the pages ask GitHub directly.
 
 The **Website** workflow (`.github/workflows/website.yml`) fetches the releases, builds the site and
-publishes it on GitHub Pages after every release, daily, and whenever the site changes. Turn it on
-once: repository **Settings → Pages → Source: GitHub Actions**.
+publishes it after every release, daily, and whenever the site changes. It works either way GitHub
+Pages is set up:
+
+- **Settings → Pages → Source: GitHub Actions** — deployed directly (the workflow also asks GitHub to
+  turn this on);
+- otherwise the site is pushed to the **gh-pages** branch: choose **Source: Deploy from a branch →
+  gh-pages / (root)**.
+
+Every link is relative, so it works at `https://<owner>.github.io/<repo>/` or on its own domain.
 
 New files are recognised by name (see `classify` in `tools/update-releases.mjs` and `RULES` in
 `assets/js/site.js`); add a rule there when a release gains a new kind of file.
