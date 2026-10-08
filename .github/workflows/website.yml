@@ -58,28 +58,40 @@ jobs:
           ASK_ENDPOINT: ${{ vars.ASK_ENDPOINT }}   # the "Ask the guide" Worker, if there is one
         run: node staticsite/tools/build.mjs
 
-      # ── GitHub Pages (Actions deployment) ──
+      # ── How Pages is set up decides how the site is published ──
+      # Settings → Pages → Source "GitHub Actions" (build_type "workflow"): deployed directly.
+      # "Deploy from a branch" (or Pages not on yet): pushed to gh-pages — choose gh-pages / (root).
+      - name: Check the GitHub Pages setting
+        id: mode
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          info=$(gh api "repos/${{ github.repository }}/pages" 2>/dev/null || echo '{}')
+          type=$(echo "$info" | jq -r '.build_type // "off"')
+          branch=$(echo "$info" | jq -r '.source.branch // ""')
+          url=$(echo "$info" | jq -r '.html_url // ""')
+          echo "Pages: build_type=$type branch=$branch url=$url"
+          echo "type=$type" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
       - name: Set up GitHub Pages
-        id: pages
+        if: steps.mode.outputs.type == 'workflow'
         uses: actions/configure-pages@v5
-        continue-on-error: true
-        with:
-          enablement: true
 
       - name: Upload the site for Pages
-        if: steps.pages.outcome == 'success'
+        if: steps.mode.outputs.type == 'workflow'
         uses: actions/upload-pages-artifact@v3
         with:
           path: staticsite/_site
 
       - name: Publish on GitHub Pages
         id: deployment
-        if: steps.pages.outcome == 'success'
+        if: steps.mode.outputs.type == 'workflow'
         uses: actions/deploy-pages@v4
 
-      # ── Fallback: the gh-pages branch ──
-      - name: Publish to the gh-pages branch (Pages isn't set to GitHub Actions)
-        if: steps.pages.outcome != 'success'
+      - name: Publish to the gh-pages branch
+        if: steps.mode.outputs.type != 'workflow'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -90,12 +102,16 @@ jobs:
 
       - name: Where the site is
         run: |
-          if [[ "${{ steps.pages.outcome }}" == "success" ]]; then
+          type="${{ steps.mode.outputs.type }}"; branch="${{ steps.mode.outputs.branch }}"
+          if [[ "$type" == "workflow" ]]; then
             echo "Published: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$branch" == "gh-pages" ]]; then
+            echo "Pushed to **gh-pages**; GitHub Pages publishes it at ${{ steps.mode.outputs.url }} in a minute or two." >> "$GITHUB_STEP_SUMMARY"
           else
             {
-              echo "The site was pushed to the **gh-pages** branch."
-              echo "To put it online: Settings → Pages → Build and deployment → Source: *Deploy from a branch*, Branch: **gh-pages** / (root)."
-              echo "Or choose Source: *GitHub Actions* and this workflow deploys it directly next time."
+              echo "The site was pushed to the **gh-pages** branch, but Pages isn't publishing that branch (it's set to: ${branch:-off})."
+              echo "To put it online: Settings → Pages → Build and deployment → Source: *Deploy from a branch*, Branch: **gh-pages** / (root) → Save."
+              echo "::warning::GitHub Pages is set to '${branch:-off}'. Choose gh-pages / (root) in Settings → Pages."
             } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::GitHub Pages is set to '${branch:-off}', not gh-pages. Choose gh-pages / (root) in Settings → Pages."
           fi

@@ -9,8 +9,17 @@
 <p align="center">
   <a href="https://github.com/dotnetappdev/Pdfedit/releases/latest"><img src="https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release" alt="Latest release"></a>
   <a href="https://github.com/dotnetappdev/Pdfedit/actions/workflows/ci.yml?query=branch%3Adevmain"><img src="https://img.shields.io/github/actions/workflow/status/dotnetappdev/Pdfedit/ci.yml?branch=devmain&label=build" alt="Build status"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6" alt="Windows 10 and 11">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Mac%20%7C%20web-0078D6" alt="Windows, Mac and web">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licence"></a>
+  <a href="https://dotnetappdev.github.io/Pdfedit/docs/index.html"><img src="https://img.shields.io/badge/docs-user%20guide-1565D8" alt="User guide"></a>
+</p>
+
+<p align="center">
+  <a href="https://dotnetappdev.github.io/Pdfedit/"><b>Website</b></a> ·
+  <a href="https://dotnetappdev.github.io/Pdfedit/download.html"><b>Download</b></a> ·
+  <a href="https://dotnetappdev.github.io/Pdfedit/docs/index.html"><b>User guide</b></a> ·
+  <a href="https://dotnetappdev.github.io/Pdfedit/tutorials/index.html"><b>Tutorials</b></a> ·
+  <a href="https://dotnetappdev.github.io/Pdfedit/whats-new.html"><b>What's new</b></a>
 </p>
 
 ## Why PdfEdit?
