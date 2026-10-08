@@ -28,8 +28,10 @@ permissions:
   pages: write
   id-token: write
 
+# Its own group: "pages" is the one GitHub's own Pages publishing uses, and sharing it lets the two
+# cancel each other.
 concurrency:
-  group: pages
+  group: website
   cancel-in-progress: true
 
 jobs:
