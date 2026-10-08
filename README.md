@@ -68,6 +68,38 @@ PdfEdit follows your Windows light, dark or contrast theme, or you can pick one 
 
 More in the [screenshot gallery](docs/screenshots.md).
 
+## Blazor version
+
+**PdfEdit.Blazor** is PdfEdit in the browser: a Blazor Web App (.NET 10) with the same ribbon,
+panels and three themes as the Windows app, running PdfEdit.Core and the Pdfium renderer on the
+server. Fill and sign forms, prepare forms, design forms, stamps, drawing and measuring, OCR,
+compare, certificate signing, the AI assistant and Translate PDF, batch processing and bulk fill,
+Google Drive and OneDrive, Office files to PDF, and several documents open at once.
+How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/blazor/theme-light.png" alt="The web version filling a form, Light theme"><br>Light</td>
+    <td align="center"><img src="docs/screenshots/blazor/theme-dark.png" alt="The web version filling a form, Dark theme"><br>Dark</td>
+    <td align="center"><img src="docs/screenshots/blazor/theme-high-contrast.png" alt="The web version filling a form, High contrast theme"><br>High contrast</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/blazor/draw-measure.png" alt="A stamp, freehand drawing, an arrow and a distance measurement"><br>Stamps, drawing and measuring</td>
+    <td align="center"><img src="docs/screenshots/blazor/design.png" alt="Designing a form on the design canvas"><br>Design a form</td>
+    <td align="center"><img src="docs/screenshots/blazor/rotated-page.png" alt="Text and a stamp added upright on a rotated page, with several documents open as tabs"><br>Rotated pages and document tabs</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/blazor/batch.png" alt="Batch Process: OCR, watermark, Bates numbers and compress over several PDFs"><br>Batch process</td>
+    <td align="center"><img src="docs/screenshots/blazor/bulk-fill.png" alt="Bulk Fill: form fields matched to spreadsheet columns"><br>Bulk fill from a spreadsheet</td>
+    <td align="center"><img src="docs/screenshots/blazor/cloud.png" alt="Opening a PDF from Google Drive"><br>Google Drive and OneDrive</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/blazor/translate-before.png" alt="A page before translation"><br>Before Translate PDF</td>
+    <td align="center"><img src="docs/screenshots/blazor/translate-after.png" alt="The same page translated, keeping its coloured bands and text colours"><br>After: layout and colours kept</td>
+    <td></td>
+  </tr>
+</table>
+
 ## Updates
 
 **Help → Check for Updates** (on the Help tab, or File → Help) looks at the [GitHub releases](https://github.com/dotnetappdev/pdfedit/releases) for a newer version. It picks the download that matches how PdfEdit was installed (setup EXE, portable ZIP or MSIX), lets you choose where to save it, shows a progress bar while it downloads, and checks the file against its SHA-256. Then it installs the update. By default it closes PdfEdit (and any other PdfEdit windows) first and starts it again afterwards. Your unsaved work is kept, as it is on any normal close. Each time PdfEdit starts it also checks for a new version. If there is one, it shows the version and a link to it on GitHub, with **See release notes**, and asks **Yes, update** / **No** (skip this version) / **Cancel** (ask again next time). **Help → About PdfEdit** has a **Check for Updates…** button too. You can turn the startup check off, or include pre-releases, in the update window. The setup program checks for a version that's already installed and uninstalls it first, then installs the new one in the same folder. Your settings, signatures, stamps and recent files are kept.

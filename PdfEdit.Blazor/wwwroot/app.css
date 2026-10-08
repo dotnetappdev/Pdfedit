@@ -1,5 +1,6 @@
-/* PdfEdit for the web: the look of the Windows app (PdfEdit/Themes/LightTheme.xaml and
-   DarkTheme.xaml) — a ribbon, docked panels and a blue status bar. */
+/* PdfEdit for the web: the look of the Windows app — a ribbon, docked panels and a status bar —
+   with its three themes, colour for colour: PdfEdit/Themes/LightTheme.xaml, DarkTheme.xaml and
+   HighContrastTheme.xaml. */
 
 :root, .pe-theme-light {
     --pe-accent: #0A84FF;
@@ -16,9 +17,13 @@
     --pe-input-border: #BEBEBE;
     --pe-hover: #E0E0E0;
     --pe-active: #D6EAFF;
-    --pe-status-bg: #0A84FF;
-    --pe-status-fg: #FFFFFF;
+    --pe-status-bg: #EAEAEA;
+    --pe-status-fg: #444444;
     --pe-toast-bg: #2D2D2D;
+    --pe-toast-fg: #FFFFFF;
+    --pe-button-bg: #FFFFFF;
+    --pe-button-border: #C8C8C8;
+    --pe-focus: #0A84FF;
     --pe-shadow: 0 1px 4px rgba(0, 0, 0, .28);
 }
 
@@ -38,10 +43,52 @@
     --pe-hover: #303030;
     --pe-active: #1E2D3D;
     --pe-status-bg: #0D0D0D;
-    --pe-status-fg: #C8C8C8;
+    --pe-status-fg: #AAAAAA;
     --pe-toast-bg: #2D2D2D;
+    --pe-toast-fg: #E8E8E8;
+    --pe-button-bg: #2B2B2B;
+    --pe-button-border: #3A3A3A;
+    --pe-focus: #409CFF;
     --pe-shadow: 0 1px 6px rgba(0, 0, 0, .7);
 }
+
+/* High contrast: black, white, cyan accents and yellow secondary text, as in the Windows app. */
+.pe-theme-hc {
+    --pe-accent: #1AEBFF;
+    --pe-accent-hover: #37F0FF;
+    --pe-accent-muted: #1AEBFF;
+    --pe-app-bg: #000000;
+    --pe-panel-bg: #000000;
+    --pe-sidebar-bg: #000000;
+    --pe-content-bg: #0A0A0A;
+    --pe-fg: #FFFFFF;
+    --pe-dim: #FFFF00;
+    --pe-border: #FFFFFF;
+    --pe-input-bg: #000000;
+    --pe-input-border: #FFFFFF;
+    --pe-hover: #1A1A00;
+    --pe-active: #003300;
+    --pe-status-bg: #1AEBFF;
+    --pe-status-fg: #000000;
+    --pe-toast-bg: #000000;
+    --pe-toast-fg: #FFFFFF;
+    --pe-button-bg: #000000;
+    --pe-button-border: #FFFFFF;
+    --pe-focus: #FFFF00;
+    --pe-shadow: 0 0 0 1px #FFFFFF;
+}
+/* Every control has a visible edge and a thick yellow focus ring; selected things are outlined. */
+.pe-theme-hc :focus-visible { outline: 3px solid var(--pe-focus) !important; outline-offset: 1px; }
+.pe-theme-hc .pe-rbtn.active, .pe-theme-hc .pe-panel-tab.active, .pe-theme-hc .pe-tab.active,
+.pe-theme-hc .pe-list li.selected { outline: 2px solid var(--pe-accent); color: #000 !important; background: var(--pe-accent) !important; }
+.pe-theme-hc .pe-rbtn:hover:not(:disabled), .pe-theme-hc .pe-list li:hover { outline: 1px solid #FFFF00; }
+.pe-theme-hc .pe-btn, .pe-theme-hc .pe-option, .pe-theme-hc .pe-card { border: 1px solid #FFFFFF !important; background: #000 !important; color: #FFF !important; }
+.pe-theme-hc .pe-btn.primary { background: var(--pe-accent) !important; color: #000 !important; border-color: var(--pe-accent) !important; }
+.pe-theme-hc .pe-rbtn:disabled, .pe-theme-hc .pe-btn:disabled { opacity: .55; }
+.pe-theme-hc .pe-ribbon, .pe-theme-hc .pe-panel, .pe-theme-hc .pe-modal, .pe-theme-hc .pe-titlebar { border-color: #FFFFFF !important; }
+.pe-theme-hc .pe-field { border: 2px solid #1AEBFF; background: rgba(26, 235, 255, .12); }
+.pe-theme-hc .pe-toast { border: 2px solid #FFFFFF; }
+.pe-theme-hc a { color: #FFFF00; }
 
 html, body {
     height: 100%;
@@ -685,8 +732,8 @@ html, body {
     font-size: 13px;
 }
 .pe-btn {
-    border: 1px solid var(--pe-input-border);
-    background: var(--pe-input-bg);
+    border: 1px solid var(--pe-button-border);
+    background: var(--pe-button-bg);
     color: var(--pe-fg);
     border-radius: 4px;
     padding: 5px 14px;
@@ -821,6 +868,8 @@ html, body {
     border-bottom: 1px solid var(--pe-border);
 }
 .pe-viewswitch button {
+    white-space: nowrap;
+    flex-shrink: 0;
     border: 0;
     background: transparent;
     color: var(--pe-dim);

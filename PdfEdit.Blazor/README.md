@@ -13,6 +13,37 @@ dotnet run --project PdfEdit.Blazor
 Then open the address it prints. With a checkout of the repository, the files in `Samples/` are
 offered on the start page.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/theme-light.png" alt="Filling a form, Light theme"><br>Light</td>
+    <td align="center"><img src="../docs/screenshots/blazor/theme-dark.png" alt="Filling a form, Dark theme"><br>Dark</td>
+    <td align="center"><img src="../docs/screenshots/blazor/theme-high-contrast.png" alt="Filling a form, High contrast theme"><br>High contrast</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/draw-measure.png" alt="Stamp, drawing, arrow and measurement"><br>Stamps, drawing and measuring</td>
+    <td align="center"><img src="../docs/screenshots/blazor/design.png" alt="Design canvas"><br>Design a form</td>
+    <td align="center"><img src="../docs/screenshots/blazor/rotated-page.png" alt="Rotated page and document tabs"><br>Rotated pages and tabs</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/batch.png" alt="Batch Process"><br>Batch process</td>
+    <td align="center"><img src="../docs/screenshots/blazor/bulk-fill.png" alt="Bulk Fill"><br>Bulk fill</td>
+    <td align="center"><img src="../docs/screenshots/blazor/cloud.png" alt="Google Drive"><br>Cloud storage</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/translate-before.png" alt="Before translation"><br>Before Translate PDF</td>
+    <td align="center"><img src="../docs/screenshots/blazor/translate-after.png" alt="After translation"><br>After: layout and colours kept</td>
+    <td></td>
+  </tr>
+</table>
+
+## Themes
+
+Light, Dark and High Contrast use the Windows app's colours exactly (PdfEdit/Themes/*.xaml);
+**System** follows the device's dark-mode and high-contrast settings. Pick one on the View tab
+(Theme) or cycle with the button at the top right; the choice is remembered in the browser.
+
 ## What it can do
 
 | Area | Features |

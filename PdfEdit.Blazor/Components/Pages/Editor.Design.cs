@@ -101,13 +101,14 @@ public partial class Editor
         _designDragStart = null;
         double left = Math.Min(start.X, x), top = Math.Min(start.Y, y);
         double w = Math.Abs(x - start.X), h = Math.Abs(y - start.Y);
-        bool dragged = w > 6 && h > 4;
+        // A drag in either direction counts: thin rules and straight lines are only a few points tall.
+        bool dragged = w > 6 || h > 6;
 
         var item = NewDesignItem(_designTool);
         if (item == null) return;
         if (dragged && _designTool is not (DesignTool.Check or DesignTool.Cross or DesignTool.Checkbox or DesignTool.Radio))
         {
-            item.X = left; item.Y = top; item.W = w; item.H = h;
+            item.X = left; item.Y = top; item.W = Math.Max(w, 1); item.H = Math.Max(h, 1);
             if (_designTool is DesignTool.Line or DesignTool.Arrow)
             {
                 item.FlipX = x < start.X;   // keep the direction the line was drawn in

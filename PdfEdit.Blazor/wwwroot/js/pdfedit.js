@@ -226,12 +226,29 @@ window.pdfedit = (() => {
                 if (!poly.layer.isConnected) { poly = null; return; }
                 draw(poly, at(poly.layer, e));
             });
+            // A double-click (finishing an area) mustn't select text on the page or elsewhere.
+            document.addEventListener('mousedown', e => { if (e.target.closest?.('.pe-tool-layer[data-sketch]')) e.preventDefault(); });
             document.addEventListener('dblclick', e => { if (poly && e.target.closest?.('.pe-tool-layer[data-sketch]')) finishPoly(); });
             document.addEventListener('keydown', e => {
                 if (!poly) return;
                 if (e.key === 'Enter') { e.preventDefault(); finishPoly(); }
                 else if (e.key === 'Escape') { cancel(poly); poly = null; }
             });
+        },
+
+        // Theme: the saved choice and the device's dark / high-contrast settings (and their changes).
+        theme: {
+            init(dotnet) {
+                const dark = matchMedia('(prefers-color-scheme: dark)');
+                const contrast = matchMedia('(forced-colors: active), (prefers-contrast: more)');
+                const tell = () => dotnet.invokeMethodAsync('OnSystemTheme', dark.matches, contrast.matches);
+                dark.addEventListener('change', tell);
+                contrast.addEventListener('change', tell);
+                let saved = 'System';
+                try { saved = localStorage.getItem('pdfedit-theme') || 'System'; } catch { }
+                return { saved, dark: dark.matches, contrast: contrast.matches };
+            },
+            save(id) { try { localStorage.setItem('pdfedit-theme', id); } catch { } },
         },
 
         timeZone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; },

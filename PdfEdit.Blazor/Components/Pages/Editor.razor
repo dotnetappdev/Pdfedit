@@ -5,7 +5,7 @@
 
 <PageTitle>@(Doc == null ? "PdfEdit" : $"{Doc.FileName} — PdfEdit")</PageTitle>
 
-<div class="pe-app @(_dark ? "pe-theme-dark" : "pe-theme-light")" data-bs-theme="@(_dark ? "dark" : "light")">
+<div class="pe-app @ThemeClass" data-bs-theme="@(ThemeIsLight ? "light" : "dark")">
 
     @* ── Title bar ─────────────────────────────────────────────────────── *@
     <div class="pe-titlebar">
@@ -18,8 +18,8 @@
         <span class="pe-spacer"></span>
         <button class="pe-icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled="@(!CanUndo)" @onclick="UndoAsync"><i class="bi bi-arrow-counterclockwise"></i></button>
         <button class="pe-icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled="@(!CanRedo)" @onclick="RedoAsync"><i class="bi bi-arrow-clockwise"></i></button>
-        <button class="pe-icon-btn" title="@(_dark ? "Light theme" : "Dark theme")" aria-label="Switch theme" @onclick="() => _dark = !_dark">
-            <i class="bi @(_dark ? "bi-sun" : "bi-moon")"></i>
+        <button class="pe-icon-btn" title="@($"Theme: {ThemeName(_theme)} — click for the next one")" aria-label="Switch theme" @onclick="NextThemeAsync">
+            <i class="bi @ThemeIcon(_theme)"></i>
         </button>
     </div>
 
@@ -301,8 +301,11 @@
                     <RibbonButton Large Icon="bi-layout-split" Label="Compare PDFs" Title="Compare this PDF with another version: text and pictures" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.CompareUpload)" />
                 </RibbonGroup>
                 <RibbonGroup Title="Theme">
-                    <RibbonButton Large Icon="bi-sun" Label="Light" Active="!_dark" OnClick="() => _dark = false" />
-                    <RibbonButton Large Icon="bi-moon" Label="Dark" Active="_dark" OnClick="() => _dark = true" />
+                    @foreach (var th in Themes)
+                    {
+                        var id = th;
+                        <RibbonButton Large Icon="@ThemeIcon(id)" Label="@ThemeName(id)" Title="@ThemeHint(id)" Active="_theme == id" OnClick="() => SetThemeAsync(id)" />
+                    }
                 </RibbonGroup>
                 <RibbonGroup Title="Document">
                     <RibbonButton Large Icon="bi-bar-chart-line" Label="Statistics" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Statistics)" />

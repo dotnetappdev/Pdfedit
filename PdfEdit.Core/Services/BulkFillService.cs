@@ -21,7 +21,10 @@ public static class BulkFillService
         using var pdf = new PdfDocument(new PdfReader(pdfPath));
         var form = PdfAcroForm.GetAcroForm(pdf, false);
         if (form == null) return new();
-        return form.GetAllFormFields()
+        var all = form.GetAllFormFields();
+        return all
+            // iText also lists a radio group's or checkbox's unnamed widgets as "Name." — the same field again.
+            .Where(kv => !(kv.Key.EndsWith('.') && all.ContainsKey(kv.Key.TrimEnd('.'))))
             .Where(kv => kv.Value.GetFormType() != null && !kv.Value.IsReadOnly() && kv.Value is not PdfSignatureFormField)
             .Where(kv => kv.Value is not PdfButtonFormField b || !b.IsPushButton())
             .Select(kv => new BulkField(kv.Key, KindOf(kv.Value),

@@ -33,7 +33,7 @@ public partial class Editor
     public DialogKind Dialog => _dialog;
     private DialogKind _dialog;
     private Tool _tool = Tool.Select;
-    private bool _dark, _showLeft = true, _showRight = true, _busy;
+    private bool _showLeft = true, _showRight = true, _busy;
     private double _zoom = 1.0;
     private int _page;
     private ElementReference _viewer;
@@ -99,6 +99,7 @@ public partial class Editor
             await JS.InvokeVoidAsync("pdfedit.listenKeys", _self);
             await JS.InvokeVoidAsync("pdfedit.listenDrag", _self);
             await JS.InvokeVoidAsync("pdfedit.listenSketch", _self);
+            await LoadThemeAsync();
         }
         if (_observePages && Doc != null)
         {

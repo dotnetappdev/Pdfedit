@@ -7,6 +7,9 @@ using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Data;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Layout.Element;
 using iText.Layout.Layout;
 
@@ -20,6 +23,10 @@ public sealed class TranslationBlock
     public double LineHeight;
     public StringBuilder Text { get; } = new();
     public string? Translation { get; set; }
+    /// <summary>The colour behind the text (a filled shape on the page), or null for the plain page.</summary>
+    public float[]? Background { get; set; }
+    /// <summary>The colour the original text is printed in (RGB 0–1), when known.</summary>
+    public float[]? TextColor { get; set; }
 }
 
 /// <summary>
@@ -62,9 +69,109 @@ public static class TranslateService
                 block.Right = Math.Max(block.Right, c.X1);
                 block.Bottom = Math.Min(block.Bottom, c.Bottom);
             }
-            blocks.AddRange(pageBlocks.Where(b => b.Text.ToString().Any(char.IsLetter)));
+            var kept = pageBlocks.Where(b => b.Text.ToString().Any(char.IsLetter)).ToList();
+            FindColours(pdfPath, p, kept);
+            blocks.AddRange(kept);
         }
         return blocks;
+    }
+
+    // ── Colours: so a paragraph on a coloured band is rewritten on that band, in its own colour ──
+
+    private sealed class ColourListener : IEventListener
+    {
+        public readonly List<(Rectangle Box, float[] Rgb)> Fills = new();
+        public readonly List<(double X, double Y, int Letters, float[] Rgb)> Glyphs = new();
+
+        public void EventOccurred(IEventData data, EventType type)
+        {
+            if (type == EventType.RENDER_PATH && data is PathRenderInfo path
+                && (path.GetOperation() & PathRenderInfo.FILL) != 0 && !path.IsPathModifiesClippingPath()
+                && Rgb(path.GetFillColor()) is { } fill && Bounds(path) is { } box)
+                Fills.Add((box, fill));
+            else if (type == EventType.RENDER_TEXT && data is TextRenderInfo text && Rgb(text.GetFillColor()) is { } ink)
+            {
+                var b = text.GetBaseline();
+                Glyphs.Add(((b.GetStartPoint().Get(0) + b.GetEndPoint().Get(0)) / 2, b.GetStartPoint().Get(1) + 1,
+                            text.GetText().Count(char.IsLetterOrDigit), ink));
+            }
+        }
+
+        public ICollection<EventType> GetSupportedEvents() => new[] { EventType.RENDER_PATH, EventType.RENDER_TEXT };
+
+        private static Rectangle? Bounds(PathRenderInfo info)
+        {
+            var ctm = info.GetCtm();
+            double x0 = double.MaxValue, y0 = double.MaxValue, x1 = double.MinValue, y1 = double.MinValue;
+            foreach (var sub in info.GetPath().GetSubpaths())
+                foreach (var pt in sub.GetPiecewiseLinearApproximation())
+                {
+                    var v = new iText.Kernel.Geom.Vector((float)pt.GetX(), (float)pt.GetY(), 1).Cross(ctm);
+                    x0 = Math.Min(x0, v.Get(0)); x1 = Math.Max(x1, v.Get(0));
+                    y0 = Math.Min(y0, v.Get(1)); y1 = Math.Max(y1, v.Get(1));
+                }
+            return x1 > x0 && y1 > y0 ? new Rectangle((float)x0, (float)y0, (float)(x1 - x0), (float)(y1 - y0)) : null;
+        }
+    }
+
+    /// <summary>RGB (0–1) for gray, RGB and CMYK colours; null for patterns and others.</summary>
+    private static float[]? Rgb(Color? c)
+    {
+        var v = c?.GetColorValue();
+        return v?.Length switch
+        {
+            1 => new[] { v[0], v[0], v[0] },
+            3 => new[] { v[0], v[1], v[2] },
+            4 => new[] { (1 - v[0]) * (1 - v[3]), (1 - v[1]) * (1 - v[3]), (1 - v[2]) * (1 - v[3]) },
+            _ => null,
+        };
+    }
+
+    private static void FindColours(string pdfPath, int page, List<TranslationBlock> blocks)
+    {
+        if (blocks.Count == 0) return;
+        var listener = new ColourListener();
+        try
+        {
+            using var pdf = new PdfDocument(new PdfReader(pdfPath));
+            new PdfCanvasProcessor(listener).ProcessPageContent(pdf.GetPage(page));
+        }
+        catch { return; }   // unreadable content: white boxes and black text, as before
+
+        foreach (var b in blocks)
+        {
+            double area = Math.Max(1, (b.Right - b.Left) * (b.Top - b.Bottom));
+            // The last-drawn shape that lies under most of the paragraph (table rules and underlines don't).
+            for (int i = listener.Fills.Count - 1; i >= 0; i--)
+            {
+                var (box, rgb) = listener.Fills[i];
+                double w = Math.Min(b.Right, box.GetRight()) - Math.Max(b.Left, box.GetLeft());
+                double h = Math.Min(b.Top, box.GetTop()) - Math.Max(b.Bottom, box.GetBottom());
+                if (w > 0 && h > 0 && w * h >= area * 0.8) { b.Background = rgb; break; }
+            }
+            // The ink most of the paragraph's letters are printed in.
+            b.TextColor = listener.Glyphs
+                .Where(g => g.X >= b.Left - 1 && g.X <= b.Right + 1 && g.Y >= b.Bottom - 1 && g.Y <= b.Top + 1)
+                .GroupBy(g => string.Join(",", g.Rgb.Select(x => Math.Round(x, 2))))
+                .OrderByDescending(g => g.Sum(x => x.Letters)).FirstOrDefault()?.First().Rgb;
+        }
+    }
+
+    /// <summary>Relative luminance (WCAG): how light a colour looks.</summary>
+    private static double Luminance(float[] c)
+    {
+        static double Lin(float v) => v <= 0.03928 ? v / 12.92 : Math.Pow((v + 0.055) / 1.055, 2.4);
+        return 0.2126 * Lin(c[0]) + 0.7152 * Lin(c[1]) + 0.0722 * Lin(c[2]);
+    }
+
+    private static double Contrast(double a, double b) => (Math.Max(a, b) + 0.05) / (Math.Min(a, b) + 0.05);
+
+    /// <summary>The original ink, unless it wouldn't stand out on the background (then black or white).</summary>
+    private static float[] InkFor(TranslationBlock b)
+    {
+        double lb = Luminance(b.Background ?? new[] { 1f, 1f, 1f });
+        if (b.TextColor is { } ink && Contrast(lb, Luminance(ink)) >= 3) return ink;
+        return Contrast(lb, 1) > Contrast(lb, 0) ? new[] { 1f, 1f, 1f } : new[] { 0f, 0f, 0f };
     }
 
     /// <summary>Translates the blocks in batches through <paramref name="complete"/> (prompt → reply).</summary>
@@ -129,7 +236,9 @@ public static class TranslateService
             foreach (var b in group)
             {
                 var rect = new Rectangle((float)b.Left - 1, (float)b.Bottom - 2, (float)(b.Right - b.Left) + 2, (float)(b.Top - b.Bottom) + 3);
-                pdfCanvas.SaveState().SetFillColor(ColorConstants.WHITE).Rectangle(rect).Fill().RestoreState();
+                var bg = b.Background ?? new[] { 1f, 1f, 1f };
+                pdfCanvas.SaveState().SetFillColor(new DeviceRgb(bg[0], bg[1], bg[2])).Rectangle(rect).Fill().RestoreState();
+                var ink = InkFor(b);
 
                 var canvas = new iText.Layout.Canvas(pdfCanvas, rect);
                 float size = (float)Math.Clamp(b.LineHeight * 0.95, 4, 72);
@@ -137,7 +246,7 @@ public static class TranslateService
                 while (true)
                 {
                     para = new Paragraph(b.Translation!).SetFont(font).SetFontSize(size).SetMultipliedLeading(1.05f)
-                        .SetMargin(0).SetPadding(0).SetFontColor(ColorConstants.BLACK);
+                        .SetMargin(0).SetPadding(0).SetFontColor(new DeviceRgb(ink[0], ink[1], ink[2]));
                     var renderer = para.CreateRendererSubTree().SetParent(canvas.GetRenderer());
                     var result = renderer.Layout(new LayoutContext(new LayoutArea(1, rect)));
                     if (result.GetStatus() == LayoutResult.FULL || size <= 4) break;

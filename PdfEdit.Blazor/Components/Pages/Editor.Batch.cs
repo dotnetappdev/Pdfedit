@@ -185,6 +185,7 @@ public partial class Editor
             return;
         }
         BulkStatus = null;
+        Status("Bulk Fill: choose a spreadsheet and match the fields to its columns");
         if (BulkData != null) GuessBulkMapping();
         _dialog = DialogKind.BulkFill;
     }
