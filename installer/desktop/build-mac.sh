@@ -54,8 +54,9 @@ for ARCH in $ARCHES; do
   chmod +x "$APP/Contents/MacOS/PdfEdit"
 
   if $ON_MAC; then
-    # Sign the native libraries first, then the bundle (which seals everything else in it).
-    find "$APP/Contents/MacOS" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | while IFS= read -r -d '' f; do sign "$f"; done
+    # Everything in Contents/MacOS counts as code to macOS — the .NET assemblies and the web app's
+    # files too — so each file is signed, then the program, then the bundle that seals them.
+    find "$APP/Contents/MacOS" -type f ! -path "$APP/Contents/MacOS/PdfEdit" -print0 | while IFS= read -r -d '' f; do sign "$f" >/dev/null; done
     sign "$APP/Contents/MacOS/PdfEdit"
     sign "$APP"
     codesign --verify --deep --strict "$APP"
