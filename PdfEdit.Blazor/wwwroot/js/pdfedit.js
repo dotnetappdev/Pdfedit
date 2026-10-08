@@ -697,10 +697,21 @@ window.pdfeditRecent = (() => {
         } catch { /* private window or storage blocked: no recent list */ }
     }
 
+    // Opening a recent file again only moves it to the top: storing it again would replace the very
+    // record the file is being read from, and the browser then aborts the read.
+    async function touch(id) {
+        try {
+            const item = (await all()).find(i => i.id === id);
+            if (item) await tx('readwrite', s => s.put({ ...item, opened: Date.now() }));
+        } catch { }
+    }
+
     // Anything chosen or dropped on an Open area (.pe-drop) is remembered.
     document.addEventListener('change', e => {
         const input = e.target;
-        if (input?.type === 'file' && (input.closest('.pe-drop') || input.id === 'pe-recent-input') && input.files?.length) add(input.files[0]);
+        if (input?.type !== 'file' || !input.files?.length) return;
+        if (input.id === 'pe-recent-input') touch(keyOf(input.files[0]));
+        else if (input.closest('.pe-drop')) add(input.files[0]);
     }, true);
 
     return {
@@ -718,8 +729,10 @@ window.pdfeditRecent = (() => {
                 const item = (await all()).find(i => i.id === id);
                 const input = document.getElementById(inputId);
                 if (!item || !input) return false;
+                // A copy in memory, so the file doesn't depend on the stored record while it's read.
+                const data = await item.blob.arrayBuffer();
                 const dt = new DataTransfer();
-                dt.items.add(new File([item.blob], item.name, { type: item.type || 'application/pdf' }));
+                dt.items.add(new File([data], item.name, { type: item.type || 'application/pdf' }));
                 input.files = dt.files;
                 input.dispatchEvent(new Event('change', { bubbles: true }));
                 return true;

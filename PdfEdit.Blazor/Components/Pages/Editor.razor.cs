@@ -164,9 +164,19 @@ public partial class Editor
         }
         // Read it now: the browser file can't be read again later (for a password retry).
         var temp = Path.Combine(Path.GetTempPath(), $"pdfedit-upload-{Guid.NewGuid():N}.pdf");
-        await using (var s = file.OpenReadStream(PdfDocumentStore.MaxUploadBytes))
-        await using (var f = File.Create(temp))
+        try
+        {
+            await using var s = file.OpenReadStream(PdfDocumentStore.MaxUploadBytes);
+            await using var f = File.Create(temp);
             await s.CopyToAsync(f);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or JSException or TaskCanceledException)
+        {
+            // The browser stopped handing the file over (it was moved, or its stored copy changed).
+            TryDelete(temp);
+            Toast($"Couldn't read {file.Name} from your computer. Please open it again.", "error");
+            return;
+        }
         try { await OpenPathAsync(temp, file.Name, null); }
         finally { if (PendingPassword == null) TryDelete(temp); }
     }
