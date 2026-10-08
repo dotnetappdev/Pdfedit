@@ -435,8 +435,15 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   async function respond(question, answer, passages, p) {
     if (busy) return;
     if (p === 'browser' && !(engine && engineModel === browserModel().full)) {
-      answer.innerHTML = '<p>Starting the free AI…</p><div class="ask-progress"><span style="width:2%"></span></div><p class="ask-note" data-ask-progress></p>';
+      answer.innerHTML = '<p>Starting the free AI…</p><div class="ask-progress"><span style="width:2%"></span></div><p class="ask-note" data-ask-progress></p>' +
+        '<div class="ask-row"><button type="button" class="btn small" data-ask-skip>Show the guide instead</button></div>';
       const bar = answer.querySelector('.ask-progress span'), note = answer.querySelector('[data-ask-progress]');
+      // Not waiting: show the sections now; the AI carries on loading for the next question.
+      let skipped = false;
+      answer.querySelector('[data-ask-skip]').addEventListener('click', () => {
+        skipped = true;
+        showPassages(answer, passages, 'Here\'s what the guide says (the AI keeps loading for your next question):');
+      });
       try {
         await startEngine(r => {
           bar.style.width = `${Math.max(2, Math.round(r.progress * 100))}%`;
@@ -448,7 +455,9 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
             : t.replace(/\[.*?\]\s*/g, '').slice(0, 120);
         });
         showVia();
+        if (skipped) return;
       } catch (e) {
+        if (skipped) return;
         showPassages(answer, passages, `The free AI couldn't start on this computer (${esc(String(e.message || e).slice(0, 160))}). Here's what the guide says instead:`);
         return;
       }

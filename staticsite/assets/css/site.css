@@ -70,6 +70,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 /* ── News strip (top of every page, like the old "latest version" bars) ── */
 .strip { background: var(--primary-soft); border-bottom: 1px solid var(--border); font-size: .88rem; }
 .strip .wrap { display: flex; gap: 12px; align-items: center; min-height: 36px; flex-wrap: wrap; padding-top: 4px; padding-bottom: 4px; }
+.strip-links { margin-left: auto; color: var(--muted); }
 .strip .new { background: var(--go); color: #fff; font-weight: 700; font-size: .72rem; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
 
 /* ── Header band: logo, name, the big download button ── */
