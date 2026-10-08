@@ -14,4 +14,8 @@
     <ProjectReference Include="..\PdfEdit.Render\PdfEdit.Render.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
+  </ItemGroup>
+
 </Project>

@@ -431,7 +431,8 @@ html, body {
     line-height: 1.15;
     color: inherit;
 }
-.pe-item.mark { display: grid; place-items: center; font-weight: 700; line-height: 1; border: 1px dashed transparent; }
+.pe-item.mark { display: grid; place-items: center; font-weight: 700; line-height: 1; border: 1px dashed transparent;
+    background: transparent; padding: 0; }   /* not Bootstrap's .mark highlight */
 .pe-item.mark:hover, .pe-item.signature:hover { border-color: rgba(10, 132, 255, .7); }
 .pe-item.signature img { width: 100%; height: 100%; object-fit: contain; }
 .pe-item.signature { border: 1px dashed transparent; }
@@ -979,3 +980,153 @@ html, body {
 .pe-viewswitch .pe-doctab-x { padding: 2px 4px; border-radius: 3px; font-size: 14px; line-height: 1; }
 .pe-viewswitch .pe-doctab-x:hover, .pe-viewswitch .pe-doctab-add:hover { background: var(--pe-hover); color: var(--pe-fg); }
 .pe-viewswitch .pe-doctab-add { padding: 4px 8px; border-radius: 3px; align-self: center; }
+
+/* ── Toolbox tools: callouts, carets, clouds, markup, vertical text ──────── */
+
+.pe-item.callout { border: 1px solid; background: #FFFDE7; overflow: visible; }
+.pe-item.callout textarea { width: 100%; height: 100%; border: 0; background: transparent; resize: none; padding: .3cqw .5cqw;
+    font-family: Helvetica, Arial, sans-serif; line-height: 1.2; color: #000; }
+.pe-callout-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pe-item.caret { cursor: move; }
+.pe-item.caret svg { width: 100%; height: 100%; display: block; }
+.pe-item.replace { cursor: move; }
+.pe-item.replace .pe-strike { position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-1px); }
+.pe-item.replace .pe-replace-caret { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; }
+.pe-item.cloud { pointer-events: none; }
+.pe-item.cloud svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.pe-item.cloud .hit { fill: transparent; pointer-events: all; cursor: move; }
+.pe-item.cloud .pe-x, .pe-item.cloud .pe-item-handle { pointer-events: auto; }
+.pe-item.box.markup { border: 0; background: transparent; }
+.pe-item.box.markup::after { content: ""; position: absolute; left: 0; right: 0; }
+.pe-item.box.markup.underline::after { bottom: 0; border-bottom: 2px solid currentColor; }
+.pe-item.box.markup.strike::after { top: 50%; border-bottom: 2px solid currentColor; }
+.pe-item.box.markup.squiggly::after { bottom: 0; height: 4px;
+    background: linear-gradient(135deg, transparent 35%, currentColor 35% 55%, transparent 55%) 0 0 / 6px 4px repeat-x,
+                linear-gradient(45deg, transparent 35%, currentColor 35% 55%, transparent 55%) 3px 0 / 6px 4px repeat-x; }
+.pe-item.text.vertical textarea { writing-mode: vertical-rl; transform: rotate(180deg); }
+.pe-zoom-rect { position: absolute; border: 1px dashed var(--pe-accent); background: rgba(10, 132, 255, .12); pointer-events: none; }
+.pe-tool-layer[data-sketch="pan"] { cursor: grab; }
+.pe-tool-layer[data-sketch="pan"].panning { cursor: grabbing; }
+.pe-tool-layer[data-sketch="zoom"] { cursor: zoom-in; }
+
+/* Design grid (the toolbox's Grid button): a line every 10 points. */
+.pe-design-page.grid {
+    background-image: linear-gradient(to right, rgba(10, 132, 255, .14) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(10, 132, 255, .14) 1px, transparent 1px);
+    background-size: var(--gx) var(--gy);
+}
+
+/* ── Floating toolbox (the Windows app's quick-tools rail) ──────────────── */
+
+/* A zero-size anchor that stays at the top-left of the pages while they scroll. */
+.pe-rail-anchor { position: sticky; top: 52px; left: 14px; width: 0; height: 0; z-index: 45; }
+.pe-rail-stack { position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.pe-rail {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 5px;
+    background: var(--pe-panel-bg);
+    border: 1px solid var(--pe-border);
+    border-radius: 22px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
+}
+.pe-rail-grip { color: var(--pe-dim); font-size: 12px; line-height: 1; margin-bottom: 2px; cursor: default; }
+.pe-rail-cell { position: relative; }
+.pe-rail-btn {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--pe-fg);
+    font-size: 17px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+.pe-rail-btn:hover { background: var(--pe-hover); }
+.pe-rail-btn.active { background: var(--pe-accent); color: #fff; }
+.pe-theme-hc .pe-rail-btn.active { color: #000; }
+.pe-rail-corner {
+    position: absolute;
+    right: -2px;
+    bottom: 0;
+    width: 13px;
+    height: 13px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--pe-dim);
+    font-size: 8px;
+    line-height: 13px;
+    cursor: pointer;
+    transform: rotate(45deg);
+}
+.pe-rail-corner:hover { color: var(--pe-accent); }
+.pe-rail-sep { width: 22px; height: 1px; background: var(--pe-border); margin: 3px 0; }
+.pe-rot { display: inline-block; transform: rotate(-90deg); }
+.pe-flyout-backdrop { position: fixed; inset: 0; z-index: 44; }
+.pe-flyout {
+    position: absolute;
+    left: 46px;
+    top: -6px;
+    min-width: 210px;
+    padding: 6px;
+    background: var(--pe-panel-bg);
+    border: 1px solid var(--pe-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .22);
+    z-index: 46;
+}
+.pe-flyout.wide { min-width: 470px; }
+.pe-flyout-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.pe-flyout-title { font-size: 11px; font-weight: 600; color: var(--pe-dim); text-transform: uppercase; letter-spacing: .04em; margin: 6px 6px 3px; }
+.pe-flyout-title:first-child { margin-top: 2px; }
+.pe-flyout-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pe-fg);
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+.pe-flyout-item i { font-size: 15px; width: 18px; text-align: center; color: var(--pe-accent); }
+.pe-flyout-item:hover { background: var(--pe-hover); }
+.pe-flyout-item.active { background: var(--pe-active); font-weight: 600; }
+.pe-flyout-sep { height: 1px; background: var(--pe-border); margin: 5px 4px; }
+.pe-flyout-label { font-size: 11px; color: var(--pe-dim); margin: 2px 8px; display: block; }
+.pe-flyout-select { margin: 0 6px 4px; width: calc(100% - 12px); }
+.pe-flyout-hint { font-size: 12px; color: var(--pe-dim); margin: 2px 8px 6px; }
+.pe-swatches { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px 8px; }
+.pe-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--pe-border); padding: 0; cursor: pointer; }
+.pe-swatch.on { outline: 2px solid var(--pe-accent); outline-offset: 1px; }
+.pe-swatch.default { width: auto; border-radius: 11px; padding: 0 6px; font-size: 11px; background: var(--pe-input-bg); color: var(--pe-fg); }
+.pe-units { display: flex; gap: 3px; padding: 2px 8px 4px; }
+.pe-units button { border: 1px solid var(--pe-border); background: var(--pe-input-bg); color: var(--pe-fg); border-radius: 4px; padding: 1px 8px; font-size: 12px; cursor: pointer; }
+.pe-units button.on { background: var(--pe-accent); color: #fff; border-color: var(--pe-accent); }
+.pe-saved-sig { display: flex; align-items: center; gap: 6px; padding: 2px 4px; }
+.pe-saved-sig-img { flex: 1; height: 44px; border: 1px solid var(--pe-border); border-radius: 6px; background: #fff; cursor: pointer; padding: 2px; }
+.pe-saved-sig-img:hover { border-color: var(--pe-accent); }
+.pe-saved-sig-img img { max-width: 100%; max-height: 100%; }
+/* Pages sit to the right of the rail when the window is narrow. */
+.pe-pages { padding-left: 64px; }
+
+/* The Design set is long: it flows into as many columns as the window height needs. */
+.pe-rail.design {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(auto-fill, 38px);
+    max-height: calc(100vh - 290px);
+    gap: 0 2px;
+    border-radius: 18px;
+}
+.pe-rail.design .pe-rail-sep, .pe-rail.design .pe-rail-grip { display: none; }

@@ -41,7 +41,7 @@ public partial class Editor
         }
     }
 
-    private void StartDesignTool(DesignTool tool)
+    public void StartDesignTool(DesignTool tool)
     {
         if (!DesignMode) SetDesignMode(true);
         SetDesignTool(tool);
@@ -116,6 +116,7 @@ public partial class Editor
             }
         }
         else { item.X = x; item.Y = y; }
+        item.X = Snap(item.X); item.Y = Snap(item.Y);
         var (pw, ph) = DesignSize;
         item.X = Math.Clamp(item.X, 0, Math.Max(0, pw - item.W));
         item.Y = Math.Clamp(item.Y, 0, Math.Max(0, ph - item.H));
@@ -265,11 +266,58 @@ public partial class Editor
         if (e == null) return;
         DesignCheckpoint();
         var (pw, ph) = DesignSize;
-        e.W = Math.Max(1, w / 100 * pw);
-        e.H = Math.Max(1, h / 100 * ph);
-        e.X = Math.Clamp(l / 100 * pw, 0, pw - Math.Min(e.W, pw));
-        e.Y = Math.Clamp(t / 100 * ph, 0, ph - Math.Min(e.H, ph));
+        e.W = Math.Max(1, Snap(w / 100 * pw));
+        e.H = Math.Max(1, Snap(h / 100 * ph));
+        e.X = Math.Clamp(Snap(l / 100 * pw), 0, pw - Math.Min(e.W, pw));
+        e.Y = Math.Clamp(Snap(t / 100 * ph), 0, ph - Math.Min(e.H, ph));
         SelectedDesignId = id;
+    }
+
+    // ── Grid, snap, pen and signature (the Design toolbox) ───────────────────
+
+    public const double DesignGridSize = 10;
+    public bool DesignGrid { get; set; }
+    public bool DesignSnap { get; set; }
+
+    private double Snap(double v) => DesignSnap ? Math.Round(v / DesignGridSize) * DesignGridSize : v;
+
+    /// <summary>A pen stroke drawn on the design page (points as % of the page).</summary>
+    private void AddDesignStroke(double[] pct)
+    {
+        if (pct.Length < 4) return;
+        var (pw, ph) = DesignSize;
+        var pts = new List<DesignPoint>();
+        for (int i = 0; i + 1 < pct.Length; i += 2)
+            pts.Add(new DesignPoint { X = Math.Clamp(pct[i], 0, 100) / 100 * pw, Y = Math.Clamp(pct[i + 1], 0, 100) / 100 * ph });
+        double x0 = pts.Min(p => p.X), y0 = pts.Min(p => p.Y);
+        DesignCheckpoint();
+        var item = new DesignItem
+        {
+            Type = "freehand", X = x0, Y = y0, W = Math.Max(1, pts.Max(p => p.X) - x0), H = Math.Max(1, pts.Max(p => p.Y) - y0),
+            Color = "#FF000000", Thickness = 2, Strokes = [pts],
+        };
+        Design.Elements ??= new();
+        Design.Elements.Add(item);
+        SelectedDesignId = item.Id;
+        Status("Added drawing — keep drawing, or pick Select to move it");
+    }
+
+    /// <summary>Your signature as a picture on the design (asks for one first).</summary>
+    public void AddDesignSignature()
+    {
+        if (!DesignMode) SetDesignMode(true);
+        if (SignaturePng == null) { NewSignature(initials: false); return; }
+        var (iw, ih) = PngSize(SignaturePng);
+        double w = 160, h = ih > 0 ? w * ih / iw : 50;
+        var (pw, ph) = DesignSize;
+        DesignCheckpoint();
+        var item = new DesignItem { Type = "image", X = 60, Y = ph - h - 80, W = w, H = h, Signature = Convert.ToBase64String(SignaturePng) };
+        Design.Elements ??= new();
+        Design.Elements.Add(item);
+        SelectedDesignId = item.Id;
+        _designTool = DesignTool.Select;
+        ShowRight(RightTab.Properties);
+        Status("Signature added — drag it into place");
     }
 
     // ── Files ────────────────────────────────────────────────────────────────

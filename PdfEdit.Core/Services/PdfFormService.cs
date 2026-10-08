@@ -752,21 +752,29 @@ public class PdfFormService
                 }
                 else if (shape.Kind == Models.ShapeKind.Callout && !string.IsNullOrEmpty(shape.CalloutText))
                 {
-                    var boxRect = new Rectangle((float)left, (float)bottom, (float)width, (float)height);
-                    var annot = new PdfFreeTextAnnotation(boxRect, new PdfString(shape.CalloutText));
+                    // Callout line: from the tip (Points[0] when given, else below the box) to the
+                    // middle of the box's nearest side.
+                    float tipX = (float)(left + width / 2.0), tipY = (float)(bottom - 20);
+                    if (shape.Points is { Count: > 0 } tipPts) (tipX, tipY) = ((float)tipPts[0].X, (float)tipPts[0].Y);
+                    var (attachX, attachY) = CalloutAttach(left, bottom, width, height, tipX, tipY);
+                    // The annotation's Rect holds the box and the tip; /RD says where the box is inside it.
+                    float pad = lw + 2;
+                    float rl = Math.Min((float)left, tipX) - pad, rb = Math.Min((float)bottom, tipY) - pad;
+                    float rr = Math.Max((float)(left + width), tipX) + pad, rt = Math.Max((float)(bottom + height), tipY) + pad;
+                    var outer = new Rectangle(rl, rb, rr - rl, rt - rb);
+                    var annot = new PdfFreeTextAnnotation(outer, new PdfString(shape.CalloutText));
+                    annot.SetContents(shape.CalloutText);
                     annot.SetColor(strokeColor);
-                    if (ParseHexColor(shape.FillColor ?? "#FFFDE7", out float fr, out float fg, out float fb))
-                        annot.Put(PdfName.IC, new PdfArray(new float[] { fr, fg, fb }));
+                    float[] fill = ParseHexColor(shape.FillColor ?? "#FFFDE7", out float fr, out float fg, out float fb) ? new[] { fr, fg, fb } : new[] { 1f, 0.99f, 0.91f };
+                    annot.Put(PdfName.IC, new PdfArray(fill));
                     annot.Put(PdfName.BS, BuildBorderStyle(lw));
-                    // Callout line: tip below box center, knee at box bottom, attach at box bottom-center
-                    float tipX = (float)(left + width / 2.0);
-                    float tipY = (float)(bottom - 20);
-                    float kneeX = tipX;
-                    float kneeY = (float)bottom;
-                    float attachX = tipX;
-                    float attachY = (float)bottom;
-                    annot.Put(PdfName.CL, new PdfArray(new float[] { tipX, tipY, kneeX, kneeY, attachX, attachY }));
+                    annot.Put(PdfName.CL, new PdfArray(new float[] { tipX, tipY, attachX, attachY, attachX, attachY }));
+                    annot.Put(new PdfName("RD"), new PdfArray(new float[] { (float)left - rl, (float)bottom - rb, rr - (float)(left + width), rt - (float)(bottom + height) }));
                     annot.Put(new PdfName("IT"), new PdfName("FreeTextCallout"));
+                    annot.SetDefaultAppearance(new PdfString("/Helv 10 Tf 0 0 0 rg"));
+                    annot.SetNormalAppearance(BuildCalloutAppearance(doc, outer, new Rectangle((float)left, (float)bottom, (float)width, (float)height),
+                        tipX, tipY, attachX, attachY, shape.CalloutText, strokeColor, fill, lw).GetPdfObject());
+                    annot.SetFlags(PdfAnnotation.PRINT);
                     AddTracked(page, annot, shape.Comment);
                 }
             }
@@ -787,6 +795,7 @@ public class PdfFormService
                     var caret = new PdfCaretAnnotation(new Rectangle((float)mark.Left, (float)mark.Bottom, (float)mark.Width, (float)mark.Height));
                     caret.SetColor(markColor);
                     caret.SetContents(mark.Comment.Note);
+                    caret.SetNormalAppearance(BuildCaretAppearance(doc, caret.GetRectangle().ToRectangle(), markColor).GetPdfObject());
                     AddTracked(page, caret, mark.Comment);
                 }
                 else
@@ -804,6 +813,7 @@ public class PdfFormService
                     var caret = new PdfCaretAnnotation(new Rectangle(r - ch / 2, bt - ch * 0.2f, ch, ch));
                     caret.SetColor(markColor);
                     caret.SetContents(mark.Comment.Note);
+                    caret.SetNormalAppearance(BuildCaretAppearance(doc, new Rectangle(r - ch / 2, bt - ch * 0.2f, ch, ch), markColor).GetPdfObject());
                     caret.Put(PdfName.IRT, strike.GetPdfObject());
                     caret.Put(PdfName.RT, new PdfName("Group"));
                     caret.Put(PdfName.NM, new PdfString(TrackedName(mark.Comment.Id) + ":caret"));
@@ -1346,6 +1356,99 @@ public class PdfFormService
 
     private enum LineEnd { None, Arrow, Ticks }
 
+    /// <summary>Where a callout's line meets its box: the middle of the side facing the tip.</summary>
+    private static (float X, float Y) CalloutAttach(double left, double bottom, double width, double height, float tipX, float tipY)
+    {
+        double cx = left + width / 2, cy = bottom + height / 2;
+        if (tipX >= left && tipX <= left + width) return ((float)cx, (float)(tipY < cy ? bottom : bottom + height));
+        if (tipY >= bottom && tipY <= bottom + height) return ((float)(tipX < cx ? left : left + width), (float)cy);
+        return ((float)(tipX < cx ? left : left + width), (float)(tipY < cy ? bottom : bottom + height));
+    }
+
+    /// <summary>A callout: filled box with border and wrapped text, and the line to the tip (page coordinates).</summary>
+    private static PdfFormXObject BuildCalloutAppearance(PdfDocument doc, Rectangle outer, Rectangle box, float tipX, float tipY,
+        float attachX, float attachY, string text, DeviceRgb stroke, float[] fill, float lw)
+    {
+        var xobj = new PdfFormXObject(outer);
+        var canvas = new PdfCanvas(xobj, doc);
+        canvas.SaveState().SetFillColor(new DeviceRgb(fill[0], fill[1], fill[2])).SetStrokeColor(stroke).SetLineWidth(lw)
+              .Rectangle(box).FillStroke()
+              .MoveTo(tipX, tipY).LineTo(attachX, attachY).Stroke()
+              .Circle(tipX, tipY, Math.Max(1.5f, lw)).SetFillColor(stroke).Fill()
+              .RestoreState();
+        var font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+        const float size = 10;
+        float y = box.GetTop() - 4 - size * 0.8f;
+        foreach (var line in WrapLines(font, text, size, box.GetWidth() - 8))
+        {
+            if (y < box.GetBottom() + 2) break;
+            if (line.Length > 0)
+                canvas.BeginText().SetFontAndSize(font, size).SetFillColor(ColorConstants.BLACK).MoveText(box.GetLeft() + 4, y).ShowText(line).EndText();
+            y -= size * 1.2f;
+        }
+        return xobj;
+    }
+
+    /// <summary>Text broken into lines that fit <paramref name="width"/> (paragraphs kept).</summary>
+    private static List<string> WrapLines(PdfFont font, string text, float size, float width)
+    {
+        var lines = new List<string>();
+        foreach (var para in text.Replace("\r\n", "\n").Split('\n'))
+        {
+            string current = "";
+            foreach (var word in para.Split(' '))
+            {
+                string trial = current.Length == 0 ? word : current + " " + word;
+                if (current.Length > 0 && font.GetWidth(trial, size) > width) { lines.Add(current); current = word; }
+                else current = trial;
+            }
+            lines.Add(current);
+        }
+        return lines;
+    }
+
+    /// <summary>A cloud: scallops all round the box (outward half-circles), optionally filled.</summary>
+    private static PdfFormXObject BuildCloudAppearance(PdfDocument doc, Rectangle outer, Rectangle box, float bump, DeviceRgb stroke, float lw, float[]? interior)
+    {
+        var xobj = new PdfFormXObject(outer);
+        var canvas = new PdfCanvas(xobj, doc);
+        canvas.SaveState().SetStrokeColor(stroke).SetLineWidth(lw);
+        if (interior != null)
+            canvas.SaveState().SetFillColor(new DeviceRgb(interior[0], interior[1], interior[2])).Rectangle(box).Fill().RestoreState();
+        void Edge(float x1, float y1, float x2, float y2, double startAngle)
+        {
+            double len = Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+            int n = Math.Max(1, (int)Math.Round(len / (bump * 2)));
+            for (int i = 0; i < n; i++)
+            {
+                double t = (i + 0.5) / n;
+                float cx = (float)(x1 + (x2 - x1) * t), cy = (float)(y1 + (y2 - y1) * t);
+                float r = (float)(len / n / 2);
+                canvas.Arc(cx - r, cy - r, cx + r, cy + r, startAngle, 180).Stroke();
+            }
+        }
+        float l = box.GetLeft(), b = box.GetBottom(), rgt = box.GetRight(), t = box.GetTop();
+        Edge(l, t, rgt, t, 0);       // top: bulging up
+        Edge(rgt, t, rgt, b, 270);   // right: bulging right
+        Edge(rgt, b, l, b, 180);     // bottom: bulging down
+        Edge(l, b, l, t, 90);        // left: bulging left
+        canvas.RestoreState();
+        return xobj;
+    }
+
+    /// <summary>An insert-text caret: a filled wedge pointing up, in page coordinates.</summary>
+    private static PdfFormXObject BuildCaretAppearance(PdfDocument doc, Rectangle rect, DeviceRgb color)
+    {
+        var xobj = new PdfFormXObject(rect);
+        var canvas = new PdfCanvas(xobj, doc);
+        float l = rect.GetLeft(), b = rect.GetBottom(), w = rect.GetWidth(), h = rect.GetHeight();
+        canvas.SaveState().SetFillColor(color)
+              .MoveTo(l, b).LineTo(l + w / 2, b + h).LineTo(l + w, b)
+              .CurveTo(l + w * 0.65f, b + h * 0.25f, l + w * 0.35f, b + h * 0.25f, l, b).Fill()
+              .RestoreState();
+        return xobj;
+    }
+
     /// <summary>
     /// Appearance for line, arrow, polygon, polyline and measure annotations (in page coordinates,
     /// the form's BBox being the annotation's Rect), so viewers that don't draw these themselves —
@@ -1641,12 +1744,16 @@ public class PdfFormService
             }
             case Models.ShapeKind.Cloud:
             {
-                var sq = new PdfSquareAnnotation(new Rectangle(l, b, w, h));
+                float bump = Math.Clamp(Math.Min(w, h) / 6, 3, 9);   // scallop radius
+                var cloudRect = new Rectangle(l - bump - lw, b - bump - lw, w + 2 * (bump + lw), h + 2 * (bump + lw));
+                var sq = new PdfSquareAnnotation(cloudRect);
                 var be = new PdfDictionary();                   // border effect: cloudy
                 be.Put(PdfName.S, new PdfName("C"));
                 be.Put(PdfName.I, new PdfNumber(1));
                 sq.Put(new PdfName("BE"), be);
+                sq.Put(new PdfName("RD"), new PdfArray(new[] { bump + lw, bump + lw, bump + lw, bump + lw }));
                 if (interior != null) sq.SetInteriorColor(interior);
+                sq.SetNormalAppearance(BuildCloudAppearance(doc, cloudRect, new Rectangle(l, b, w, h), bump, stroke, lw, interior).GetPdfObject());
                 annot = sq;
                 break;
             }

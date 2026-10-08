@@ -1,0 +1,296 @@
+@* The floating toolbox beside the page, like the Windows app's quick-tools rail (ToolboxPanel):
+   each button uses its last-picked tool, and its corner arrow opens a flyout with the others,
+   their colours and options. In Design view it shows the design canvas tools. *@
+@if (_open != null)
+{
+    <div class="pe-flyout-backdrop" @onclick="Close"></div>
+}
+<div class="pe-rail-anchor"><div class="pe-rail-stack">
+    @if (Ed.DesignMode)
+    {
+        <div class="pe-rail design" role="toolbar" aria-label="Design toolbox" aria-orientation="vertical">
+            <span class="pe-rail-grip" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>
+            @foreach (var (tool, icon, label) in DesignTools)
+            {
+                var t = tool;
+                <button class="pe-rail-btn @(Ed.DesignToolNow == t ? "active" : "")" title="@label" aria-label="@label" aria-pressed="@(Ed.DesignToolNow == t)"
+                        @onclick="() => UseDesignTool(t)"><i class="bi @icon"></i></button>
+                @if (t is DesignTool.Select)
+                {
+                    <button class="pe-rail-btn" title="Fill — open the design as a PDF and fill in its fields" aria-label="Fill the form" @onclick="FillDesign"><i class="bi bi-input-cursor-text"></i></button>
+                    <button class="pe-rail-btn" title="Sign — put your signature on the design  (S)" aria-label="Sign" @onclick="SignDesign"><i class="bi bi-pen"></i></button>
+                    <span class="pe-rail-sep"></span>
+                }
+                @if (t is DesignTool.Pen)
+                {
+                    <button class="pe-rail-btn" title="Image — insert a picture  (I)" aria-label="Insert a picture" @onclick="() => Ed.ShowDialog(DialogKind.DesignPicture)"><i class="bi bi-image"></i></button>
+                }
+                @if (t is DesignTool.Cross)
+                {
+                    <span class="pe-rail-sep"></span>
+                }
+            }
+            <span class="pe-rail-sep"></span>
+            <button class="pe-rail-btn @(Ed.DesignGrid ? "active" : "")" title="Grid on / off" aria-label="Toggle grid" aria-pressed="@Ed.DesignGrid"
+                    @onclick="() => { Ed.DesignGrid = !Ed.DesignGrid; Ed.Refresh(); }"><i class="bi bi-grid-3x3"></i></button>
+            <button class="pe-rail-btn @(Ed.DesignSnap ? "active" : "")" title="Snap to grid while placing and dragging" aria-label="Snap to grid" aria-pressed="@Ed.DesignSnap"
+                    @onclick="() => { Ed.DesignSnap = !Ed.DesignSnap; Ed.Refresh(); }"><i class="bi bi-magnet"></i></button>
+        </div>
+    }
+    else if (!Ed.NoDoc)
+    {
+        <div class="pe-rail" role="toolbar" aria-label="Toolbox" aria-orientation="vertical">
+            <span class="pe-rail-grip" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>
+            @foreach (var g in Groups)
+            {
+                var group = g;
+                var current = Current(group);
+                bool active = group.Tools.Any(x => x.Tool == Ed.CurrentTool);
+                <div class="pe-rail-cell">
+                    <button class="pe-rail-btn @(active ? "active" : "")" title="@($"{current.Label} — {group.Name}")" aria-label="@($"{group.Name}: {current.Label}")" aria-pressed="@active"
+                            @onclick="() => Pick(group, current)"><i class="bi @current.Icon @(current.Tool == Tool.VerticalText ? "pe-rot" : "")"></i></button>
+                    <button class="pe-rail-corner" title="@($"More {group.Name.ToLowerInvariant()} tools")" aria-label="@($"{group.Name} options")"
+                            aria-expanded="@(_open == group.Name)" @onclick="() => Toggle(group.Name)"><i class="bi bi-caret-right-fill"></i></button>
+                    @if (_open == group.Name)
+                    {
+                        <div class="pe-flyout" role="menu" aria-label="@group.Name tools">
+                            <div class="pe-flyout-title">@group.Name</div>
+                            @foreach (var s in group.Tools)
+                            {
+                                var sub = s;
+                                <button class="pe-flyout-item @(Ed.CurrentTool == sub.Tool ? "active" : "")" role="menuitem" @onclick="() => Pick(group, sub)">
+                                    <i class="bi @sub.Icon @(sub.Tool == Tool.VerticalText ? "pe-rot" : "")"></i><span>@sub.Label</span>
+                                </button>
+                            }
+                            @switch (group.Name)
+                            {
+                                case "Comment":
+                                    <div class="pe-flyout-sep"></div>
+                                    <label class="pe-flyout-label">Stamp</label>
+                                    <select class="form-select form-select-sm pe-flyout-select" value="@Ed.StampKey" aria-label="Stamp" @onchange="PickStamp">
+                                        @foreach (var sg in Editor.StampGroups)
+                                        {
+                                            <optgroup label="@sg.Key">@foreach (var d in sg) { <option value="@StampCatalog.KeyOf(d)">@d.Title</option> }</optgroup>
+                                        }
+                                    </select>
+                                    <button class="pe-flyout-item" role="menuitem" @onclick="ShowComments"><i class="bi bi-chat-left-dots"></i><span>Show comments list</span></button>
+                                    break;
+                                case "Highlight":
+                                    <div class="pe-flyout-sep"></div>
+                                    <Swatches Colors="Editor.HighlightColors" Selected="@Ed.HighlightColor" OnPick="c => { Ed.HighlightColor = c; Ed.Refresh(); }" />
+                                    break;
+                                case "Draw":
+                                    <div class="pe-flyout-sep"></div>
+                                    <Swatches Colors="Editor.InkColors" Selected="@Ed.StrokeColor" OnPick="c => { Ed.StrokeColor = c; Ed.Refresh(); }" />
+                                    break;
+                                case "Add text":
+                                    <div class="pe-flyout-sep"></div>
+                                    <div class="pe-swatches">
+                                        <button class="pe-swatch default @(Ed.MarkColorChoice == null ? "on" : "")" title="Default — green ✓, black ✕" aria-label="Default mark colours"
+                                                @onclick="() => { Ed.MarkColorChoice = null; Ed.Refresh(); }">✓✕</button>
+                                        @foreach (var (hex, name) in Editor.InkColors)
+                                        {
+                                            var c = hex;
+                                            <button class="pe-swatch @(Ed.MarkColorChoice == c ? "on" : "")" style="background:@c" title="@name" aria-label="@name marks"
+                                                    @onclick="() => { Ed.MarkColorChoice = c; Ed.Refresh(); }"></button>
+                                        }
+                                    </div>
+                                    break;
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Sign: saved signatures and initials, new ones, certificate *@
+            <div class="pe-rail-cell">
+                <button class="pe-rail-btn @(Ed.CurrentTool is Tool.Signature or Tool.Initials ? "active" : "")" title="Sign — place or create your signature  (S)"
+                        aria-label="Sign" aria-expanded="@(_open == "Sign")" @onclick="@(() => Toggle("Sign"))"><i class="bi bi-pen"></i></button>
+                @if (_open == "Sign")
+                {
+                    <div class="pe-flyout" role="menu" aria-label="Sign">
+                        <div class="pe-flyout-title">Sign</div>
+                        @if (Ed.MySignatures.Count == 0 && Ed.SignaturePng == null && Ed.InitialsPng == null)
+                        {
+                            <p class="pe-flyout-hint">No saved signature yet.</p>
+                        }
+                        @foreach (var s in Ed.MySignatures)
+                        {
+                            var saved = s;
+                            <div class="pe-saved-sig">
+                                <button class="pe-saved-sig-img" title="@(saved.Kind == "initials" ? "Place these initials" : "Place this signature")" @onclick="() => UseSaved(saved)">
+                                    <img src="@saved.DataUrl" alt="@(saved.Kind == "initials" ? "Saved initials" : "Saved signature")" />
+                                </button>
+                                <button class="pe-linkbtn" title="Delete" aria-label="Delete this saved @(saved.Kind)" @onclick="() => { Ed.DeleteSavedSignature(saved); Ed.Refresh(); }"><i class="bi bi-trash3"></i></button>
+                            </div>
+                        }
+                        @if (Ed.MySignatures.Count == 0 && Ed.SignaturePng != null)
+                        {
+                            <button class="pe-flyout-item" role="menuitem" @onclick="() => Sign(false)"><i class="bi bi-pen-fill"></i><span>Place my signature</span></button>
+                        }
+                        <div class="pe-flyout-sep"></div>
+                        <button class="pe-flyout-item" role="menuitem" @onclick="() => New(false)"><i class="bi bi-plus-lg"></i><span>Add signature</span></button>
+                        <button class="pe-flyout-item" role="menuitem" @onclick="() => New(true)"><i class="bi bi-plus-lg"></i><span>Add initials</span></button>
+                        <button class="pe-flyout-item" role="menuitem" @onclick="CertSign"><i class="bi bi-patch-check"></i><span>Sign with certificate…</span></button>
+                    </div>
+                }
+            </div>
+
+            @* More tools: measure, navigate, shapes, form fields *@
+            <div class="pe-rail-cell">
+                <button class="pe-rail-btn" title="More tools — measure, hand, zoom, date, stamp, shapes, eraser, form fields"
+                        aria-label="More tools" aria-expanded="@(_open == "More")" @onclick="@(() => Toggle("More"))"><i class="bi bi-three-dots"></i></button>
+                @if (_open == "More")
+                {
+                    <div class="pe-flyout wide" role="menu" aria-label="More tools">
+                        <div class="pe-flyout-cols">
+                            <div>
+                                <div class="pe-flyout-title">Measure</div>
+                                @More(Tool.Distance, "bi-rulers", "Distance")
+                                @More(Tool.Perimeter, "bi-bezier2", "Perimeter")
+                                @More(Tool.Area, "bi-pentagon", "Area")
+                                <div class="pe-units" role="radiogroup" aria-label="Units">
+                                    @foreach (var u in new[] { "in", "cm", "mm", "pt" })
+                                    {
+                                        var unit = u;
+                                        <button class="@(Ed.MeasureUnit == unit ? "on" : "")" role="radio" aria-checked="@(Ed.MeasureUnit == unit)" @onclick="() => { Ed.MeasureUnit = unit; Ed.Refresh(); }">@unit</button>
+                                    }
+                                </div>
+                                <div class="pe-flyout-title">Navigate</div>
+                                @More(Tool.Hand, "bi-hand-index", "Hand — pan  (H)")
+                                @More(Tool.Zoom, "bi-zoom-in", "Zoom  (Z)")
+                                <div class="pe-flyout-title">Fill</div>
+                                @More(Tool.Select, "bi-input-cursor-text", "Fill text field  (F)")
+                                @More(Tool.Select, "bi-check2-square", "Toggle checkbox / radio")
+                                @More(Tool.Date, "bi-calendar-event", "Date stamp  (D)")
+                                @More(Tool.Stamp, "bi-postage", "Text stamp  (M)")
+                            </div>
+                            <div>
+                                <div class="pe-flyout-title">Shapes</div>
+                                @More(Tool.Rectangle, "bi-square", "Rectangle")
+                                @More(Tool.Ellipse, "bi-circle", "Ellipse")
+                                @More(Tool.Arrow, "bi-arrow-up-right", "Arrow")
+                                @More(Tool.Callout, "bi-chat-square-text", "Callout")
+                                @More(Tool.Eraser, "bi-eraser", "Eraser")
+                                <div class="pe-flyout-title">Form fields</div>
+                                <button class="pe-flyout-item @(Ed.PrepareMode ? "active" : "")" role="menuitemcheckbox" aria-checked="@Ed.PrepareMode" @onclick="EditFields">
+                                    <i class="bi bi-ui-checks-grid"></i><span>Edit fields — move / resize  (E)</span></button>
+                                @More(Tool.FieldText, "bi-input-cursor-text", "Add text field")
+                                @More(Tool.FieldCheckbox, "bi-check2-square", "Add checkbox")
+                                @More(Tool.FieldRadio, "bi-record-circle", "Add radio button")
+                                @More(Tool.FieldCombo, "bi-menu-button-wide", "Add combo box")
+                                @More(Tool.FieldList, "bi-list-ul", "Add list box")
+                                @More(Tool.FieldSignature, "bi-pen", "Add signature field")
+                                @More(Tool.FieldDate, "bi-calendar-date", "Add date field")
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Page tools (Acrobat shows these beside the rail) *@
+        <div class="pe-rail pe-rail-pages" role="toolbar" aria-label="Page tools" aria-orientation="vertical">
+            <button class="pe-rail-btn" title="Rotate page clockwise" aria-label="Rotate page clockwise" @onclick="Ed.RotatePageClockwiseAsync"><i class="bi bi-arrow-clockwise"></i></button>
+            <button class="pe-rail-btn" title="Insert a blank page after this one" aria-label="Insert a blank page after this one" @onclick="Ed.InsertBlankAfterAsync"><i class="bi bi-file-earmark-plus"></i></button>
+            <button class="pe-rail-btn" title="Delete this page" aria-label="Delete this page" @onclick="Ed.DeleteThisPageAsync"><i class="bi bi-trash3"></i></button>
+            <button class="pe-rail-btn" title="Extract this page as a new PDF" aria-label="Extract this page as a new PDF" @onclick="Ed.ExtractThisPageAsync"><i class="bi bi-box-arrow-up-right"></i></button>
+        </div>
+    }
+</div></div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+
+    private string? _open;
+    private readonly Dictionary<string, Sub> _current = new();
+
+    public sealed record Sub(Tool Tool, string Icon, string Label);
+    public sealed record Group(string Name, Sub[] Tools);
+
+    // The Windows app's rail: Select, Comment, Highlight, Draw, Add text (then Sign and More).
+    private static readonly Group[] Groups =
+    [
+        new("Select", [new(Tool.Select, "bi-cursor", "Select  (V)"), new(Tool.Hand, "bi-hand-index", "Hand — pan the page  (H)"), new(Tool.Zoom, "bi-zoom-in", "Marquee zoom  (Z)")]),
+        new("Comment", [new(Tool.Note, "bi-sticky", "Sticky note"), new(Tool.Callout, "bi-chat-square-text", "Text callout"),
+            new(Tool.InsertText, "bi-caret-up-fill", "Insert text"), new(Tool.ReplaceText, "bi-input-cursor-text", "Replace text"),
+            new(Tool.Stamp, "bi-postage", "Stamp  (M)")]),
+        new("Highlight", [new(Tool.Highlight, "bi-highlighter", "Highlight text  (I)"), new(Tool.Underline, "bi-type-underline", "Underline text"),
+            new(Tool.Squiggly, "bi-water", "Squiggly underline"), new(Tool.Strikeout, "bi-type-strikethrough", "Strikethrough text")]),
+        new("Draw", [new(Tool.Ink, "bi-brush", "Draw freehand  (W)"), new(Tool.Rectangle, "bi-square", "Rectangle"), new(Tool.Ellipse, "bi-circle", "Ellipse"),
+            new(Tool.Arrow, "bi-arrow-up-right", "Arrow"), new(Tool.Line, "bi-slash-lg", "Line"), new(Tool.Cloud, "bi-cloud", "Cloud"),
+            new(Tool.Polygon, "bi-pentagon", "Polygon (click points, double-click to close)"), new(Tool.Polyline, "bi-bezier", "Polyline (click points, double-click to end)"),
+            new(Tool.Eraser, "bi-eraser", "Eraser")]),
+        new("Add text", [new(Tool.Text, "bi-fonts", "Add text  (T)"), new(Tool.Check, "bi-check-lg", "Checkmark"), new(Tool.Cross, "bi-x-lg", "Cross mark"),
+            new(Tool.Dot, "bi-circle-fill", "Dot"), new(Tool.Circle, "bi-circle", "Circle"), new(Tool.LineMark, "bi-dash-lg", "Line"),
+            new(Tool.Date, "bi-calendar-event", "Date  (D)"), new(Tool.VerticalText, "bi-type", "Vertical text")]),
+    ];
+
+    private static readonly (DesignTool Tool, string Icon, string Label)[] DesignTools =
+    [
+        (DesignTool.Select, "bi-cursor", "Select — move and resize elements  (V)"),
+        (DesignTool.Text, "bi-fonts", "Text  (T)"),
+        (DesignTool.Rectangle, "bi-square", "Rectangle — drag to draw  (R)"),
+        (DesignTool.Ellipse, "bi-circle", "Ellipse — drag to draw  (E)"),
+        (DesignTool.Line, "bi-slash-lg", "Line — drag in any direction  (L)"),
+        (DesignTool.Arrow, "bi-arrow-up-right", "Arrow — drag to draw  (A)"),
+        (DesignTool.Pen, "bi-vector-pen", "Pen — freehand drawing  (P)"),
+        (DesignTool.Table, "bi-table", "Table  (B)"),
+        (DesignTool.Check, "bi-check-lg", "Checkmark  (K)"),
+        (DesignTool.Cross, "bi-x-lg", "X mark  (X)"),
+        (DesignTool.TextField, "bi-input-cursor-text", "Text field"),
+        (DesignTool.Memo, "bi-textarea-t", "Memo — multi-line field"),
+        (DesignTool.Checkbox, "bi-check2-square", "Checkbox field"),
+        (DesignTool.Radio, "bi-record-circle", "Radio button field"),
+        (DesignTool.ComboBox, "bi-menu-button-wide", "Combo box field"),
+        (DesignTool.Signature, "bi-pen", "Signature field"),
+    ];
+
+    private Sub Current(Group g) =>
+        g.Tools.FirstOrDefault(t => t.Tool == Ed.CurrentTool) ?? (_current.TryGetValue(g.Name, out var s) ? s : g.Tools[0]);
+
+    private void Toggle(string name) => _open = _open == name ? null : name;
+    private void Close() => _open = null;
+
+    private async Task Pick(Group g, Sub s)
+    {
+        _current[g.Name] = s;
+        _open = null;
+        await Use(s.Tool);
+    }
+
+    private async Task Use(Tool tool)
+    {
+        _open = null;
+        if (tool == Tool.Signature) await Ed.SignatureToolAsync();
+        else if (tool == Tool.Initials) await Ed.InitialsToolAsync();
+        else Ed.SetTool(tool);
+        Ed.Refresh();
+    }
+
+    private RenderFragment More(Tool tool, string icon, string label) => __builder =>
+    {
+        <button class="pe-flyout-item @(Ed.CurrentTool == tool && tool != Tool.Select ? "active" : "")" role="menuitem" @onclick="() => Use(tool)">
+            <i class="bi @icon"></i><span>@label</span>
+        </button>
+    };
+
+    private void PickStamp(ChangeEventArgs e)
+    {
+        Ed.PickStamp(e.Value?.ToString() ?? Ed.StampKey);
+        _current["Comment"] = Groups[1].Tools.First(t => t.Tool == Tool.Stamp);
+        _open = null;
+        Ed.Refresh();
+    }
+
+    private void ShowComments() { _open = null; Ed.ShowRight(RightTab.Comments); Ed.Refresh(); }
+    private void EditFields() { _open = null; Ed.TogglePrepareMode(); Ed.Refresh(); }
+    private async Task Sign(bool initials) => await Use(initials ? Tool.Initials : Tool.Signature);
+    private void UseSaved(StoredSignature s) { _open = null; Ed.UseSavedSignature(s); Ed.Refresh(); }
+    private void New(bool initials) { _open = null; Ed.NewSignature(initials); Ed.Refresh(); }
+    private void CertSign() { _open = null; Ed.PrepareCertSign(); Ed.ShowDialog(DialogKind.CertSign); Ed.Refresh(); }
+
+    private void UseDesignTool(DesignTool t) { Ed.StartDesignTool(t); Ed.Refresh(); }
+    private async Task FillDesign() { await Ed.OpenDesignAsPdfAsync(); Ed.Refresh(); }
+    private void SignDesign() { Ed.AddDesignSignature(); Ed.Refresh(); }
+}

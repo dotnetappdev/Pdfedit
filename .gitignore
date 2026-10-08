@@ -47,3 +47,6 @@ _msix_stage/
 ## OS generated
 .DS_Store
 Thumbs.db
+
+# PdfEdit.Blazor saved signatures (SQLite)
+PdfEdit.Blazor/pdfedit.db*

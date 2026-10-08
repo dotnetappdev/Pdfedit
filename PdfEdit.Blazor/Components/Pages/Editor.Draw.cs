@@ -20,7 +20,10 @@ public partial class Editor
     private StampDefinition SelectedStamp =>
         StampCatalog.BuiltIn.FirstOrDefault(d => StampCatalog.KeyOf(d) == _stampKey) ?? StampCatalog.BuiltIn[0];
 
-    private void PickStamp(string key)
+    public string StampKey => _stampKey;
+    public string MeasureUnit { get => _measureUnit; set => _measureUnit = value; }
+
+    public void PickStamp(string key)
     {
         _stampKey = key;
         SetTool(Tool.Stamp);
@@ -31,13 +34,15 @@ public partial class Editor
     {
         Tool.Ink => "ink",
         Tool.Line or Tool.Arrow or Tool.Distance => "line",
-        Tool.Perimeter => "poly",
-        Tool.Area => "closed",
+        Tool.Perimeter or Tool.Polyline => "poly",
+        Tool.Area or Tool.Polygon => "closed",
+        Tool.Hand => "pan",
+        Tool.Zoom => "zoom",
         _ => null,
     };
 
     private string? MeasureMode => _tool switch { Tool.Area => "area", Tool.Distance or Tool.Perimeter => "length", _ => null };
-    private double SketchWidth => _tool == Tool.Ink ? _inkWidth : _tool is Tool.Line or Tool.Arrow ? 2 : 1.5;
+    private double SketchWidth => _tool == Tool.Ink ? _inkWidth : _tool is Tool.Line or Tool.Arrow or Tool.Polygon or Tool.Polyline ? 2 : 1.5;
 
     private string SketchColor => _tool is Tool.Distance or Tool.Perimeter or Tool.Area ? MeasureColor : _strokeColor;
     private const string MeasureColor = "#1F4FB5";
@@ -82,11 +87,15 @@ public partial class Editor
     [JSInvokable]
     public Task OnSketch(int page, double[] pct)
     {
+        if (page < 0 && DesignMode) { AddDesignStroke(pct); return InvokeAsync(StateHasChanged); }
         if (Doc == null || pct.Length < 4) return Task.CompletedTask;
         var (pw, ph) = ViewSize(page);
         var pts = new List<PointD>();
         for (int i = 0; i + 1 < pct.Length; i += 2)
             pts.Add(new PointD(Math.Clamp(pct[i], 0, 100) / 100 * pw, Math.Clamp(pct[i + 1], 0, 100) / 100 * ph));
+        if (_tool == Tool.Zoom)
+            return InvokeAsync(() => ZoomToAsync(page, Math.Min(pts[0].X, pts[^1].X), Math.Min(pts[0].Y, pts[^1].Y),
+                Math.Abs(pts[^1].X - pts[0].X), Math.Abs(pts[^1].Y - pts[0].Y)));
 
         var kind = _tool switch
         {
@@ -96,17 +105,19 @@ public partial class Editor
             Tool.Distance => ItemKind.Distance,
             Tool.Perimeter => ItemKind.Perimeter,
             Tool.Area => ItemKind.Area,
+            Tool.Polygon => ItemKind.Polygon,
+            Tool.Polyline => ItemKind.Polyline,
             _ => (ItemKind?)null,
         };
         if (kind == null) return Task.CompletedTask;
         if (kind is ItemKind.Line or ItemKind.Arrow or ItemKind.Distance) pts = [pts[0], pts[^1]];
-        if (kind == ItemKind.Area && pts.Count < 3) { Toast("Click at least three corners, then double-click to finish."); return InvokeAsync(StateHasChanged); }
+        if (kind is ItemKind.Area or ItemKind.Polygon && pts.Count < 3) { Toast("Click at least three corners, then double-click to finish."); return InvokeAsync(StateHasChanged); }
 
         var item = new PageItem
         {
             Kind = kind.Value, Page = page, Points = pts, Unit = _measureUnit,
             Color = kind is ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area ? MeasureColor : _strokeColor,
-            LineWidth = kind == ItemKind.Ink ? _inkWidth : kind is ItemKind.Line or ItemKind.Arrow ? 2 : 1.5,
+            LineWidth = kind == ItemKind.Ink ? _inkWidth : kind is ItemKind.Line or ItemKind.Arrow or ItemKind.Polygon or ItemKind.Polyline ? 2 : 1.5,
         };
         FitSketchBox(item);
         _items.Add(item);
@@ -175,10 +186,10 @@ public partial class Editor
     private IEnumerable<ShapeAnnotation> LineAndMeasureShapes()
     {
         foreach (var i in _items.Where(i => i.Points is { Count: > 1 } && i.Kind is ItemKind.Line or ItemKind.Arrow
-                                             or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area))
+                                             or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area or ItemKind.Polygon or ItemKind.Polyline))
         {
             var pts = i.Points!.Select(p => ToUserPoint(i.Page, p.X, p.Y)).ToList();
-            bool poly = i.Kind is ItemKind.Perimeter or ItemKind.Area;
+            bool poly = i.Kind is ItemKind.Perimeter or ItemKind.Area or ItemKind.Polygon or ItemKind.Polyline;
             var shape = new ShapeAnnotation
             {
                 PageNumber = i.Page + 1,
@@ -188,6 +199,8 @@ public partial class Editor
                     ItemKind.Distance => ShapeKind.Distance,
                     ItemKind.Perimeter => ShapeKind.Perimeter,
                     ItemKind.Area => ShapeKind.Area,
+                    ItemKind.Polygon => ShapeKind.Polygon,
+                    ItemKind.Polyline => ShapeKind.Polyline,
                     _ => ShapeKind.Line,
                 },
                 X1 = poly ? pts.Min(p => p.X) : pts[0].X, Y1 = poly ? pts.Min(p => p.Y) : pts[0].Y,

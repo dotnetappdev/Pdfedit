@@ -12,6 +12,9 @@ public enum Tool
     Select, Text, Date, Check, Cross, Dot, Signature, Note, Highlight, Redact, Rectangle, Ellipse,
     // Stamps, freehand ink, lines and the Measure tools
     Stamp, Ink, Line, Arrow, Distance, Perimeter, Area,
+    // The floating toolbox's extra tools (as in the Windows app's quick-tools rail)
+    Hand, Zoom, Callout, InsertText, ReplaceText, Underline, Squiggly, Strikeout, Cloud, Polygon, Polyline,
+    Eraser, Circle, LineMark, VerticalText, Initials,
     // Prepare Form: add a form field
     FieldText, FieldCheckbox, FieldRadio, FieldCombo, FieldList, FieldDate, FieldSignature,
 }
@@ -28,6 +31,7 @@ public enum DesignTool
 {
     Select, Text, Rectangle, Ellipse, Line, Arrow, Table, Check, Cross,
     TextField, Memo, Checkbox, Radio, ComboBox, Signature,
+    Pen,
 }
 
 public enum ExportFormat { Word, Excel, PowerPoint, Html, Markdown, Epub, Text, Images, Pictures }
@@ -36,6 +40,7 @@ public enum ItemKind
 {
     Text, Mark, Signature, Note, Highlight, Redact, Rectangle, Ellipse,
     Stamp, Ink, Line, Arrow, Distance, Perimeter, Area,
+    Callout, InsertText, ReplaceText, Cloud, Polygon, Polyline,
 }
 
 /// <summary>
@@ -64,7 +69,11 @@ public sealed class PageItem
     /// <summary>Unit a measurement is shown in: in, mm, cm or pt.</summary>
     public string Unit { get; set; } = "in";
 
-    public bool IsSketch => Points != null;
+    public bool IsSketch => Points != null && Kind != ItemKind.Callout;
+    /// <summary>Highlight, underline, squiggly or strikethrough (a Highlight item).</summary>
+    public PdfEdit.Models.HighlightKind Markup { get; set; } = PdfEdit.Models.HighlightKind.Highlight;
+    /// <summary>Text that reads upwards (the toolbox's Vertical text).</summary>
+    public bool Vertical { get; set; }
 
     /// <summary>The measurement shown on a Distance, Perimeter or Area item.</summary>
     public string MeasureLabel()
@@ -85,7 +94,19 @@ public sealed class PageItem
         ItemKind.Mark => $"Mark {Text}",
         ItemKind.Signature => "Signature",
         ItemKind.Note => string.IsNullOrWhiteSpace(Text) ? "Sticky note" : $"Note: {Text}",
-        ItemKind.Highlight => "Highlight",
+        ItemKind.Highlight => Markup switch
+        {
+            PdfEdit.Models.HighlightKind.Underline => "Underline",
+            PdfEdit.Models.HighlightKind.Squiggly => "Squiggly underline",
+            PdfEdit.Models.HighlightKind.Strikethrough => "Strikethrough",
+            _ => "Highlight",
+        },
+        ItemKind.Callout => string.IsNullOrWhiteSpace(Text) ? "Callout" : $"Callout: {Text}",
+        ItemKind.InsertText => string.IsNullOrWhiteSpace(Text) ? "Insert text" : $"Insert “{Text}”",
+        ItemKind.ReplaceText => string.IsNullOrWhiteSpace(Text) ? "Replace text" : $"Replace with “{Text}”",
+        ItemKind.Cloud => "Cloud",
+        ItemKind.Polygon => "Polygon",
+        ItemKind.Polyline => "Polyline",
         ItemKind.Redact => "Redaction (not applied yet)",
         ItemKind.Rectangle => "Rectangle",
         ItemKind.Ellipse => "Ellipse",

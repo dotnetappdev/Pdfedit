@@ -39,8 +39,29 @@ Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PD
 panels and three themes as the Windows app, running PdfEdit.Core and the Pdfium renderer on the
 server. Fill and sign forms, prepare and design forms, stamps, drawing and measuring, OCR,
 compare, certificate signing, the AI assistant and Translate PDF, batch processing and bulk fill,
-Google Drive and OneDrive, Office files to PDF, and several documents open at once.
+Google Drive and OneDrive, Office files to PDF, several documents open at once, and the
+floating toolbox beside the pages.
 How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
+
+**Floating toolbox: Draw tools with ink colours**
+
+![Floating toolbox with the Draw flyout open](docs/screenshots/blazor/toolbox-draw.png)
+
+**Toolbox tools on a page: callout, insert and replace text, highlights, clouds, polygons, marks, vertical text and initials**
+
+![Callouts, text edits, markup, clouds, polygons, marks and initials placed with the toolbox](docs/screenshots/blazor/toolbox-tools.png)
+
+**Saved signatures and initials**
+
+![The Sign flyout with a saved signature and initials](docs/screenshots/blazor/toolbox-sign.png)
+
+**More tools: measure, navigate, fill, shapes and form fields**
+
+![The More flyout](docs/screenshots/blazor/toolbox-more.png)
+
+**Design toolbox with grid and snap**
+
+![The design toolbox with the grid turned on](docs/screenshots/blazor/toolbox-design.png)
 
 **Fill in and sign forms — Light theme**
 

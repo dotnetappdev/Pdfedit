@@ -529,16 +529,22 @@
                     </div>
                 }
             </div>
+            <ToolRail Ed="this" />
             @if (DesignMode)
             {
                 var (dw, dh) = DesignSize;
                 <div class="pe-pages" @onclick="() => SelectedDesignId = null">
-                    <div class="pe-page pe-design-page" style="width:@Css(DesignWidthPx)px;height:@Css(DesignHeightPx)px;background:@DesignColor.ToCss(Design.BgColor, "#fff")">
+                    <div class="pe-page pe-design-page @(DesignGrid ? "grid" : "")" style="width:@Css(DesignWidthPx)px;height:@Css(DesignHeightPx)px;background-color:@DesignColor.ToCss(Design.BgColor, "#fff");--gx:@Css(DesignGridSize / dw * 100)%;--gy:@Css(DesignGridSize / dh * 100)%">
                         @foreach (var item in Design.Elements ?? [])
                         {
                             <DesignItemView @key="item.Id" Ed="this" Item="item" PageW="dw" PageH="dh" />
                         }
-                        @if (_designTool != DesignTool.Select)
+                        @if (_designTool == DesignTool.Pen)
+                        {
+                            <div class="pe-tool-layer" title="Draw with the mouse, pen or finger" data-sketch="ink" data-page="-1" @onclick:stopPropagation="true"
+                                 data-ptw="@Css(dw)" data-pth="@Css(dh)" data-color="#000000" data-width="2" data-unit="in"></div>
+                        }
+                        else if (_designTool != DesignTool.Select)
                         {
                             <div class="pe-tool-layer" title="Click to add, or drag to draw at a size" @onclick:stopPropagation="true"
                                  @onmousedown="DesignDown" @onmouseup="DesignUp"></div>

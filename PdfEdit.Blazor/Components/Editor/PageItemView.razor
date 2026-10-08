@@ -6,7 +6,7 @@
 @switch (i.Kind)
 {
     case ItemKind.Text:
-        <div class="pe-item text" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
+        <div class="pe-item text @(i.Vertical ? "vertical" : "")" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
             <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
             <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here"
                       @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
@@ -46,15 +46,55 @@
             <button class="pe-x" title="Remove" aria-label="Remove stamp" @onclick="Remove">✕</button>
         </div>
         break;
-    case ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area when i.Points != null:
+    case ItemKind.Callout:
+        var tip = i.Points is { Count: > 0 } tp ? tp[0] : new PdfEdit.Models.PointD(i.Left - 30, i.Top + i.Height + 30);
+        var (ax, ay) = CalloutAttach(tip);
+        <div class="pe-item callout" style="@style;border-color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
+            <svg class="pe-callout-line" viewBox="0 0 @Editor.Css(i.Width) @Editor.Css(i.Height)" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="@Editor.Css(ax)" y1="@Editor.Css(ay)" x2="@Editor.Css(tip.X - i.Left)" y2="@Editor.Css(tip.Y - i.Top)" stroke="@i.Color" stroke-width="1" />
+                <circle cx="@Editor.Css(tip.X - i.Left)" cy="@Editor.Css(tip.Y - i.Top)" r="1.6" fill="@i.Color" />
+            </svg>
+            <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
+            <textarea id="item-@i.Id" aria-label="Callout text" placeholder="Type the callout"
+                      @bind="Item.Text" @bind:event="oninput" @onblur="() => Ed.Refresh()"></textarea>
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+            <button class="pe-x" title="Remove" aria-label="Remove callout" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.InsertText:
+        <div class="pe-item caret" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
+            <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
+            <button class="pe-x" title="Remove" aria-label="Remove insert mark" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.ReplaceText:
+        <div class="pe-item replace" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
+            <span class="pe-strike" style="background:@i.Color"></span>
+            <svg class="pe-replace-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+            <button class="pe-x" title="Remove" aria-label="Remove replace mark" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Cloud:
+        <div class="pe-item cloud" style="@style" title="Cloud" data-drag="i:@i.Id">
+            <svg viewBox="0 0 @Editor.Css(i.Width) @Editor.Css(i.Height)" preserveAspectRatio="none" aria-hidden="true">
+                <path d="@CloudPath()" fill="none" stroke="@i.Color" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+                <rect class="hit" x="0" y="0" width="@Editor.Css(i.Width)" height="@Editor.Css(i.Height)" />
+            </svg>
+            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
+            <button class="pe-x" title="Remove" aria-label="Remove cloud" @onclick="Remove">✕</button>
+        </div>
+        break;
+    case ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area
+        or ItemKind.Polygon or ItemKind.Polyline when i.Points != null:
         var vb = $"{Editor.Css(i.Left)} {Editor.Css(i.Top)} {Editor.Css(i.Width)} {Editor.Css(i.Height)}";
         var pts = string.Join(" ", i.Points.Select(p => Editor.Css(p.X) + "," + Editor.Css(p.Y)));
         <div class="pe-item sketch" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
             <svg viewBox="@vb" preserveAspectRatio="none" aria-hidden="true">
-                @if (i.Kind == ItemKind.Area)
+                @if (i.Kind is ItemKind.Area or ItemKind.Polygon)
                 {
                     <polygon class="hit" points="@pts" />
-                    <polygon points="@pts" fill="@(i.Color)22" stroke="@i.Color" stroke-width="@Editor.Css(i.LineWidth)" stroke-linejoin="round" />
+                    <polygon points="@pts" fill="@(i.Kind == ItemKind.Area ? i.Color + "22" : "none")" stroke="@i.Color" stroke-width="@Editor.Css(i.LineWidth)" stroke-linejoin="round" />
                 }
                 else
                 {
@@ -77,7 +117,18 @@
         </div>
         break;
     default:
-        var kind = i.Kind switch { ItemKind.Highlight => "highlight", ItemKind.Redact => "redact", _ => "rect" };
+        var kind = i.Kind switch
+        {
+            ItemKind.Highlight => i.Markup switch
+            {
+                PdfEdit.Models.HighlightKind.Underline => "markup underline",
+                PdfEdit.Models.HighlightKind.Squiggly => "markup squiggly",
+                PdfEdit.Models.HighlightKind.Strikethrough => "markup strike",
+                _ => "highlight",
+            },
+            ItemKind.Redact => "redact",
+            _ => "rect",
+        };
         <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)" data-drag="i:@i.Id">
             <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
             <button class="pe-x" title="Remove" aria-label="Remove" @onclick="Remove">✕</button>
@@ -95,8 +146,40 @@
     {
         ItemKind.Rectangle => $"{style};border-color:{Item.Color};border-width:2px",
         ItemKind.Ellipse => $"{style};border-color:{Item.Color};border-width:2px;border-radius:50%",
+        ItemKind.Highlight when Item.Markup == PdfEdit.Models.HighlightKind.Highlight => $"{style};background:{Item.Color}66",
+        ItemKind.Highlight => $"{style};color:{Item.Color}",
         _ => style,
     };
+
+    // Where the callout's line leaves the box (box-local points): the side facing the tip.
+    private (double X, double Y) CalloutAttach(PdfEdit.Models.PointD tip)
+    {
+        double l = Item.Left, t = Item.Top, w = Item.Width, h = Item.Height;
+        if (tip.X >= l && tip.X <= l + w) return (w / 2, tip.Y > t + h / 2 ? h : 0);
+        if (tip.Y >= t && tip.Y <= t + h) return (tip.X < l ? 0 : w, h / 2);
+        return (tip.X < l ? 0 : w, tip.Y > t + h / 2 ? h : 0);
+    }
+
+    // Scallops all round the box, like the PDF's cloud.
+    private string CloudPath()
+    {
+        double w = Item.Width, h = Item.Height, r0 = Math.Clamp(Math.Min(w, h) / 6, 3, 9);
+        var sb = new System.Text.StringBuilder();
+        void Edge(double x1, double y1, double x2, double y2)
+        {
+            double len = Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+            int n = Math.Max(1, (int)Math.Round(len / (r0 * 2)));
+            for (int k = 0; k < n; k++)
+            {
+                double ax = x1 + (x2 - x1) * k / n, ay = y1 + (y2 - y1) * k / n;
+                double bx = x1 + (x2 - x1) * (k + 1) / n, by = y1 + (y2 - y1) * (k + 1) / n;
+                double r = len / n / 2;
+                sb.Append($"M{Editor.Css(ax)} {Editor.Css(ay)} A{Editor.Css(r)} {Editor.Css(r)} 0 0 1 {Editor.Css(bx)} {Editor.Css(by)} ");
+            }
+        }
+        Edge(0, 0, w, 0); Edge(w, 0, w, h); Edge(w, h, 0, h); Edge(0, h, 0, 0);
+        return sb.ToString();
+    }
 
     // Title and subtitle text sizes, fitted to the stamp like the PDF appearance is.
     private double StampTitleSize()
@@ -165,6 +248,14 @@
     // Grow the box to fit the lines typed (like the Windows app's auto-size text).
     private void Grow()
     {
+        if (Item.Vertical)
+        {
+            // Reads upwards: the box grows taller (and up the page) with the text.
+            var longestV = Item.Text.Split('\n').Max(l => l.Length);
+            double need = Math.Clamp(longestV * Item.FontSize * 0.55 + 6, 20, Item.Top + Item.Height);
+            if (need > Item.Height) { Item.Top -= need - Item.Height; Item.Height = need; }
+            return;
+        }
         var lines = Math.Max(1, Item.Text.Split('\n').Length);
         var longest = Item.Text.Split('\n').Max(l => l.Length);
         Item.Height = Math.Max(Item.Height, lines * Item.FontSize * 1.3 + 2);

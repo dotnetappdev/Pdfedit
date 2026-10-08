@@ -22,6 +22,16 @@ offered on the start page.
     <td align="center"><img src="../docs/screenshots/blazor/theme-high-contrast.png" alt="Filling a form, High contrast theme"><br>High contrast</td>
   </tr>
   <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-draw.png" alt="Floating toolbox, Draw flyout"><br>Floating toolbox</td>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-tools.png" alt="Toolbox tools on a page"><br>Toolbox tools</td>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-sign.png" alt="Saved signatures"><br>Saved signatures and initials</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-more.png" alt="More tools flyout"><br>More tools</td>
+    <td align="center"><img src="../docs/screenshots/blazor/toolbox-design.png" alt="Design toolbox with grid"><br>Design toolbox, grid and snap</td>
+    <td></td>
+  </tr>
+  <tr>
     <td align="center"><img src="../docs/screenshots/blazor/draw-measure.png" alt="Stamp, drawing, arrow and measurement"><br>Stamps, drawing and measuring</td>
     <td align="center"><img src="../docs/screenshots/blazor/design.png" alt="Design canvas"><br>Design a form</td>
     <td align="center"><img src="../docs/screenshots/blazor/rotated-page.png" alt="Rotated page and document tabs"><br>Rotated pages and tabs</td>
@@ -64,6 +74,8 @@ Light, Dark and High Contrast use the Windows app's colours exactly (PdfEdit/The
 | Cloud storage | Google Drive and OneDrive: sign in, browse folders and Shared with me, search, open PDFs (and Google Docs / Sheets / Slides as PDFs), save into a folder, Save Back over the opened file |
 | Compare & Read Aloud | Compare PDFs: page-by-page difference pictures (red only in the old version, green only in the new, orange changed), the old and new pages, and the text lines that changed; Read Page / Read to End with the browser's voices, pause, stop, speed and voice |
 | Certificate signing | Sign with Certificate using your .pfx / .p12 Digital ID or a new self-signed one (downloaded so you can reuse it): in an empty signature field, a box on the page or invisibly, with reason, location, contact, optional timestamp server, certify, and your drawn signature in the box; Check Signatures shows whether each signature is intact, trusted and what it covers. The Digital ID is only held in memory for the session |
+| Floating toolbox | The quick-tools rail beside the pages, like the Windows app's: Select (Hand to pan, Marquee zoom), Comment (sticky note, text callout with a leader line, insert text, replace text, stamps with a picker, comments list), Highlight (highlight, underline, squiggly, strikethrough, with colours), Draw (freehand, rectangle, ellipse, arrow, line, cloud, polygon, polyline, eraser, with ink colours), Add text (text, tick, cross, dot, circle, line, date, vertical text, with mark colours), Sign (saved signatures and initials, add new, sign with certificate), More (measure with units, navigate, fill, shapes, form fields) and page tools (rotate, insert blank, delete, extract). Each group remembers the last tool picked; the corner arrow opens its options. In Design view it becomes the design toolbox: select, fill, sign, text, shapes, pen, picture, table, ticks, crosses, every field type, and a grid with snap. Single-letter shortcuts (V select, H hand, Z zoom, T text, I highlight, W draw, M stamp, D date, S sign, E edit fields) work when you're not typing in a box. Everything saves as real PDF annotations with their own appearance, so they show in any viewer |
+| Saved signatures | Signatures and initials you draw or type can be kept for next time: they're stored in `pdfedit.db` (SQLite) in the app's folder, keyed by an anonymous ID kept in your browser, at most eight of each, and can be deleted from the Sign flyout. Set `PdfEdit:Database` to put the database somewhere else. Digital IDs and passwords are never stored |
 | AI Assistant | Chat about the open PDF with page links, Summarize, Extract data, Review contract, Find personal info, Translate, Fill form with AI, Translate PDF (every paragraph translated and written back in place, keeping the layout; Undo brings back the original), and the changes the AI proposes (fill fields, highlight, redact, notes, stamps, rotate, delete, watermark, bookmarks, commands) applied one by one or all at once |
 
 Keyboard: Ctrl+O, Ctrl+S, Ctrl+P, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+plus/minus, Ctrl+0, Esc.

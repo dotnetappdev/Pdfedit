@@ -100,6 +100,7 @@ public partial class Editor
             await JS.InvokeVoidAsync("pdfedit.listenDrag", _self);
             await JS.InvokeVoidAsync("pdfedit.listenSketch", _self);
             await LoadThemeAsync();
+            await LoadSavedSignaturesAsync();
         }
         if (_observePages && Doc != null)
         {
@@ -290,7 +291,7 @@ public partial class Editor
             .Select(i => new FreeTextAnnotation
             {
                 PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i),
+                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) - (i.Vertical ? 90 : 0),
                 FontColor = i.Color, FontFamily = "Helvetica", GrowToFit = true,
             }).Concat(StampAndInkAnnotations()).ToList();
         var signatures = _items.Where(i => i.Kind == ItemKind.Signature && i.Image != null)
@@ -308,7 +309,9 @@ public partial class Editor
         var highlights = _items.Where(i => i.Kind == ItemKind.Highlight)
             .Select(i => new HighlightAnnotation
             {
-                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H, Color = "#FFEB00",
+                PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
+                Color = i.Color,
+                Kind = i.Markup, Opacity = i.Markup == HighlightKind.Highlight ? 0.4f : 1f,
             }).ToList();
         var shapes = _items.Where(i => i.Kind is ItemKind.Rectangle or ItemKind.Ellipse)
             .Select(i => new ShapeAnnotation
@@ -316,7 +319,8 @@ public partial class Editor
                 PageNumber = i.Page + 1, Kind = i.Kind == ItemKind.Ellipse ? ShapeKind.Ellipse : ShapeKind.Rectangle,
                 X1 = U(i).L, Y1 = U(i).B, X2 = U(i).L + U(i).W, Y2 = U(i).B + U(i).H,
                 StrokeColor = i.Color, FillColor = "", LineWidth = 2,
-            }).Concat(LineAndMeasureShapes()).ToList();
+            }).Concat(LineAndMeasureShapes()).Concat(ToolboxShapes()).ToList();
+        var textEdits = ToolboxTextEdits().ToList();
         var redactions = _items.Where(i => i.Kind == ItemKind.Redact)
             .Select(i => (i.Page + 1, (float)U(i).L, (float)U(i).B, (float)U(i).W, (float)U(i).H))
             .ToList();
@@ -328,14 +332,15 @@ public partial class Editor
         await Store.ApplyAsync(doc, (src, dest) =>
         {
             bool annotate = values.Count > 0 || texts.Count > 0 || signatures.Count > 0 || notes.Count > 0
-                            || highlights.Count > 0 || shapes.Count > 0 || deleted.Count > 0 || bounds.Count > 0 || edits.Count > 0;
+                            || highlights.Count > 0 || shapes.Count > 0 || deleted.Count > 0 || bounds.Count > 0 || edits.Count > 0
+                            || textEdits.Count > 0;
             var step = src;
             if (annotate)
             {
                 step = redactions.Count > 0 ? dest + ".tmp" : dest;
                 Store.Forms.SaveFull(src, step, values, new Dictionary<int, int>(), texts, signatures,
                     flatten: false, deletedFieldNames: deleted, fieldExportValues: onValues, highlightAnnotations: highlights,
-                    stickyNotes: notes, shapeAnnotations: shapes, fieldBounds: bounds, fieldEdits: edits);
+                    stickyNotes: notes, shapeAnnotations: shapes, fieldBounds: bounds, fieldEdits: edits, textEdits: textEdits);
             }
             if (redactions.Count > 0)
             {
@@ -499,7 +504,7 @@ public partial class Editor
         Tool.Area => "Click each corner, double-click (or Enter) to finish; Esc cancels",
         Tool.FieldCheckbox or Tool.FieldRadio => "Click where the box should go",
         Tool.FieldText or Tool.FieldCombo or Tool.FieldList or Tool.FieldDate or Tool.FieldSignature => "Drag to draw the field (or click for a standard size)",
-        _ => "Ready",
+        _ => ToolboxHint(_tool) ?? "Ready",
     };
 
     public async Task SignatureToolAsync()
@@ -551,7 +556,7 @@ public partial class Editor
                 added = new PageItem
                 {
                     Kind = ItemKind.Mark, Page = page, Left = x - m / 2, Top = y - m / 2, Width = m, Height = m,
-                    FontSize = m, Color = _textColor, Text = _tool switch { Tool.Check => "✓", Tool.Cross => "✕", _ => "●" },
+                    FontSize = m, Color = MarkColor(_tool), Text = _tool switch { Tool.Check => "✓", Tool.Cross => "✕", _ => "●" },
                 };
                 break;
             case Tool.Signature when SignaturePng != null:
@@ -576,8 +581,12 @@ public partial class Editor
                 added = new PageItem
                 {
                     Kind = _tool switch { Tool.Highlight => ItemKind.Highlight, Tool.Redact => ItemKind.Redact, Tool.Ellipse => ItemKind.Ellipse, _ => ItemKind.Rectangle },
-                    Page = page, Left = left, Top = top, Width = width, Height = height, Color = _strokeColor,
+                    Page = page, Left = left, Top = top, Width = width, Height = height,
+                    Color = _tool == Tool.Highlight ? _highlightColor : _strokeColor,
                 };
+                break;
+            default:
+                added = await ToolboxItemAsync(page, x, y, left, top, width, height);
                 break;
         }
         if (added == null) return;
@@ -587,7 +596,7 @@ public partial class Editor
         _page = page;
         Status(added.Describe() + " added — Apply Changes or Download writes it into the PDF");
 
-        if (added.Kind == ItemKind.Text)
+        if (added.Kind is ItemKind.Text or ItemKind.Callout)
         {
             _tool = Tool.Select;   // like the Windows app: type straight away
             StateHasChanged();
@@ -628,6 +637,9 @@ public partial class Editor
     {
         switch (keys)
         {
+            case var key when key.StartsWith("Key:"):
+                await ToolboxKeyAsync(key[4]);
+                break;
             case "Ctrl+o": OpenBackstage(Backstage.Open); break;
             case "Ctrl+s": await SaveAsync(); break;
             case "Ctrl+p": await PrintAsync(); break;

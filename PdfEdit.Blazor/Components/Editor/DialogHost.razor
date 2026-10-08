@@ -227,7 +227,7 @@
         break;
 
     case DialogKind.Signature:
-        <Modal Title="Your Signature" OnClose="Close" Wide>
+        <Modal Title="@(Ed.MakingInitials ? "Your Initials" : "Your Signature")" OnClose="CloseSignature" Wide>
             <ChildContent>
                 <div class="pe-panel-tabs mb-2" style="border:0">
                     <button class="pe-panel-tab @(_sigTyped ? "" : "active")" @onclick="() => SetSigMode(false)">Draw</button>
@@ -262,18 +262,24 @@
                                 title="@c" aria-label="Ink colour @c" @onclick="() => SetSigColor(colour)"></button>
                     }
                 </div>
+                <label class="pe-check-label mt-2"><input type="checkbox" @bind="Ed.KeepSignatures" />
+                    Keep @(Ed.MakingInitials ? "these initials" : "this signature") for next time on this browser</label>
             </ChildContent>
             <Footer>
                 @if (!_sigTyped) { <button class="pe-btn me-auto" @onclick="ClearSig">Clear</button> }
-                <button class="pe-btn" @onclick="Close">Cancel</button>
-                <button class="pe-btn primary" @onclick="UseSignature">Use signature</button>
+                <button class="pe-btn" @onclick="CloseSignature">Cancel</button>
+                <button class="pe-btn primary" @onclick="UseSignature">@(Ed.MakingInitials ? "Use initials" : "Use signature")</button>
             </Footer>
         </Modal>
         break;
 
     case DialogKind.Note when Ed.EditingNote is { } note:
-        <Modal Title="Sticky Note" OnClose="CloseNote">
+        <Modal Title="@(note.Kind switch { ItemKind.InsertText => "Insert text", ItemKind.ReplaceText => "Replace text", _ => "Sticky Note" })" OnClose="CloseNote">
             <ChildContent>
+                @if (note.Kind is ItemKind.InsertText or ItemKind.ReplaceText)
+                {
+                    <p class="pe-hint mb-1">@(note.Kind == ItemKind.InsertText ? "The text to insert here:" : "Replace the struck-through text with:")</p>
+                }
                 <textarea class="form-control" rows="5" @bind="note.Text" @bind:event="oninput" aria-label="Note" autofocus></textarea>
             </ChildContent>
             <Footer>
@@ -1320,6 +1326,12 @@
 
     private async Task ClearSig() => await JS.InvokeVoidAsync("pdfedit.sigPad.clear", _sigCanvas);
 
+    private void CloseSignature()
+    {
+        Ed.MakingInitials = false;
+        Close();
+    }
+
     private async Task UseSignature()
     {
         string dataUrl = _sigTyped
@@ -1331,8 +1343,7 @@
             Ed.Refresh();
             return;
         }
-        Ed.SignaturePng = Convert.FromBase64String(dataUrl[(dataUrl.IndexOf(',') + 1)..]);
-        Ed.SetTool(Tool.Signature);
+        Ed.UseNewSignature(Convert.FromBase64String(dataUrl[(dataUrl.IndexOf(',') + 1)..]));
         Close();
     }
 }

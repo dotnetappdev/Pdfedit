@@ -184,6 +184,40 @@ window.pdfedit = (() => {
                 if (!layer || e.button !== 0) return;
                 e.preventDefault();
                 const mode = layer.dataset.sketch;
+                if (mode === 'pan') {
+                    // Hand: drag the pages around (no .NET round trip).
+                    const viewer = layer.closest('.pe-viewer');
+                    const st = { x: e.clientX, y: e.clientY, l: viewer.scrollLeft, t: viewer.scrollTop };
+                    layer.setPointerCapture(e.pointerId);
+                    layer.classList.add('panning');
+                    const mv = ev => { viewer.scrollLeft = st.l - (ev.clientX - st.x); viewer.scrollTop = st.t - (ev.clientY - st.y); };
+                    const end = () => { layer.removeEventListener('pointermove', mv); layer.removeEventListener('pointerup', end); layer.classList.remove('panning'); };
+                    layer.addEventListener('pointermove', mv);
+                    layer.addEventListener('pointerup', end);
+                    return;
+                }
+                if (mode === 'zoom') {
+                    // Marquee zoom: a rectangle; .NET zooms so it fills the window (a click zooms in a step).
+                    const a0 = at(layer, e);
+                    const box = document.createElement('div');
+                    box.className = 'pe-zoom-rect';
+                    layer.appendChild(box);
+                    layer.setPointerCapture(e.pointerId);
+                    const place = p => {
+                        box.style.left = Math.min(a0[0], p[0]) + '%'; box.style.top = Math.min(a0[1], p[1]) + '%';
+                        box.style.width = Math.abs(p[0] - a0[0]) + '%'; box.style.height = Math.abs(p[1] - a0[1]) + '%';
+                    };
+                    const mv = ev => place(at(layer, ev));
+                    const end = ev => {
+                        layer.removeEventListener('pointermove', mv); layer.removeEventListener('pointerup', end);
+                        box.remove();
+                        const p = at(layer, ev);
+                        dotnet.invokeMethodAsync('OnSketch', +layer.dataset.page, [a0[0], a0[1], p[0], p[1]]);
+                    };
+                    layer.addEventListener('pointermove', mv);
+                    layer.addEventListener('pointerup', end);
+                    return;
+                }
                 if (mode === 'poly' || mode === 'closed') {
                     if (poly && poly.layer !== layer) { cancel(poly); poly = null; }
                     poly ??= start(layer, mode === 'closed');
@@ -251,6 +285,18 @@ window.pdfedit = (() => {
             save(id) { try { localStorage.setItem('pdfedit-theme', id); } catch { } },
         },
 
+        // A random ID for this browser, so it gets back the signatures it saved (the site has no accounts).
+        clientId() {
+            try {
+                let id = localStorage.getItem('pdfedit-client');
+                if (!id || !/^[0-9a-f]{32}$/.test(id)) {
+                    id = crypto.randomUUID().replace(/-/g, '');
+                    localStorage.setItem('pdfedit-client', id);
+                }
+                return id;
+            } catch { return ''; }
+        },
+
         timeZone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; },
 
         // Keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+F, Ctrl+P, +, -, Esc, Delete).
@@ -267,6 +313,10 @@ window.pdfedit = (() => {
                     dotnet.invokeMethodAsync('OnShortcut', 'Escape');
                 } else if (k === 'delete' && !inField) {
                     dotnet.invokeMethodAsync('OnDeleteKey');
+                } else if (!inField && !e.altKey && /^[a-z]$/.test(k) && !document.querySelector('.pe-modal, .pe-backstage')
+                           && !document.activeElement?.isContentEditable) {
+                    // The toolbox's single-letter shortcuts (V select, T text, S sign, H hand, Z zoom …).
+                    dotnet.invokeMethodAsync('OnShortcut', 'Key:' + k);
                 }
             });
         },

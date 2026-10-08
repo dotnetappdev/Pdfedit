@@ -14,6 +14,8 @@ builder.Services.AddSingleton<OcrEngine>();
 // Google Drive / OneDrive: OAuth apps from configuration, sign-ins kept per browser session.
 builder.Services.AddScoped<CloudConnections>();
 builder.Services.AddSingleton<CloudSignIns>();
+// Saved signatures and initials: SQLite in the app's folder (pdfedit.db, or PdfEdit:Database).
+builder.Services.AddSingleton<SavedSignatures>();
 
 // Office-to-PDF uses LibreOffice on the server; PdfEdit:Office:LibreOfficePath if it isn't on the PATH.
 if (builder.Configuration["PdfEdit:Office:LibreOfficePath"] is { Length: > 0 } soffice)

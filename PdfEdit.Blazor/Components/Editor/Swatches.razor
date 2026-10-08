@@ -1,0 +1,15 @@
+@* A row of colour swatches (the toolbox's highlight and ink colours). *@
+<div class="pe-swatches" role="radiogroup" aria-label="Colour">
+    @foreach (var (hex, name) in Colors)
+    {
+        var c = hex;
+        <button class="pe-swatch @(string.Equals(Selected, c, StringComparison.OrdinalIgnoreCase) ? "on" : "")" style="background:@c" title="@name"
+                role="radio" aria-checked="@(string.Equals(Selected, c, StringComparison.OrdinalIgnoreCase))" aria-label="@name" @onclick="() => OnPick.InvokeAsync(c)"></button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public (string Hex, string Name)[] Colors { get; set; } = [];
+    [Parameter] public string? Selected { get; set; }
+    [Parameter] public EventCallback<string> OnPick { get; set; }
+}
