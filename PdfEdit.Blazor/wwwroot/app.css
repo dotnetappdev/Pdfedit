@@ -959,6 +959,20 @@ html, body {
 .pe-backstage nav button.active { background: rgba(255, 255, 255, .25); }
 .pe-backstage nav button:disabled { opacity: .5; cursor: default; }
 .pe-backstage nav hr { border-color: rgba(255, 255, 255, .35); margin: 8px 16px; }
+/* Dark themes: a dark sidebar with an accent bar on the open page, instead of a solid blue panel. */
+[data-bs-theme="dark"] .pe-backstage nav {
+    background: var(--pe-sidebar-bg);
+    color: var(--pe-fg);
+    border-right: 1px solid var(--pe-border);
+}
+[data-bs-theme="dark"] .pe-backstage nav button { color: var(--pe-fg); box-shadow: inset 3px 0 0 transparent; }
+[data-bs-theme="dark"] .pe-backstage nav button:hover:not(:disabled) { background: var(--pe-hover); }
+[data-bs-theme="dark"] .pe-backstage nav button.active {
+    background: var(--pe-active);
+    color: var(--pe-accent-hover);
+    box-shadow: inset 3px 0 0 var(--pe-accent);
+}
+[data-bs-theme="dark"] .pe-backstage nav hr { border-color: var(--pe-border); opacity: 1; }
 .pe-backstage section { padding: 28px 40px; overflow: auto; }
 .pe-backstage h2 { font-size: 26px; font-weight: 300; margin: 0 0 16px; }
 .pe-option-list { display: grid; gap: 6px; max-width: 560px; }
