@@ -81,3 +81,20 @@ Signing: pick a saved signature or initials and click where they go.
 Sample PDFs (a two-page invoice, a landscape report, a certificate and a mixed-orientation document) are in the `Samples` folder:
 
 ![Browsing the sample PDFs](screenshots/samples-v1.gif)
+
+## Web version (Blazor)
+
+PdfEdit in the browser ([PdfEdit.Blazor](../PdfEdit.Blazor/README.md)): the same ribbon, panels and themes.
+
+| | |
+|---|---|
+| <img src="screenshots/blazor/theme-light.png" width="480" alt="Filling a form in the web version, Light theme"> | <img src="screenshots/blazor/theme-dark.png" width="480" alt="Dark theme"> |
+| Light | Dark |
+| <img src="screenshots/blazor/theme-high-contrast.png" width="480" alt="High contrast theme"> | <img src="screenshots/blazor/draw-measure.png" width="480" alt="A stamp, freehand drawing, an arrow and a distance measurement"> |
+| High contrast | Stamps, drawing and measuring |
+| <img src="screenshots/blazor/design.png" width="480" alt="Designing a form"> | <img src="screenshots/blazor/rotated-page.png" width="480" alt="Text and a stamp upright on a rotated page, with document tabs"> |
+| Design a form | Rotated pages and document tabs |
+| <img src="screenshots/blazor/batch.png" width="480" alt="Batch Process"> | <img src="screenshots/blazor/bulk-fill.png" width="480" alt="Bulk Fill from a spreadsheet"> |
+| Batch process | Bulk fill from a spreadsheet |
+| <img src="screenshots/blazor/cloud.png" width="480" alt="Opening a PDF from Google Drive"> | <img src="screenshots/blazor/translate-after.png" width="480" alt="A translated page that keeps its layout and colours"> |
+| Google Drive and OneDrive | Translate PDF, keeping layout and colours |

@@ -29,7 +29,7 @@ Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PD
 
 **[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
 
-**[Features](docs/features.md)** · [Video tour](docs/tour.md) · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
+**[Features](docs/features.md)** · [Video tour](docs/tour.md) · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Web version (Blazor)](#blazor-version) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
 
 ## Screenshots
 
