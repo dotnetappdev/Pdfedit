@@ -1,0 +1,8 @@
+{
+  "repo": "dotnetappdev/pdfedit",
+  "name": "PdfEdit",
+  "tagline": "Fill, sign, edit and design PDFs. Free and open source.",
+  "demoUrl": "",
+  "issuesUrl": "https://github.com/dotnetappdev/pdfedit/issues",
+  "docsUrl": "https://github.com/dotnetappdev/pdfedit/tree/devmain/docs"
+}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Download PdfEdit — Windows, Mac and web</title>
+<meta name="description" content="Download PdfEdit for Windows or Mac, or host it on your own server. Free and open source.">
+<!-- @include head -->
+</head>
+<body data-page="download">
+<!-- @include header -->
+<main id="main">
+  <div class="wrap">
+    <div class="section-head">
+      <h1>Download PdfEdit <span data-latest-version></span></h1>
+      <span class="muted">Released <span data-latest-date>…</span> · <a href="whats-new.html">what's new</a></span>
+    </div>
+    <p class="muted">Free for everyone, with nothing to sign up for. Pick the version for your computer below.</p>
+
+    <div class="grid-2">
+      <div>
+        <section class="box" id="windows">
+          <h2>PdfEdit for Windows <span class="badge">Recommended on Windows</span></h2>
+          <div class="body">
+            <p>The full Windows app. The installer includes everything it needs.</p>
+            <div data-downloads="windows"><p class="loading">Finding the latest files…</p></div>
+          </div>
+        </section>
+
+        <section class="box" id="desktop">
+          <h2>PdfEdit Desktop — Windows &amp; Mac</h2>
+          <div class="body">
+            <p>The modern interface as a desktop app. On a Mac, open the disk image and drag PdfEdit to Applications.</p>
+            <div data-downloads="desktop"><p class="loading">Finding the latest files…</p></div>
+            <p class="note" style="margin-top:14px"><strong>First time on a Mac?</strong> If macOS says it can't check the app, right-click PdfEdit in Applications and choose <strong>Open</strong>. On Windows, if SmartScreen appears, choose <strong>More info → Run anyway</strong>.</p>
+          </div>
+        </section>
+
+        <section class="box" id="web">
+          <h2>PdfEdit for the web</h2>
+          <div class="body">
+            <p>Run PdfEdit on your own server and use it from any browser — your team's laptops, phones and tablets. It needs the <a href="https://dotnet.microsoft.com/download/dotnet/10.0">.NET 10</a> runtime.</p>
+            <pre style="overflow:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px;font:13px/1.5 var(--mono)">git clone https://github.com/dotnetappdev/pdfedit.git
+cd pdfedit
+dotnet run --project PdfEdit.Blazor</pre>
+            <p style="margin:0">Then open the address it shows. <a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/PdfEdit.Blazor/README.md">Hosting guide →</a></p>
+          </div>
+        </section>
+
+        <section id="older">
+          <h2>Older versions</h2>
+          <div data-older><p class="loading">Loading…</p></div>
+        </section>
+      </div>
+
+      <aside>
+        <div class="box">
+          <h2>Which one?</h2>
+          <div class="body">
+            <ul class="plain">
+              <li><strong>On Windows:</strong> PdfEdit for Windows has every tool, including scanners.</li>
+              <li><strong>On a Mac:</strong> PdfEdit Desktop. Apple silicon for M1 and newer Macs, Intel for older ones (Apple menu → About This Mac).</li>
+              <li><strong>For a team:</strong> host the web version once; everyone uses it in their browser.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="box">
+          <h2>System requirements</h2>
+          <div class="body">
+            <ul class="plain">
+              <li>Windows 10 (version 2004) or 11, 64-bit</li>
+              <li>macOS 12 Monterey or later</li>
+              <li>PdfEdit Desktop on Windows uses Microsoft Edge WebView2 (the installer adds it if needed)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="box">
+          <h2>Safe downloads</h2>
+          <div class="body"><p style="margin:0">Every file is built by GitHub Actions from the public source code and published on <a href="https://github.com/dotnetappdev/pdfedit/releases">GitHub Releases</a>.</p></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+<!-- @include footer -->
+</body>
+</html>
