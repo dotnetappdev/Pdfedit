@@ -43,6 +43,8 @@ public sealed class PdfSession : IDisposable
     public int Version { get; set; }
     public bool IsModified { get; set; }
     public DateTime LastUsedUtc { get; set; } = DateTime.UtcNow;
+    /// <summary>Its window has gone (a reload, or closed with a draft kept): let it go after a short while unless a reload picks it up.</summary>
+    public bool Released { get; set; }
 
     public Stack<string> UndoStack { get; } = new();
     public Stack<string> RedoStack { get; } = new();
@@ -71,6 +73,8 @@ public sealed class PdfDocumentStore : IDisposable
 {
     public const long MaxUploadBytes = 100 * 1024 * 1024;
     private static readonly TimeSpan Idle = TimeSpan.FromHours(2);
+    /// <summary>How long a released document waits for its window to be reloaded.</summary>
+    private static readonly TimeSpan ReleasedIdle = TimeSpan.FromMinutes(15);
 
     private readonly ConcurrentDictionary<string, PdfSession> _sessions = new();
     private readonly string _root = Path.Combine(Path.GetTempPath(), "PdfEdit.Blazor");
@@ -172,6 +176,24 @@ public sealed class PdfDocumentStore : IDisposable
         if (!_sessions.TryGetValue(id, out var s)) return null;
         s.LastUsedUtc = DateTime.UtcNow;
         return s;
+    }
+
+    /// <summary>A reloaded page picks the document up again: it's in use, not released.</summary>
+    public PdfSession? Reclaim(string id)
+    {
+        var s = Get(id);
+        if (s != null) s.Released = false;
+        return s;
+    }
+
+    /// <summary>
+    /// The window working on it has gone but kept a draft: the document stays a little while so a
+    /// reload carries on with it (Undo included), then goes like any idle one.
+    /// </summary>
+    public void Release(PdfSession session)
+    {
+        session.Released = true;
+        session.LastUsedUtc = DateTime.UtcNow;
     }
 
     public void Close(PdfSession session)
@@ -365,7 +387,7 @@ public sealed class PdfDocumentStore : IDisposable
     private void RemoveIdle()
     {
         foreach (var (id, s) in _sessions)
-            if (DateTime.UtcNow - s.LastUsedUtc > Idle && _sessions.TryRemove(id, out _))
+            if (DateTime.UtcNow - s.LastUsedUtc > (s.Released ? ReleasedIdle : Idle) && _sessions.TryRemove(id, out _))
                 s.Dispose();
         try
         {

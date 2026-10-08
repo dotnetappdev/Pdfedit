@@ -11,6 +11,8 @@ namespace PdfEdit.Blazor.Components.Editor;
 public sealed class DocTab
 {
     public required PdfSession Session { get; init; }
+    /// <summary>The key of this tab's draft in the browser (kept when a restored draft reopens its PDF).</summary>
+    public string DraftId { get; set; } = Guid.NewGuid().ToString("N");
 
     // Shared with the editor while this tab is shown (the editor works on these very objects).
     public Dictionary<string, string> Values { get; } = new();

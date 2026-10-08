@@ -7,9 +7,32 @@
     <div class="pe-drop">
         <i class="bi bi-cloud-arrow-up"></i>
         <strong>Drop a PDF here</strong> or click to choose one
-        <div class="pe-hint">Up to @(PdfDocumentStore.MaxUploadBytes / 1024 / 1024) MB. It's kept on the server only while you work on it.</div>
+        <div class="pe-hint">Up to @(PdfDocumentStore.MaxUploadBytes / 1024 / 1024) MB. It's kept on the server only while you work on it, and your work is kept in this browser as a draft so a reload doesn't lose it.</div>
         <InputFile accept=".pdf,application/pdf" OnChange="OnFile" aria-label="Open a PDF" />
     </div>
+
+    @if (Ed.OtherDrafts.Count > 0)
+    {
+        @* Work kept as drafts in this browser by another window, or one that was closed. *@
+        <div class="pe-recent">
+            <div class="pe-recent-head"><h4 class="pe-hint">Unsaved drafts</h4></div>
+            <ul class="pe-recent-list">
+                @foreach (var d in Ed.OtherDrafts.ToList())
+                {
+                    var draft = d;
+                    <li>
+                        <button class="pe-recent-open" title="Carry on with @d.Name" @onclick="() => ActAsync(() => Ed.RestoreOtherDraftAsync(draft))">
+                            <i class="bi @(d.Kind == "design" ? "bi-pencil-square" : "bi-file-earmark-pdf-fill")"></i>
+                            <span class="pe-recent-name">@d.Name</span>
+                            <span class="pe-recent-meta">@(d.Kind == "design" ? "Design" : "Draft") · @d.When</span>
+                        </button>
+                        <button class="pe-icon-btn" title="Discard this draft" aria-label="Discard the draft of @d.Name" @onclick="() => ActAsync(() => Ed.DiscardDraftAsync(draft))"><i class="bi bi-x"></i></button>
+                    </li>
+                }
+            </ul>
+            <p class="pe-hint pe-recent-note">Kept in this browser only, from a window that was closed or is open elsewhere.</p>
+        </div>
+    }
 
     <RecentFiles Open="file => ActAsync(() => Ed.OpenUploadAsync(file))" />
 

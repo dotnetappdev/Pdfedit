@@ -647,26 +647,32 @@ window.pdfedit = (() => {
     };
 })();
 
+// ── Browser storage ──────────────────────────────────────────────────────────
+// One IndexedDB database for the recent files and the drafts kept against a reload.
+function pdfeditDb(name, mode, work) {
+    const open = () => new Promise((ok, fail) => {
+        const req = indexedDB.open('pdfedit', 2);
+        req.onupgradeneeded = () => {
+            for (const store of ['recent', 'drafts'])
+                if (!req.result.objectStoreNames.contains(store)) req.result.createObjectStore(store, { keyPath: 'id' });
+        };
+        req.onsuccess = () => ok(req.result);
+        req.onerror = () => fail(req.error);
+    });
+    return open().then(d => new Promise((ok, fail) => {
+        const t = d.transaction(name, mode), store = t.objectStore(name);
+        const result = work(store);
+        t.oncomplete = () => { d.close(); ok(result?.result ?? result); };
+        t.onerror = () => { d.close(); fail(t.error); };
+    }));
+}
+
 // ── Recent files ─────────────────────────────────────────────────────────────
 // Files opened from this computer are kept in this browser (IndexedDB) so File → Open can list them
 // and open them again, like the Windows app's recent files. Nothing leaves the browser for this.
 window.pdfeditRecent = (() => {
     const MAX_FILES = 10, MAX_SIZE = 50 * 1024 * 1024;
-    const db = () => new Promise((ok, fail) => {
-        const req = indexedDB.open('pdfedit', 1);
-        req.onupgradeneeded = () => req.result.createObjectStore('recent', { keyPath: 'id' });
-        req.onsuccess = () => ok(req.result);
-        req.onerror = () => fail(req.error);
-    });
-    const tx = async (mode, work) => {
-        const d = await db();
-        return new Promise((ok, fail) => {
-            const t = d.transaction('recent', mode), store = t.objectStore('recent');
-            const result = work(store);
-            t.oncomplete = () => { d.close(); ok(result?.result ?? result); };
-            t.onerror = () => { d.close(); fail(t.error); };
-        });
-    };
+    const tx = (mode, work) => pdfeditDb('recent', mode, work);
     const all = async () => (await tx('readonly', s => s.getAll())) || [];
     const keyOf = f => `${f.name}|${f.size}`;
     // "today 14:05", "yesterday", "Monday" or "3 Oct 2026", in the viewer's own time.
@@ -719,5 +725,77 @@ window.pdfeditRecent = (() => {
                 return true;
             } catch { return false; }
         },
+    };
+})();
+
+// ── Drafts ───────────────────────────────────────────────────────────────────
+// Open documents (with the things placed on them but not applied yet) and the Design canvas are
+// kept in this browser as drafts, so reloading the page, a dropped connection or closing the
+// window doesn't lose them. Each window has its own id (sessionStorage survives a reload, not a
+// new window); a reload brings back that window's drafts, and the start page lists the others.
+window.pdfeditDrafts = (() => {
+    const MAX_PDF = 50 * 1024 * 1024, MAX_AGE = 14 * 864e5;
+    const tx = (mode, work) => pdfeditDb('drafts', mode, work);
+    const get = id => tx('readonly', s => s.get(id));
+    let unsaved = false;
+    window.addEventListener('beforeunload', e => { if (unsaved) { e.preventDefault(); e.returnValue = ''; } });
+    const when = ms => {
+        const d = new Date(ms), today = new Date(); today.setHours(0, 0, 0, 0);
+        const days = Math.round((today - new Date(d).setHours(0, 0, 0, 0)) / 864e5);
+        const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (days <= 0) return 'today ' + time;
+        if (days === 1) return 'yesterday ' + time;
+        return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + time;
+    };
+    const bytes = text => new TextEncoder().encode(text);
+
+    return {
+        windowId() {
+            try {
+                let id = sessionStorage.getItem('pdfedit-window');
+                if (!id) { id = crypto.randomUUID?.() ?? String(Math.random()).slice(2); sessionStorage.setItem('pdfedit-window', id); }
+                return id;
+            } catch { return 'window'; }
+        },
+        // Everything kept, newest first, without the state or the PDF (those are read one at a time).
+        async list() {
+            try {
+                const all = (await tx('readonly', s => s.getAll())) || [];
+                const old = all.filter(d => Date.now() - d.saved > MAX_AGE);
+                if (old.length) await tx('readwrite', s => old.forEach(d => s.delete(d.id)));
+                return all.filter(d => !old.includes(d)).sort((a, b) => b.saved - a.saved).map(d => ({
+                    id: d.id, window: d.window, kind: d.kind, name: d.name, sessionId: d.sessionId, order: d.order,
+                    active: d.active, changes: d.changes, hasPdf: !!d.pdf, when: when(d.saved),
+                }));
+            } catch { return []; }
+        },
+        // Keeps a draft. The PDF itself is fetched from the server again only when it has changed
+        // (pdfKey is the server copy and its version), so a draft can come back even after the
+        // server has let the document go.
+        async put(draft, state, pdfKey) {
+            try {
+                const old = await get(draft.id);
+                let pdf = old?.pdf ?? null, key = old?.pdfKey ?? null;
+                if (draft.kind === 'doc' && pdfKey !== key) {
+                    pdf = null; key = null;
+                    const r = await fetch(`documents/${encodeURIComponent(draft.sessionId)}/file`);
+                    if (r.ok) {
+                        const blob = await r.blob();
+                        if (blob.size <= MAX_PDF) { pdf = blob; key = pdfKey; }
+                    }
+                }
+                await tx('readwrite', s => s.put({ ...draft, state, pdf, pdfKey: key, saved: Date.now() }));
+                return true;
+            } catch { return false; }
+        },
+        // The state and the PDF go back as streams: they can be bigger than one message.
+        async state(id) { const d = await get(id); return bytes(d?.state ?? ''); },
+        async pdf(id) { const d = await get(id); return d?.pdf ? new Uint8Array(await d.pdf.arrayBuffer()) : new Uint8Array(0); },
+        async claim(id, window) {
+            try { const d = await get(id); if (d) await tx('readwrite', s => s.put({ ...d, window })); } catch { }
+        },
+        async remove(id) { try { await tx('readwrite', s => s.delete(id)); } catch { } },
+        // Asks before the page is left while there's work not kept yet.
+        setUnsaved(on) { unsaved = !!on; },
     };
 })();

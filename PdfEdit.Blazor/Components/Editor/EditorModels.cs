@@ -67,6 +67,7 @@ public sealed class PageItem
     /// <summary>Can't be moved, resized, edited or deleted until unlocked (text is saved with the PDF's Locked flag).</summary>
     public bool Locked { get; set; }
     /// <summary>Who added it (kept when an annotation from the PDF is written again).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public string? Author { get => Comment.Author is { Length: > 0 } a ? a : null; set => Comment.Author = value ?? ""; }
     /// <summary>The review thread (Comments panel): note, replies, status, checkmark, dates. Its Id is the item's.</summary>
     public PdfEdit.Models.CommentInfo Comment { get; set; } = new() { Author = "" };
@@ -80,6 +81,8 @@ public sealed class PageItem
     public double FontSize { get; set; } = 12;
     public string Color { get; set; } = "#000000";
     public byte[]? Image { get; set; }
+    /// <summary>The picture as a data: URL for the page (made again from <see cref="Image"/> when a draft is restored).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public string? ImageUrl { get; set; }
     /// <summary>Second line of a dynamic stamp ("By … at …").</summary>
     public string? Subtitle { get; set; }
@@ -95,6 +98,7 @@ public sealed class PageItem
     /// <summary>Turn of text, marks and stamps on the page: 0, 90, 180 or 270 degrees clockwise.</summary>
     public int Rotation { get; set; }
     /// <summary>Text that reads upwards (the toolbox's Vertical text): a 270° turn.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public bool Vertical { get => Rotation == 270; set => Rotation = value ? 270 : 0; }
     public bool QuarterTurn => Rotation is 90 or 270;
     /// <summary>A placed date: the date and the format its text is written in (the Date rows in Properties).</summary>

@@ -65,6 +65,9 @@
                         <RibbonButton Icon="bi-printer" Label="Print" Title="Print the document (Ctrl+P)" Disabled="NoDoc" OnClick="PrintAsync" />
                     </div>
                     <div class="pe-stack">
+                        <RibbonButton Icon="bi-floppy" Label="Save Draft" Title="Keep your work in this browser now — it's also kept every few seconds — so reloading or closing the page doesn't lose it" Disabled="@(NoDoc && Design.Elements is not { Count: > 0 })" OnClick="SaveDraftNowAsync" />
+                    </div>
+                    <div class="pe-stack">
                         <RibbonButton Icon="bi-file-earmark-plus" Label="New" Title="A new blank document" OnClick="NewBlankAsync" />
                         <RibbonButton Icon="bi-x-square" Label="Close" Title="Close the current document (Ctrl+W)" Disabled="NoDoc" OnClick="CloseCurrentAsync" />
                         <RibbonButton Icon="bi-gear" Label="Settings" Title="Settings and preferences" OnClick="() => ShowDialog(DialogKind.Settings)" />
@@ -238,6 +241,7 @@
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-arrow-counterclockwise" Label="Undo" Title="Undo (Ctrl+Z)" Disabled="!CanUndo" OnClick="UndoAsync" />
                         <RibbonButton Icon="bi-x-circle" Label="Discard Changes" Title="Remove what you've added since the last Apply" Disabled="@(NoDoc || !HasPending)" OnClick="DiscardPending" />
+                        <RibbonButton Icon="bi-floppy" Label="Save Draft" Title="Keep your work in this browser now — it's also kept every few seconds — so reloading or closing the page doesn't lose it" Disabled="NoDoc" OnClick="SaveDraftNowAsync" />
                     </div>
                 </RibbonGroup>
                 break;
@@ -700,6 +704,9 @@
                     <div class="pe-stack">
                         <RibbonButton Icon="bi-download" Label="Save Design" Title="Download the design (.pdfdesign) to open later here or in the Windows app" OnClick="SaveDesignAsync" />
                         <RibbonButton Icon="bi-folder2-open" Label="Load Design" Title="Open a .pdfdesign file" OnClick="() => ShowDialog(DialogKind.OpenDesign)" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-floppy" Label="Save Draft" Title="Keep the design in this browser now — it's also kept every few seconds — so reloading or closing the page doesn't lose it" OnClick="SaveDraftNowAsync" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Templates">
@@ -1248,6 +1255,11 @@
     <div class="pe-status" role="status">
         <span>@_status</span>
         <span class="pe-spacer"></span>
+        @if (DraftSavedAt is { } kept && (Doc != null || DesignMode))
+        {
+            <span class="pe-draft-kept" title="Your work is kept in this browser as a draft: reloading or closing the page doesn't lose it"><i class="bi bi-cloud-check"></i> Draft saved @kept.ToString("HH:mm")</span>
+            @if (Doc != null) { <span>·</span> }
+        }
         @if (Doc != null)
         {
             <button title="Previous page" aria-label="Previous page" disabled="@(_page == 0)" @onclick="() => GoToPageAsync(_page - 1)"><i class="bi bi-chevron-left"></i></button>

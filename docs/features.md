@@ -9,6 +9,7 @@ Everything below is free and included. There's no account, no watermark and no d
 ## What's new
 
 - **Templates**: start from one of 70 templates (invoices, quotes, receipts, fillable forms and applications, agreements, letters, resumes, flyers and menus, certificates and cards, worksheets, planners, calendars and budgets) in a gallery with search, categories and a preview, like Office's. Customise it on the Design canvas or open it straight away as a fillable PDF. File → New from Template on Windows, File → New on the web.
+- **Drafts on the web**: your work is kept in the browser as you go: open documents, things placed on them but not applied yet, typed field values and the Design canvas. A reload, a dropped connection or a server restart brings everything back. Save Draft keeps it straight away, and drafts from a closed window wait on the start page.
 - **Web version catches up**: added text, stamps, marks, drawings and highlights stay editable after saving; a floating toolbar and right-click menus; Properties and Lock for the selected item; a Comments panel with review status, checkmarks, notes and replies; thumbnail rotate, delete, menu and drag to reorder; All tools docked on the left; recent files; editing the PDF's own links; dates that change format in place.
 - **Edit images**: select any picture already in a PDF to move it, resize it, replace it with another, save it, copy it or delete it.
 - **Snapshot**: drag a box round any area of a page and copy it or save it as a picture.

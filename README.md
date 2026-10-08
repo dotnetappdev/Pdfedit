@@ -44,6 +44,8 @@ Google Drive and OneDrive, Office files to PDF, several documents open at once, 
 floating toolbox beside the pages.
 How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdit.Blazor/README.md).
 
+**Drafts: reloading the page doesn't lose your work.** Open documents, things placed on them but not applied yet, field values and the Design canvas are kept in the browser as you go (and at once with Save Draft), and come back after a reload; drafts from a closed window wait on the start page.
+
 **Templates: 70 to start from, in a gallery like Office's (File → New)**
 
 ![The template gallery](docs/screenshots/blazor/templates-gallery.png)

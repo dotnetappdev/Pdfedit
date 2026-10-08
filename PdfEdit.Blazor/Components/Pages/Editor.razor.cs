@@ -103,8 +103,10 @@ public partial class Editor
             await LoadThemeAsync();
             await LoadSavedSignaturesAsync();
             LoadPrefs();
+            await RestoreDraftsAsync();
             StateHasChanged();
         }
+        _draftDirty = true;
         if (_observePages && Doc != null)
         {
             _observePages = false;
@@ -127,7 +129,10 @@ public partial class Editor
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var tab in Tabs) Store.Close(tab.Session);
+        _draftTimer?.Dispose();
+        // With a draft kept in the browser, a reload picks the documents up again; otherwise they go now.
+        foreach (var tab in Tabs)
+            if (_draftsReady) Store.Release(tab.Session); else Store.Close(tab.Session);
         _keepAlive?.Dispose();
         SigningCert?.Dispose();
         _self?.Dispose();
