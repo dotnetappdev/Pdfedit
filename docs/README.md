@@ -1,6 +1,6 @@
 # Docs
 
-These pages are also the [PdfEdit user guide](https://dotnetappdev.github.io/Pdfedit/docs/index.html) on the website, with step-by-step [tutorials](https://dotnetappdev.github.io/Pdfedit/tutorials/index.html). Help → User Guide in the app opens it.
+These pages are also the [PdfEdit user guide](https://dotnetappdev.github.io/Pdfedit/docs/index.html) on the website, with step-by-step [tutorials](https://dotnetappdev.github.io/Pdfedit/tutorials/index.html). Help > User Guide in the app opens it.
 
 - [Features](features.md)
 - [Video tour](tour.md)

@@ -1,6 +1,6 @@
 # Building from source and releases
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 ## Running from source
 
@@ -70,8 +70,8 @@ installer/desktop/build-mac.sh               # dist/PdfEdit-Desktop-<version>-ma
   Intel and packs each in a disk image; elsewhere it makes a `.tar.gz` of the app to check). It's
   signed ad hoc unless `MACOS_SIGN_IDENTITY` names a Developer ID certificate; with `APPLE_ID`,
   `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD` set too it's notarized, so it opens without a warning.
-  Signed ad hoc, the first launch needs right-click → **Open** (or System Settings → Privacy &
-  Security → Open Anyway).
+  Signed ad hoc, the first launch needs right-click > **Open** (or System Settings > Privacy &
+  Security > Open Anyway).
 
 GitHub Actions builds both on every release (the `desktop-windows` and `desktop-mac` jobs add them to
 the release), and the **PdfEdit Desktop installers** workflow builds them on demand or whenever the

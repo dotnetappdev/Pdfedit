@@ -1,6 +1,6 @@
 # Screenshots
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 These are rendered mock-ups of the interface rather than captures of the running app, so small details may differ. The ribbon and form-filling images are drawn from the real ribbon layout and can be regenerated with `node docs/screenshots/src/render.mjs`.
 
@@ -74,7 +74,7 @@ Signing: pick a saved signature or initials and click where they go.
 
 ![PdfEdit in each of its themes](screenshots/themes.png)
 
-| Settings → Accessibility |
+| Settings > Accessibility |
 |---|
 | <img src="screenshots/settings-accessibility.png" width="480" alt="Sizes, screen reader and narration settings"> |
 
@@ -88,8 +88,8 @@ PdfEdit in the browser ([PdfEdit.Blazor](../PdfEdit.Blazor/README.md)): the same
 
 | | |
 |---|---|
-| <img src="screenshots/blazor/templates-gallery.png" width="480" alt="The template gallery (File → New)"> | <img src="screenshots/blazor/templates-preview.png" width="480" alt="A template in the preview"> |
-| Templates (File → New) | Template preview |
+| <img src="screenshots/blazor/templates-gallery.png" width="480" alt="The template gallery (File > New)"> | <img src="screenshots/blazor/templates-preview.png" width="480" alt="A template in the preview"> |
+| Templates (File > New) | Template preview |
 | <img src="screenshots/blazor/start-page.png" width="480" alt="Start page with recent files and templates"> | <img src="screenshots/blazor/item-toolbar.png" width="480" alt="The floating toolbar over selected text"> |
 | Recent files and featured templates | Floating toolbar on anything you add |
 | <img src="screenshots/blazor/right-click-menu.png" width="480" alt="Right-click menu on a stamp"> | <img src="screenshots/blazor/properties-panel.png" width="480" alt="Properties of the selected item"> |

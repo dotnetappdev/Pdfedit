@@ -40,7 +40,7 @@ function classify(name) {
 }
 
 // Plain punctuation for the site: no long dashes or curly quotes.
-const plain = t => t.replace(/\s+[—–]\s+/g, ', ').replace(/[—–]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+const plain = t => t.replace(/\s+[\u2014\u2013]\s+/g, ', ').replace(/[\u2014\u2013]/g, '-').replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/\s*\u2192\s*/g, ' > ').replace(/\u2026/g, '...').replace(/\s\u00B7\s/g, ', ');
 
 // The "What's new" list from the release text: one line per change, without the commit hash.
 function whatsNew(body = '') {

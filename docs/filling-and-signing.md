@@ -1,6 +1,6 @@
 # Filling and signing
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 Here's a flat form (no fields, just boxes printed on the page) being filled in, ticked, signed and saved in Live View:
 
@@ -19,7 +19,7 @@ When a document has fields, a bar across the top offers two things:
 - **Highlight Existing Fields** shades every field light blue so the empty ones are easy to spot. Required fields get a red outline.
 - **Prepare Form** switches to editing the fields themselves (see [Preparing forms](forms.md)).
 
-To check you haven't missed anything, use **Forms → Validate**. It lists the empty required fields and jumps to the first one.
+To check you haven't missed anything, use **Forms > Validate**. It lists the empty required fields and jumps to the first one.
 
 ## Flat PDFs (no fields)
 
@@ -51,7 +51,7 @@ The **Marks** group places ticks (✓), crosses (✕), dots (●), circles (○)
 
 ## Signatures
 
-Click **Sign** to place your signature, or use **New Signature…** to draw, type or import one first. **New Initials…** does the same for initials. Saved signatures are kept for next time.
+Click **Sign** to place your signature, or use **New Signature...** to draw, type or import one first. **New Initials...** does the same for initials. Saved signatures are kept for next time.
 
 ![Placing a signature from the saved signatures list](screenshots/fill-signature.png)
 

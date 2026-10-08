@@ -62,7 +62,7 @@ HTTPS is also needed for installing PdfEdit as an app, Share, Dictate and locati
 
 ## Share an AI key (optional)
 
-Each person can paste their own key in **AI Assistant → API Keys**. To give everyone one, set it in the server's environment, never in a committed file:
+Each person can paste their own key in **AI Assistant > API Keys**. To give everyone one, set it in the server's environment, never in a committed file:
 
 ```bash
 export PdfEdit__Ai__Provider=Claude          # Claude, OpenAI, Copilot or Local

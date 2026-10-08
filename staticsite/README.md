@@ -2,7 +2,7 @@
 
 The project's website: home, downloads, what's new, screenshots, the **user guide** and
 **tutorials**, in the style of classic software sites, with light and dark themes. Plain HTML, CSS
-and a little JavaScript, with no framework. Help → User Guide / Tutorials in the Windows app, the web
+and a little JavaScript, with no framework. Help > User Guide / Tutorials in the Windows app, the web
 version and the Mac app open it (the addresses are in `PdfEdit.Core/Services/HelpLinks.cs`).
 
 ```
@@ -28,9 +28,9 @@ The **Website** workflow (`.github/workflows/website.yml`) fetches the releases,
 publishes it after every release, daily, and whenever the site changes. It works either way GitHub
 Pages is set up:
 
-- **Settings → Pages → Source: GitHub Actions**: deployed directly (the workflow also asks GitHub to
+- **Settings > Pages > Source: GitHub Actions**: deployed directly (the workflow also asks GitHub to
   turn this on);
-- otherwise the site is pushed to the **gh-pages** branch: choose **Source: Deploy from a branch →
+- otherwise the site is pushed to the **gh-pages** branch: choose **Source: Deploy from a branch >
   gh-pages / (root)**.
 
 Every link is relative, so it works at `https://<owner>.github.io/<repo>/` or on its own domain.
@@ -70,7 +70,7 @@ box.
 Every page has an **Ask the guide** button (`assets/js/ask.js`). It answers questions from the user
 guide and tutorials: the build cuts them into passages (`data/chunks.json`, one per heading), the
 page picks the best ones for each question and an LLM answers from those only, citing them as
-links. Visitors choose who answers in its ⚙ settings: the site's own assistant, a **free AI that runs
+links. Visitors choose who answers in its settings: the site's own assistant, a **free AI that runs
 in their browser** (the default when no site assistant is set up), their own Claude or OpenAI key
 (kept in their browser), a local model (Ollama, LM Studio), or no AI (the matching sections).
 
@@ -87,7 +87,7 @@ page opens the chat with that question.
 ```bash
 npm ci --prefix staticsite                  # once: the Markdown converter
 node staticsite/tools/update-releases.mjs   # refresh data/releases.json (optional)
-node staticsite/tools/build.mjs             # → staticsite/_site
+node staticsite/tools/build.mjs             # > staticsite/_site
 python3 -m http.server -d staticsite/_site  # then open http://localhost:8000
 ```
 

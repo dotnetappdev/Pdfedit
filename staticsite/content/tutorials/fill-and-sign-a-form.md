@@ -12,7 +12,7 @@ order: 1
 
 ## Before you start
 
-You need a PDF form, for example one you were emailed or downloaded. To practise, use any form from the `Samples` folder in the PdfEdit download, or make one from a template: **File → New from Template** (on Windows), or **New** on the start page (on Mac and the web).
+You need a PDF form, for example one you were emailed or downloaded. To practise, use any form from the `Samples` folder in the PdfEdit download, or make one from a template: **File > New from Template** (on Windows), or **New** on the start page (on Mac and the web).
 
 ## Open the form
 
@@ -39,23 +39,23 @@ To change the format, select the date and pick another in the **Properties** pan
 
 ## Create your signature (once)
 
-On the **Fill & Sign** tab, click **New Signature…** and choose how to make it:
+On the **Fill & Sign** tab, click **New Signature...** and choose how to make it:
 
 - **Draw** it with your mouse, trackpad, pen or finger
 - **Type** your name and pick a handwriting-style font
 - use a **photo** or scan of your signature. PdfEdit removes the paper behind the ink.
 
-Your signature is saved for next time. Do the same with **New Initials…** if the form asks for initials.
+Your signature is saved for next time. Do the same with **New Initials...** if the form asks for initials.
 
 ## Sign
 
 Click **Sign** and then click the signature line. Drag the signature to move it, and use the corner handle to resize it.
 
-> **Note:** this puts a picture of your signature on the page, like signing on paper. If someone asks for a *digital signature*, use **Certificate…** on the same tab instead. It needs a Digital ID (`.pfx` file).
+> **Note:** this puts a picture of your signature on the page, like signing on paper. If someone asks for a *digital signature*, use **Certificate...** on the same tab instead. It needs a Digital ID (`.pfx` file).
 
 ## Check you haven't missed anything
 
-Use **Validate** (Forms tab on Windows; **Edit → Validate Required** on Mac and the web). It lists any required fields that are still empty and jumps to the first one.
+Use **Validate** (Forms tab on Windows; **Edit > Validate Required** on Mac and the web). It lists any required fields that are still empty and jumps to the first one.
 
 ## Save and send
 

@@ -1,6 +1,6 @@
 # Features
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 ![PdfEdit filling in a form](screenshots/demo-v4.gif)
 
@@ -9,7 +9,7 @@ Everything below is free and included. There's no account, no watermark and no d
 ## What's new
 
 - **PdfEdit Desktop for Windows and Mac** (new in 1.4): the web version in its own desktop window, built with Avalonia, with installers for Windows and for Apple silicon and Intel Macs. It works offline from the web, keeps your files on your computer, saves with the system's Save dialog and opens PDFs from Explorer or Finder. Installs alongside the Windows app.
-- **Templates**: start from one of 70 templates (invoices, quotes, receipts, fillable forms and applications, agreements, letters, resumes, flyers and menus, certificates and cards, worksheets, planners, calendars and budgets) in a gallery with search, categories and a preview, like Office's. Customise it on the Design canvas or open it straight away as a fillable PDF. File → New from Template on Windows, File → New on the web.
+- **Templates**: start from one of 70 templates (invoices, quotes, receipts, fillable forms and applications, agreements, letters, resumes, flyers and menus, certificates and cards, worksheets, planners, calendars and budgets) in a gallery with search, categories and a preview, like Office's. Customise it on the Design canvas or open it straight away as a fillable PDF. File > New from Template on Windows, File > New on the web.
 - **Quick wins**: open a PDF from a web link (both apps); a signature from a photo with the paper removed (both); the form's progress in the status bar with a jump to the next empty field (both); several PDFs dropped at once each open in a tab (both); the screen stays on while reading aloud, auto-scrolling or presenting (both); the taskbar button flashes (Windows) or the tab title flashes and a notification shows (web) when a long job finishes while you're elsewhere. The web version also installs as an app and opens PDFs from Open with, continues on your phone with a QR code, reopens documents where you left them, writes stamp dates in your own format and can reduce motion.
 - **Share, dictate and stamp where you are (web)**: Share sends the PDF through your phone's or computer's share sheet; Dictate types what you say into fields and notes; dynamic stamps can add your location.
 - **Drafts on the web**: your work is kept in the browser as you go: open documents, things placed on them but not applied yet, typed field values and the Design canvas. A reload, a dropped connection or a server restart brings everything back. Save Draft keeps it straight away, and drafts from a closed window wait on the start page.

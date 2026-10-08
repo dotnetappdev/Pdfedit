@@ -1,7 +1,7 @@
 # PdfEdit demo video: script and shot list
 
 > **Production note:** record on Windows with OBS Studio or Camtasia. Record the voiceover yourself
-> or use a text-to-speech voice. Aim for **90 seconds**. Export as MP4 (H.264, 1920×1080, 30 fps).
+> or use a text-to-speech voice. Aim for **90 seconds**. Export as MP4 (H.264, 1920x1080, 30 fps).
 
 ---
 
@@ -90,7 +90,7 @@ change the fill colour to light blue. Add a logo and drag it into the header; it
 
 ## Checklist
 
-- [ ] Record at 1920×1080, 30 fps
+- [ ] Record at 1920x1080, 30 fps
 - [ ] Use the **Dark** theme, except High contrast in scene 5
 - [ ] Voiceover at about 140 words a minute
 - [ ] Quiet background music, faded out in scene 6

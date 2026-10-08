@@ -1,14 +1,14 @@
 # Preparing forms
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 ## Adding fields
 
 Choose **Prepare a form** in All tools, **Prepare Form** on the form bar, or press E. A toolbar appears above the page with:
 
-Select · Text · Check Box · Radio Button · List Box · Dropdown · Signature · Date
+Select | Text | Check Box | Radio Button | List Box | Dropdown | Signature | Date
 
-Click the page to drop a field at its default size, or drag to size it yourself. New fields are named the way Acrobat names them (`Text1`, `Check Box1`, `Group1`…). A small popup under the field lets you rename it straight away, mark it required, or add another button to a radio group.
+Click the page to drop a field at its default size, or drag to size it yourself. New fields are named the way Acrobat names them (`Text1`, `Check Box1`, `Group1`...). A small popup under the field lets you rename it straight away, mark it required, or add another button to a radio group.
 
 Fields can go on any PDF, including scans that have no form at all.
 

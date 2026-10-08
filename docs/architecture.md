@@ -1,6 +1,6 @@
 # How the code is organised
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 PdfEdit is a .NET 10 app split into libraries, so the UI can be swapped (Avalonia, MAUI, a command-line tool or a web API) without touching the logic or the renderer:
 
@@ -15,7 +15,7 @@ PdfEdit is a .NET 10 app split into libraries, so the UI can be swapped (Avaloni
 
 ### How a page is drawn
 
-`RendererFactory` picks an engine from Settings → Render Engine. The built-in engine (`CustomPdfEngine`) reads the page's drawing operators and calls an `IDrawingSurface`: fill or stroke a path, push a clip, transform or opacity, draw an image or a glyph. `PdfEdit.Drawing.Wpf` turns those calls into a WPF `DrawingContext` and a bitmap. The Pdfium engine renders to pixels by itself. `WpfPdfRenderer` gives the app a `BitmapSource` either way.
+`RendererFactory` picks an engine from Settings > Render Engine. The built-in engine (`CustomPdfEngine`) reads the page's drawing operators and calls an `IDrawingSurface`: fill or stroke a path, push a clip, transform or opacity, draw an image or a glyph. `PdfEdit.Drawing.Wpf` turns those calls into a WPF `DrawingContext` and a bitmap. The Pdfium engine renders to pixels by itself. `WpfPdfRenderer` gives the app a `BitmapSource` either way.
 
 To render with another UI, implement `IDrawingBackend`, `IDrawingSurface` and `IFontProvider` for it (about 200 lines; Avalonia's `DrawingContext` and SkiaSharp both map almost one to one), and wrap pages for its image type, as `PdfEdit.Drawing.Wpf` does for WPF. The engines themselves don't change.
 
@@ -41,7 +41,7 @@ A new front end references `PdfEdit.Core` and gets all of the above. What it sti
 
 ## Rendering
 
-You can choose between three page renderers in **Settings → Render Engine**:
+You can choose between three page renderers in **Settings > Render Engine**:
 
 | Engine | Notes |
 |--------|-------|

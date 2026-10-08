@@ -20,11 +20,11 @@ Other downloads for Windows:
 
 - **Portable ZIP (no install)**: unzip anywhere, even a USB stick, and run `PdfEdit.exe`. Everything it needs is inside.
 - **ZIP (needs .NET 10 Desktop Runtime)**: a much smaller download if the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) is already installed.
-- **MSIX package**: for people who prefer Windows' own installer. Install the test certificate first (double-click the `.cer`, choose **Install Certificate → Local Machine → Trusted People**), then open the `.msix`.
+- **MSIX package**: for people who prefer Windows' own installer. Install the test certificate first (double-click the `.cer`, choose **Install Certificate > Local Machine > Trusted People**), then open the `.msix`.
 
 ### Updating
 
-**Help → Check for Updates** finds the newest version, downloads the right file for how you installed PdfEdit, checks it and installs it. PdfEdit also checks each time it starts and asks before doing anything. Your settings, signatures, stamps and recent files are kept.
+**Help > Check for Updates** finds the newest version, downloads the right file for how you installed PdfEdit, checks it and installs it. PdfEdit also checks each time it starts and asks before doing anything. Your settings, signatures, stamps and recent files are kept.
 
 ## Mac
 
@@ -32,9 +32,9 @@ Other downloads for Windows:
    - **Apple silicon** for Macs with an M1 chip or newer
    - **Intel** for older Macs
 
-   Not sure? Open the Apple menu → **About This Mac**. It says *Chip: Apple M…* or *Processor: Intel*.
+   Not sure? Open the Apple menu > **About This Mac**. It says *Chip: Apple M...* or *Processor: Intel*.
 2. Open the `.dmg` and drag **PdfEdit** into **Applications**.
-3. The first time, macOS may say it can't check PdfEdit for malicious software. Right-click (or Control-click) PdfEdit in Applications and choose **Open**, then **Open** again. On macOS 15 and later, open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to PdfEdit.
+3. The first time, macOS may say it can't check PdfEdit for malicious software. Right-click (or Control-click) PdfEdit in Applications and choose **Open**, then **Open** again. On macOS 15 and later, open **System Settings > Privacy & Security**, scroll down and click **Open Anyway** next to PdfEdit.
 
 After that it opens like any other app, and you can choose it under **Open With** for PDFs in Finder.
 
@@ -56,7 +56,7 @@ Then open the address it prints. [Hosting PdfEdit for the web](web-version.md) c
 
 ## Removing PdfEdit
 
-- **Windows**: Settings → Apps → Installed apps → PdfEdit → Uninstall. For the portable ZIP, delete the folder.
+- **Windows**: Settings > Apps > Installed apps > PdfEdit > Uninstall. For the portable ZIP, delete the folder.
 - **Mac**: drag PdfEdit from Applications to the Bin.
 
 Your settings live in `%AppData%\PdfEdit` on Windows and in your user Application Support folder on a Mac, if you want to remove those too.

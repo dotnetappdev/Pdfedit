@@ -1,16 +1,16 @@
 # Troubleshooting and FAQ
 
-Answers to the questions people ask most. If yours isn't here, [open an issue on GitHub](https://github.com/dotnetappdev/pdfedit/issues/new). Include what you did, what happened, and your version (Help → About PdfEdit).
+Answers to the questions people ask most. If yours isn't here, [open an issue on GitHub](https://github.com/dotnetappdev/pdfedit/issues/new). Include what you did, what happened, and your version (Help > About PdfEdit).
 
 ## Installing and starting
 
 ### Windows says it protected my PC
 
-That's SmartScreen. The installer isn't signed with a paid certificate yet. Click **More info → Run anyway**. Every file is built by GitHub Actions from the public source code.
+That's SmartScreen. The installer isn't signed with a paid certificate yet. Click **More info > Run anyway**. Every file is built by GitHub Actions from the public source code.
 
 ### macOS says PdfEdit can't be opened or checked
 
-Right-click PdfEdit in Applications and choose **Open**. On macOS 15 and later, go to **System Settings → Privacy & Security** and click **Open Anyway** next to PdfEdit. You only need to do this once.
+Right-click PdfEdit in Applications and choose **Open**. On macOS 15 and later, go to **System Settings > Privacy & Security** and click **Open Anyway** next to PdfEdit. You only need to do this once.
 
 ### PdfEdit for Mac shows a blank window
 
@@ -36,17 +36,17 @@ Some viewers, especially on phones, don't draw form fields well. Use **Flatten &
 
 ### Validate says required fields are empty
 
-**Forms → Validate** (Edit → Validate Required on the web) lists them and jumps to the first. Required fields have a red outline when **Highlight Fields** is on.
+**Forms > Validate** (Edit > Validate Required on the web) lists them and jumps to the first. Required fields have a red outline when **Highlight Fields** is on.
 
 ## Signing
 
 ### What's the difference between Sign and Certificate?
 
-**Sign** puts a picture of your signature on the page, like signing paper. **Certificate…** (a Digital ID) adds a cryptographic signature that shows if the file is changed afterwards. Use a certificate when the other side asks for a digital signature.
+**Sign** puts a picture of your signature on the page, like signing paper. **Certificate...** (a Digital ID) adds a cryptographic signature that shows if the file is changed afterwards. Use a certificate when the other side asks for a digital signature.
 
 ### My signature has a grey background
 
-Import the photo again with **New Signature → Image**. PdfEdit removes the paper behind the ink. A photo taken in good light on plain white paper works best.
+Import the photo again with **New Signature > Image**. PdfEdit removes the paper behind the ink. A photo taken in good light on plain white paper works best.
 
 ## Scanning and OCR
 
@@ -56,7 +56,7 @@ PdfEdit lists what Windows' own Scan app sees. Check that the scanner works ther
 
 ### OCR found no text, or the wrong text
 
-Scan at 300 dpi in greyscale, and straighten the pages first with **Clean Up Scans**. For languages other than English, download the language in **Settings → OCR**.
+Scan at 300 dpi in greyscale, and straighten the pages first with **Clean Up Scans**. For languages other than English, download the language in **Settings > OCR**.
 
 ## Saving and files
 
@@ -76,7 +76,7 @@ If it asks for a password to open, you'll need that password. If it opens but wo
 
 ### The AI buttons don't do anything
 
-The AI features need a provider. Add your Claude or OpenAI key, a GitHub token for Copilot, or a local model in **Settings → AI**. Nothing is sent anywhere until you do. See [AI assistant](ai-assistant.md).
+The AI features need a provider. Add your Claude or OpenAI key, a GitHub token for Copilot, or a local model in **Settings > AI**. Nothing is sent anywhere until you do. See [AI assistant](ai-assistant.md).
 
 ### Is my document sent to the internet?
 

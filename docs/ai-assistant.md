@@ -1,8 +1,8 @@
 # AI assistant
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
-The AI features are entirely optional. PdfEdit sends nothing anywhere until you connect a provider in **Settings → AI**.
+The AI features are entirely optional. PdfEdit sends nothing anywhere until you connect a provider in **Settings > AI**.
 
 ## Providers
 

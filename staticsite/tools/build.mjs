@@ -1,11 +1,11 @@
 // Builds the website into staticsite/_site:
-//  • the top-level pages, with the shared head, header and footer put in (<!-- @include name --> →
-//    partials/name.html) and the screenshots they use (img/shots/x.png ← docs/screenshots/blazor/x.png,
-//    img/shots/win-x.png ← docs/screenshots/x.png);
-//  • the user guide (docs/…), from the Markdown in the repository's docs folder plus the site's own
+//  - the top-level pages, with the shared head, header and footer put in (<!-- @include name --> ->
+//    partials/name.html) and the screenshots they use (img/shots/x.png <- docs/screenshots/blazor/x.png,
+//    img/shots/win-x.png <- docs/screenshots/x.png);
+//  - the user guide (docs/...), from the Markdown in the repository's docs folder plus the site's own
 //    pages in content/docs, with a contents list, page outline, previous/next and search;
-//  • the tutorials (tutorials/…), from content/tutorials;
-//  • data/search.json for the search box, the assets and the release data.
+//  - the tutorials (tutorials/...), from content/tutorials;
+//  - data/search.json for the search box, the assets and the release data.
 // Partials write links as {{root}}page.html so they work from the top level and from a folder.
 //   npm ci --prefix staticsite && node staticsite/tools/build.mjs     then serve staticsite/_site
 import { readFile, writeFile, mkdir, cp, readdir, rm } from 'node:fs/promises';
@@ -34,7 +34,7 @@ const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' 
 const strip = html => html.replace(/<strong class="callout-title">(\w+)<\/strong>/g, '$1: ').replace(/<\/?(strong|em|b|i|code|a|kbd|span|mark|sup|sub)\b[^>]*>/gi, '').replace(/<[^>]+>/g, ' ').replace(/&([a-z]+|#\d+);/gi, (m, e) => ENTITIES[e.toLowerCase()] ?? ' ').replace(/\s+/g, ' ').trim();
 const slugify = s => strip(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
 
-// ── Top-level pages ──────────────────────────────────────────────────────────
+// Top-level pages
 const shots = new Set();
 let pageCount = 0;
 for (const f of (await readdir(site)).filter(f => f.endsWith('.html'))) {
@@ -51,7 +51,7 @@ for (const name of shots) {
   await cp(src, join(out, 'img/shots', name));
 }
 
-// ── The user guide: what's in it and in what order ──────────────────────────
+// The user guide: what's in it and in what order
 // src is relative to the repository; title overrides the Markdown's own heading.
 const GUIDE = [
   ['Getting started', [
@@ -88,7 +88,7 @@ const GUIDE = [
 const guidePages = GUIDE.flatMap(([section, pages]) => pages.map(p => Object.assign(p, { section })));
 const bySource = new Map(guidePages.map(p => [p.src, p]));
 
-// ── Tutorials ────────────────────────────────────────────────────────────────
+// Tutorials
 const TUTORIAL_GROUPS = ['Forms and signing', 'Pages and documents', 'Review and markup', 'Scanning and converting', 'Working faster', 'Setting up'];
 const tutorials = [];
 for (const f of (await readdir(join(site, 'content/tutorials'))).filter(f => f.endsWith('.md')).sort()) {
@@ -104,7 +104,7 @@ for (const f of (await readdir(join(site, 'content/tutorials'))).filter(f => f.e
 tutorials.sort((a, b) => TUTORIAL_GROUPS.indexOf(a.group) - TUTORIAL_GROUPS.indexOf(b.group) || a.order - b.order);
 const tutorialBySource = new Map(tutorials.map(t => [t.src, t]));
 
-// ── Markdown → page HTML ─────────────────────────────────────────────────────
+// Markdown -> page HTML
 marked.setOptions({ gfm: true });
 const media = new Set();   // repository files (pictures, video) the pages show
 
@@ -125,13 +125,13 @@ function resolveLink(target, src) {
     if (t) return `../tutorials/${t.slug}.html${anchor}`;
   }
   if (/\.(png|gif|jpe?g|svg|webp|mp4)$/i.test(p) && existsSync(join(repo, p))) { media.add(p); return `../img/repo/${p}`; }
-  // The site's own pages: content/docs/x → docs/x, content/tutorials/x → tutorials/x, x.html → x.html.
+  // The site's own pages: content/docs/x -> docs/x, content/tutorials/x -> tutorials/x, x.html -> x.html.
   if (p.startsWith('staticsite/')) return `../${p.slice('staticsite/'.length).replace(/^content\//, '')}${anchor}`;
   return `${GITHUB}/${existsSync(join(repo, p)) && !/\.\w+$/.test(p) ? 'tree' : 'blob'}/${BRANCH}/${p}${anchor}`;
 }
 
 function renderMarkdown(md, src) {
-  md = md.replace(/^\[←[^\]]*\]\([^)]*\)\s*$/gm, '');            // "← Back to README" lines
+  md = md.replace(/^\[(\u2190\s*)?Back to README\]\([^)]*\)\s*$/gm, '');   // "Back to README" lines
   const title = md.match(/^#\s+(.+)$/m)?.[1].trim();
   md = md.replace(/^#\s+.+$/m, '');                                 // the page title is drawn separately
   let html = marked.parse(md);
@@ -154,7 +154,7 @@ function renderMarkdown(md, src) {
   return { title, html, outline };
 }
 
-// ── Page shells ──────────────────────────────────────────────────────────────
+// Page shells
 const shell = ({ title, description, page, body }) => withRoot(include(`<!doctype html>
 <html lang="en">
 <head>
@@ -209,7 +209,7 @@ const pager = (prev, next) => `
         ${next ? `<a class="next" href="${next.href}"><small>Next</small>${esc(next.title)}</a>` : '<span></span>'}
       </nav>`;
 
-const editLink = src => `<p class="edit"><a href="${GITHUB}/edit/${BRANCH}/${src}">Improve this page on GitHub</a> · <a href="${GITHUB}/issues/new">Report a problem</a></p>`;
+const editLink = src => `<p class="edit"><a href="${GITHUB}/edit/${BRANCH}/${src}">Improve this page on GitHub</a> | <a href="${GITHUB}/issues/new">Report a problem</a></p>`;
 
 const search = [];
 const searchText = html => strip(html.replace(/<a class="anchor"[^>]*>#<\/a>/g, '')).slice(0, 6000);
@@ -229,7 +229,7 @@ function addChunks(html, url, title, where) {
 }
 const firstParagraph = html => strip(html.match(/<p>([\s\S]*?)<\/p>/)?.[1] ?? '').slice(0, 200);
 
-// ── Build the user guide ─────────────────────────────────────────────────────
+// Build the user guide
 await mkdir(join(out, 'docs'), { recursive: true });
 await mkdir(join(out, 'tutorials'), { recursive: true });
 for (const p of guidePages) {
@@ -244,7 +244,7 @@ for (const [i, p] of guidePages.entries()) {
   <div class="wrap docs">
     ${sidebar(p.slug)}
     <article class="prose" data-search-scope>
-      <p class="crumbs"><a href="index.html">User guide</a> › ${esc(p.section)}</p>
+      <p class="crumbs"><a href="index.html">User guide</a> > ${esc(p.section)}</p>
       <h1>${esc(p.title)}</h1>
       ${p.rendered.html}
       ${editLink(p.src)}
@@ -254,8 +254,8 @@ for (const [i, p] of guidePages.entries()) {
   </div>`;
   const description = firstParagraph(p.rendered.html) || `${p.title}: PdfEdit user guide.`;
   await writeFile(join(out, 'docs', `${p.slug}.html`), shell({ title: p.title, description, page: 'docs', body }));
-  addChunks(p.rendered.html, `docs/${p.slug}.html`, p.title, `User guide · ${p.section}`);
-  search.push({ t: p.title, u: `docs/${p.slug}.html`, s: `User guide · ${p.section}`, d: description,
+  addChunks(p.rendered.html, `docs/${p.slug}.html`, p.title, `User guide | ${p.section}`);
+  search.push({ t: p.title, u: `docs/${p.slug}.html`, s: `User guide | ${p.section}`, d: description,
     h: p.rendered.outline.map(o => [o.text, o.id]), x: searchText(p.rendered.html) });
 }
 
@@ -278,7 +278,7 @@ await writeFile(join(out, 'docs', 'index.html'), shell({
         <h1>PdfEdit user guide</h1>
         <p class="lead">How everything works in PdfEdit for Windows, PdfEdit for Mac and PdfEdit for the web. Search, or start with a section below.</p>
         ${searchBox('Search the guide and tutorials, e.g. signature, merge, OCR')}
-        <p class="quick"><button type="button" class="btn small" data-ask-open>Ask a question</button> Popular: <a href="filling-and-signing.html">Fill and sign</a> · <a href="forms.html">Make a form fillable</a> · <a href="pages-and-security.html#passwords-and-redaction">Redact</a> · <a href="scan-and-ocr.html">Scan and OCR</a> · <a href="keyboard-shortcuts.html">Shortcuts</a></p>
+        <p class="quick"><button type="button" class="btn small" data-ask-open>Ask a question</button> Popular: <a href="filling-and-signing.html">Fill and sign</a> | <a href="forms.html">Make a form fillable</a> | <a href="pages-and-security.html#passwords-and-redaction">Redact</a> | <a href="scan-and-ocr.html">Scan and OCR</a> | <a href="keyboard-shortcuts.html">Shortcuts</a></p>
       </section>
       <div class="doc-cards">
         ${GUIDE.map(([section, pages]) => `
@@ -292,15 +292,15 @@ await writeFile(join(out, 'docs', 'index.html'), shell({
         <h2>Learn by doing: tutorials</h2>
         <div class="body">
           <p>Step-by-step walkthroughs of the jobs people do most, from signing a form to scanning a stack of paper.</p>
-          <ul class="tut-mini">${tutorials.slice(0, 6).map(t => `<li><a href="../tutorials/${t.slug}.html">${esc(t.title)}</a> <span class="muted">· ${esc(t.time)}</span></li>`).join('')}</ul>
-          <a class="btn small" href="../tutorials/index.html">All ${tutorials.length} tutorials →</a>
+          <ul class="tut-mini">${tutorials.slice(0, 6).map(t => `<li><a href="../tutorials/${t.slug}.html">${esc(t.title)}</a> <span class="muted">| ${esc(t.time)}</span></li>`).join('')}</ul>
+          <a class="btn small" href="../tutorials/index.html">All ${tutorials.length} tutorials</a>
         </div>
       </section>
     </div>
   </div>`,
 }));
 
-// ── Build the tutorials ──────────────────────────────────────────────────────
+// Build the tutorials
 const appBadges = apps => apps.split(',').map(a => `<span class="app-badge">${esc(a.trim())}</span>`).join('');
 const tutorialSidebar = current => `
     <nav class="docs-nav" aria-label="Tutorials">
@@ -317,14 +317,14 @@ const tutorialSidebar = current => `
 
 for (const [i, t] of tutorials.entries()) {
   const r = renderMarkdown(t.body, t.src);
-  // Steps are numbered; the sections round them (before you start, what's next…) aren't.
+  // Steps are numbered; the sections round them (before you start, what's next...) aren't.
   r.html = r.html.replace(/<h2 id="((?:before-you-start|what-you-ll-need|what-s-next|next-steps|troubleshooting|if-something-goes-wrong)[\w-]*)">/g, '<h2 id="$1" class="plain">');
   const prev = tutorials[i - 1], next = tutorials[i + 1];
   const body = `
   <div class="wrap docs">
     ${tutorialSidebar(t.slug)}
     <article class="prose tutorial" data-search-scope>
-      <p class="crumbs"><a href="index.html">Tutorials</a> › ${esc(t.group)}</p>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > ${esc(t.group)}</p>
       <h1>${esc(t.title)}</h1>
       <p class="lead">${esc(t.summary)}</p>
       <div class="tut-meta">
@@ -339,8 +339,8 @@ for (const [i, t] of tutorials.entries()) {
     ${outlineHtml(r.outline)}
   </div>`;
   await writeFile(join(out, 'tutorials', `${t.slug}.html`), shell({ title: t.title, description: t.summary, page: 'tutorials', body }));
-  addChunks(`<p>${esc(t.summary)}</p>` + r.html, `tutorials/${t.slug}.html`, t.title, `Tutorial · ${t.group}`);
-  search.push({ t: t.title, u: `tutorials/${t.slug}.html`, s: `Tutorial · ${t.group}`, d: t.summary,
+  addChunks(`<p>${esc(t.summary)}</p>` + r.html, `tutorials/${t.slug}.html`, t.title, `Tutorial | ${t.group}`);
+  search.push({ t: t.title, u: `tutorials/${t.slug}.html`, s: `Tutorial | ${t.group}`, d: t.summary,
     h: r.outline.map(o => [o.text, o.id]), x: searchText(r.html) });
 }
 
@@ -374,7 +374,7 @@ await writeFile(join(out, 'tutorials', 'index.html'), shell({
   </div>`,
 }));
 
-// ── Pictures the docs use, assets, data ──────────────────────────────────────
+// Pictures the docs use, assets, data
 for (const p of media) await cp(join(repo, p), join(out, 'img/repo', p));
 await cp(join(site, 'assets'), join(out, 'assets'), { recursive: true });
 await cp(join(site, 'data'), join(out, 'data'), { recursive: true });

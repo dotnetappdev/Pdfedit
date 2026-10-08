@@ -21,8 +21,8 @@ You can use:
 
 ## Add your key
 
-- **Windows**: **Settings → AI**.
-- **Mac and web**: **AI Assistant** tab → **API Keys**.
+- **Windows**: **Settings > AI**.
+- **Mac and web**: **AI Assistant** tab > **API Keys**.
 
 Pick the provider, paste the key (or the local server's address), and save.
 

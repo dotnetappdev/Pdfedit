@@ -1,6 +1,6 @@
 # Design canvas
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 The **Design** tab beside **Live View** is a blank page for laying out documents yourself. You can start from nothing, from a template, or from the current PDF page.
 
@@ -27,7 +27,7 @@ Form fields can be drawn here too, and they turn into real PDF fields when you e
 
 ## Design a form with AI
 
-**Design → Design Form with AI** (also on the AI Assistant tab) builds a fillable form from a description. Say what it's for and any fields it must have, for example *"a car damage report for a rental company, with a vehicle outline to mark the damage on"*, or pick one of the ideas: job application, car damage report, patient intake, event registration, rental inspection, customer feedback, incident report. Choose A4 or US Letter and a heading colour, then click **Design form**.
+**Design > Design Form with AI** (also on the AI Assistant tab) builds a fillable form from a description. Say what it's for and any fields it must have, for example *"a car damage report for a rental company, with a vehicle outline to mark the damage on"*, or pick one of the ideas: job application, car damage report, patient intake, event registration, rental inspection, customer feedback, incident report. Choose A4 or US Letter and a heading colour, then click **Design form**.
 
 The AI plans the sections and fields; PdfEdit lays them out with a title, coloured section headings and labels, using real form fields: text boxes, multi-line boxes, tick boxes, radio groups, drop-downs and signature boxes, plus empty areas to draw or mark on where the form needs one. Short fields sit side by side. If it won't fit on one page, the page is made taller.
 
@@ -39,7 +39,7 @@ It uses whichever AI provider is selected (Claude, Copilot, ChatGPT or a local m
 
 ## Templates
 
-**All Templates** on the Design tab (or **File → New from Template**; **File → New** in the web version) opens a gallery of 70 templates in nine categories, with search and a large preview:
+**All Templates** on the Design tab (or **File > New from Template**; **File > New** in the web version) opens a gallery of 70 templates in nine categories, with search and a large preview:
 
 - **Business**: invoices, a quote, a receipt, a purchase order, a price list, a letterhead, proposal and report covers, a project status report
 - **Forms**: job and rental applications, event registration, contact details, a feedback survey, an order form, consent and release, a time-off request, an expense report, a timesheet, an incident report and a sign-in sheet

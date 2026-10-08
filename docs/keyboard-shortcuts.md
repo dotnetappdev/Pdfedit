@@ -1,10 +1,10 @@
 # Keyboard shortcuts
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 Press F1 in the app to see the shortcuts in use. Single-letter shortcuts are ignored while you're typing in a field or text box.
 
-**Change any of them** in Settings → Keyboard: pick a command, click in the box, press the keys and click Assign (or Add to keep the old keys too). Remove, Default and Reset all undo your changes. Your shortcuts are saved in `settings.json`.
+**Change any of them** in Settings > Keyboard: pick a command, click in the box, press the keys and click Assign (or Add to keep the old keys too). Remove, Default and Reset all undo your changes. Your shortcuts are saved in `settings.json`.
 
 ## Files and pages
 
@@ -15,7 +15,7 @@ Press F1 in the app to see the shortcuts in use. Single-letter shortcuts are ign
 | Next / previous tab | Ctrl+Tab / Ctrl+Shift+Tab |
 | Next / previous page | Ctrl+Right / Ctrl+Left, or keep scrolling with the mouse wheel |
 | Make everything bigger / smaller / 100% | Ctrl+Plus / Ctrl+Minus / Ctrl+0 |
-| Zoom the page in / out | Ctrl+mouse wheel, Ctrl+Alt+Plus / Ctrl+Alt+Minus, or + / − over the page |
+| Zoom the page in / out | Ctrl+mouse wheel, Ctrl+Alt+Plus / Ctrl+Alt+Minus, or + / - over the page |
 | Fit page / actual size / fit width | Ctrl+Shift+0 / Ctrl+1 / Ctrl+Shift+W |
 | Rotate page | Ctrl+] / Ctrl+[ |
 | Search everything | Ctrl+Shift+F |

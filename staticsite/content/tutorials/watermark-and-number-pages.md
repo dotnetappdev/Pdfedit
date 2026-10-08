@@ -20,7 +20,7 @@ order: 2
 
 **Remove Watermark** takes it off again, and Ctrl+Z undoes it.
 
-> **Tip:** a stamp you've made can also be used as a page background, under **Stamps…**.
+> **Tip:** a stamp you've made can also be used as a page background, under **Stamps...**.
 
 ## Add page numbers
 

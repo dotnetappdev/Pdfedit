@@ -1,6 +1,6 @@
 {
  "repo": "dotnetappdev/pdfedit",
- "updated": "2026-10-08T21:50:03.547Z",
+ "updated": "2026-10-08T21:56:26.945Z",
  "releases": [
   {
    "version": "1.4.0",
@@ -490,7 +490,7 @@
      "commit": "3375d0d"
     },
     {
-     "text": "Stamps dialog: Watermark… button opens Watermark & Background",
+     "text": "Stamps dialog: Watermark... button opens Watermark & Background",
      "commit": "58131c8"
     },
     {
@@ -518,7 +518,7 @@
      "commit": "152c639"
     },
     {
-     "text": "Add PDF → HTML / Markdown / ePub and text / Markdown / HTML → PDF",
+     "text": "Add PDF > HTML / Markdown / ePub and text / Markdown / HTML > PDF",
      "commit": "8e0bd70"
     },
     {
@@ -598,7 +598,7 @@
      "commit": "9a99eb5"
     },
     {
-     "text": "feat: every size setting lives in Settings → Accessibility",
+     "text": "feat: every size setting lives in Settings > Accessibility",
      "commit": "58cc1b0"
     },
     {
@@ -687,7 +687,7 @@
      "commit": "75003d3"
     },
     {
-     "text": "feat: custom keyboard shortcuts (Settings → Keyboard)",
+     "text": "feat: custom keyboard shortcuts (Settings > Keyboard)",
      "commit": "ae09eda"
     },
     {
@@ -924,7 +924,7 @@
      "commit": "f4b5d5c"
     },
     {
-     "text": "feat: OCR works without a Windows OCR language, bundled Tesseract + Settings → OCR",
+     "text": "feat: OCR works without a Windows OCR language, bundled Tesseract + Settings > OCR",
      "commit": "f372c41"
     },
     {
@@ -932,7 +932,7 @@
      "commit": "7fb634a"
     },
     {
-     "text": "feat: Local AI provider, free, private, offline AI form filling (Ollama, LM Studio, llama.cpp…)",
+     "text": "feat: Local AI provider, free, private, offline AI form filling (Ollama, LM Studio, llama.cpp...)",
      "commit": "20e21cb"
     },
     {

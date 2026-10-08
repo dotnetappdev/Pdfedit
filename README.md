@@ -15,10 +15,10 @@
 </p>
 
 <p align="center">
-  <a href="https://dotnetappdev.github.io/Pdfedit/"><b>Website</b></a> ·
-  <a href="https://dotnetappdev.github.io/Pdfedit/download.html"><b>Download</b></a> ·
-  <a href="https://dotnetappdev.github.io/Pdfedit/docs/index.html"><b>User guide</b></a> ·
-  <a href="https://dotnetappdev.github.io/Pdfedit/tutorials/index.html"><b>Tutorials</b></a> ·
+  <a href="https://dotnetappdev.github.io/Pdfedit/"><b>Website</b></a> |
+  <a href="https://dotnetappdev.github.io/Pdfedit/download.html"><b>Download</b></a> |
+  <a href="https://dotnetappdev.github.io/Pdfedit/docs/index.html"><b>User guide</b></a> |
+  <a href="https://dotnetappdev.github.io/Pdfedit/tutorials/index.html"><b>Tutorials</b></a> |
   <a href="https://dotnetappdev.github.io/Pdfedit/whats-new.html"><b>What's new</b></a>
 </p>
 
@@ -38,14 +38,14 @@ Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PD
 
 **[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
 
-**[Features](docs/features.md)** · [Video tour](docs/tour.md) · [Screenshots](docs/screenshots.md) · [Documentation](docs/) · [Themes](docs/themes.md) · [Web version (Blazor)](#blazor-web-version) · [Accessibility](docs/accessibility.md) · [Keyboard shortcuts](docs/keyboard-shortcuts.md) · [Building](docs/building.md)
+**[Features](docs/features.md)** | [Video tour](docs/tour.md) | [Screenshots](docs/screenshots.md) | [Documentation](docs/) | [Themes](docs/themes.md) | [Web version (Blazor)](#blazor-web-version) | [Accessibility](docs/accessibility.md) | [Keyboard shortcuts](docs/keyboard-shortcuts.md) | [Building](docs/building.md)
 
 ## Screenshots
 
 ### Blazor web version
 
 **PdfEdit.Blazor** is PdfEdit in the browser: a Blazor Web App (.NET 10) with the same ribbon
-(the same nine tabs, groups and commands — everything that can work in a browser), panels, All tools
+(the same nine tabs, groups and commands, everything that can work in a browser), panels, All tools
 pane and themes as the Windows app, running PdfEdit.Core and the Pdfium renderer on the
 server. Fill and sign forms, prepare and design forms, stamps, drawing and measuring, OCR,
 compare, certificate signing, the AI assistant and Translate PDF, batch processing and bulk fill,
@@ -55,7 +55,7 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 **Drafts: reloading the page doesn't lose your work.** Open documents, things placed on them but not applied yet, field values and the Design canvas are kept in the browser as you go (and at once with Save Draft), and come back after a reload; drafts from a closed window wait on the start page.
 
-**Templates: 70 to start from, in a gallery like Office's (File → New)**
+**Templates: 70 to start from, in a gallery like Office's (File > New)**
 
 ![The template gallery](docs/screenshots/blazor/templates-gallery.png)
 
@@ -175,9 +175,9 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![The tour](docs/screenshots/blazor/tour.png)
 
-**Fill in and sign forms — Light theme**
+**Fill in and sign forms (Light theme)**
 
-![Fill in and sign forms — Light theme](docs/screenshots/blazor/theme-light.png)
+![Fill in and sign forms (Light theme)](docs/screenshots/blazor/theme-light.png)
 
 **Dark theme**
 
@@ -211,17 +211,17 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![Open from and save to Google Drive and OneDrive](docs/screenshots/blazor/cloud.png)
 
-**Translate PDF — before**
+**Translate PDF: before**
 
-![Translate PDF — before](docs/screenshots/blazor/translate-before.png)
+![Translate PDF: before](docs/screenshots/blazor/translate-before.png)
 
-**Translate PDF — after: the layout and colours are kept**
+**Translate PDF: after, with the layout and colours kept**
 
-![Translate PDF — after: the layout and colours are kept](docs/screenshots/blazor/translate-after.png)
+![Translate PDF: after, with the layout and colours kept](docs/screenshots/blazor/translate-after.png)
 
 ### Cross-platform desktop (Avalonia)
 
-**PdfEdit.Avalonia** runs the web version inside a desktop window on Windows, macOS and Linux — the same ribbon,
+**PdfEdit.Avalonia** runs the web version inside a desktop window on Windows, macOS and Linux, with the same ribbon,
 tools and drafts, with the system's Save dialog, your PDF viewer for printing, and PDFs opened from the
 command line or Open with. The program is called PdfEdit, like the Windows app. It hosts the web app in its own process on
 a private local address that only its window can use, and shows it in WebView2, WebKit or WebKitGTK
@@ -266,7 +266,7 @@ More in the [screenshot gallery](docs/screenshots.md).
 
 ## Updates
 
-**Help → Check for Updates** (on the Help tab, or File → Help) looks at the [GitHub releases](https://github.com/dotnetappdev/pdfedit/releases) for a newer version. It picks the download that matches how PdfEdit was installed (setup EXE, portable ZIP or MSIX), lets you choose where to save it, shows a progress bar while it downloads, and checks the file against its SHA-256. Then it installs the update. By default it closes PdfEdit (and any other PdfEdit windows) first and starts it again afterwards. Your unsaved work is kept, as it is on any normal close. Each time PdfEdit starts it also checks for a new version. If there is one, it shows the version and a link to it on GitHub, with **See release notes**, and asks **Yes, update** / **No** (skip this version) / **Cancel** (ask again next time). **Help → About PdfEdit** has a **Check for Updates…** button too. You can turn the startup check off, or include pre-releases, in the update window. The setup program checks for a version that's already installed and uninstalls it first, then installs the new one in the same folder. Your settings, signatures, stamps and recent files are kept.
+**Help > Check for Updates** (on the Help tab, or File > Help) looks at the [GitHub releases](https://github.com/dotnetappdev/pdfedit/releases) for a newer version. It picks the download that matches how PdfEdit was installed (setup EXE, portable ZIP or MSIX), lets you choose where to save it, shows a progress bar while it downloads, and checks the file against its SHA-256. Then it installs the update. By default it closes PdfEdit (and any other PdfEdit windows) first and starts it again afterwards. Your unsaved work is kept, as it is on any normal close. Each time PdfEdit starts it also checks for a new version. If there is one, it shows the version and a link to it on GitHub, with **See release notes**, and asks **Yes, update** / **No** (skip this version) / **Cancel** (ask again next time). **Help > About PdfEdit** has a **Check for Updates...** button too. You can turn the startup check off, or include pre-releases, in the update window. The setup program checks for a version that's already installed and uninstalls it first, then installs the new one in the same folder. Your settings, signatures, stamps and recent files are kept.
 
 ## Build from source
 
@@ -277,7 +277,7 @@ dotnet run --project PdfEdit
 ```
 
 The cross-platform desktop app (Windows, macOS and Linux) is `dotnet run --project PdfEdit.Avalonia`: an
-Avalonia window showing the web version in the system's web view — see [Building](docs/building.md).
+Avalonia window showing the web version in the system's web view. See [Building](docs/building.md).
 
 Needs the .NET 10 SDK. Bugs and ideas go in [issues](https://github.com/dotnetappdev/Pdfedit/issues); pull requests go to the `devmain` branch.
 

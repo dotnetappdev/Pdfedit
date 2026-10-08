@@ -1,8 +1,8 @@
 # Themes
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
-PdfEdit follows your Windows theme until you choose one yourself. Change it in **View → Theme** or **Settings → Appearance**; every window, panel, dialog, the ribbon and the title bars follow it.
+PdfEdit follows your Windows theme until you choose one yourself. Change it in **View > Theme** or **Settings > Appearance**; every window, panel, dialog, the ribbon and the title bars follow it.
 
 ![PdfEdit in each of its themes](screenshots/themes.png)
 
@@ -14,7 +14,7 @@ PdfEdit follows your Windows theme until you choose one yourself. Change it in *
 
 ## Following Windows
 
-**Use Windows setting** matches *Settings → Personalisation → Colours → Choose your app mode*: light or dark. With a Windows contrast theme on (*Settings → Accessibility → Contrast themes*: Aquatic, Desert, Dusk, Night sky or your own), PdfEdit uses that theme's colours. It switches straight away when you change Windows.
+**Use Windows setting** matches *Settings > Personalisation > Colours > Choose your app mode*: light or dark. With a Windows contrast theme on (*Settings > Accessibility > Contrast themes*: Aquatic, Desert, Dusk, Night sky or your own), PdfEdit uses that theme's colours. It switches straight away when you change Windows.
 
 Choose any other theme and PdfEdit keeps it, whatever Windows is set to. Choose **Use Windows setting** again to go back to following Windows.
 
@@ -36,6 +36,6 @@ Choose any other theme and PdfEdit keeps it, whatever Windows is set to. Choose 
 
 ## Accent colour
 
-**Use my Windows accent colour** (View → Theme, or Settings → Appearance) gives buttons, selections, highlights and the ribbon your Windows accent colour, with any theme except High contrast. It updates when you change the accent in Windows.
+**Use my Windows accent colour** (View > Theme, or Settings > Appearance) gives buttons, selections, highlights and the ribbon your Windows accent colour, with any theme except High contrast. It updates when you change the accent in Windows.
 
 Your choice is saved in `%AppData%\PdfEdit\settings.json`.

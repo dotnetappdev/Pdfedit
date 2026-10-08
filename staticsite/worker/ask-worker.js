@@ -66,7 +66,7 @@ export default {
       if (!success) return json(429, { error: 'Too many questions. Wait a minute and try again.' }, headers);
     }
 
-    // ── Check what was sent ──
+    // Check what was sent
     const raw = await request.text();
     if (raw.length > LIMITS.body) return json(413, { error: 'That question is too long.' }, headers);
     let body;
@@ -84,9 +84,9 @@ export default {
     try { chunks = await passages(env); } catch (e) { return json(502, { error: e.message }, headers); }
     const picked = ids.map(i => chunks[i]).filter(Boolean);
     if (!picked.length) return json(400, { error: 'Nothing in the guide matched that question.' }, headers);
-    const excerpts = picked.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' › ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
+    const excerpts = picked.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' > ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
 
-    // ── Ask Claude, and pass the answer on as it's written ──
+    // Ask Claude, and pass the answer on as it's written
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },

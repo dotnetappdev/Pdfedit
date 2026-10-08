@@ -67,13 +67,13 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 .skip:focus { left: 8px; }
 :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
 
-/* ── News strip (top of every page, like the old "latest version" bars) ── */
+/* News strip (top of every page, like the old "latest version" bars) */
 .strip { background: var(--primary-soft); border-bottom: 1px solid var(--border); font-size: .88rem; }
 .strip .wrap { display: flex; gap: 12px; align-items: center; min-height: 36px; flex-wrap: wrap; padding-top: 4px; padding-bottom: 4px; }
 .strip-links { margin-left: auto; color: var(--muted); }
 .strip .new { background: var(--go); color: #fff; font-weight: 700; font-size: .72rem; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
 
-/* ── Header band: logo, name, the big download button ── */
+/* Header band: logo, name, the big download button */
 .band { background: var(--band); color: var(--band-text); }
 .band .wrap { display: flex; align-items: center; gap: 20px; padding-top: 22px; padding-bottom: 22px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 14px; color: inherit; margin-right: auto; }
@@ -98,7 +98,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 .btn.go { background: var(--go); border-color: var(--go); color: #fff; }
 .btn.go:hover { background: var(--go-hover); color: #fff; }
 
-/* ── Tabs ── */
+/* Tabs */
 .tabs { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
 .tabs ul { list-style: none; display: flex; gap: 4px; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
 .tabs ul::-webkit-scrollbar { display: none; }
@@ -106,7 +106,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
 .tabs a:hover { color: var(--text); text-decoration: none; }
 .tabs a[aria-current="page"] { color: var(--primary); border-bottom-color: var(--primary); }
 
-/* ── Layout ── */
+/* Layout */
 main { padding: 32px 0 56px; }
 .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
 @media (max-width: 920px) { .grid-2 { grid-template-columns: 1fr; } }
@@ -121,7 +121,7 @@ main { padding: 32px 0 56px; }
 .box ul.plain li { padding: 7px 0; border-bottom: 1px dashed var(--border); }
 .box ul.plain li:last-child { border-bottom: 0; }
 
-/* ── Home: hero ── */
+/* Home: hero */
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 36px; align-items: center; margin-bottom: 44px; }
 @media (max-width: 920px) { .hero { grid-template-columns: 1fr; } }
 .hero p.lead { font-size: 1.12rem; color: var(--muted); }
@@ -143,7 +143,7 @@ main { padding: 32px 0 56px; }
 :root[data-theme="dark"] .shot-light { display: none; }
 :root[data-theme="dark"] .shot-dark { display: block; }
 
-/* ── Feature grid ── */
+/* Feature grid */
 .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
 .feature { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
 .feature .ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); margin-bottom: 10px; }
@@ -151,14 +151,14 @@ main { padding: 32px 0 56px; }
 .feature h3 { margin-bottom: 4px; }
 .feature p { color: var(--muted); font-size: .94rem; margin: 0; }
 
-/* ── Products ("three ways to run it") ── */
+/* Products ("three ways to run it") */
 .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .product { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .product .tag { align-self: flex-start; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--primary); background: var(--primary-soft); padding: 3px 8px; border-radius: 4px; }
 .product p { color: var(--muted); font-size: .94rem; margin: 0; flex: 1; }
 .product .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ── Screenshot strip and gallery ── */
+/* Screenshot strip and gallery */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 .gallery figure { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .gallery button { all: unset; cursor: zoom-in; display: block; width: 100%; }
@@ -171,7 +171,7 @@ main { padding: 32px 0 56px; }
 .lightbox form { position: fixed; top: 12px; right: 16px; }
 .lightbox form button { background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; font: inherit; cursor: pointer; }
 
-/* ── Downloads ── */
+/* Downloads */
 .dl-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
 .dl-table th, .dl-table td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .dl-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); }
@@ -191,7 +191,7 @@ details.older .body { padding: 0 16px 14px; }
 .note { border-left: 4px solid var(--warn); background: var(--surface); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: .92rem; }
 .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: var(--primary-soft); color: var(--primary); vertical-align: middle; margin-left: 6px; }
 
-/* ── What's new ── */
+/* What's new */
 .release { position: relative; padding-left: 26px; margin-bottom: 28px; }
 .release::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: -28px; width: 2px; background: var(--border); }
 .release:last-child::before { display: none; }
@@ -202,7 +202,7 @@ details.older .body { padding: 0 16px 14px; }
 .release li { margin: 4px 0; }
 .release li a.hash { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-left: 6px; }
 
-/* ── Footer ── */
+/* Footer */
 footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0 24px; font-size: .9rem; }
 footer .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 24px; margin-bottom: 20px; }
 footer h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
@@ -211,7 +211,7 @@ footer li { margin: 6px 0; }
 footer a { color: var(--text); }
 footer .legal { border-top: 1px solid var(--border); padding-top: 16px; color: var(--muted); display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
 
-/* ── User guide and tutorials ── */
+/* User guide and tutorials */
 .docs { display: grid; grid-template-columns: 230px minmax(0, 1fr) 210px; gap: 36px; align-items: start; }
 .docs:not(:has(.docs-toc)) { grid-template-columns: 230px minmax(0, 1fr); }
 .docs-nav, .docs-toc { position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow: auto; font-size: .92rem; scrollbar-width: thin; }
@@ -325,7 +325,7 @@ footer .legal { border-top: 1px solid var(--border); padding-top: 16px; color: v
 .search-results mark { background: color-mix(in srgb, var(--go) 25%, transparent); color: inherit; border-radius: 2px; }
 .search-results .none { margin: 0; padding: 10px 12px; color: var(--muted); }
 
-/* ── Ask the guide (chat) ── */
+/* Ask the guide (chat) */
 .ask-launcher { position: fixed; right: 20px; bottom: 20px; z-index: 30; display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; border: 0; border-radius: 999px; padding: 12px 18px 12px 14px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(10, 30, 60, .3); }
 .ask-launcher:hover { background: var(--primary-hover); }
 .ask-launcher svg { width: 22px; height: 22px; }

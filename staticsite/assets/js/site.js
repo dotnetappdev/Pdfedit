@@ -8,11 +8,11 @@
   // Pages in a folder (docs/, tutorials/) reach the site's files through "../".
   const ROOT = document.querySelector('meta[name="site-root"]')?.content ?? '';
 
-  // ── Current tab ──────────────────────────────────────────────────────────
+  // Current tab
   const page = document.body.dataset.page;
   $$('[data-tab]').forEach(a => { if (a.dataset.tab === page) a.setAttribute('aria-current', 'page'); });
 
-  // ── Theme: Auto (follows the system) → Light → Dark ─────────────────────
+  // Theme: Auto (follows the system) -> Light -> Dark
   const KEY = 'pdfedit-site-theme';
   const label = { auto: 'Auto', light: 'Light', dark: 'Dark' };
   const current = () => document.documentElement.dataset.theme || 'auto';
@@ -29,7 +29,7 @@
   // On a phone the guide's contents list starts folded, so the page itself comes first.
   if (matchMedia('(max-width: 820px)').matches) $$('.docs-nav details').forEach(d => d.open = false);
 
-  // ── Screenshot viewer ────────────────────────────────────────────────────
+  // Screenshot viewer
   const box = $('[data-lightbox]');
   if (box?.showModal) {
     $$('[data-zoom]').forEach(btn => btn.addEventListener('click', () => {
@@ -42,7 +42,7 @@
     box.addEventListener('click', e => { if (e.target === box) box.close(); });
   }
 
-  // ── Release data ─────────────────────────────────────────────────────────
+  // Release data
   const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
   const fmtSize = b => b >= 1048576 ? `${(b / 1048576).toFixed(b >= 104857600 ? 0 : 1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -60,7 +60,7 @@
   ];
   const classify = name => { for (const [re, product, platform, label, kind] of RULES) if (re.test(name)) return product ? { product, platform, label, kind } : null; return null; };
   // Plain punctuation for the release notes (they come from commit messages).
-  const plain = t => t.replace(/\s+[—–]\s+/g, ', ').replace(/[—–]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  const plain = t => t.replace(/\s+[\u2014\u2013]\s+/g, ', ').replace(/[\u2014\u2013]/g, '-').replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/\s*\u2192\s*/g, ' > ').replace(/\u2026/g, '...').replace(/\s\u00B7\s/g, ', ');
   const changesOf = body => {
     const m = (body || '').match(/###\s*What's new\s*\n([\s\S]*?)(\n---|\n#{1,3}\s|$)/i);
     return m ? m[1].split('\n').map(l => l.trim()).filter(l => l.startsWith('- ')).map(l => ({
@@ -97,8 +97,8 @@
     const isMac = /Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua);
     const isWin = /Windows/.test(ua);
     const pick = (product, kind) => release.assets.find(a => a.product === product && a.kind === kind);
-    if (isMac) return pick('desktop', 'arm64') && { asset: pick('desktop', 'arm64'), text: `Mac · ${release.version}` };
-    if (isWin) return pick('windows', 'installer') && { asset: pick('windows', 'installer'), text: `Windows · ${release.version} · ${fmtSize(pick('windows', 'installer').size)}` };
+    if (isMac) return pick('desktop', 'arm64') && { asset: pick('desktop', 'arm64'), text: `Mac, version ${release.version}` };
+    if (isWin) return pick('windows', 'installer') && { asset: pick('windows', 'installer'), text: `Windows, version ${release.version} (${fmtSize(pick('windows', 'installer').size)})` };
     return null;
   }
 
@@ -151,7 +151,7 @@
     });
     $$('[data-older]').forEach(el => {
       el.innerHTML = releases.filter(r => r !== latest).map(r => `
-        <details class="older"><summary>PdfEdit ${esc(r.version)} <span class="muted">· ${esc(fmtDate(r.date))}</span>${r.prerelease ? '<span class="badge">Pre-release</span>' : ''}</summary>
+        <details class="older"><summary>PdfEdit ${esc(r.version)} <span class="muted">| ${esc(fmtDate(r.date))}</span>${r.prerelease ? '<span class="badge">Pre-release</span>' : ''}</summary>
           <div class="body">${table(r.assets, r.url)}</div></details>`).join('') || '<p class="muted">None yet.</p>';
     });
 
@@ -160,7 +160,7 @@
       el.innerHTML = releases.map((r, i) => `
         <article class="release" id="v${esc(r.version)}">
           <h2>Version ${esc(r.version)}${i === 0 ? '<span class="badge">Latest</span>' : ''}${r.prerelease ? '<span class="badge">Pre-release</span>' : ''}</h2>
-          <div class="when">${esc(fmtDate(r.date))} · <a href="${esc(r.url)}">release notes</a> · <a href="${ROOT}download.html${i === 0 ? '' : '#older'}">download</a></div>
+          <div class="when">${esc(fmtDate(r.date))} | <a href="${esc(r.url)}">release notes</a> | <a href="${ROOT}download.html${i === 0 ? '' : '#older'}">download</a></div>
           ${changeList(r, data.repo)}
         </article>`).join('');
     });
@@ -181,7 +181,7 @@
       el.innerHTML = '<p>Couldn\'t load the release list. Get PdfEdit from <a href="https://github.com/dotnetappdev/pdfedit/releases">GitHub Releases</a>.</p>');
   });
 
-  // ── Docs search: the guide and tutorials, from data/search.json ──────────
+  // Docs search: the guide and tutorials, from data/search.json
   let index = null;
   const loadIndex = () => index ??= fetch(ROOT + 'data/search.json').then(r => r.json()).catch(() => []);
   const words = q => q.toLowerCase().split(/\s+/).filter(w => w.length > 1);
@@ -199,7 +199,7 @@
       }
       // A line of the page round the first word, for context.
       const at = x.indexOf(ws[0]);
-      const snippet = at < 0 ? e.d : (at > 60 ? '…' : '') + e.x.slice(Math.max(0, at - 60), at + 110) + '…';
+      const snippet = at < 0 ? e.d : (at > 60 ? '...' : '') + e.x.slice(Math.max(0, at - 60), at + 110) + '...';
       return { e, score, heading, snippet };
     }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 8);
   }
@@ -218,7 +218,7 @@
       if (!q) { list.hidden = true; return; }
       const hits = find(await loadIndex(), q);
       list.innerHTML = hits.length
-        ? hits.map(h => `<a href="${ROOT}${h.e.u}${h.heading ? '#' + h.heading[1] : ''}"><span class="where">${esc(h.e.s)}</span><b>${mark(h.e.t, q)}${h.heading ? ` › ${mark(h.heading[0], q)}` : ''}</b><span class="snip">${mark(h.snippet, q)}</span></a>`).join('')
+        ? hits.map(h => `<a href="${ROOT}${h.e.u}${h.heading ? '#' + h.heading[1] : ''}"><span class="where">${esc(h.e.s)}</span><b>${mark(h.e.t, q)}${h.heading ? ` > ${mark(h.heading[0], q)}` : ''}</b><span class="snip">${mark(h.snippet, q)}</span></a>`).join('')
         : `<p class="none">Nothing found for "${esc(q)}". Try fewer words, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>`;
       list.hidden = false;
       active = -1;

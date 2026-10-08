@@ -1,14 +1,14 @@
 // "Ask the guide": a chat that answers questions about PdfEdit from the user guide and tutorials.
 // Each question picks the few best-matching passages from data/chunks.json (made by the build) and an
 // LLM answers from those alone, citing them. The LLM can be:
-//   • the site's own assistant: data/site.json "chatEndpoint", a small proxy (worker/ask-worker.js)
+//   - the site's own assistant: data/site.json "chatEndpoint", a small proxy (worker/ask-worker.js)
 //     that holds the key; visitors need nothing;
-//   • the visitor's own Claude or OpenAI key, sent straight from their browser to that provider and
+//   - the visitor's own Claude or OpenAI key, sent straight from their browser to that provider and
 //     kept only in this browser;
-//   • a free open model running in the visitor's browser on their GPU (WebLLM + WebGPU): no key, no
+//   - a free open model running in the visitor's browser on their GPU (WebLLM + WebGPU): no key, no
 //     server; it downloads once (about 1 GB) when they agree, then loads from the browser's cache;
-//   • a local model (Ollama, LM Studio…) on their own computer;
-//   • none: the matching passages are shown instead.
+//   - a local model (Ollama, LM Studio...) on their own computer;
+//   - none: the matching passages are shown instead.
 (() => {
   'use strict';
   const ROOT = document.querySelector('meta[name="site-root"]')?.content ?? '';
@@ -18,13 +18,13 @@
   const PROVIDERS = {
     site: { name: 'PdfEdit assistant', needs: [] },
     browser: { name: 'Free AI in your browser (no key)', needs: ['browserModel'] },
-    claude: { name: 'Claude (your key)', needs: ['key', 'model'], models: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'], keyHint: 'sk-ant-…  from console.anthropic.com' },
-    openai: { name: 'OpenAI (your key)', needs: ['key', 'model'], models: ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o'], keyHint: 'sk-…  from platform.openai.com' },
-    local: { name: 'Local model (Ollama, LM Studio…)', needs: ['endpoint', 'model'], models: [], endpoint: 'http://localhost:11434/v1', model: 'llama3.2' },
+    claude: { name: 'Claude (your key)', needs: ['key', 'model'], models: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'], keyHint: 'sk-ant-...  from console.anthropic.com' },
+    openai: { name: 'OpenAI (your key)', needs: ['key', 'model'], models: ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o'], keyHint: 'sk-...  from platform.openai.com' },
+    local: { name: 'Local model (Ollama, LM Studio...)', needs: ['endpoint', 'model'], models: [], endpoint: 'http://localhost:11434/v1', model: 'llama3.2' },
     none: { name: 'No AI, just show the matching sections', needs: [] },
   };
 
-  // ── Settings (this browser only) ───────────────────────────────────────────
+  // Settings (this browser only)
   let site = {};
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) ?? {}; } catch { return {}; } };
   const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* private window */ } };
@@ -36,7 +36,7 @@
   };
   const configured = p => p === 'claude' || p === 'openai' ? !!prefs[p + 'Key'] : true;
 
-  // ── The free AI in the browser (WebLLM) ────────────────────────────────────
+  // The free AI in the browser (WebLLM)
   const WEBLLM = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm';
   const BROWSER_MODELS = [
     { id: 'Qwen2.5-1.5B-Instruct', label: 'Standard: Qwen 2.5 1.5B', size: 'about 1 GB' },
@@ -76,7 +76,7 @@
     })().finally(() => { starting = null; });
   }
 
-  // ── Finding the passages a question needs ──────────────────────────────────
+  // Finding the passages a question needs
   const STOP = new Set('a an and are as at be but by can do does for from how i if in into is it its me my of on or so that the then there these this to was what when where which who why will with you your pdfedit please want need get'.split(' '));
   const SAME = { signature: 'sign', signing: 'sign', signed: 'sign', fillable: 'fill', filling: 'fill', filled: 'fill', merging: 'merge', combine: 'merge', join: 'merge', scanner: 'scan', scanning: 'scan', scanned: 'scan', ocr: 'ocr', searchable: 'ocr', password: 'protect', encrypt: 'protect', redaction: 'redact', redacting: 'redact', blackout: 'redact', comments: 'comment', annotations: 'comment', annotate: 'comment', pages: 'page', forms: 'form', fields: 'field', mac: 'mac', macos: 'mac', install: 'install', installing: 'install', setup: 'install', download: 'install', word: 'word', docx: 'word', excel: 'excel', xlsx: 'excel', watermarks: 'watermark', stamps: 'stamp', shortcuts: 'shortcut', keys: 'shortcut', themes: 'theme', dark: 'theme', translate: 'translate', translation: 'translate' };
   const terms = text => (text.toLowerCase().match(/[a-z0-9]+/g) ?? [])
@@ -132,9 +132,9 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   // A shorter brief for the small in-browser models, which have less room.
   const SYSTEM_SMALL = `You answer questions about PdfEdit, a free PDF editor for Windows, Mac and the web, using ONLY the numbered excerpts from its user guide. Give short numbered steps with button names in bold. After each step or sentence, cite the excerpt it came from like [1]. If the excerpts don't answer the question, say "I couldn't find that in the guide." Never make up buttons or features. Don't use em dashes or emoji.`;
 
-  const contextBlock = passages => passages.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' › ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
+  const contextBlock = passages => passages.map((p, i) => `[${i + 1}] ${p.t}${p.h ? ' > ' + p.h : ''} (${p.s})\n${p.x}`).join('\n\n');
 
-  // ── Talking to the LLM ─────────────────────────────────────────────────────
+  // Talking to the LLM
   /** Reads a server-sent-events stream and hands each "data:" payload to onData. */
   async function readSse(response, onData) {
     const reader = response.body.getReader(), decoder = new TextDecoder();
@@ -155,7 +155,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   async function failure(response, p) {
     let detail = '';
     try { const j = await response.json(); detail = j.error?.message ?? j.error ?? j.message ?? ''; } catch { /* not JSON */ }
-    if (response.status === 401 || response.status === 403) return `The ${PROVIDERS[p].name.replace(' (your key)', '')} key was refused. Check it in ⚙ Settings.`;
+    if (response.status === 401 || response.status === 403) return `The ${PROVIDERS[p].name.replace(' (your key)', '')} key was refused. Check it in the chat's settings (the gear button).`;
     if (response.status === 429) return 'Too many questions at once. Wait a moment and try again.';
     return `The AI service answered ${response.status}${detail ? ': ' + detail : ''}.`;
   }
@@ -226,20 +226,20 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
     await readSse(r, d => { if (d !== '[DONE]') { const t = JSON.parse(d).choices?.[0]?.delta?.content; if (t) onText(t); } });
   }
 
-  // ── Showing answers: a small, safe Markdown subset with [n] citations ──────
+  // Showing answers: a small, safe Markdown subset with [n] citations
   function render(md, passages) {
-    md = md.replace(/\s*—\s*/g, ', ').replace(/–/g, '-');   // plain punctuation
+    md = md.replace(/\s*\u2014\s*/g, ', ').replace(/\u2013/g, '-');   // plain punctuation
     const inline = s => esc(s)
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|[\w./#-]+\.html[^)\s]*)\)/g, (_, text, url) => `<a href="${url.startsWith('http') ? url : ROOT + url}">${text}</a>`)
-      .replace(/\[(\d{1,2})\]/g, (m, n) => passages[n - 1] ? `<a class="cite" href="${ROOT}${esc(passages[n - 1].u)}" title="${esc(passages[n - 1].t + (passages[n - 1].h ? ' › ' + passages[n - 1].h : ''))}">${n}</a>` : m);
+      .replace(/\[(\d{1,2})\]/g, (m, n) => passages[n - 1] ? `<a class="cite" href="${ROOT}${esc(passages[n - 1].u)}" title="${esc(passages[n - 1].t + (passages[n - 1].h ? ' > ' + passages[n - 1].h : ''))}">${n}</a>` : m);
     const out = [];
     let list = null;
     for (const raw of md.split('\n')) {
       const line = raw.trimEnd();
-      const item = line.match(/^\s*(?:([-*•])|(\d+)[.)])\s+(.*)$/);
+      const item = line.match(/^\s*(?:([-*\u2022])|(\d+)[.)])\s+(.*)$/);
       if (item) {
         const kind = item[1] ? 'ul' : 'ol';
         if (list !== kind) { if (list) out.push(`</${list}>`); out.push(`<${kind}>`); list = kind; }
@@ -259,11 +259,11 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
     const show = passages.filter((_, i) => !used.size || used.has(i + 1));
     return show.length ? `<div class="ask-sources"><span>Sources</span>${show.map(p => {
       const n = passages.indexOf(p) + 1;
-      return `<a href="${ROOT}${esc(p.u)}"><b>${n}</b>${esc(p.t)}${p.h ? ' › ' + esc(p.h) : ''}</a>`;
+      return `<a href="${ROOT}${esc(p.u)}"><b>${n}</b>${esc(p.t)}${p.h ? ' > ' + esc(p.h) : ''}</a>`;
     }).join('')}</div>` : '';
   };
 
-  // ── The panel ──────────────────────────────────────────────────────────────
+  // The panel
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5M12 16h.01"/></svg>';
   const SUGGESTIONS = ['How do I sign a PDF?', 'How do I make a form fillable?', 'How do I merge two PDFs?', 'Can I use PdfEdit on a Mac?', 'Is my document sent anywhere?'];
 
@@ -283,12 +283,12 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       <span class="ask-title">${ICON}<span><b>Ask the guide</b><small data-ask-via></small></span></span>
       <button type="button" data-ask-clear title="New conversation" aria-label="New conversation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
       <button type="button" data-ask-settings title="Settings" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-      <button type="button" data-ask-close title="Close" aria-label="Close">✕</button>
+      <button type="button" data-ask-close title="Close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </header>
     <div class="ask-settings" data-ask-settings-view hidden></div>
     <div class="ask-log" data-ask-log aria-live="polite"></div>
     <form class="ask-form" data-ask-form>
-      <textarea rows="1" placeholder="Ask how to do something in PdfEdit…" aria-label="Your question" data-ask-input maxlength="1000"></textarea>
+      <textarea rows="1" placeholder="Ask how to do something in PdfEdit..." aria-label="Your question" data-ask-input maxlength="1000"></textarea>
       <button type="submit" class="ask-send" data-ask-send aria-label="Send">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
@@ -303,16 +303,16 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   function showVia() {
     const p = provider();
     $('[data-ask-via]').textContent = p === 'browser'
-      ? (engine ? `Free AI in your browser · ${browserModel().label.split(': ')[1]}` : 'Free AI in your browser · no key needed')
-      : p === 'none' ? 'Showing matching sections · ⚙ to add an AI'
-      : configured(p) ? `Answered by ${PROVIDERS[p].name.replace(' (your key)', '')}` : `${PROVIDERS[p].name}: add your key in ⚙`;
+      ? (engine ? `Free AI in your browser | ${browserModel().label.split(': ')[1]}` : 'Free AI in your browser | no key needed')
+      : p === 'none' ? 'Showing matching sections. Use the gear button to add an AI'
+      : configured(p) ? `Answered by ${PROVIDERS[p].name.replace(' (your key)', '')}` : `${PROVIDERS[p].name}: add your key in settings`;
   }
 
   function welcome() {
     log.innerHTML = `
       <div class="ask-msg bot"><p>Ask how to do something in PdfEdit. Answers come from the user guide and tutorials, with links to the pages.</p>
-      ${provider() === 'browser' && !engine ? `<p class="muted">Answers are written by a free AI that runs in your browser, so nothing you ask leaves your computer. The first time, it downloads ${browserModel().size} (once). Prefer something else? Open ⚙.</p>` : ''}
-      ${provider() === 'none' ? '<p class="muted">No AI is connected, so I\'ll show the sections that match your question. Open ⚙ to use the site\'s assistant, your own Claude or OpenAI key, or a model on your computer.</p>' : ''}
+      ${provider() === 'browser' && !engine ? `<p class="muted">Answers are written by a free AI that runs in your browser, so nothing you ask leaves your computer. The first time, it downloads ${browserModel().size} (once). Prefer something else? Open the settings (gear button).</p>` : ''}
+      ${provider() === 'none' ? '<p class="muted">No AI is connected, so I\'ll show the sections that match your question. Open the settings (gear button) to use the site\'s assistant, your own Claude or OpenAI key, or a model on your computer.</p>' : ''}
       <div class="ask-suggest">${SUGGESTIONS.map(s => `<button type="button">${esc(s)}</button>`).join('')}</div></div>`;
     log.querySelectorAll('.ask-suggest button').forEach(b => b.addEventListener('click', () => { input.value = b.textContent; submit(); }));
   }
@@ -348,7 +348,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       const def = PROVIDERS[id];
       fields.innerHTML = [
         def.needs.includes('endpoint') ? `<label>Server address<input data-f="localEndpoint" value="${esc(prefs.localEndpoint || def.endpoint)}" spellcheck="false"></label>
-          <p class="ask-note">Ollama: start it with <code>OLLAMA_ORIGINS=${esc(location.origin)} ollama serve</code>. LM Studio: Developer → turn on CORS.</p>` : '',
+          <p class="ask-note">Ollama: start it with <code>OLLAMA_ORIGINS=${esc(location.origin)} ollama serve</code>. LM Studio: Developer, then turn on CORS.</p>` : '',
         def.needs.includes('key') ? `<label>API key<input type="password" data-f="${id}Key" value="${esc(prefs[id + 'Key'] ?? '')}" placeholder="${esc(def.keyHint)}" autocomplete="off" spellcheck="false"></label>` : '',
         def.needs.includes('model') ? (def.models.length
           ? `<label>Model<select data-f="${id}Model">${def.models.map(m => `<option${(prefs[id + 'Model'] || def.models[0]) === m ? ' selected' : ''}>${m}</option>`).join('')}</select></label>`
@@ -419,7 +419,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       }
     }
     if (p === 'none' || !configured(p)) {
-      showPassages(answer, passages, p === 'none' ? 'Here\'s what the guide says:' : 'Add your key in ⚙ for a written answer. Meanwhile, here\'s what the guide says:');
+      showPassages(answer, passages, p === 'none' ? 'Here\'s what the guide says:' : 'Add your key in settings for a written answer. Meanwhile, here\'s what the guide says:');
       return;
     }
     await respond(question, answer, passages, p);
@@ -428,7 +428,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   function showPassages(answer, passages, intro) {
     answer.innerHTML = passages.length
       ? `<p>${intro}</p>` +
-        passages.slice(0, 4).map((x, i) => `<div class="ask-passage"><a href="${ROOT}${esc(x.u)}"><b>${i + 1}</b>${esc(x.t)}${x.h ? ' › ' + esc(x.h) : ''}</a><p>${esc(x.x.length > 320 ? x.x.slice(0, 320) + '…' : x.x)}</p></div>`).join('')
+        passages.slice(0, 4).map((x, i) => `<div class="ask-passage"><a href="${ROOT}${esc(x.u)}"><b>${i + 1}</b>${esc(x.t)}${x.h ? ' > ' + esc(x.h) : ''}</a><p>${esc(x.x.length > 320 ? x.x.slice(0, 320) + '...' : x.x)}</p></div>`).join('')
       : '<p>I couldn\'t find that in the guide. Try other words, browse the <a href="' + ROOT + 'docs/index.html">user guide</a>, or <a href="https://github.com/dotnetappdev/pdfedit/issues/new">ask on GitHub</a>.</p>';
     log.scrollTop = log.scrollHeight;
   }
@@ -437,7 +437,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
   async function respond(question, answer, passages, p) {
     if (busy) return;
     if (p === 'browser' && !(engine && engineModel === browserModel().full)) {
-      answer.innerHTML = '<p>Starting the free AI…</p><div class="ask-progress"><span style="width:2%"></span></div><p class="ask-note" data-ask-progress></p>' +
+      answer.innerHTML = '<p>Starting the free AI...</p><div class="ask-progress"><span style="width:2%"></span></div><p class="ask-note" data-ask-progress></p>' +
         '<div class="ask-row"><button type="button" class="btn small" data-ask-skip>Show the guide instead</button></div>';
       const bar = answer.querySelector('.ask-progress span'), note = answer.querySelector('[data-ask-progress]');
       // Not waiting: show the sections now; the AI carries on loading for the next question.
@@ -449,10 +449,10 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
       try {
         await startEngine(r => {
           bar.style.width = `${Math.max(2, Math.round(r.progress * 100))}%`;
-          // WebLLM says "Fetching param cache[3/22]: 120MB fetched. 15% completed…" while downloading
-          // and "Loading model from cache[3/22]…" once it's stored.
+          // WebLLM says "Fetching param cache[3/22]: 120MB fetched. 15% completed..." while downloading
+          // and "Loading model from cache[3/22]..." once it's stored.
           const t = r.text;
-          note.textContent = /^Loading model from cache/i.test(t) ? 'Loading the AI from this browser…'
+          note.textContent = /^Loading model from cache/i.test(t) ? 'Loading the AI from this browser...'
             : /^Fetching param cache/i.test(t) ? 'Downloading (once): ' + (t.match(/([\d.]+\s*MB)\s+fetched/i)?.[1] ?? '') + (t.match(/(\d+)%\s+completed/i) ? `, ${t.match(/(\d+)%\s+completed/i)[1]}%` : '')
             : t.replace(/\[.*?\]\s*/g, '').slice(0, 120);
         });
@@ -504,7 +504,7 @@ Answer the user's question using ONLY the numbered excerpts from the PdfEdit use
 
   document.body.append(launcher, panel);
   document.querySelectorAll('[data-ask-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); open(); }));
-  // ?ask=… opens the chat with a question (the apps' Help can link straight to an answer).
+  // ?ask=... opens the chat with a question (the apps' Help can link straight to an answer).
   const asked = new URLSearchParams(location.search).get('ask');
 
   Promise.all([fetch(ROOT + 'data/site.json').then(r => r.ok ? r.json() : {}).catch(() => ({})), checkGpu()]).then(([s]) => {

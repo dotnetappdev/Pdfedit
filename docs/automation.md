@@ -1,11 +1,11 @@
 # Automation and tools
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 ## Many files at once
 
-- **Batch Process** (Home → Automate) runs the same steps over a folder: OCR, compress, watermark, flatten, rotate, page numbers, header and footer, Bates numbers, remove hidden information, password, PDF/A or text export. Save the steps as an action to use again.
-- **Bulk Fill** (Home → Automate) fills the open form once for every row of a CSV or Excel file and names each copy from a column.
+- **Batch Process** (Home > Automate) runs the same steps over a folder: OCR, compress, watermark, flatten, rotate, page numbers, header and footer, Bates numbers, remove hidden information, password, PDF/A or text export. Save the steps as an action to use again.
+- **Bulk Fill** (Home > Automate) fills the open form once for every row of a CSV or Excel file and names each copy from a column.
 - **Search Folder** (View) finds text in every PDF in a folder and its subfolders. Double-click a result to open it at that page.
 
 ## Forms
@@ -17,7 +17,7 @@
 
 - **Visual Compare** (View) shows what was added, removed and changed between two versions.
 - **Accessibility Check** (View) tests the things screen readers depend on and fixes the common problems.
-- **Remove Hidden Info** (Home → Security) strips metadata, scripts and attachments before you send a file.
+- **Remove Hidden Info** (Home > Security) strips metadata, scripts and attachments before you send a file.
 - **Signatures** (Fill & Sign) checks whether certificate-signed files have changed.
 
 ## Scans

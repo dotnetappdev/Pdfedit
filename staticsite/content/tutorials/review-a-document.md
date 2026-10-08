@@ -38,7 +38,7 @@ To measure on plans and drawings, use **Distance**, **Perimeter** and **Area**.
 
 Pick a stamp from the list, such as **Approved**, **Draft**, **For Comment** or **Not Approved**, and click the page. The **Dynamic** stamps add your name and the time underneath.
 
-**Stamps…** shows every stamp with a preview, and **New Stamp…** makes your own in any colour.
+**Stamps...** shows every stamp with a preview, and **New Stamp...** makes your own in any colour.
 
 ![Stamps on a page](../../../docs/screenshots/fill-stamps.png)
 

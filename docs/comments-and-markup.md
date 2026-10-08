@@ -1,6 +1,6 @@
 # Comments, stamps and links
 
-[← Back to README](../README.md)
+[Back to README](../README.md)
 
 ## Marking up text
 
@@ -25,7 +25,7 @@ Choose a stamp from the list on the Tools or Fill & Sign tab, then click the pag
 
 ![The stamp list open with stamps placed on the page](screenshots/fill-stamps.png)
 
-**Custom Stamp…** adds your own wording to the list, and **Remove Custom** takes it off again.
+**Custom Stamp...** adds your own wording to the list, and **Remove Custom** takes it off again.
 
 A placed stamp can be moved, resized, rotated, recoloured or deleted like any other mark. When you save, it becomes a proper PDF stamp annotation.
 

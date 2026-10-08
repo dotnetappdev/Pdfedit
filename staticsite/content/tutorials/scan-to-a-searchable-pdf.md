@@ -40,8 +40,8 @@ order: 1
 
 If you skipped OCR, or have an old scanned PDF:
 
-- **Windows**: All tools → **Scan & OCR → Recognise text**.
-- **Mac and web**: Tools tab → **OCR**.
+- **Windows**: All tools > **Scan & OCR > Recognise text**.
+- **Mac and web**: Tools tab > **OCR**.
 
 Pick the language and click **Recognise text**. PdfEdit adds an invisible layer of text. The pages look the same, but now you can search, select and copy.
 
@@ -53,7 +53,7 @@ Search for a word you can see on the page. If it's found, the OCR worked.
 
 - **Scanner not listed (Windows)**: check that it works in the Windows Scan app, and install the maker's driver.
 - **OCR says it isn't set up (Mac)**: PdfEdit uses the free Tesseract engine. Install it with [Homebrew](https://brew.sh): `brew install tesseract tesseract-lang`, then open PdfEdit again.
-- **Other languages (Windows)**: download them in **Settings → OCR**.
+- **Other languages (Windows)**: download them in **Settings > OCR**.
 - **Wrong text**: scan at 300 dpi in greyscale and straighten pages first.
 
 ## What's next

@@ -14,7 +14,7 @@ The Design canvas is a blank page for laying out invoices, forms, letters, certi
 
 ## Open the template gallery
 
-Choose **File → New from Template** on Windows, or **New** on the start page (Mac and web). You can also use **All Templates** on the Design tab.
+Choose **File > New from Template** on Windows, or **New** on the start page (Mac and web). You can also use **All Templates** on the Design tab.
 
 Browse by category (Business, Forms, Agreements, Letters & office, Resumes, Marketing & events, Certificates & cards, Education, Planning & personal) or search. Click a template to see a large preview.
 
