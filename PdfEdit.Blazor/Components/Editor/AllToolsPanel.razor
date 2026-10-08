@@ -1,6 +1,5 @@
 @* The Windows app's All tools pane: every feature grouped by task, with a search box. *@
 <div class="pe-alltools">
-    <h5>All tools</h5>
     <input type="search" class="form-control form-control-sm mb-2" placeholder="Find a tool" aria-label="Find a tool" @bind="_find" @bind:event="oninput" />
     @foreach (var c in Ed.AllTools)
     {

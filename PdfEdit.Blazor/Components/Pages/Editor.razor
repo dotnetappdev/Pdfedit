@@ -425,6 +425,8 @@
                 </RibbonGroup>
                 <RibbonGroup Title="Panels">
                     <div class="pe-stack">
+                        <RibbonButton Icon="bi-grid-3x3-gap" Label="All Tools" Title="Show or hide the All tools pane" Active="_showTools" OnClick="() => _showTools = !_showTools" />
+                        <RibbonButton Icon="bi-layout-sidebar" Label="Thumbnails" Title="Show or hide the page thumbnails" Active="_showLeft" OnClick="() => _showLeft = !_showLeft" />
                         <RibbonButton Icon="bi-layout-sidebar-reverse" Label="Side Panel" Active="_showRight" OnClick="() => _showRight = !_showRight" />
                         <RibbonButton Icon="bi-bookmark" Label="Bookmarks" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Bookmarks)" />
                         <RibbonButton Icon="bi-chat-left-text" Label="Comments" Disabled="NoDoc" OnClick="() => ShowRight(RightTab.Comments)" />
@@ -885,54 +887,70 @@
 
     @* ── Workspace ─────────────────────────────────────────────────────── *@
     <div class="pe-workspace">
-        @if (_showLeft)
+        @if (_showTools || _showLeft)
         {
-            <aside class="pe-panel left" aria-label="Thumbnails">
-                <div class="pe-panel-tabs"><span class="pe-panel-tab active">Thumbnails</span></div>
-                <div class="pe-panel-body" style="padding:0">
-                    @if (Doc != null)
-                    {
-                        <div class="pe-thumbs">
-                            @for (int p = 0; p < PageCount; p++)
-                            {
-                                int pg = p;
-                                <div class="pe-thumb-wrap @(_thumbDrop == pg && _thumbDrag != pg ? (_thumbDrag < pg ? "drop-after" : "drop-before") : "")"
-                                     draggable="true" @ondragstart="() => ThumbDragStart(pg)" @ondragend="ThumbDragEnd"
-                                     @ondragenter="() => _thumbDrop = pg" @ondragover:preventDefault="true" @ondrop="() => ThumbDropAsync(pg)"
-                                     @oncontextmenu="e => OpenThumbMenu(pg, e)" @oncontextmenu:preventDefault="true">
-                                    <button class="pe-thumb @(pg == _page ? "current" : "")" @onclick="() => GoToPageAsync(pg)" aria-label="Page @(pg + 1)">
-                                        <img src="@PageUrl(pg, 0.3)" loading="lazy" alt="" draggable="false" style="width:@Css(ThumbWidth(pg))px" />
-                                        <div>@(pg + 1)</div>
-                                    </button>
-                                    <div class="pe-thumb-tools" role="toolbar" aria-label="Page @(pg + 1) tools">
-                                        <button title="Rotate anticlockwise" aria-label="Rotate page @(pg + 1) anticlockwise" @onclick="() => ThumbActionAsync(pg, () => RotateAsync(-90))"><i class="bi bi-arrow-counterclockwise"></i></button>
-                                        <button title="Rotate clockwise" aria-label="Rotate page @(pg + 1) clockwise" @onclick="() => ThumbActionAsync(pg, () => RotateAsync(90))"><i class="bi bi-arrow-clockwise"></i></button>
-                                        <button title="Delete page" aria-label="Delete page @(pg + 1)" @onclick="() => ThumbActionAsync(pg, DeleteThisPageAsync)"><i class="bi bi-trash3"></i></button>
+            @* Docked like the Windows app: All tools, then the page thumbnails. *@
+            <div class="pe-leftdock">
+                @if (_showTools)
+                {
+                    <aside class="pe-panel tools" aria-label="All tools">
+                        <div class="pe-panel-tabs">
+                            <span class="pe-panel-tab active">All tools</span>
+                            <button class="pe-panel-close" title="Hide All tools (View → All Tools brings it back)" aria-label="Hide All tools" @onclick="() => _showTools = false"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <div class="pe-panel-body"><AllToolsPanel Ed="this" /></div>
+                    </aside>
+                }
+                @if (_showLeft)
+                {
+                <aside class="pe-panel left" aria-label="Thumbnails">
+                    <div class="pe-panel-tabs"><span class="pe-panel-tab active">Thumbnails</span></div>
+                    <div class="pe-panel-body" style="padding:0">
+                        @if (Doc != null)
+                        {
+                            <div class="pe-thumbs">
+                                @for (int p = 0; p < PageCount; p++)
+                                {
+                                    int pg = p;
+                                    <div class="pe-thumb-wrap @(_thumbDrop == pg && _thumbDrag != pg ? (_thumbDrag < pg ? "drop-after" : "drop-before") : "")"
+                                         draggable="true" @ondragstart="() => ThumbDragStart(pg)" @ondragend="ThumbDragEnd"
+                                         @ondragenter="() => _thumbDrop = pg" @ondragover:preventDefault="true" @ondrop="() => ThumbDropAsync(pg)"
+                                         @oncontextmenu="e => OpenThumbMenu(pg, e)" @oncontextmenu:preventDefault="true">
+                                        <button class="pe-thumb @(pg == _page ? "current" : "")" @onclick="() => GoToPageAsync(pg)" aria-label="Page @(pg + 1)">
+                                            <img src="@PageUrl(pg, 0.3)" loading="lazy" alt="" draggable="false" style="width:@Css(ThumbWidth(pg))px" />
+                                            <div>@(pg + 1)</div>
+                                        </button>
+                                        <div class="pe-thumb-tools" role="toolbar" aria-label="Page @(pg + 1) tools">
+                                            <button title="Rotate anticlockwise" aria-label="Rotate page @(pg + 1) anticlockwise" @onclick="() => ThumbActionAsync(pg, () => RotateAsync(-90))"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                            <button title="Rotate clockwise" aria-label="Rotate page @(pg + 1) clockwise" @onclick="() => ThumbActionAsync(pg, () => RotateAsync(90))"><i class="bi bi-arrow-clockwise"></i></button>
+                                            <button title="Delete page" aria-label="Delete page @(pg + 1)" @onclick="() => ThumbActionAsync(pg, DeleteThisPageAsync)"><i class="bi bi-trash3"></i></button>
+                                        </div>
                                     </div>
+                                }
+                            </div>
+                            @if (_thumbMenu is { } mp)
+                            {
+                                <div class="pe-ctx-backdrop" @onclick="() => _thumbMenu = null" @oncontextmenu="() => _thumbMenu = null" @oncontextmenu:preventDefault="true"></div>
+                                <div class="pe-ctxmenu" role="menu" aria-label="Page @(mp + 1)" style="left:@Css(_thumbMenuX)px;top:@Css(_thumbMenuY)px">
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => RotateAsync(90))"><i class="bi bi-arrow-clockwise"></i>Rotate CW</button>
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => RotateAsync(-90))"><i class="bi bi-arrow-counterclockwise"></i>Rotate CCW</button>
+                                    <hr />
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => InsertBlankAsync(before: true))"><i class="bi bi-file-earmark-arrow-up"></i>Insert Before</button>
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => InsertBlankAsync(before: false))"><i class="bi bi-file-earmark-arrow-down"></i>Insert After</button>
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, DuplicatePageAsync)"><i class="bi bi-files"></i>Duplicate</button>
+                                    <hr />
+                                    <button role="menuitem" disabled="@(mp == 0)" @onclick="() => ThumbActionAsync(mp, () => MovePageAsync(-1))"><i class="bi bi-arrow-up"></i>Move Up</button>
+                                    <button role="menuitem" disabled="@(mp >= PageCount - 1)" @onclick="() => ThumbActionAsync(mp, () => MovePageAsync(1))"><i class="bi bi-arrow-down"></i>Move Down</button>
+                                    <hr />
+                                    <button role="menuitem" disabled="@(PageCount < 2)" @onclick="() => ThumbActionAsync(mp, DeleteThisPageAsync)"><i class="bi bi-trash3"></i>Delete Page</button>
+                                    <button role="menuitem" @onclick="() => ThumbActionAsync(mp, ExtractThisPageAsync)"><i class="bi bi-box-arrow-up-right"></i>Extract Page…</button>
                                 </div>
                             }
-                        </div>
-                        @if (_thumbMenu is { } mp)
-                        {
-                            <div class="pe-ctx-backdrop" @onclick="() => _thumbMenu = null" @oncontextmenu="() => _thumbMenu = null" @oncontextmenu:preventDefault="true"></div>
-                            <div class="pe-ctxmenu" role="menu" aria-label="Page @(mp + 1)" style="left:@Css(_thumbMenuX)px;top:@Css(_thumbMenuY)px">
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => RotateAsync(90))"><i class="bi bi-arrow-clockwise"></i>Rotate CW</button>
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => RotateAsync(-90))"><i class="bi bi-arrow-counterclockwise"></i>Rotate CCW</button>
-                                <hr />
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => InsertBlankAsync(before: true))"><i class="bi bi-file-earmark-arrow-up"></i>Insert Before</button>
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, () => InsertBlankAsync(before: false))"><i class="bi bi-file-earmark-arrow-down"></i>Insert After</button>
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, DuplicatePageAsync)"><i class="bi bi-files"></i>Duplicate</button>
-                                <hr />
-                                <button role="menuitem" disabled="@(mp == 0)" @onclick="() => ThumbActionAsync(mp, () => MovePageAsync(-1))"><i class="bi bi-arrow-up"></i>Move Up</button>
-                                <button role="menuitem" disabled="@(mp >= PageCount - 1)" @onclick="() => ThumbActionAsync(mp, () => MovePageAsync(1))"><i class="bi bi-arrow-down"></i>Move Down</button>
-                                <hr />
-                                <button role="menuitem" disabled="@(PageCount < 2)" @onclick="() => ThumbActionAsync(mp, DeleteThisPageAsync)"><i class="bi bi-trash3"></i>Delete Page</button>
-                                <button role="menuitem" @onclick="() => ThumbActionAsync(mp, ExtractThisPageAsync)"><i class="bi bi-box-arrow-up-right"></i>Extract Page…</button>
-                            </div>
                         }
-                    }
-                </div>
-            </aside>
+                    </div>
+                </aside>
+                }
+            </div>
         }
         else
         {
@@ -1066,7 +1084,7 @@
         {
             <aside class="pe-panel right" aria-label="Side panel">
                 <div class="pe-panel-tabs" role="tablist">
-                    @foreach (var t in Enum.GetValues<RightTab>())
+                    @foreach (var t in Enum.GetValues<RightTab>().Where(t => t != RightTab.AllTools))
                     {
                         var tab = t;
                         <button class="pe-panel-tab @(_right == tab ? "active" : "")" role="tab" @onclick="() => _right = tab">@(tab switch { RightTab.AI => "AI", RightTab.AllTools => "All tools", _ => tab.ToString() })</button>

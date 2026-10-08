@@ -1038,9 +1038,9 @@
                     <div class="col-7">
                         <label>Date format</label>
                         <select class="form-select" @bind="_settings.DateFormat">
-                            @foreach (var f in new[] { "d MMMM yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "d MMM yyyy", "dddd d MMMM yyyy" })
+                            @foreach (var f in new[] { _settings.DateFormat }.Concat(Editor.DateFormats).Distinct())
                             {
-                                <option value="@f">@DateTime.Today.ToString(f)</option>
+                                <option value="@f">@Editor.FormatDate(DateTime.Today, f)&nbsp;&nbsp;(@f)</option>
                             }
                         </select>
                     </div>

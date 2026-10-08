@@ -60,8 +60,7 @@ public partial class Editor
 
     public string DateText(DateTime d)
     {
-        try { return d.ToString(Settings.DateFormat, System.Globalization.CultureInfo.CurrentCulture); }
-        catch (FormatException) { return d.ToString("d MMMM yyyy"); }
+        return FormatDate(d, Settings.DateFormat);
     }
 
     // ── Custom stamps (Stamps… / New Stamp / Remove Custom) ──────────────────

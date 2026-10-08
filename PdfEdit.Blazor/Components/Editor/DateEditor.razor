@@ -1,0 +1,66 @@
+@* A placed date's format, day, month and year — the Windows app's Date rows in Properties. *@
+@if (Ed.ReadDate(Item) is { } cur)
+{
+    var months = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat;
+    <div class="pe-date-editor">
+        <label for="df-@Id">Date format</label>
+        <select id="df-@Id" class="form-select form-select-sm" title="How the date is written (d = day, M = month, y = year)"
+                value="@cur.Format" @onchange="e => Set(cur.Date, e.Value?.ToString())">
+            @foreach (var f in Ed.AllDateFormats)
+            {
+                <option value="@f">@Editor.FormatDate(DateTime.Today, f)&nbsp;&nbsp;(@f)</option>
+            }
+        </select>
+        <div class="pe-date-parts">
+            <div>
+                <label for="dd-@Id">Day</label>
+                <select id="dd-@Id" class="form-select form-select-sm" value="@cur.Date.Day" @onchange="e => Day(cur.Date, e)">
+                    @for (int d = 1; d <= DateTime.DaysInMonth(cur.Date.Year, cur.Date.Month); d++) { <option value="@d">@d</option> }
+                </select>
+            </div>
+            <div>
+                <label for="dm-@Id">Month</label>
+                <select id="dm-@Id" class="form-select form-select-sm" value="@cur.Date.Month" @onchange="e => Month(cur.Date, e)">
+                    @for (int m = 1; m <= 12; m++) { <option value="@m">@months.GetMonthName(m)</option> }
+                </select>
+            </div>
+            <div>
+                <label for="dy-@Id">Year</label>
+                <input id="dy-@Id" class="form-control form-control-sm" type="number" min="1" max="9999" value="@cur.Date.Year" @onchange="e => Year(cur.Date, e)" />
+            </div>
+        </div>
+        <button class="pe-btn" title="Set the date to today" @onclick="() => Set(DateTime.Today, null)"><i class="bi bi-calendar-check"></i> Today</button>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public PageItem Item { get; set; } = default!;
+    [Parameter] public string Where { get; set; } = "p";
+
+    private string Id => Where + Item.Id;
+
+    private void Set(DateTime date, string? format)
+    {
+        Ed.SetItemDate(Item, date, string.IsNullOrEmpty(format) ? null : format);
+        Ed.Refresh();
+    }
+
+    private static int Num(ChangeEventArgs e) => int.TryParse(e.Value?.ToString(), out var v) ? v : 0;
+
+    private void Day(DateTime cur, ChangeEventArgs e) =>
+        Set(new DateTime(cur.Year, cur.Month, Math.Clamp(Num(e), 1, DateTime.DaysInMonth(cur.Year, cur.Month))), null);
+
+    private void Month(DateTime cur, ChangeEventArgs e)
+    {
+        int m = Math.Clamp(Num(e), 1, 12);
+        Set(new DateTime(cur.Year, m, Math.Min(cur.Day, DateTime.DaysInMonth(cur.Year, m))), null);
+    }
+
+    private void Year(DateTime cur, ChangeEventArgs e)
+    {
+        int y = Num(e);
+        y = y is >= 0 and < 100 ? 2000 + y : Math.Clamp(y, 1, 9999);   // 26 → 2026, like Windows
+        Set(new DateTime(y, cur.Month, Math.Min(cur.Day, DateTime.DaysInMonth(y, cur.Month))), null);
+    }
+}

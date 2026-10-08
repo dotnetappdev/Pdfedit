@@ -33,7 +33,7 @@ public partial class Editor
     public DialogKind Dialog => _dialog;
     private DialogKind _dialog;
     private Tool _tool = Tool.Select;
-    private bool _showLeft = true, _showRight = true, _busy;
+    private bool _showLeft = true, _showRight = true, _showTools = true, _busy;
     private double _zoom = 1.0;
     private int _page;
     private ElementReference _viewer;
@@ -569,6 +569,7 @@ public partial class Editor
                     Kind = ItemKind.Text, Page = page, Left = x, Top = y - size * 0.6,
                     Width = _tool == Tool.Date ? Math.Max(60, text.Length * size * 0.55) : 160, Height = size * 1.45,
                     FontSize = size, Color = _textColor, Text = text,
+                    DateValue = _tool == Tool.Date ? DateTime.Today : null, DateFormat = _tool == Tool.Date ? Settings.DateFormat : null,
                     Bold = _bold, Italic = _italic, Underline = _underline, Upper = _upper, Align = _textAlign,
                 };
                 break;

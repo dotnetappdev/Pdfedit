@@ -86,6 +86,9 @@ public sealed class PageItem
     /// <summary>Text that reads upwards (the toolbox's Vertical text): a 270° turn.</summary>
     public bool Vertical { get => Rotation == 270; set => Rotation = value ? 270 : 0; }
     public bool QuarterTurn => Rotation is 90 or 270;
+    /// <summary>A placed date: the date and the format its text is written in (the Date rows in Properties).</summary>
+    public DateTime? DateValue { get; set; }
+    public string? DateFormat { get; set; }
     /// <summary>Extra space between letters, in points (the toolbar's VA).</summary>
     public double CharSpacing { get; set; }
     /// <summary>How a text box follows its text (the toolbar's Fit menu).</summary>
@@ -103,7 +106,7 @@ public sealed class PageItem
     {
         Kind = Kind, Page = Page, Left = Left, Top = Top, Width = Width, Height = Height, Text = Text, FontSize = FontSize,
         Color = Color, Image = Image, ImageUrl = ImageUrl, Subtitle = Subtitle, LineWidth = LineWidth, Unit = Unit,
-        Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Rotation = Rotation, CharSpacing = CharSpacing, Fit = Fit,
+        Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Rotation = Rotation, CharSpacing = CharSpacing, Fit = Fit, DateValue = DateValue, DateFormat = DateFormat,
         Bold = Bold, Italic = Italic, Underline = Underline, Upper = Upper, Align = Align, Opacity = Opacity,
     };
 

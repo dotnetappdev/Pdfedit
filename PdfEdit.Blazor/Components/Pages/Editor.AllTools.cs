@@ -88,6 +88,7 @@ public partial class Editor
             new("Pages", "bi-files", "Rotate, insert, move, delete, extract, split",
             [
                 Act("Show / hide page thumbnails", () => _showLeft = !_showLeft, needsDoc: false),
+                Act("Show / hide All tools", () => _showTools = !_showTools, needsDoc: false),
                 Run("Slide show (full screen)", StartSlideShowAsync),
                 Act("Two-page view on / off", () => TwoPages = !TwoPages),
                 Act("Night mode on / off", () => NightMode = !NightMode),

@@ -23,9 +23,14 @@
     @if (Item.Kind == ItemKind.Text)
     {
         <button class="pe-itembar-btn va @(_spacing ? "on" : "")" title="Character spacing" aria-label="Character spacing" aria-expanded="@_spacing"
-                @onclick="() => { _spacing = !_spacing; _fit = false; }">VA</button>
+                @onclick="() => { _spacing = !_spacing; _fit = _date = false; }">VA</button>
         <button class="pe-itembar-btn @(_fit ? "on" : "")" title="Fit box to text — auto-size, wrap or fixed" aria-label="Fit box to text" aria-haspopup="menu" aria-expanded="@_fit"
-                @onclick="() => { _fit = !_fit; _spacing = false; }"><i class="bi bi-arrows-angle-expand"></i></button>
+                @onclick="() => { _fit = !_fit; _spacing = _date = false; }"><i class="bi bi-arrows-angle-expand"></i></button>
+    }
+    @if (Ed.ReadDate(Item) != null)
+    {
+        <button class="pe-itembar-btn @(_date ? "on" : "")" title="Date format, day, month and year" aria-label="Date format" aria-expanded="@_date"
+                @onclick="() => { _date = !_date; _spacing = _fit = false; }"><i class="bi bi-calendar3"></i></button>
     }
     @if (Item.Kind == ItemKind.Mark)
     {
@@ -49,6 +54,12 @@
             <button class="pe-itembar-popbtn" @onclick="() => SetSpacing(0)">Reset</button>
         </div>
     }
+    @if (_date && Ed.ReadDate(Item) != null)
+    {
+        <div class="pe-itembar-pop date" data-nodrag>
+            <DateEditor Ed="Ed" Item="Item" Where="t" />
+        </div>
+    }
     @if (_fit && Item.Kind == ItemKind.Text)
     {
         <div class="pe-itembar-pop menu" role="menu" data-nodrag>
@@ -67,7 +78,7 @@
     [Parameter] public bool Resizable { get; set; } = true;
 
     private static readonly string[] Edges = ["n", "s", "e", "w", "nw", "ne", "sw", "se"];
-    private bool _spacing, _fit;
+    private bool _spacing, _fit, _date;
 
     private RenderFragment FitOption(TextFit fit, string label, string tip) =>
         @<button role="menuitemradio" aria-checked="@(Item.Fit == fit)" title="@tip" @onclick="() => SetFit(fit)">
