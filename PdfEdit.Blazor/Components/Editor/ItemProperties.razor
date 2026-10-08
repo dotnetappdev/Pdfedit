@@ -1,0 +1,165 @@
+@* The selected item in the Properties panel (the Windows app's "Selected text" section): its text,
+   format, rotation, spacing, fit, position and size in points, and Locked. Changes show at once. *@
+@{ var i = Item; bool locked = i.Locked; }
+<h3>@Title()</h3>
+<div class="pe-props">
+    @if (HasText)
+    {
+        <label for="pt-@i.Id">Text</label>
+        <textarea id="pt-@i.Id" class="form-control form-control-sm" rows="@(i.Kind is ItemKind.Stamp ? 1 : 3)" disabled="@locked"
+                  value="@i.Text" @onchange="e => Set(() => i.Text = e.Value?.ToString() ?? string.Empty, grow: true)"></textarea>
+        @if (i.Kind == ItemKind.Stamp)
+        {
+            <label for="ps-@i.Id">Second line</label>
+            <input id="ps-@i.Id" class="form-control form-control-sm" disabled="@locked" value="@i.Subtitle"
+                   @onchange="e => Set(() => i.Subtitle = string.IsNullOrWhiteSpace(e.Value?.ToString()) ? null : e.Value!.ToString())" />
+        }
+    }
+    @if (i.Kind == ItemKind.Mark)
+    {
+        <label>Mark</label>
+        <div class="pe-props-row">
+            @foreach (var g in Editor.MarkGlyphs)
+            {
+                var glyph = g;
+                <button class="pe-props-chip @(i.Text == glyph ? "on" : "")" disabled="@locked" @onclick="() => Set(() => i.Text = glyph)">@glyph</button>
+            }
+        </div>
+    }
+
+    @if (i.Kind is ItemKind.Text or ItemKind.Callout)
+    {
+        <div class="pe-props-grid">
+            <div>
+                <label for="pf-@i.Id">Size</label>
+                <input id="pf-@i.Id" type="number" min="4" max="144" step="1" class="form-control form-control-sm" disabled="@locked"
+                       value="@Editor.Css(i.FontSize)" @onchange="e => Set(() => i.FontSize = Math.Clamp(Num(e, i.FontSize), 4, 144), grow: true)" />
+            </div>
+            <div>
+                <label for="pc-@i.Id">Colour</label>
+                <input id="pc-@i.Id" type="color" class="form-control form-control-sm form-control-color" disabled="@locked"
+                       value="@DesignColor.ToRgb(i.Color)" @onchange="e => Set(() => Ed.SetItemColor(i, e.Value?.ToString() ?? i.Color))" />
+            </div>
+        </div>
+        @if (i.Kind == ItemKind.Text)
+        {
+            <div class="pe-props-row">
+                <button class="pe-props-chip @(i.Bold ? "on" : "")" title="Bold" aria-pressed="@i.Bold" disabled="@locked" @onclick="() => Set(() => i.Bold = !i.Bold, grow: true)"><b>B</b></button>
+                <button class="pe-props-chip @(i.Italic ? "on" : "")" title="Italic" aria-pressed="@i.Italic" disabled="@locked" @onclick="() => Set(() => i.Italic = !i.Italic)"><i>I</i></button>
+                <button class="pe-props-chip @(i.Underline ? "on" : "")" title="Underline" aria-pressed="@i.Underline" disabled="@locked" @onclick="() => Set(() => i.Underline = !i.Underline)"><u>U</u></button>
+                <button class="pe-props-chip @(i.Upper ? "on" : "")" title="Capitals" aria-pressed="@i.Upper" disabled="@locked" @onclick="() => Set(() => i.Upper = !i.Upper, grow: true)">AA</button>
+                <span class="pe-props-sep"></span>
+                @foreach (var (a, icon) in new[] { (PdfEdit.Models.TextAlign.Left, "bi-text-left"), (PdfEdit.Models.TextAlign.Center, "bi-text-center"), (PdfEdit.Models.TextAlign.Right, "bi-text-right") })
+                {
+                    var align = a;
+                    <button class="pe-props-chip @(i.Align == align ? "on" : "")" title="Align @align.ToString().ToLowerInvariant()" disabled="@locked" @onclick="() => Set(() => i.Align = align)"><i class="bi @icon"></i></button>
+                }
+            </div>
+        }
+    }
+    else if (Editor.HasColor(i))
+    {
+        <label for="pc-@i.Id">Colour</label>
+        <input id="pc-@i.Id" type="color" class="form-control form-control-sm form-control-color" disabled="@locked"
+               value="@DesignColor.ToRgb(i.Color)" @onchange="e => Set(() => Ed.SetItemColor(i, e.Value?.ToString() ?? i.Color))" />
+    }
+
+    @if (i.Kind is ItemKind.Ink or ItemKind.Rectangle or ItemKind.Ellipse or ItemKind.Line or ItemKind.Arrow or ItemKind.Polygon or ItemKind.Polyline)
+    {
+        <label for="pw-@i.Id">Line width (pt)</label>
+        <input id="pw-@i.Id" type="number" min="0.5" max="20" step="0.5" class="form-control form-control-sm" disabled="@locked"
+               value="@Editor.Css(i.LineWidth)" @onchange="e => Set(() => Ed.SetItemLineWidth(i, Math.Clamp(Num(e, i.LineWidth), 0.5, 20)))" />
+    }
+    @if (i.Kind == ItemKind.Highlight && i.Markup == PdfEdit.Models.HighlightKind.Highlight)
+    {
+        <label for="po-@i.Id">Opacity (@((int)Math.Round(i.Opacity * 100))%)</label>
+        <input id="po-@i.Id" type="range" min="0.1" max="1" step="0.05" class="form-range" disabled="@locked"
+               value="@Editor.Css(i.Opacity)" @onchange="e => Set(() => i.Opacity = Math.Clamp(Num(e, i.Opacity), 0.1, 1))" />
+    }
+
+    @if (Editor.CanRotate(i) || i.Kind == ItemKind.Text)
+    {
+        <div class="pe-props-grid">
+            @if (Editor.CanRotate(i))
+            {
+                <div>
+                    <label for="pr-@i.Id">Rotation</label>
+                    <select id="pr-@i.Id" class="form-select form-select-sm" disabled="@locked" value="@i.Rotation" @onchange="e => Set(() => Ed.SetItemRotation(i, (int)Num(e, i.Rotation)))">
+                        @foreach (var r in new[] { 0, 90, 180, 270 }) { <option value="@r">@r°</option> }
+                    </select>
+                </div>
+            }
+            @if (i.Kind == ItemKind.Text)
+            {
+                <div>
+                    <label for="psp-@i.Id">Spacing (pt)</label>
+                    <input id="psp-@i.Id" type="number" min="0" max="30" step="0.5" class="form-control form-control-sm" disabled="@locked"
+                           value="@Editor.Css(i.CharSpacing)" @onchange="e => Set(() => i.CharSpacing = Math.Clamp(Num(e, i.CharSpacing), 0, 30), grow: true)" />
+                </div>
+            }
+        </div>
+        @if (i.Kind == ItemKind.Text)
+        {
+            <label for="pfit-@i.Id">Box</label>
+            <select id="pfit-@i.Id" class="form-select form-select-sm" disabled="@locked" value="@i.Fit" @onchange="e => Set(() => Ed.SetItemFit(i, Enum.Parse<TextFit>(e.Value?.ToString() ?? nameof(TextFit.Auto))))">
+                <option value="@TextFit.Auto">Auto-size to the text</option>
+                <option value="@TextFit.Wrap">Wrap text, grow to fit</option>
+                <option value="@TextFit.Fixed">Fixed size</option>
+            </select>
+        }
+    }
+
+    <label>Position and size (pt)</label>
+    <div class="pe-props-grid four">
+        @foreach (var (label, get, set) in Layout())
+        {
+            var s = set;
+            <div>
+                <span class="pe-props-mini">@label</span>
+                <input type="number" step="1" class="form-control form-control-sm" aria-label="@label" disabled="@locked"
+                       value="@Editor.Css(Math.Round(get, 1))" @onchange="e => Set(() => s(Num(e, get)))" />
+            </div>
+        }
+    </div>
+
+    <div class="form-check form-switch mt-2">
+        <input id="pl-@i.Id" class="form-check-input" type="checkbox" role="switch" checked="@locked" @onchange="e => Set(() => i.Locked = e.Value is true)" />
+        <label class="form-check-label" for="pl-@i.Id">Locked<span class="pe-props-mini"> — can't be moved, changed or deleted</span></label>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public PageItem Item { get; set; } = default!;
+
+    private bool HasText => Item.Kind is ItemKind.Text or ItemKind.Callout or ItemKind.Note or ItemKind.Stamp
+        or ItemKind.InsertText or ItemKind.ReplaceText;
+
+    private string Title() => Item.Kind switch
+    {
+        ItemKind.Text => "Selected text",
+        ItemKind.InsertText => "Insert text mark",
+        ItemKind.ReplaceText => "Replace text mark",
+        _ => "Selected " + Item.Describe().Split(':')[0].ToLowerInvariant(),
+    };
+
+    private static double Num(ChangeEventArgs e, double fallback) =>
+        double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : fallback;
+
+    // Points from the top-left of the page as it's seen.
+    private IEnumerable<(string Label, double Value, Action<double> Set)> Layout()
+    {
+        var (pw, ph) = Ed.ViewSize(Item.Page);
+        yield return ("X", Item.Left, v => Ed.PlaceItem(Item, Math.Clamp(v, 0, pw - Item.Width), Item.Top, Item.Width, Item.Height));
+        yield return ("Y", Item.Top, v => Ed.PlaceItem(Item, Item.Left, Math.Clamp(v, 0, ph - Item.Height), Item.Width, Item.Height));
+        yield return ("W", Item.Width, v => Ed.PlaceItem(Item, Item.Left, Item.Top, Math.Clamp(v, 4, pw - Item.Left), Item.Height));
+        yield return ("H", Item.Height, v => Ed.PlaceItem(Item, Item.Left, Item.Top, Item.Width, Math.Clamp(v, 4, ph - Item.Top)));
+    }
+
+    private void Set(Action change, bool grow = false)
+    {
+        change();
+        if (grow) Ed.GrowText(Item);
+        Ed.Refresh();
+    }
+}

@@ -267,7 +267,7 @@ public partial class Editor
     {
         await CopyAsync();
         if (DesignMode) DeleteDesignItem();
-        else if (SelectedItem is { } item) { _items.Remove(item); SelectedItemId = null; Status("Cut"); }
+        else if (SelectedItem is { Locked: false } item) { _items.Remove(item); SelectedItemId = null; Status("Cut"); }
     }
 
     private async Task TryCopyText(string text)

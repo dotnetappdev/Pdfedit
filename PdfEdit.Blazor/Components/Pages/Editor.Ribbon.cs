@@ -129,6 +129,7 @@ public partial class Editor
     public void DeleteSelectedItem()
     {
         if (SelectedItem is not { } item) return;
+        if (item.Locked) { Status("It's locked — unlock it (its toolbar or Properties) to delete it"); return; }
         _items.Remove(item);
         _itemRedo.Push(item);
         SelectedItemId = null;

@@ -45,6 +45,7 @@ public sealed record OwnAnnotation(string Id, int PageNumber, string Kind)
     /// <summary>A measurement's unit (in, mm, cm or pt).</summary>
     public string Unit { get; init; } = "in";
     public string Author { get; init; } = "";
+    public bool Locked { get; init; }
 }
 
 /// <summary>Lists the annotations already saved in a PDF (not form fields or links).</summary>
@@ -83,6 +84,7 @@ public static class PdfAnnotationReader
                         Left = r.GetX(), Bottom = r.GetY(), Width = r.GetWidth(), Height = r.GetHeight(),
                         Colour = colour.Length > 0 ? colour : "#000000", Rotate = rotate, Author = author, LineWidth = width,
                         Opacity = o.GetAsNumber(PdfName.CA)?.DoubleValue() ?? 1,
+                        Locked = (a.GetFlags() & PdfAnnotation.LOCKED) != 0,
                     };
                     var inner = Inner(o, r);
                     switch (a.GetSubtype()?.GetValue())

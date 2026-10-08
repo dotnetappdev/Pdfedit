@@ -132,7 +132,7 @@ window.pdfedit = (() => {
             });
             document.addEventListener('pointerdown', e => {
                 const box = e.target.closest?.('[data-drag]');
-                if (!box || e.button !== 0) return;
+                if (!box || e.button !== 0 || box.dataset.locked) return;
                 const page = box.closest('.pe-page');
                 if (!page || e.target.closest('input, textarea, select, button, [data-nodrag]')) return;
                 e.preventDefault();   // no text selection or native image drag (which cancels the pointer)

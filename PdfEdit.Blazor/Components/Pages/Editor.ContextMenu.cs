@@ -83,11 +83,7 @@ public partial class Editor
         await ToolUpAsync(page, at);
     }
 
-    private void SetLineWidth(PageItem item, double width)
-    {
-        item.LineWidth = width;
-        if (item.IsSketch) FitSketchBox(item);
-    }
+    private void SetLineWidth(PageItem item, double width) => SetItemLineWidth(item, width);
 
     /// <summary>Shows the item in the Comments panel.</summary>
     private void ShowInComments(PageItem item)
@@ -106,7 +102,7 @@ public partial class Editor
     [JSInvokable]
     public Task OnNudge(int dx, int dy)
     {
-        if (DesignMode || PrepareMode || SelectedItem is not { } item) return Task.CompletedTask;
+        if (DesignMode || PrepareMode || SelectedItem is not { } item || item.Locked) return Task.CompletedTask;
         var (pw, ph) = ViewSize(item.Page);
         var (oldLeft, oldTop) = (item.Left, item.Top);
         item.Left = Math.Clamp(item.Left + dx, 0, Math.Max(0, pw - item.Width));

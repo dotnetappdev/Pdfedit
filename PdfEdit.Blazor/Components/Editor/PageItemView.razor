@@ -11,33 +11,33 @@
 @switch (i.Kind)
 {
     case ItemKind.Text:
-        <div class="pe-item text @rot" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
-            <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here" style="@textStyle"
+        <div class="pe-item text @rot" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
+            <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here" style="@textStyle" readonly="@i.Locked"
                       @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Mark:
-        <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()" data-drag="i:@i.Id">
+        <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <span class="pe-mark-glyph" style="@(i.Rotation != 0 ? $"transform:rotate({i.Rotation}deg)" : null)">@i.Text</span>
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Signature or ItemKind.Picture:
-        <div class="pe-item signature" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
+        <div class="pe-item signature" style="@style" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <img src="@i.ImageUrl" alt="@i.Describe()" draggable="false" />
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Note:
         <div class="pe-item note" style="left:@Editor.Css(i.Left / PageW * 100)%;top:@Editor.Css(i.Top / PageH * 100)%" title="@i.Text"
-             @onclick="Edit" role="button" data-drag="i:@i.Id" aria-label="Sticky note: @i.Text">
+             @onclick="Edit" role="button" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)" aria-label="Sticky note: @i.Text">
             <i class="bi bi-sticky-fill"></i>
             <ItemChrome Ed="Ed" Item="Item" Resizable="false" />
         </div>
         break;
     case ItemKind.Stamp:
-        <div class="pe-item stamp" style="@style;color:@i.Color;border-color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id">
+        <div class="pe-item stamp" style="@style;color:@i.Color;border-color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <div class="pe-stamp-body @rot">
                 <div class="pe-stamp-title" style="font-size:@Editor.Css(StampTitleSize() / PageW * 100)cqw">@i.Text</div>
                 @if (!string.IsNullOrEmpty(i.Subtitle))
@@ -51,31 +51,31 @@
     case ItemKind.Callout:
         var tip = i.Points is { Count: > 0 } tp ? tp[0] : new PdfEdit.Models.PointD(i.Left - 30, i.Top + i.Height + 30);
         var (ax, ay) = CalloutAttach(tip);
-        <div class="pe-item callout" style="@style;border-color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
+        <div class="pe-item callout" style="@style;border-color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <svg class="pe-callout-line" viewBox="0 0 @Editor.Css(i.Width) @Editor.Css(i.Height)" preserveAspectRatio="none" aria-hidden="true">
                 <line x1="@Editor.Css(ax)" y1="@Editor.Css(ay)" x2="@Editor.Css(tip.X - i.Left)" y2="@Editor.Css(tip.Y - i.Top)" stroke="@i.Color" stroke-width="1" />
                 <circle cx="@Editor.Css(tip.X - i.Left)" cy="@Editor.Css(tip.Y - i.Top)" r="1.6" fill="@i.Color" />
             </svg>
-            <textarea id="item-@i.Id" aria-label="Callout text" placeholder="Type the callout"
+            <textarea id="item-@i.Id" aria-label="Callout text" placeholder="Type the callout" readonly="@i.Locked"
                       @bind="Item.Text" @bind:event="oninput" @onblur="() => Ed.Refresh()"></textarea>
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.InsertText:
-        <div class="pe-item caret" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
+        <div class="pe-item caret" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)" @ondblclick="Edit">
             <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
             <ItemChrome Ed="Ed" Item="Item" Resizable="false" />
         </div>
         break;
     case ItemKind.ReplaceText:
-        <div class="pe-item replace" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
+        <div class="pe-item replace" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)" @ondblclick="Edit">
             <span class="pe-strike" style="background:@i.Color"></span>
             <svg class="pe-replace-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Cloud:
-        <div class="pe-item cloud" style="@style" title="Cloud" data-drag="i:@i.Id">
+        <div class="pe-item cloud" style="@style" title="Cloud" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <svg viewBox="0 0 @Editor.Css(i.Width) @Editor.Css(i.Height)" preserveAspectRatio="none" aria-hidden="true">
                 <path d="@CloudPath()" fill="none" stroke="@i.Color" stroke-width="1.5" vector-effect="non-scaling-stroke" />
                 <rect class="hit" x="0" y="0" width="@Editor.Css(i.Width)" height="@Editor.Css(i.Height)" />
@@ -87,7 +87,7 @@
         or ItemKind.Polygon or ItemKind.Polyline when i.Points != null:
         var vb = $"{Editor.Css(i.Left)} {Editor.Css(i.Top)} {Editor.Css(i.Width)} {Editor.Css(i.Height)}";
         var pts = string.Join(" ", i.Points.Select(p => Editor.Css(p.X) + "," + Editor.Css(p.Y)));
-        <div class="pe-item sketch" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
+        <div class="pe-item sketch" style="@style" title="@i.Describe()" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <svg viewBox="@vb" preserveAspectRatio="none" aria-hidden="true">
                 @if (i.Kind is ItemKind.Area or ItemKind.Polygon)
                 {
@@ -126,7 +126,7 @@
             ItemKind.Redact => "redact",
             _ => "rect",
         };
-        <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)" data-drag="i:@i.Id">
+        <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)" data-drag="i:@i.Id" data-locked="@(i.Locked ? "1" : null)">
             <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;

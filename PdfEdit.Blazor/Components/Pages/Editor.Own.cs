@@ -22,7 +22,7 @@ public partial class Editor
     {
         i.Kind, i.Page, R(i.Left), R(i.Top), R(i.Width), R(i.Height), i.Text, R(i.FontSize), i.Color, i.Subtitle, R(i.LineWidth),
         i.Markup, i.Rotation, R(i.CharSpacing), i.Fit, i.Bold, i.Italic, i.Underline, i.Upper, i.Align, R(i.Opacity), i.DateFormat,
-        i.Points == null ? "" : string.Join(';', i.Points.Select(p => R(p.X) + "," + R(p.Y))), i.Unit,
+        i.Points == null ? "" : string.Join(';', i.Points.Select(p => R(p.X) + "," + R(p.Y))), i.Unit, i.Locked,
     });
 
     private static string R(double v) => Math.Round(v, 2).ToString(CultureInfo.InvariantCulture);
@@ -112,6 +112,7 @@ public partial class Editor
             LineWidth = item.LineWidth, Markup = item.Markup, Rotation = item.Rotation, CharSpacing = item.CharSpacing,
             Fit = item.Fit, Bold = item.Bold, Italic = item.Italic, Opacity = item.Opacity,
             Unit = item.Unit, Author = string.IsNullOrWhiteSpace(o.Author) ? null : o.Author,
+            Locked = o.Kind == "Text" && o.Locked,
         };
         // Lines and measurements: the box is worked out from the points, as when they're drawn.
         if (placed.Kind is ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Polygon

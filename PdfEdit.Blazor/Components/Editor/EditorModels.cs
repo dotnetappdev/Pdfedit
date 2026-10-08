@@ -64,6 +64,8 @@ public sealed class PageItem
     /// only changed items are written again. Null for something added since.
     /// </summary>
     public string? Baseline { get; set; }
+    /// <summary>Can't be moved, resized, edited or deleted until unlocked (text is saved with the PDF's Locked flag).</summary>
+    public bool Locked { get; set; }
     /// <summary>Who added it (kept when an annotation from the PDF is written again).</summary>
     public string? Author { get; set; }
     public ItemKind Kind { get; init; }
@@ -114,6 +116,7 @@ public sealed class PageItem
         Kind = Kind, Page = Page, Left = Left, Top = Top, Width = Width, Height = Height, Text = Text, FontSize = FontSize,
         Color = Color, Image = Image, ImageUrl = ImageUrl, Subtitle = Subtitle, LineWidth = LineWidth, Unit = Unit,
         Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Rotation = Rotation, CharSpacing = CharSpacing, Fit = Fit, DateValue = DateValue, DateFormat = DateFormat,
+        Locked = Locked,
         Bold = Bold, Italic = Italic, Underline = Underline, Upper = Upper, Align = Align, Opacity = Opacity,
     };
 

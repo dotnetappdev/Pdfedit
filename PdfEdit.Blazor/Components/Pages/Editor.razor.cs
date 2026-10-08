@@ -312,7 +312,7 @@ public partial class Editor
                     FontColor = i.Color, FontFamily = "Helvetica", CharacterSpacing = i.CharSpacing,
                     AutoSize = i.Kind == ItemKind.Text && i.Fit == TextFit.Auto, GrowToFit = i.Fit != TextFit.Fixed,
                     IsBold = i.Bold, IsItalic = i.Italic, IsUnderline = i.Underline, ForceUpperCase = i.Upper, TextAlignment = i.Align,
-                    DateValue = i.DateValue, DateFormat = i.DateFormat, Comment = CommentFor(i),
+                    DateValue = i.DateValue, DateFormat = i.DateFormat, IsLocked = i.Locked, Comment = CommentFor(i),
                 }).Concat(StampAndInkAnnotations()).ToList();
             var signatures = _items.Where(i => i.Kind is ItemKind.Signature or ItemKind.Picture && i.Image != null)
                 .Select(i => new PlacedSignature
@@ -655,6 +655,7 @@ public partial class Editor
 
     public void RemoveItem(PageItem item)
     {
+        if (item.Locked) { Status("It's locked — unlock it to remove it"); return; }
         _items.Remove(item);
         Status("Removed");
     }

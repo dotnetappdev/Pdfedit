@@ -60,6 +60,30 @@ public partial class Editor
         item.Text = MarkGlyphs[(i + 1) % MarkGlyphs.Length];
     }
 
+    /// <summary>Turns text, a mark or a stamp to a given angle (90° steps, the box turning with it).</summary>
+    public void SetItemRotation(PageItem item, int degrees)
+    {
+        degrees = ((degrees / 90 * 90) % 360 + 360) % 360;
+        for (int n = 0; n < 4 && item.Rotation != degrees; n++) RotateItem(item);
+    }
+
+    public void SetItemLineWidth(PageItem item, double width)
+    {
+        item.LineWidth = width;
+        if (item.IsSketch) FitSketchBox(item);
+    }
+
+    /// <summary>Moves and sizes an item (points on the seen page); drawings' points go with it.</summary>
+    public void PlaceItem(PageItem item, double left, double top, double width, double height)
+    {
+        var (oldLeft, oldTop, oldWidth, oldHeight) = (item.Left, item.Top, item.Width, item.Height);
+        (item.Left, item.Top, item.Width, item.Height) = (left, top, Math.Max(4, width), Math.Max(4, height));
+        if (item.Kind == ItemKind.Mark) item.FontSize = Math.Min(item.Width, item.Height);
+        if (item.Kind == ItemKind.Text && item.Fit == TextFit.Auto && (Math.Abs(width - oldWidth) > 0.5 || Math.Abs(height - oldHeight) > 0.5))
+            item.Fit = TextFit.Wrap;
+        MoveSketchPoints(item, oldLeft, oldTop, oldWidth, oldHeight);
+    }
+
     public static bool HasColor(PageItem item) =>
         item.Kind is not (ItemKind.Signature or ItemKind.Picture or ItemKind.Note or ItemKind.Redact);
 

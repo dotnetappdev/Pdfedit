@@ -1,6 +1,13 @@
 @* A page item's resize handles (every edge and corner) and its floating toolbar, shown on hover and
    while selected — the Windows app's annotation toolbar: grip · A smaller · A larger · delete · rotate ·
    character spacing · fit · swap mark · colour swatches. *@
+@if (Item.Locked)
+{
+    <div class="pe-itembar locked @(Item.Top < 30 ? "below" : "")" role="toolbar" aria-label="@Item.Describe() tools" @onclick:stopPropagation="true">
+        <button class="pe-itembar-btn" title="Locked — click to unlock" aria-label="Unlock" @onclick="Unlock"><i class="bi bi-lock-fill"></i> Locked</button>
+    </div>
+    return;
+}
 @if (Resizable)
 {
     @foreach (var edge in Edges)
@@ -95,6 +102,12 @@
     private void Rotate() { Ed.RotateItem(Item); Done(); }
     private void Swap() { Editor.SwapMark(Item); Done(); }
     private void SetColor(string hex) { Ed.SetItemColor(Item, hex); Done(); }
+
+    private void Unlock()
+    {
+        Item.Locked = false;
+        Done();
+    }
 
     private void Remove()
     {

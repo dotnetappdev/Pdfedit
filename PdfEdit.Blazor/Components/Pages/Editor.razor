@@ -895,10 +895,11 @@
             <div class="pe-ctxmenu" role="menu" aria-label="@(mi?.Describe() ?? $"Page {_menuPage + 1}")" style="left:@Css(_menuX)px;top:@Css(_menuY)px">
                 @if (mi != null)
                 {
-                    <button role="menuitem" @onclick="() => MenuAsync(CutAsync)"><i class="bi bi-scissors"></i>Cut</button>
+                    <button role="menuitem" disabled="@mi.Locked" @onclick="() => MenuAsync(CutAsync)"><i class="bi bi-scissors"></i>Cut</button>
                     <button role="menuitem" @onclick="() => MenuAsync(CopyAsync)"><i class="bi bi-copy"></i>Copy</button>
                     <button role="menuitem" @onclick="PasteHereAsync"><i class="bi bi-clipboard"></i>Paste</button>
-                    <button role="menuitem" @onclick="() => MenuAct(DeleteSelectedItem)"><i class="bi bi-trash3"></i>Delete @mi.Describe().Split(':')[0]</button>
+                    <button role="menuitem" disabled="@mi.Locked" @onclick="() => MenuAct(DeleteSelectedItem)"><i class="bi bi-trash3"></i>Delete @mi.Describe().Split(':')[0]</button>
+                    <button role="menuitem" @onclick="() => MenuAct(() => mi.Locked = !mi.Locked)"><i class="bi @(mi.Locked ? "bi-unlock" : "bi-lock")"></i>@(mi.Locked ? "Unlock" : "Lock")</button>
                     @if (Editor.CanRotate(mi))
                     {
                         <hr />

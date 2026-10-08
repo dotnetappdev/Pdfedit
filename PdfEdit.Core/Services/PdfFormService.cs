@@ -612,6 +612,8 @@ public class PdfFormService
 
             if (ann.RotationAngle != 0)
                 pdfAnn.Put(PdfName.Rotate, new PdfNumber((int)((-ann.RotationAngle % 360 + 360) % 360)));
+            // Locked text can't be moved, resized or deleted in PDF viewers either.
+            if (ann.IsLocked) pdfAnn.SetFlags(pdfAnn.GetFlags() | PdfAnnotation.LOCKED);
 
             // Build default appearance: honour bold/italic via font flag approximation using base fonts
             string fontName = ann.IsBold && ann.IsItalic ? "Helvetica-BoldOblique"
