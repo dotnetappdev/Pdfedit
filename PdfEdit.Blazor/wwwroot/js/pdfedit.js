@@ -119,9 +119,11 @@ window.pdfedit = (() => {
                 const box = e.target.closest?.('[data-drag]');
                 if (!box || e.button !== 0) return;
                 const page = box.closest('.pe-page');
-                if (!page || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)) return;
+                if (!page || e.target.closest('input, textarea, select, button, [data-nodrag]')) return;
                 e.preventDefault();   // no text selection or native image drag (which cancels the pointer)
-                const resize = !!e.target.closest('[data-resize]');
+                // Which edges a handle drags: n, s, e, w or a corner (data-resize="1" is the bottom-right one).
+                const handle = e.target.closest('[data-resize]')?.dataset.resize;
+                const resize = handle ? (handle === '1' ? 'se' : handle) : '';
                 const pr = page.getBoundingClientRect();
                 const br = box.getBoundingClientRect();
                 const start = { x: e.clientX, y: e.clientY, l: br.left - pr.left, t: br.top - pr.top, w: br.width, h: br.height };
@@ -132,7 +134,12 @@ window.pdfedit = (() => {
                     moved = true;
                     box.classList.add('pe-dragging');
                     let l = start.l, t = start.t, w = start.w, h = start.h;
-                    if (resize) { w = Math.max(6, start.w + dx); h = Math.max(6, start.h + dy); }
+                    if (resize) {
+                        if (resize.includes('e')) w = Math.max(6, Math.min(start.w + dx, pr.width - start.l));
+                        if (resize.includes('s')) h = Math.max(6, Math.min(start.h + dy, pr.height - start.t));
+                        if (resize.includes('w')) { const nl = Math.min(Math.max(0, start.l + dx), start.l + start.w - 6); w = start.w + start.l - nl; l = nl; }
+                        if (resize.includes('n')) { const nt = Math.min(Math.max(0, start.t + dy), start.t + start.h - 6); h = start.h + start.t - nt; t = nt; }
+                    }
                     else { l = Math.min(Math.max(0, start.l + dx), pr.width - w); t = Math.min(Math.max(0, start.t + dy), pr.height - h); }
                     box.style.left = (l / pr.width * 100) + '%';
                     box.style.top = (t / pr.height * 100) + '%';

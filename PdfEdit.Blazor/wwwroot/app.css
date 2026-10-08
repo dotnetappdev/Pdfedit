@@ -749,6 +749,11 @@ html, body {
     cursor: move;
     user-select: none;
 }
+.pe-stamp-body { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pe-stamp-body.rot90 { writing-mode: vertical-rl; }
+.pe-stamp-body.rot180 { transform: rotate(180deg); }
+.pe-stamp-body.rot270 { writing-mode: vertical-rl; transform: rotate(180deg); }
+.pe-mark-glyph { display: inline-block; }
 .pe-stamp-title { font-weight: 700; }
 .pe-stamp-sub { font-style: italic; }
 .pe-item.sketch { pointer-events: none; }
@@ -1302,7 +1307,9 @@ html, body {
 .pe-item.box.markup.squiggly::after { bottom: 0; height: 4px;
     background: linear-gradient(135deg, transparent 35%, currentColor 35% 55%, transparent 55%) 0 0 / 6px 4px repeat-x,
                 linear-gradient(45deg, transparent 35%, currentColor 35% 55%, transparent 55%) 3px 0 / 6px 4px repeat-x; }
-.pe-item.text.vertical textarea { writing-mode: vertical-rl; transform: rotate(180deg); }
+.pe-item.text.rot90 textarea { writing-mode: vertical-rl; }
+.pe-item.text.rot180 textarea { transform: rotate(180deg); }
+.pe-item.text.rot270 textarea { writing-mode: vertical-rl; transform: rotate(180deg); }
 .pe-zoom-rect { position: absolute; border: 1px dashed var(--pe-accent); background: rgba(10, 132, 255, .12); pointer-events: none; }
 .pe-tool-layer[data-sketch="pan"] { cursor: grab; }
 .pe-tool-layer[data-sketch="pan"].panning { cursor: grabbing; }
@@ -1585,3 +1592,192 @@ html, body {
 .pe-panel.right .pe-panel-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
 
 .pe-ribbon-row { display: contents; }
+
+/* ── Page item handles and floating toolbar ─────────────────────────────────
+   Resize from any edge or corner, and the Windows app's annotation toolbar (PdfViewerControl's
+   BuildAnnotationToolbar): dark in every theme, sitting flush on top of the item. */
+.pe-item-handle.n, .pe-item-handle.s { left: calc(50% - 5px); cursor: ns-resize; }
+.pe-item-handle.e, .pe-item-handle.w { top: calc(50% - 5px); cursor: ew-resize; }
+.pe-item-handle.n { top: -6px; bottom: auto; right: auto; }
+.pe-item-handle.s { bottom: -6px; right: auto; }
+.pe-item-handle.e { right: -6px; bottom: auto; }
+.pe-item-handle.w { left: -6px; right: auto; bottom: auto; }
+.pe-item-handle.nw { left: -6px; top: -6px; right: auto; bottom: auto; cursor: nwse-resize; }
+.pe-item-handle.ne { right: -6px; top: -6px; bottom: auto; cursor: nesw-resize; }
+.pe-item-handle.sw { left: -6px; bottom: -6px; right: auto; cursor: nesw-resize; }
+.pe-item-handle.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.pe-item-handle { width: 9px; height: 9px; pointer-events: auto; }
+.pe-item-wrap.sel > .pe-item .pe-item-handle { display: block; }
+
+.pe-itembar {
+    position: absolute;
+    left: -1px;
+    bottom: 100%;
+    z-index: 30;
+    display: none;
+    align-items: stretch;
+    height: 26px;
+    background: #232323;
+    border: 1px solid #464646;
+    border-radius: 4px 4px 0 0;
+    color: #C8C8C8;
+    font: 12px "Segoe UI", system-ui, sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+    padding-right: 4px;
+    pointer-events: auto;
+    cursor: default;
+    user-select: none;
+}
+.pe-itembar.below { bottom: auto; top: 100%; border-radius: 0 0 4px 4px; }
+.pe-item:hover > .pe-itembar, .pe-item:focus-within > .pe-itembar, .pe-item-wrap.sel > .pe-item > .pe-itembar { display: flex; }
+.pe-itembar-grip {
+    display: grid;
+    place-items: center;
+    padding: 0 5px;
+    background: #373737;
+    border-right: 1px solid #5A5A5A;
+    color: #B4B4B4;
+    font-size: 13px;
+    cursor: move;
+}
+.pe-itembar-btn {
+    border: 0;
+    background: transparent;
+    color: #C8C8C8;
+    padding: 0 8px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+.pe-itembar-btn:hover, .pe-itembar-btn.on { background: #3C3C3C; }
+.pe-itembar-btn:focus-visible { outline: 2px solid #409CFF; outline-offset: -2px; }
+.pe-itembar-btn.smaller { font-size: 10px; }
+.pe-itembar-btn.larger { font-size: 16px; }
+.pe-itembar-btn.va { font-size: 11px; }
+.pe-itembar-sep { width: 1px; background: #464646; margin: 3px 2px; }
+.pe-itembar-swatch {
+    align-self: center;
+    width: 12px;
+    height: 12px;
+    margin: 0 2px;
+    padding: 0;
+    border: 1px solid #fff;
+    border-radius: 2px;
+    cursor: pointer;
+}
+.pe-itembar-swatch.on { box-shadow: 0 0 0 2px #409CFF; }
+.pe-itembar-pop {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: #232323;
+    border: 1px solid #464646;
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+    color: #fff;
+    font-size: 11px;
+    cursor: default;
+}
+.pe-itembar.below .pe-itembar-pop { top: calc(100% + 2px); }
+.pe-itembar-pop input[type=range] { width: 160px; accent-color: #0A84FF; }
+.pe-itembar-popbtn {
+    align-self: flex-start;
+    border: 1px solid #5A5A5A;
+    background: #2B2B2B;
+    color: #E8E8E8;
+    border-radius: 3px;
+    padding: 2px 10px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.pe-itembar-pop.menu { padding: 4px 0; gap: 0; min-width: 230px; }
+.pe-itembar-pop.menu button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    color: #E8E8E8;
+    text-align: left;
+    padding: 6px 12px 6px 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.pe-itembar-pop.menu button i { width: 16px; text-align: center; }
+.pe-itembar-pop.menu button:hover { background: #3C3C3C; }
+.pe-itembar-pop.menu hr { margin: 4px 0; border-color: #464646; opacity: 1; }
+.pe-theme-hc .pe-itembar, .pe-theme-hc .pe-itembar-pop { background: #000; border-color: #fff; color: #fff; }
+.pe-theme-hc .pe-itembar-btn { color: #fff; }
+.pe-theme-hc .pe-itembar-btn:hover { outline: 1px solid #FFFF00; }
+
+/* ── Thumbnail page tools (hover buttons, right-click menu, drag to reorder) ─ */
+.pe-thumb-wrap { position: relative; border-top: 3px solid transparent; border-bottom: 3px solid transparent; }
+.pe-thumb-wrap.drop-before { border-top-color: var(--pe-accent); }
+.pe-thumb-wrap.drop-after { border-bottom-color: var(--pe-accent); }
+.pe-thumb-tools {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    background: #232323;
+    border: 1px solid #464646;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+}
+.pe-thumb-wrap:hover .pe-thumb-tools, .pe-thumb-wrap:focus-within .pe-thumb-tools { display: flex; }
+.pe-thumb-tools button {
+    border: 0;
+    background: transparent;
+    color: #C8C8C8;
+    width: 26px;
+    height: 24px;
+    padding: 0;
+    font-size: 13px;
+    cursor: pointer;
+}
+.pe-thumb-tools button:hover { background: #3C3C3C; color: #fff; }
+.pe-thumb-tools button:focus-visible { outline: 2px solid #409CFF; outline-offset: -2px; }
+.pe-ctx-backdrop { position: fixed; inset: 0; z-index: 1090; }
+.pe-ctxmenu {
+    position: fixed;
+    z-index: 1100;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    background: var(--pe-panel-bg);
+    color: var(--pe-fg);
+    border: 1px solid var(--pe-border);
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+    font-size: 12px;
+}
+.pe-ctxmenu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 6px 14px 6px 10px;
+    cursor: pointer;
+}
+.pe-ctxmenu button i { width: 16px; text-align: center; color: var(--pe-dim); }
+.pe-ctxmenu button:hover:not(:disabled) { background: var(--pe-hover); }
+.pe-ctxmenu button:disabled { opacity: .45; cursor: default; }
+.pe-ctxmenu hr { margin: 4px 0; border-color: var(--pe-border); opacity: 1; }

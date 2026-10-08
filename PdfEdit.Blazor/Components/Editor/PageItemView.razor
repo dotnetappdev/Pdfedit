@@ -3,50 +3,49 @@
     var i = Item;
     var style = Editor.OverlayStyle(i.Left, PageH - i.Top - i.Height, i.Width, i.Height, PageW, PageH);
     var textStyle = $"font-weight:{(i.Bold ? 700 : 400)};font-style:{(i.Italic ? "italic" : "normal")};text-decoration:{(i.Underline ? "underline" : "none")};" +
-                    $"text-transform:{(i.Upper ? "uppercase" : "none")};text-align:{i.Align.ToString().ToLowerInvariant()}";
+                    $"text-transform:{(i.Upper ? "uppercase" : "none")};text-align:{i.Align.ToString().ToLowerInvariant()};" +
+                    $"letter-spacing:{Editor.Css(i.CharSpacing / PageW * 100)}cqw;white-space:{(i.Fit == TextFit.Auto ? "pre" : "pre-wrap")}";
+    var rot = i.Rotation != 0 ? $"rot{i.Rotation}" : "";
 }
 <div class="pe-item-wrap @(Ed.SelectedItemId == i.Id ? "sel" : "")" @onpointerdown="() => Ed.SelectItem(Item)">
 @switch (i.Kind)
 {
     case ItemKind.Text:
-        <div class="pe-item text @(i.Vertical ? "vertical" : "")" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
-            <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
+        <div class="pe-item text @rot" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" data-drag="i:@i.Id">
             <textarea id="item-@i.Id" aria-label="Text on page" placeholder="Type here" style="@textStyle"
                       @bind="Item.Text" @bind:event="oninput" @bind:after="Grow" @onblur="() => Ed.Refresh()"></textarea>
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove text" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Mark:
         <div class="pe-item mark" style="@style;color:@i.Color;font-size:@Editor.Css(i.FontSize / PageW * 100)cqw" title="@i.Describe()" data-drag="i:@i.Id">
-            @i.Text
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove mark" @onclick="Remove">✕</button>
+            <span class="pe-mark-glyph" style="@(i.Rotation != 0 ? $"transform:rotate({i.Rotation}deg)" : null)">@i.Text</span>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Signature or ItemKind.Picture:
         <div class="pe-item signature" style="@style" title="@i.Describe()" data-drag="i:@i.Id">
             <img src="@i.ImageUrl" alt="@i.Describe()" draggable="false" />
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove signature" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Note:
         <div class="pe-item note" style="left:@Editor.Css(i.Left / PageW * 100)%;top:@Editor.Css(i.Top / PageH * 100)%" title="@i.Text"
              @onclick="Edit" role="button" data-drag="i:@i.Id" aria-label="Sticky note: @i.Text">
             <i class="bi bi-sticky-fill"></i>
-            <button class="pe-x" title="Remove" aria-label="Remove note" @onclick="Remove" @onclick:stopPropagation="true">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" Resizable="false" />
         </div>
         break;
     case ItemKind.Stamp:
         <div class="pe-item stamp" style="@style;color:@i.Color;border-color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id">
-            <div class="pe-stamp-title" style="font-size:@Editor.Css(StampTitleSize() / PageW * 100)cqw">@i.Text</div>
-            @if (!string.IsNullOrEmpty(i.Subtitle))
-            {
-                <div class="pe-stamp-sub" style="font-size:@Editor.Css(StampSubSize() / PageW * 100)cqw">@i.Subtitle</div>
-            }
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove stamp" @onclick="Remove">✕</button>
+            <div class="pe-stamp-body @rot">
+                <div class="pe-stamp-title" style="font-size:@Editor.Css(StampTitleSize() / PageW * 100)cqw">@i.Text</div>
+                @if (!string.IsNullOrEmpty(i.Subtitle))
+                {
+                    <div class="pe-stamp-sub" style="font-size:@Editor.Css(StampSubSize() / PageW * 100)cqw">@i.Subtitle</div>
+                }
+            </div>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Callout:
@@ -57,25 +56,22 @@
                 <line x1="@Editor.Css(ax)" y1="@Editor.Css(ay)" x2="@Editor.Css(tip.X - i.Left)" y2="@Editor.Css(tip.Y - i.Top)" stroke="@i.Color" stroke-width="1" />
                 <circle cx="@Editor.Css(tip.X - i.Left)" cy="@Editor.Css(tip.Y - i.Top)" r="1.6" fill="@i.Color" />
             </svg>
-            <span class="pe-item-grip" title="Drag to move" aria-hidden="true"><i class="bi bi-arrows-move"></i></span>
             <textarea id="item-@i.Id" aria-label="Callout text" placeholder="Type the callout"
                       @bind="Item.Text" @bind:event="oninput" @onblur="() => Ed.Refresh()"></textarea>
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove callout" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.InsertText:
         <div class="pe-item caret" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
             <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
-            <button class="pe-x" title="Remove" aria-label="Remove insert mark" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" Resizable="false" />
         </div>
         break;
     case ItemKind.ReplaceText:
         <div class="pe-item replace" style="@style;color:@i.Color" title="@i.Describe()" data-drag="i:@i.Id" @ondblclick="Edit">
             <span class="pe-strike" style="background:@i.Color"></span>
             <svg class="pe-replace-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 10 L5 0 L10 10 Q5 7.5 0 10Z" fill="currentColor" /></svg>
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove replace mark" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Cloud:
@@ -84,8 +80,7 @@
                 <path d="@CloudPath()" fill="none" stroke="@i.Color" stroke-width="1.5" vector-effect="non-scaling-stroke" />
                 <rect class="hit" x="0" y="0" width="@Editor.Css(i.Width)" height="@Editor.Css(i.Height)" />
             </svg>
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove cloud" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     case ItemKind.Ink or ItemKind.Line or ItemKind.Arrow or ItemKind.Distance or ItemKind.Perimeter or ItemKind.Area
@@ -115,8 +110,7 @@
                     @((MarkupString)$"<text x=\"{Editor.Css(lx)}\" y=\"{Editor.Css(ly)}\" fill=\"{i.Color}\" font-size=\"9\" text-anchor=\"middle\" class=\"pe-measure\">{System.Net.WebUtility.HtmlEncode(i.MeasureLabel())}</text>")
                 }
             </svg>
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove @i.Describe()" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
     default:
@@ -133,8 +127,7 @@
             _ => "rect",
         };
         <div class="pe-item box @kind" title="@i.Describe()" style="@BoxStyle(style)" data-drag="i:@i.Id">
-            <span class="pe-item-handle" data-resize="1" aria-hidden="true"></span>
-            <button class="pe-x" title="Remove" aria-label="Remove" @onclick="Remove">✕</button>
+            <ItemChrome Ed="Ed" Item="Item" />
         </div>
         break;
 }
@@ -186,19 +179,24 @@
     }
 
     // Title and subtitle text sizes, fitted to the stamp like the PDF appearance is.
+    // A stamp turned a quarter lays its text along the box's height.
+    private (double W, double H) StampBox() => Item.QuarterTurn ? (Item.Height, Item.Width) : (Item.Width, Item.Height);
+
     private double StampTitleSize()
     {
+        var (w, h) = StampBox();
         bool sub = !string.IsNullOrEmpty(Item.Subtitle);
-        double size = (sub ? Item.Height * 0.42 : Item.Height * 0.55) / 1.15;
-        double inner = Item.Width * 0.82;
+        double size = (sub ? h * 0.42 : h * 0.55) / 1.15;
+        double inner = w * 0.82;
         double textW = Item.Text.Length * size * 0.68;
         return textW > inner ? size * inner / textW : size;
     }
 
     private double StampSubSize()
     {
-        double size = Item.Height * 0.2 / 1.15;
-        double inner = Item.Width * 0.82;
+        var (w, h) = StampBox();
+        double size = h * 0.2 / 1.15;
+        double inner = w * 0.82;
         double textW = (Item.Subtitle?.Length ?? 0) * size * 0.5;
         return textW > inner ? size * inner / textW : size;
     }
@@ -249,20 +247,6 @@
         Ed.Refresh();
     }
 
-    // Grow the box to fit the lines typed (like the Windows app's auto-size text).
-    private void Grow()
-    {
-        if (Item.Vertical)
-        {
-            // Reads upwards: the box grows taller (and up the page) with the text.
-            var longestV = Item.Text.Split('\n').Max(l => l.Length);
-            double need = Math.Clamp(longestV * Item.FontSize * 0.55 + 6, 20, Item.Top + Item.Height);
-            if (need > Item.Height) { Item.Top -= need - Item.Height; Item.Height = need; }
-            return;
-        }
-        var lines = Math.Max(1, Item.Text.Split('\n').Length);
-        var longest = Item.Text.Split('\n').Max(l => l.Length);
-        Item.Height = Math.Max(Item.Height, lines * Item.FontSize * 1.3 + 2);
-        Item.Width = Math.Clamp(Math.Max(Item.Width, longest * Item.FontSize * 0.55 + 6), 20, PageW - Item.Left);
-    }
+    // Size the box to the text as it's typed, as its Fit says (like the Windows app's auto-size text).
+    private void Grow() => Ed.GrowText(Item);
 }

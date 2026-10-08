@@ -111,7 +111,10 @@ public partial class Editor
             item.Height = Math.Max(4, heightPct / 100 * ph);
             item.Left = Math.Clamp(leftPct / 100 * pw, 0, pw - item.Width);
             item.Top = Math.Clamp(topPct / 100 * ph, 0, ph - item.Height);
-            if (item.Kind == ItemKind.Mark) item.FontSize = item.Height;
+            if (item.Kind == ItemKind.Mark) item.FontSize = Math.Min(item.Width, item.Height);
+            // Sizing a text box by hand stops it auto-sizing (it wraps to the new width instead).
+            bool sized = Math.Abs(item.Width - oldWidth) > 0.5 || Math.Abs(item.Height - oldHeight) > 0.5;
+            if (sized && item.Kind == ItemKind.Text && item.Fit == TextFit.Auto) item.Fit = TextFit.Wrap;
             MoveSketchPoints(item, oldLeft, oldTop, oldWidth, oldHeight);
         }
         return InvokeAsync(StateHasChanged);

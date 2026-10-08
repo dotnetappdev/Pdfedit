@@ -161,7 +161,7 @@ public partial class Editor
             {
                 yield return new FreeTextAnnotation
                 {
-                    PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h, RotationAngle = -Rotation(i.Page),
+                    PageNumber = i.Page + 1, Left = l, Bottom = b, Width = w, Height = h, RotationAngle = i.Rotation - Rotation(i.Page),
                     Text = i.Text, IsStamp = true, StampSubtitle = i.Subtitle, FontColor = i.Color,
                     Comment = new CommentInfo { Author = string.IsNullOrWhiteSpace(_stampAuthor) ? "PdfEdit web" : _stampAuthor.Trim() },
                 };

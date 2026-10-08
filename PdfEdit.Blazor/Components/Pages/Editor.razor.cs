@@ -301,8 +301,9 @@ public partial class Editor
             .Select(i => new FreeTextAnnotation
             {
                 PageNumber = i.Page + 1, Left = U(i).L, Bottom = U(i).B, Width = U(i).W, Height = U(i).H,
-                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) - (i.Vertical ? 90 : 0),
-                FontColor = i.Color, FontFamily = "Helvetica", GrowToFit = true,
+                Text = i.Text, FontSize = i.FontSize, RotationAngle = Turn(i) + i.Rotation,
+                FontColor = i.Color, FontFamily = "Helvetica", CharacterSpacing = i.CharSpacing,
+                AutoSize = i.Kind == ItemKind.Text && i.Fit == TextFit.Auto, GrowToFit = i.Fit != TextFit.Fixed,
                 IsBold = i.Bold, IsItalic = i.Italic, IsUnderline = i.Underline, ForceUpperCase = i.Upper, TextAlignment = i.Align,
             }).Concat(StampAndInkAnnotations()).ToList();
         var signatures = _items.Where(i => i.Kind is ItemKind.Signature or ItemKind.Picture && i.Image != null)

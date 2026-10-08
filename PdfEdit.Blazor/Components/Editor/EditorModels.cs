@@ -53,6 +53,9 @@ public enum ItemKind
 /// Something added on a page that isn't in the PDF yet (Apply Changes, Save and every page tool
 /// write them in). Position and size are in PDF points from the page's top-left corner.
 /// </summary>
+/// <summary>Auto-size the box to the text, wrap and grow taller, or keep the box as sized.</summary>
+public enum TextFit { Auto, Wrap, Fixed }
+
 public sealed class PageItem
 {
     public string Id { get; } = Guid.NewGuid().ToString("N")[..8];
@@ -78,8 +81,15 @@ public sealed class PageItem
     public bool IsSketch => Points != null && Kind != ItemKind.Callout;
     /// <summary>Highlight, underline, squiggly or strikethrough (a Highlight item).</summary>
     public PdfEdit.Models.HighlightKind Markup { get; set; } = PdfEdit.Models.HighlightKind.Highlight;
-    /// <summary>Text that reads upwards (the toolbox's Vertical text).</summary>
-    public bool Vertical { get; set; }
+    /// <summary>Turn of text, marks and stamps on the page: 0, 90, 180 or 270 degrees clockwise.</summary>
+    public int Rotation { get; set; }
+    /// <summary>Text that reads upwards (the toolbox's Vertical text): a 270° turn.</summary>
+    public bool Vertical { get => Rotation == 270; set => Rotation = value ? 270 : 0; }
+    public bool QuarterTurn => Rotation is 90 or 270;
+    /// <summary>Extra space between letters, in points (the toolbar's VA).</summary>
+    public double CharSpacing { get; set; }
+    /// <summary>How a text box follows its text (the toolbar's Fit menu).</summary>
+    public TextFit Fit { get; set; } = TextFit.Auto;
     public bool Bold { get; set; }
     public bool Italic { get; set; }
     public bool Underline { get; set; }
@@ -93,7 +103,7 @@ public sealed class PageItem
     {
         Kind = Kind, Page = Page, Left = Left, Top = Top, Width = Width, Height = Height, Text = Text, FontSize = FontSize,
         Color = Color, Image = Image, ImageUrl = ImageUrl, Subtitle = Subtitle, LineWidth = LineWidth, Unit = Unit,
-        Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Vertical = Vertical,
+        Points = Points?.Select(p => new PdfEdit.Models.PointD(p.X, p.Y)).ToList(), Markup = Markup, Rotation = Rotation, CharSpacing = CharSpacing, Fit = Fit,
         Bold = Bold, Italic = Italic, Underline = Underline, Upper = Upper, Align = Align, Opacity = Opacity,
     };
 

@@ -1,0 +1,120 @@
+@* A page item's resize handles (every edge and corner) and its floating toolbar, shown on hover and
+   while selected — the Windows app's annotation toolbar: grip · A smaller · A larger · delete · rotate ·
+   character spacing · fit · swap mark · colour swatches. *@
+@if (Resizable)
+{
+    @foreach (var edge in Edges)
+    {
+        <span class="pe-item-handle @edge" data-resize="@edge" aria-hidden="true"></span>
+    }
+}
+<div class="pe-itembar @(Item.Top < 30 ? "below" : "")" role="toolbar" aria-label="@Item.Describe() tools" @onclick:stopPropagation="true" @ondblclick:stopPropagation="true">
+    <span class="pe-itembar-grip" title="Drag to move" aria-hidden="true">⠿</span>
+    @if (Item.Kind != ItemKind.Note)
+    {
+        <button class="pe-itembar-btn smaller" title="Smaller" aria-label="Smaller" @onclick="() => Resize(-1)">A</button>
+        <button class="pe-itembar-btn larger" title="Larger" aria-label="Larger" @onclick="() => Resize(+1)">A</button>
+    }
+    <button class="pe-itembar-btn" title="Delete (Del)" aria-label="Delete" @onclick="Remove"><i class="bi bi-trash3"></i></button>
+    @if (Editor.CanRotate(Item))
+    {
+        <button class="pe-itembar-btn" title="Rotate 90°" aria-label="Rotate 90°" @onclick="Rotate"><i class="bi bi-arrow-clockwise"></i></button>
+    }
+    @if (Item.Kind == ItemKind.Text)
+    {
+        <button class="pe-itembar-btn va @(_spacing ? "on" : "")" title="Character spacing" aria-label="Character spacing" aria-expanded="@_spacing"
+                @onclick="() => { _spacing = !_spacing; _fit = false; }">VA</button>
+        <button class="pe-itembar-btn @(_fit ? "on" : "")" title="Fit box to text — auto-size, wrap or fixed" aria-label="Fit box to text" aria-haspopup="menu" aria-expanded="@_fit"
+                @onclick="() => { _fit = !_fit; _spacing = false; }"><i class="bi bi-arrows-angle-expand"></i></button>
+    }
+    @if (Item.Kind == ItemKind.Mark)
+    {
+        <button class="pe-itembar-btn" title="Swap mark" aria-label="Swap mark" @onclick="Swap"><i class="bi bi-arrow-repeat"></i></button>
+    }
+    @if (Editor.HasColor(Item))
+    {
+        <span class="pe-itembar-sep" aria-hidden="true"></span>
+        @foreach (var (hex, name) in Editor.SwatchColors)
+        {
+            <button class="pe-itembar-swatch @(string.Equals(Item.Color, hex, StringComparison.OrdinalIgnoreCase) ? "on" : "")" style="background:@hex"
+                    title="Set color: @name" aria-label="Set color: @name" @onclick="() => SetColor(hex)"></button>
+        }
+    }
+
+    @if (_spacing && Item.Kind == ItemKind.Text)
+    {
+        <div class="pe-itembar-pop" data-nodrag>
+            <label for="sp-@Item.Id">Character spacing: @Item.CharSpacing.ToString("0.#") pt</label>
+            <input id="sp-@Item.Id" type="range" min="0" max="30" step="0.5" value="@Editor.Css(Item.CharSpacing)" @oninput="Spacing" />
+            <button class="pe-itembar-popbtn" @onclick="() => SetSpacing(0)">Reset</button>
+        </div>
+    }
+    @if (_fit && Item.Kind == ItemKind.Text)
+    {
+        <div class="pe-itembar-pop menu" role="menu" data-nodrag>
+            @FitOption(TextFit.Auto, "Auto-size box to text", "The box grows and shrinks to fit the text on one line per paragraph")
+            @FitOption(TextFit.Wrap, "Wrap text, grow box to fit", "Keep the width; wrap the text and make the box taller so nothing is cut off")
+            @FitOption(TextFit.Fixed, "Fixed box size", "Keep the box exactly as sized — text that does not fit is cut off")
+            <hr />
+            <button role="menuitem" @onclick="FitNow">Fit box to text now</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Editor Ed { get; set; } = default!;
+    [Parameter, EditorRequired] public PageItem Item { get; set; } = default!;
+    [Parameter] public bool Resizable { get; set; } = true;
+
+    private static readonly string[] Edges = ["n", "s", "e", "w", "nw", "ne", "sw", "se"];
+    private bool _spacing, _fit;
+
+    private RenderFragment FitOption(TextFit fit, string label, string tip) =>
+        @<button role="menuitemradio" aria-checked="@(Item.Fit == fit)" title="@tip" @onclick="() => SetFit(fit)">
+            <i class="bi @(Item.Fit == fit ? "bi-check2" : "")"></i>@label
+        </button>;
+
+    private void Done()
+    {
+        Ed.SelectItem(Item);
+        Ed.Refresh();
+    }
+
+    private void Resize(int step) { Ed.ResizeItem(Item, step); Done(); }
+    private void Rotate() { Ed.RotateItem(Item); Done(); }
+    private void Swap() { Editor.SwapMark(Item); Done(); }
+    private void SetColor(string hex) { Ed.SetItemColor(Item, hex); Done(); }
+
+    private void Remove()
+    {
+        Ed.RemoveItem(Item);
+        Ed.Refresh();
+    }
+
+    private void Spacing(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+            SetSpacing(v);
+    }
+
+    private void SetSpacing(double v)
+    {
+        Item.CharSpacing = Math.Clamp(v, 0, 30);
+        Ed.GrowText(Item);
+        Ed.Refresh();
+    }
+
+    private void SetFit(TextFit fit)
+    {
+        Ed.SetItemFit(Item, fit);
+        _fit = false;
+        Done();
+    }
+
+    private void FitNow()
+    {
+        Ed.GrowText(Item, now: true);
+        _fit = false;
+        Done();
+    }
+}
