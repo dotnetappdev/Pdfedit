@@ -11,9 +11,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
-    <Version>1.4.1</Version>
-    <AssemblyVersion>1.4.1.0</AssemblyVersion>
-    <FileVersion>1.4.1.0</FileVersion>
+    <Version>1.4.2</Version>
+    <AssemblyVersion>1.4.2.0</AssemblyVersion>
+    <FileVersion>1.4.2.0</FileVersion>
     <Company>PdfEdit</Company>
     <Product>PdfEdit — PDF Form Filler</Product>
     <Description>A modern WPF PDF form filler and annotator.</Description>
