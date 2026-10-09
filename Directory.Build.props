@@ -6,6 +6,6 @@
     from it (1.4.2 becomes 1.4.2.0).
   -->
   <PropertyGroup>
-    <Version>1.4.2</Version>
+    <Version>1.4.3</Version>
   </PropertyGroup>
 </Project>

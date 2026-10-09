@@ -72,8 +72,8 @@ installer/desktop/build-linux.sh             # dist/PdfEdit-Desktop-<version>-li
   Signed ad hoc, the first launch needs right-click > **Open** (or System Settings > Privacy &
   Security > Open Anyway).
 
-GitHub Actions builds both on every release (the `desktop-linux` and `desktop-mac` jobs add them to
-the release), and the **PdfEdit Desktop installers** workflow builds them on demand or whenever the
+GitHub Actions builds both on every release (the `linux` and `mac` jobs in `release.yml`, next to the
+`windows` job; a final `publish` job makes the release with all their files at once), and the **PdfEdit Desktop installers** workflow builds them on demand or whenever the
 desktop app changes, as downloads on the run's page. For signed Mac builds, add the repository
 secrets `MACOS_CERT_P12` (base64 of the .p12), `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`,
 `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`.

@@ -27,12 +27,6 @@ on:
         default: 'false'
         type: choice
         options: ['false', 'true']
-      build_exe:
-        description: 'Build EXE installer?'
-        required: false
-        default: 'true'
-        type: choice
-        options: ['true', 'false']
 
 permissions:
   contents: write   # needed to create releases and upload assets
@@ -116,9 +110,11 @@ jobs:
           echo "prerelease=$PRE"     >> "$GITHUB_OUTPUT"
           echo "Resolved: version=$VERSION  version4=$VERSION4  tag=$TAG  prerelease=$PRE"
 
-  # ── Job 2: Build, package, release ────────────────────────────────────────
-  build-and-release:
-    name: Build & Release
+  # ── Job 2: PdfEdit for Windows (installer and portable ZIP) ────────────────
+  # The three build jobs run side by side and only keep their files; the publish job makes the
+  # release once, with everything in it, so a release is never edited after it's out.
+  windows:
+    name: Windows installer and portable ZIP
     runs-on: windows-latest
     needs: metadata
     if: needs.metadata.outputs.release != 'false'
@@ -131,7 +127,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history so we can compare commits for changelog
 
       # ── .NET ────────────────────────────────────────────────────────────────
       - name: Setup .NET 10
@@ -188,7 +183,6 @@ jobs:
 
       # ── Inno Setup EXE installer ─────────────────────────────────────────
       - name: Install Inno Setup 6
-        if: ${{ github.event.inputs.build_exe != 'false' }}
         shell: pwsh
         run: |
           # GitHub's Windows runners already ship Inno Setup 6; install only if it's missing.
@@ -200,7 +194,6 @@ jobs:
           }
 
       - name: Build EXE installer
-        if: ${{ github.event.inputs.build_exe != 'false' }}
         shell: pwsh
         run: |
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
@@ -230,77 +223,21 @@ jobs:
             }
           } else { Write-Host "No dist folder (all packaging steps skipped)" }
 
-      - name: Upload build artifacts (always kept for debugging)
+      - name: Keep the files for the release
         uses: actions/upload-artifact@v4
         with:
-          name: PdfEdit-${{ env.VERSION }}-artifacts
-          path: dist/
-          if-no-files-found: warn
+          name: PdfEdit-${{ env.VERSION }}-windows
+          path: |
+            dist/PdfEditSetup-${{ env.VERSION }}.exe
+            dist/PdfEdit-${{ env.VERSION }}-win-x64-portable.zip
+          if-no-files-found: error
           retention-days: 30
 
-      # ── Generate changelog ───────────────────────────────────────────────
-      - name: Generate changelog
-        id: changelog
-        shell: bash
-        run: |
-          # Compare with previous tag; fall back to last 20 commits
-          # (|| true: no earlier tags makes grep exit 1, which -o pipefail would treat as a failure)
-          PREV_TAG=$(git tag --sort=-version:refname | { grep -vx "${{ needs.metadata.outputs.tag }}" || true; } | head -1)
-          if [[ -n "$PREV_TAG" ]]; then
-            RANGE="${PREV_TAG}..HEAD"   # the new tag is created by the release step below
-          else
-            RANGE="HEAD~20..HEAD"
-            git rev-parse -q --verify HEAD~20 >/dev/null || RANGE="HEAD"
-          fi
-          LOG=$(git log "$RANGE" --pretty="format:- %s (%h)" --no-merges 2>/dev/null | head -50 || true)
-          if [[ -z "$LOG" ]]; then LOG="- Initial release"; fi
-          echo "log<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$LOG"      >> "$GITHUB_OUTPUT"
-          echo "EOF"        >> "$GITHUB_OUTPUT"
-
-      # ── Create GitHub Release ────────────────────────────────────────────
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name:   ${{ needs.metadata.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name:       PdfEdit ${{ env.VERSION }}
-          prerelease: ${{ needs.metadata.outputs.prerelease }}
-          draft:      false
-          body: |
-            ## PdfEdit ${{ env.VERSION }}
-
-            A professional WPF PDF form filler, editor, and design tool for Windows.
-
-            ### What's new
-            ${{ steps.changelog.outputs.log }}
-
-            ---
-
-            ### Installation
-
-            #### Option A — EXE Installer *(recommended)*
-            1. Download `PdfEditSetup-${{ env.VERSION }}.exe`
-            2. Run it — everything is included (.NET is bundled), nothing else to install
-
-            #### Option B — Portable ZIP (no install)
-            - `PdfEdit-${{ env.VERSION }}-win-x64-portable.zip` — unzip anywhere and run `PdfEdit.exe`; nothing else needed
-
-            ### System Requirements
-            - Windows 10 v2004 (build 19041) or later, 64-bit
-
-          files: |
-            dist/PdfEdit-${{ env.VERSION }}-win-x64-portable.zip
-            dist/PdfEditSetup-${{ env.VERSION }}.exe
-          fail_on_unmatched_files: false
-
-  # ── Job 3: PdfEdit Desktop (the cross-platform Avalonia app) for Linux ───────
-  # Runs after the release exists and adds its files to it, so a problem here never holds up the
-  # Windows release. (Windows has PdfEdit for Windows; the Avalonia app is for Mac and Linux.)
-  desktop-linux:
-    name: PdfEdit Desktop — Linux AppImage
+  # ── Job 3: PdfEdit for Linux (the Avalonia app): AppImage and tarball ───────
+  linux:
+    name: Linux AppImage and tarball
     runs-on: ubuntu-latest
-    needs: [metadata, build-and-release]
+    needs: metadata
     if: needs.metadata.outputs.release != 'false'
     env:
       VERSION: ${{ needs.metadata.outputs.version }}
@@ -317,39 +254,25 @@ jobs:
       - name: Build the AppImage and tarball
         run: bash installer/desktop/build-linux.sh "$VERSION"
 
-      - uses: actions/upload-artifact@v4
+      - name: Keep the files for the release
+        uses: actions/upload-artifact@v4
         with:
-          name: PdfEdit-Desktop-${{ env.VERSION }}-linux
+          name: PdfEdit-${{ env.VERSION }}-linux
           path: |
             dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage
             dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz
+          if-no-files-found: error
           retention-days: 30
 
-      - name: Add to the release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.metadata.outputs.tag }}
-          append_body: true
-          body: |
-
-            ### PdfEdit for Linux
-            64-bit, .NET included. Needs WebKitGTK, which most desktops have (if not: `sudo apt install libwebkit2gtk-4.1-0`, or `webkit2gtk4.1` on Fedora).
-            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage` — make it executable (`chmod +x`) and run it
-            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz` — unpack anywhere and run `./PdfEdit`
-          files: |
-            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage
-            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz
-          fail_on_unmatched_files: true
-
-  # ── Job 4: PdfEdit Desktop for macOS (Apple silicon and Intel) ─────────────────
+  # ── Job 4: PdfEdit for Mac (the Avalonia app): Apple silicon and Intel ───────
   # Signed and notarized when these repository secrets are set; otherwise signed ad hoc (the app then
   # opens after right-click → Open the first time):
   #   MACOS_CERT_P12 (base64 of a "Developer ID Application" .p12), MACOS_CERT_PASSWORD,
   #   MACOS_SIGN_IDENTITY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD
-  desktop-mac:
-    name: PdfEdit Desktop — macOS disk images
+  mac:
+    name: Mac disk images
     runs-on: macos-latest
-    needs: [metadata, build-and-release]
+    needs: metadata
     if: needs.metadata.outputs.release != 'false'
     env:
       VERSION: ${{ needs.metadata.outputs.version }}
@@ -383,22 +306,93 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: bash installer/desktop/build-mac.sh "$VERSION" "arm64 x64"
 
-      - uses: actions/upload-artifact@v4
+      - name: Keep the files for the release
+        uses: actions/upload-artifact@v4
         with:
-          name: PdfEdit-Desktop-${{ env.VERSION }}-mac
+          name: PdfEdit-${{ env.VERSION }}-mac
           path: dist/PdfEdit-Desktop-${{ env.VERSION }}-mac-*.dmg
+          if-no-files-found: error
           retention-days: 30
 
-      - name: Add to the release
+  # ── Job 5: Publish the release, once, with every file ─────────────────────────
+  # Waits for all three builds. Windows is required; if the Mac or Linux build fails, the release
+  # still goes out with the files that were built (and that job's failure shows on the run).
+  publish:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    needs: [metadata, windows, linux, mac]
+    if: always() && needs.metadata.outputs.release != 'false' && needs.windows.result == 'success'
+    env:
+      VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can compare commits for changelog
+
+      - name: Collect the files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: PdfEdit-${{ env.VERSION }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: List the files
+        run: ls -la dist
+
+      # ── Generate changelog ───────────────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        shell: bash
+        run: |
+          # Compare with previous tag; fall back to last 20 commits
+          # (|| true: no earlier tags makes grep exit 1, which -o pipefail would treat as a failure)
+          PREV_TAG=$(git tag --sort=-version:refname | { grep -vx "${{ needs.metadata.outputs.tag }}" || true; } | head -1)
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="${PREV_TAG}..HEAD"   # the new tag is created by the release step below
+          else
+            RANGE="HEAD~20..HEAD"
+            git rev-parse -q --verify HEAD~20 >/dev/null || RANGE="HEAD"
+          fi
+          LOG=$(git log "$RANGE" --pretty="format:- %s (%h)" --no-merges 2>/dev/null | head -50 || true)
+          if [[ -z "$LOG" ]]; then LOG="- Initial release"; fi
+          echo "log<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$LOG"      >> "$GITHUB_OUTPUT"
+          echo "EOF"        >> "$GITHUB_OUTPUT"
+
+      # ── Create GitHub Release ────────────────────────────────────────────
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.metadata.outputs.tag }}
-          append_body: true
+          tag_name:   ${{ needs.metadata.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name:       PdfEdit ${{ env.VERSION }}
+          prerelease: ${{ needs.metadata.outputs.prerelease }}
+          draft:      false
           body: |
+            ## PdfEdit ${{ env.VERSION }}
 
-            ### PdfEdit Desktop for Mac
-            Open the disk image and drag PdfEdit to Applications. macOS 12 or later; nothing else to install.
+            Fill in, sign, edit and design PDFs. Free and open source, for Windows, Mac and Linux.
+
+            ### What's new
+            ${{ steps.changelog.outputs.log }}
+
+            ---
+
+            ### Windows
+            Windows 10 (version 2004) or 11, 64-bit. Everything is included (.NET is bundled).
+            - `PdfEditSetup-${{ env.VERSION }}.exe` — installer *(recommended)*
+            - `PdfEdit-${{ env.VERSION }}-win-x64-portable.zip` — no install: unzip anywhere and run `PdfEdit.exe`
+
+            ### Mac
+            macOS 12 or later. Open the disk image and drag PdfEdit to Applications.
             - `PdfEdit-Desktop-${{ env.VERSION }}-mac-arm64.dmg` — Apple silicon (M1 and later)
             - `PdfEdit-Desktop-${{ env.VERSION }}-mac-x64.dmg` — Intel Macs
-          files: dist/PdfEdit-Desktop-${{ env.VERSION }}-mac-*.dmg
+
+            ### Linux
+            64-bit, .NET included. Needs WebKitGTK, which most desktops have (if not: `sudo apt install libwebkit2gtk-4.1-0`, or `webkit2gtk4.1` on Fedora).
+            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage` — make it executable (`chmod +x`) and run it
+            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz` — unpack anywhere and run `./PdfEdit`
+
+          files: dist/*
           fail_on_unmatched_files: true

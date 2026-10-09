@@ -2,7 +2,7 @@ name: PdfEdit Desktop installers
 
 # Builds the PdfEdit Desktop (Avalonia) packages for Linux and macOS and keeps them as
 # downloadable artifacts on the run's page — for trying a build without making a release.
-# (Releases get them too: see the desktop-linux and desktop-mac jobs in release.yml.)
+# (Releases get them too: see the linux and mac jobs in release.yml.)
 on:
   workflow_dispatch:
   push:
