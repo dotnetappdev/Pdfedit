@@ -15,8 +15,13 @@ internal static class Program
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace();
+    public static AppBuilder BuildAvaloniaApp()
+    {
+        var builder = AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
+        // PDFEDIT_SOFTWARE_RENDERING=1 draws the window without the GPU (for Macs without one, such
+        // as the virtual Macs that take the screenshots).
+        if (Environment.GetEnvironmentVariable("PDFEDIT_SOFTWARE_RENDERING") == "1")
+            builder = builder.With(new AvaloniaNativePlatformOptions { RenderingMode = [AvaloniaNativeRenderingMode.Software] });
+        return builder;
+    }
 }

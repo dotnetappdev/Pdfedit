@@ -55,10 +55,13 @@ jobs:
           system_profiler SPDisplaysDataType | grep -i -E "resolution|retina" || true
 
           shoot() {   # shoot <name> [pdf]
-            if [[ -n "${2:-}" ]]; then open -n "$APP" --args "$2"; else open -n "$APP"; fi
+            # Started directly (not with open) so its log is kept; software rendering, as this Mac has no GPU.
+            PDFEDIT_SOFTWARE_RENDERING=1 "$APP/Contents/MacOS/PdfEdit" ${2:+"$2"} > "$OUT/log-$1.txt" 2>&1 &
             BOX=""
             for i in $(seq 1 60); do BOX=$(./winbox); [[ -n "$BOX" ]] && break; sleep 2; done
-            sleep 40   # the web app starts and the page draws
+            sleep 5;  screencapture -x "$OUT/screen-$1-05s.png"
+            sleep 35; screencapture -x "$OUT/screen-$1-40s.png"
+            sleep 30   # the web app starts and the page draws
             BOX=$(./winbox); echo "window: $BOX"
             screencapture -x "$OUT/screen-$1.png"
             if [[ -n "$BOX" ]]; then
@@ -87,7 +90,7 @@ jobs:
           git checkout -B desktop-screenshots
           mkdir -p docs/screenshots/desktop
           cp shots/mac-*.png docs/screenshots/desktop/ || true
-          mkdir -p raw && cp shots/screen-*.png raw/ || true   # the whole screen, to check the crop
+          mkdir -p raw && cp shots/screen-*.png shots/log-*.txt raw/ || true   # the whole screen and the log, to check
           git add -f docs/screenshots/desktop raw
           git commit -m "Mac screenshots of PdfEdit (from the Desktop screenshots workflow)"
           git push --force origin desktop-screenshots
