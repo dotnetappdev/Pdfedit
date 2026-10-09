@@ -1,0 +1,10 @@
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://127.0.0.1:49223
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Users/runner/work/Pdfedit/Pdfedit/obj-desktop-mac/arm64/PdfEdit.app/Contents/MacOS/
+info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
