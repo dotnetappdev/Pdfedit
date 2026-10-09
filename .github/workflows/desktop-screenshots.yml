@@ -1,0 +1,81 @@
+name: Desktop screenshots
+
+# Screenshots of PdfEdit for Mac in a real macOS window, for the website, the user guide and the
+# README. Builds the app, opens it (the start page, then a sample form), captures the window and
+# pushes the pictures to the desktop-screenshots branch (docs/screenshots/desktop/mac-*.png), to be
+# copied into devmain. Run it from the Actions tab, or it runs when this file changes.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/desktop-screenshots.yml'
+
+permissions:
+  contents: write   # pushes the desktop-screenshots branch
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  mac:
+    name: Mac screenshots
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build PdfEdit.app
+        run: bash installer/desktop/build-mac.sh "" arm64
+
+      - name: Take the screenshots
+        run: |
+          APP="$PWD/obj-desktop-mac/arm64/PdfEdit.app"
+          OUT="$PWD/shots"; mkdir -p "$OUT"
+          cat > winid.swift <<'SWIFT'
+          import CoreGraphics
+          let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+          for w in list where (w["kCGWindowOwnerName"] as? String) == "PdfEdit" && (w["kCGWindowLayer"] as? Int) == 0 {
+            if let b = w["kCGWindowBounds"] as? [String: Any], let h = b["Height"] as? Double, h > 200 {
+              print(w["kCGWindowNumber"]!); break
+            }
+          }
+          SWIFT
+          swiftc -O winid.swift -o winid
+          system_profiler SPDisplaysDataType | grep -i resolution || true
+
+          shoot() {   # shoot <name> [pdf]
+            if [[ -n "${2:-}" ]]; then open -n "$APP" --args "$2"; else open -n "$APP"; fi
+            for i in $(seq 1 60); do ID=$(./winid); [[ -n "$ID" ]] && break; sleep 2; done
+            [[ -n "$ID" ]] || { echo "no PdfEdit window"; screencapture -x "$OUT/debug-$1.png"; return 1; }
+            sleep 40   # the web app starts and the page draws
+            ID=$(./winid)
+            screencapture -x -o -l "$ID" "$OUT/mac-$1.png"
+            screencapture -x "$OUT/debug-$1-screen.png"
+            osascript -e 'quit app "PdfEdit"' || true
+            sleep 5; pkill -f "PdfEdit.app/Contents/MacOS/PdfEdit" || true; sleep 3
+          }
+          shoot start
+          shoot form "$PWD/Samples/car-rental-fillable.pdf"
+          ls -la "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-screenshots
+          path: shots/
+          retention-days: 14
+
+      - name: Push to the desktop-screenshots branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898732+github-actions[bot]@users.noreply.github.com"
+          git checkout -B desktop-screenshots
+          mkdir -p docs/screenshots/desktop
+          cp shots/mac-*.png docs/screenshots/desktop/
+          git add docs/screenshots/desktop/mac-*.png
+          git commit -m "Mac screenshots of PdfEdit (from the Desktop screenshots workflow)"
+          git push --force origin desktop-screenshots
