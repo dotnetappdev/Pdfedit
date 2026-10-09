@@ -1027,7 +1027,7 @@
                             {
                                 <button class="pe-btn primary" @onclick="() => ActAsync(Ed.DownloadUpdateAsync)"><i class="bi bi-download"></i> Download @Ed.AvailableUpdate.Version.ToString(3)</button>
                                 <button class="pe-btn" @onclick="@(() => ActAsync(() => Ed.OpenUrlAsync(Ed.AvailableUpdate.PageUrl is { Length: > 0 } p ? p : PdfEdit.Services.UpdateService.ReleasesPage)))">What's new</button>
-                                <p class="pe-hint mt-2 mb-0">Run the download to install it over this version; your settings and signatures are kept.</p>
+                                <p class="pe-hint mt-2 mb-0">@(OperatingSystem.IsLinux() ? "Make the new AppImage executable and use it instead of this one" : OperatingSystem.IsMacOS() ? "Open the disk image and drag PdfEdit into Applications to replace this version" : "Install it from the release page"); your settings and signatures are kept.</p>
                             }
                             else
                             {

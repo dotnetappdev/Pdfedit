@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-<title>Download PdfEdit for Windows, Mac and the web</title>
-<meta name="description" content="Download PdfEdit for Windows or Mac, or host it on your own server. Free and open source.">
+<title>Download PdfEdit for Windows, Mac, Linux and the web</title>
+<meta name="description" content="Download PdfEdit for Windows, Mac or Linux, or host it on your own server. Free and open source.">
 <!-- @include head -->
 </head>
 <body data-page="download">
@@ -20,7 +20,7 @@
         <section class="box" id="windows">
           <h2>PdfEdit for Windows <span class="badge">Recommended on Windows</span></h2>
           <div class="body">
-            <p>The full Windows app. The installer includes everything it needs.</p>
+            <p>The full Windows app. The installer and the portable ZIP both include everything they need.</p>
             <div data-downloads="windows"><p class="loading">Finding the latest files...</p></div>
           </div>
         </section>
@@ -31,6 +31,15 @@
             <p>PdfEdit as a Mac app, for Apple silicon and Intel Macs. Open the disk image and drag PdfEdit to Applications.</p>
             <div data-downloads="desktop"><p class="loading">Finding the latest files...</p></div>
             <p class="note" style="margin-top:14px"><strong>First time on a Mac?</strong> If macOS says it can't check the app, right-click PdfEdit in Applications and choose <strong>Open</strong>.</p>
+          </div>
+        </section>
+
+        <section class="box" id="linux">
+          <h2>PdfEdit for Linux</h2>
+          <div class="body">
+            <p>PdfEdit as a Linux app for 64-bit PCs. The AppImage is one file: make it executable (right-click &gt; Properties &gt; Allow running as a program, or <code>chmod +x</code>) and open it.</p>
+            <div data-downloads="linux"><p class="loading">Finding the latest files...</p></div>
+            <p class="note" style="margin-top:14px"><strong>Blank window?</strong> PdfEdit shows its pages with WebKitGTK, which most desktops already have. If yours hasn't: <code>sudo apt install libwebkit2gtk-4.1-0</code> (Ubuntu, Debian, Mint) or <code>sudo dnf install webkit2gtk4.1</code> (Fedora).</p>
           </div>
         </section>
 
@@ -58,6 +67,7 @@ dotnet run --project PdfEdit.Blazor</pre>
             <ul class="plain">
               <li><strong>On Windows:</strong> PdfEdit for Windows has every tool, including scanners.</li>
               <li><strong>On a Mac:</strong> PdfEdit for Mac. Apple silicon for M1 and newer Macs, Intel for older ones (Apple menu &gt; About This Mac).</li>
+              <li><strong>On Linux:</strong> the AppImage runs on most distributions; the tarball is the same app in a folder.</li>
               <li><strong>For a team:</strong> host the web version once; everyone uses it in their browser.</li>
             </ul>
           </div>
@@ -68,6 +78,7 @@ dotnet run --project PdfEdit.Blazor</pre>
             <ul class="plain">
               <li>Windows 10 (version 2004) or 11, 64-bit</li>
               <li>macOS 12 Monterey or later</li>
+              <li>Linux, 64-bit, with WebKitGTK 4.1 or 4.0 (Ubuntu 22.04, Debian 12, Fedora 38 or later)</li>
             </ul>
           </div>
         </div>

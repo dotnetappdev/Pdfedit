@@ -148,15 +148,18 @@ public static class UpdateService
         {
             InstallKind.Installer => release.Assets.FirstOrDefault(a => Is(a, "PdfEditSetup", ".exe")),
             InstallKind.Portable => release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", "-win-x64-portable.zip")),
-            InstallKind.PortableFrameworkDependent => release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", "-win-x64.zip")),
+            // Releases since 1.4.2 have only the portable ZIP (.NET included), which updates this one too.
+            InstallKind.PortableFrameworkDependent => release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", "-win-x64.zip"))
+                                                      ?? release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", "-win-x64-portable.zip")),
             InstallKind.Msix => release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", ".msix")),
             _ => null,
         };
     }
 
     /// <summary>
-    /// The PdfEdit Desktop (Avalonia) download for this computer: the Windows installer, or the Mac
-    /// disk image for Apple silicon or Intel. Null elsewhere (Linux) or when the release lacks one.
+    /// The PdfEdit Desktop (Avalonia) download for this computer: the Mac disk image for Apple silicon
+    /// or Intel, or the Linux AppImage. Null when the release lacks one, such as on Windows from 1.4.2,
+    /// where PdfEdit for Windows replaces it.
     /// </summary>
     public static ReleaseAsset? PickDesktopAsset(UpdateInfo release, bool windows, bool mac, bool arm64)
     {
@@ -166,7 +169,7 @@ public static class UpdateService
 
         if (windows) return release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-Desktop-Setup-", ".exe"));
         if (mac) return release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-Desktop-", arm64 ? "-mac-arm64.dmg" : "-mac-x64.dmg"));
-        return null;
+        return arm64 ? null : release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-Desktop-", "-linux-x64.AppImage"));
     }
 
     /// <summary>

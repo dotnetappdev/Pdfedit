@@ -1,8 +1,8 @@
 name: PdfEdit Desktop installers
 
-# Builds the PdfEdit Desktop (Avalonia) installers for Windows and macOS and keeps them as
+# Builds the PdfEdit Desktop (Avalonia) packages for Linux and macOS and keeps them as
 # downloadable artifacts on the run's page — for trying a build without making a release.
-# (Releases get them too: see the desktop-windows and desktop-mac jobs in release.yml.)
+# (Releases get them too: see the desktop-linux and desktop-mac jobs in release.yml.)
 on:
   workflow_dispatch:
   push:
@@ -17,30 +17,24 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
 jobs:
-  windows:
-    name: Windows installer
-    runs-on: windows-latest
+  linux:
+    name: Linux AppImage
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Install Inno Setup 6
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup -y --no-progress
-            if ($LASTEXITCODE -ne 0) { throw "Inno Setup install failed" }
-          }
+      - name: Install appimagetool's helpers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq desktop-file-utils
       - name: Build
-        shell: pwsh
-        run: pwsh installer/desktop/build-windows.ps1
+        run: bash installer/desktop/build-linux.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: PdfEdit-Desktop-windows
+          name: PdfEdit-Desktop-linux
           path: |
-            dist/PdfEdit-Desktop-Setup-*.exe
-            dist/PdfEdit-Desktop-*-win-x64.zip
+            dist/PdfEdit-Desktop-*-linux-x64.AppImage
+            dist/PdfEdit-Desktop-*-linux-x64.tar.gz
           retention-days: 14
 
   mac:

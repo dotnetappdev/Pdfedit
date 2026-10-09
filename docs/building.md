@@ -46,26 +46,25 @@ dotnet test PdfEdit.Tests
 ## Building the installers locally
 
 ```powershell
-pwsh installer\build-installer.ps1              # app, EXE installer and MSIX
-pwsh installer\build-installer.ps1 -SkipMsix    # EXE installer only
+pwsh installer\build-installer.ps1 -SkipMsix    # EXE installer
 ```
 
-The EXE needs [Inno Setup 6](https://jrsoftware.org/isinfo.php), and the MSIX needs the Windows SDK (`makeappx.exe`).
+The EXE needs [Inno Setup 6](https://jrsoftware.org/isinfo.php). (The script can still make an MSIX with the Windows SDK's `makeappx.exe`, but releases no longer include one.)
 
-### PdfEdit Desktop installers (Windows and Mac)
+### PdfEdit Desktop packages (Mac and Linux)
 
-The cross-platform app has its own installers, separate from the Windows app's:
+The cross-platform app is released for Mac and Linux (Windows has the Windows app):
 
-```powershell
-pwsh installer/desktop/build-windows.ps1     # dist/PdfEdit-Desktop-Setup-<version>.exe and a portable ZIP
-```
 ```bash
 installer/desktop/build-mac.sh               # dist/PdfEdit-Desktop-<version>-mac-arm64.dmg and -mac-x64.dmg
+installer/desktop/build-linux.sh             # dist/PdfEdit-Desktop-<version>-linux-x64.AppImage and .tar.gz
 ```
 
-- **Windows** needs Inno Setup 6.3+. The installer includes .NET, installs as *PdfEdit Desktop*
-  next to the Windows app (its own folder and Start menu entry), can add itself to Open with for
-  PDFs, and installs Microsoft's WebView2 runtime if the PC hasn't got it.
+- **Linux** runs on any Linux machine with the .NET 10 SDK and `desktop-file-validate`
+  (`desktop-file-utils`); it downloads `appimagetool` when it isn't installed. Both files include
+  .NET; the app needs WebKitGTK 4.1 or 4.0 on the computer it runs on.
+- **Windows** (`installer/desktop/build-windows.ps1`, Inno Setup 6.3+) still builds a PdfEdit
+  Desktop installer and portable ZIP for trying the app on Windows, but releases don't include them.
 - **Mac** needs a Mac with the .NET 10 SDK (the script builds `PdfEdit.app` for Apple silicon and
   Intel and packs each in a disk image; elsewhere it makes a `.tar.gz` of the app to check). It's
   signed ad hoc unless `MACOS_SIGN_IDENTITY` names a Developer ID certificate; with `APPLE_ID`,
@@ -73,7 +72,7 @@ installer/desktop/build-mac.sh               # dist/PdfEdit-Desktop-<version>-ma
   Signed ad hoc, the first launch needs right-click > **Open** (or System Settings > Privacy &
   Security > Open Anyway).
 
-GitHub Actions builds both on every release (the `desktop-windows` and `desktop-mac` jobs add them to
+GitHub Actions builds both on every release (the `desktop-linux` and `desktop-mac` jobs add them to
 the release), and the **PdfEdit Desktop installers** workflow builds them on demand or whenever the
 desktop app changes, as downloads on the run's page. For signed Mac builds, add the repository
 secrets `MACOS_CERT_P12` (base64 of the .p12), `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`,
@@ -91,15 +90,10 @@ Each release includes:
 
 | File | What it is |
 |------|------------|
-| `PdfEditSetup-x.y.z.exe` | Installer, self-contained (.NET included) |
-| `PdfEdit-x.y.z-win-x64-portable.zip` | Self-contained, unzip and run |
-| `PdfEdit-x.y.z-win-x64.zip` | Smaller, needs the .NET 10 Desktop Runtime |
-| `PdfEdit-x.y.z.0.msix` + `PdfEdit-TestCert.cer` | MSIX package with its test certificate |
-
-The MSIX is signed with a self-signed certificate. To install it, first import `PdfEdit-TestCert.cer` into **Trusted People** from an administrator PowerShell:
-
-```powershell
-Import-Certificate -FilePath PdfEdit-TestCert.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople
-```
+| `PdfEditSetup-x.y.z.exe` | Windows installer, self-contained (.NET included) |
+| `PdfEdit-x.y.z-win-x64-portable.zip` | Windows, self-contained: unzip and run |
+| `PdfEdit-Desktop-x.y.z-mac-arm64.dmg` / `-mac-x64.dmg` | Mac, Apple silicon / Intel |
+| `PdfEdit-Desktop-x.y.z-linux-x64.AppImage` | Linux, one file: make it executable and run |
+| `PdfEdit-Desktop-x.y.z-linux-x64.tar.gz` | Linux, the same app in a folder |
 
 The workflows live in `.github/workflows`. `ci.yml` builds every push and pull request, and `release.yml` does the packaging.

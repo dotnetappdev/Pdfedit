@@ -32,12 +32,6 @@ on:
         default: 'true'
         type: choice
         options: ['true', 'false']
-      build_msix:
-        description: 'Build MSIX package?'
-        required: false
-        default: 'true'
-        type: choice
-        options: ['true', 'false']
 
 permissions:
   contents: write   # needed to create releases and upload assets
@@ -110,7 +104,7 @@ jobs:
             PRE=false
           fi
 
-          # Build 4-part version for MSIX (must be x.y.z.0)
+          # 4-part version (x.y.z.0) for the assembly and file versions
           BASE="${VERSION%%-*}"          # strip pre-release suffix
           PARTS=$(echo "$BASE" | tr '.' '\n' | wc -l)
           if [[ $PARTS -eq 3 ]]; then VERSION4="${BASE}.0"; else VERSION4="${BASE}"; fi
@@ -163,32 +157,9 @@ jobs:
             /p:AssemblyVersion=$env:VERSION4 `
             /p:FileVersion=$env:VERSION4
 
-      # ── Publish (framework-dependent, win-x64) ────────────────────────────
-      - name: Publish
-        run: |
-          dotnet publish PdfEdit/PdfEdit.csproj `
-            -c Release -r win-x64 `
-            --self-contained false `
-            -o publish `
-            /p:Version=$env:VERSION `
-            /p:AssemblyVersion=$env:VERSION4 `
-            /p:FileVersion=$env:VERSION4 `
-            /p:PublishSingleFile=false `
-            /p:DebugType=none `
-            /p:DebugSymbols=false
-
-      - name: Verify publish output
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "publish\PdfEdit.exe")) {
-            throw "publish\PdfEdit.exe not found — publish step failed"
-          }
-          Write-Host "Publish OK. Contents:"
-          Get-ChildItem publish | Select-Object Name, Length | Format-Table
-
-      # ── ZIP packages ──────────────────────────────────────────────────────
-      # PdfEdit-<v>-win-x64.zip            : needs the .NET 10 Desktop Runtime (small)
-      # PdfEdit-<v>-win-x64-portable.zip   : self-contained, runs on any 64-bit Windows 10/11
+      # ── Portable ZIP and installer ────────────────────────────────────────
+      # Windows gets two files: PdfEditSetup-<v>.exe and PdfEdit-<v>-win-x64-portable.zip, both
+      # self-contained (.NET included), so they run on any 64-bit Windows 10/11.
       - name: Publish self-contained (portable)
         run: |
           dotnet publish PdfEdit/PdfEdit.csproj `
@@ -202,11 +173,15 @@ jobs:
             /p:DebugType=none `
             /p:DebugSymbols=false
 
-      - name: Build ZIP packages
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "publish_portable\PdfEdit.exe")) { throw "publish_portable\PdfEdit.exe not found: publish step failed" }
+
+      - name: Build portable ZIP
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path publish\* -DestinationPath "dist\PdfEdit-$env:VERSION-win-x64.zip" -CompressionLevel Optimal -Force
           Compress-Archive -Path publish_portable\* -DestinationPath "dist\PdfEdit-$env:VERSION-win-x64-portable.zip" -CompressionLevel Optimal -Force
           Get-ChildItem dist\*.zip | ForEach-Object { Write-Host "$($_.Name)  $([Math]::Round($_.Length/1MB,1)) MB" }
 
@@ -243,114 +218,6 @@ jobs:
             Rename-Item $src "PdfEditSetup-$env:VERSION.exe"
           }
           Write-Host "EXE installer: $(Get-ChildItem dist\*.exe)"
-
-      # ── MSIX package ────────────────────────────────────────────────────
-      - name: Find makeappx.exe
-        if: ${{ github.event.inputs.build_msix != 'false' }}
-        continue-on-error: true
-        id: makeappx
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" `
-                 -ErrorAction SilentlyContinue |
-                 Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
-                 Select-Object -First 1
-          if (-not $exe) { throw "makeappx.exe not found. Windows SDK must be installed." }
-          echo "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
-          Write-Host "makeappx: $($exe.FullName)"
-
-      - name: Find signtool.exe
-        if: ${{ github.event.inputs.build_msix != 'false' }}
-        continue-on-error: true
-        id: signtool
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" `
-                 -ErrorAction SilentlyContinue |
-                 Sort-Object { [version]($_.Directory.Parent.Name) } -Descending |
-                 Select-Object -First 1
-          if (-not $exe) { throw "signtool.exe not found." }
-          echo "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
-
-      - name: Build MSIX package
-        if: ${{ github.event.inputs.build_msix != 'false' }}
-        # An MSIX problem must not stop the EXE / ZIP release from being published.
-        continue-on-error: true
-        shell: pwsh
-        env:
-          MAKEAPPX: ${{ steps.makeappx.outputs.path }}
-          SIGNTOOL:  ${{ steps.signtool.outputs.path }}
-        run: |
-          # Stage layout
-          $stage = "_msix_stage"
-          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-          New-Item -ItemType Directory $stage | Out-Null
-
-          # Copy the self-contained app (an MSIX can't install the .NET runtime for us)
-          Copy-Item "publish_portable\*" $stage -Recurse -Force
-
-          # Patch version in manifest
-          $manifest = Get-Content installer\Package.appxmanifest -Raw
-          # Only the package Identity's Version (not <?xml version>, MinVersion, MaxVersionTested).
-          $manifest = [regex]::Replace($manifest, '(?s)(<Identity\b[^>]*?\sVersion=")[\d.]+(")', "`${1}$env:VERSION4`${2}")
-          Set-Content "$stage\AppxManifest.xml" $manifest
-
-          # Generate tile assets
-          $assetsDir = "$stage\Assets"
-          New-Item -ItemType Directory -Force $assetsDir | Out-Null
-          Add-Type -AssemblyName System.Drawing
-          $tiles = @{
-            "Square44x44Logo.png"   = @(44,  44)
-            "Square150x150Logo.png" = @(150, 150)
-            "Wide310x150Logo.png"   = @(310, 150)
-            "Square310x310Logo.png" = @(310, 310)
-            "StoreLogo.png"         = @(50,  50)
-            "SplashScreen.png"      = @(620, 300)
-          }
-          foreach ($tile in $tiles.GetEnumerator()) {
-            $dest = "$assetsDir\$($tile.Key)"
-            $src  = "PdfEdit\Resources\$($tile.Key)"
-            if (Test-Path $src) { Copy-Item $src $dest; continue }
-            $w, $h = $tile.Value
-            $bmp = New-Object System.Drawing.Bitmap($w, $h)
-            $g   = [System.Drawing.Graphics]::FromImage($bmp)
-            $g.Clear([System.Drawing.Color]::FromArgb(40, 80, 160))
-            $br  = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
-            $fnt = New-Object System.Drawing.Font("Segoe UI", [Math]::Max(8, $w / 8), [System.Drawing.FontStyle]::Bold)
-            $sf  = New-Object System.Drawing.StringFormat
-            $sf.Alignment = [System.Drawing.StringAlignment]::Center
-            $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
-            $g.DrawString("PDF", $fnt, $br, [System.Drawing.RectangleF]::new(0,0,$w,$h), $sf)
-            $bmp.Save($dest, [System.Drawing.Imaging.ImageFormat]::Png)
-            $g.Dispose(); $bmp.Dispose()
-          }
-
-          # Pack
-          New-Item -ItemType Directory -Force dist | Out-Null
-          $msix = "dist\PdfEdit-$env:VERSION4.msix"
-          & $env:MAKEAPPX pack /d $stage /p $msix /o
-          if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed" }
-
-          # Self-signed cert (CI test signing — users must trust before install)
-          $certSubject = "CN=PdfEdit"
-          $cert = New-SelfSignedCertificate `
-            -Subject $certSubject `
-            -CertStoreLocation "Cert:\CurrentUser\My" `
-            -KeyUsage DigitalSignature `
-            -Type CodeSigningCert `
-            -HashAlgorithm SHA256 `
-            -NotAfter (Get-Date).AddYears(2)
-
-          & $env:SIGNTOOL sign /fd SHA256 /sha1 $cert.Thumbprint $msix
-          if ($LASTEXITCODE -ne 0) { Write-Warning "signtool returned $LASTEXITCODE (non-fatal for test cert)" }
-
-          # Export the test cert so users can import and trust it
-          $pfxPass = ConvertTo-SecureString "PdfEditTestCert" -AsPlainText -Force
-          Export-PfxCertificate -Cert $cert -FilePath "dist\PdfEdit-TestCert.pfx" -Password $pfxPass
-          Export-Certificate   -Cert $cert -FilePath "dist\PdfEdit-TestCert.cer"
-
-          Remove-Item $stage -Recurse -Force
-          Write-Host "MSIX: $msix"
 
       # ── Collect artifacts ────────────────────────────────────────────────
       - name: List dist
@@ -415,41 +282,23 @@ jobs:
             1. Download `PdfEditSetup-${{ env.VERSION }}.exe`
             2. Run it — everything is included (.NET is bundled), nothing else to install
 
-            #### Option B — ZIP (no install)
+            #### Option B — Portable ZIP (no install)
             - `PdfEdit-${{ env.VERSION }}-win-x64-portable.zip` — unzip anywhere and run `PdfEdit.exe`; nothing else needed
-            - `PdfEdit-${{ env.VERSION }}-win-x64.zip` — smaller, needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
-
-            #### Option C — MSIX Package
-            1. Download `PdfEdit-${{ env.VERSION4 }}.msix`
-            2. Trust the test certificate first (one-time):
-               ```powershell
-               # Run as Administrator
-               Import-Certificate -FilePath PdfEdit-TestCert.cer `
-                 -CertStoreLocation Cert:\LocalMachine\TrustedPeople
-               ```
-            3. Double-click the `.msix` to install
-
-            > **Note:** The MSIX is signed with a self-signed test certificate for this open-source build.
-            > A production release would use an EV code-signing certificate.
 
             ### System Requirements
             - Windows 10 v2004 (build 19041) or later, 64-bit
-            - [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) *(EXE installer handles this)*
 
           files: |
-            dist/PdfEdit-${{ env.VERSION }}-win-x64.zip
             dist/PdfEdit-${{ env.VERSION }}-win-x64-portable.zip
             dist/PdfEditSetup-${{ env.VERSION }}.exe
-            dist/PdfEdit-${{ env.VERSION4 }}.msix
-            dist/PdfEdit-TestCert.cer
           fail_on_unmatched_files: false
 
-  # ── Job 3: PdfEdit Desktop (the cross-platform Avalonia app) for Windows ──────
-  # Runs after the release exists and adds its own installer to it, so a problem here never holds
-  # up the Windows (WPF) release.
-  desktop-windows:
-    name: PdfEdit Desktop — Windows installer
-    runs-on: windows-latest
+  # ── Job 3: PdfEdit Desktop (the cross-platform Avalonia app) for Linux ───────
+  # Runs after the release exists and adds its files to it, so a problem here never holds up the
+  # Windows release. (Windows has PdfEdit for Windows; the Avalonia app is for Mac and Linux.)
+  desktop-linux:
+    name: PdfEdit Desktop — Linux AppImage
+    runs-on: ubuntu-latest
     needs: [metadata, build-and-release]
     if: needs.metadata.outputs.release != 'false'
     env:
@@ -461,24 +310,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Install Inno Setup 6
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup -y --no-progress
-            if ($LASTEXITCODE -ne 0) { throw "Inno Setup install failed" }
-          }
+      - name: Install appimagetool's helpers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq desktop-file-utils
 
-      - name: Build installer and portable ZIP
-        shell: pwsh
-        run: pwsh installer/desktop/build-windows.ps1 -Version $env:VERSION
+      - name: Build the AppImage and tarball
+        run: bash installer/desktop/build-linux.sh "$VERSION"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PdfEdit-Desktop-${{ env.VERSION }}-windows
+          name: PdfEdit-Desktop-${{ env.VERSION }}-linux
           path: |
-            dist/PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe
-            dist/PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz
           retention-days: 30
 
       - name: Add to the release
@@ -488,13 +331,13 @@ jobs:
           append_body: true
           body: |
 
-            ### PdfEdit Desktop for Windows (cross-platform version)
-            The web version's interface in a desktop window ([what's different](https://github.com/dotnetappdev/pdfedit/blob/devmain/docs/building.md#the-cross-platform-desktop-app-windows-macos-linux)). Installs alongside the Windows app above.
-            - `PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe` — installer (.NET included; installs Microsoft's WebView2 runtime if your PC hasn't got it)
-            - `PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip` — no install: unzip and run `PdfEdit.exe`
+            ### PdfEdit for Linux
+            64-bit, .NET included. Needs WebKitGTK, which most desktops have (if not: `sudo apt install libwebkit2gtk-4.1-0`, or `webkit2gtk4.1` on Fedora).
+            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage` — make it executable (`chmod +x`) and run it
+            - `PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz` — unpack anywhere and run `./PdfEdit`
           files: |
-            dist/PdfEdit-Desktop-Setup-${{ env.VERSION }}.exe
-            dist/PdfEdit-Desktop-${{ env.VERSION }}-win-x64.zip
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.AppImage
+            dist/PdfEdit-Desktop-${{ env.VERSION }}-linux-x64.tar.gz
           fail_on_unmatched_files: true
 
   # ── Job 4: PdfEdit Desktop for macOS (Apple silicon and Intel) ─────────────────

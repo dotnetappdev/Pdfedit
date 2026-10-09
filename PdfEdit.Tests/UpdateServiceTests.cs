@@ -21,6 +21,7 @@ public class UpdateServiceTests
               { "name": "PdfEdit-Desktop-Setup-1.2.0.exe", "size": 60, "browser_download_url": "https://example/d.exe" },
               { "name": "PdfEdit-Desktop-1.2.0-mac-arm64.dmg", "size": 70, "browser_download_url": "https://example/arm.dmg" },
               { "name": "PdfEdit-Desktop-1.2.0-mac-x64.dmg", "size": 80, "browser_download_url": "https://example/x64.dmg" },
+              { "name": "PdfEdit-Desktop-1.2.0-linux-x64.AppImage", "size": 90, "browser_download_url": "https://example/app.AppImage" },
               { "name": "PdfEdit-1.2.0-win-x64.zip", "size": 100, "browser_download_url": "https://example/fd.zip" },
               { "name": "PdfEdit-1.2.0-win-x64-portable.zip", "size": 200, "browser_download_url": "https://example/p.zip",
                 "digest": "sha256:ABCDEF" },
@@ -44,7 +45,7 @@ public class UpdateServiceTests
         var stable = Parse(pre: false);
         Assert.Single(stable);
         Assert.Equal(new Version(1, 2, 0), stable[0].Version);
-        Assert.Equal(8, stable[0].Assets.Count);
+        Assert.Equal(9, stable[0].Assets.Count);
         Assert.Equal("ABCDEF", stable[0].Assets[1].Sha256);
 
         Assert.Equal(2, Parse(pre: true).Count);
@@ -81,11 +82,27 @@ public class UpdateServiceTests
     public void The_package_matches_the_install(InstallKind kind, string expected) =>
         Assert.Equal(expected, UpdateService.PickAsset(Parse(false)[0], kind)?.Name);
 
+    [Fact]
+    public void A_small_zip_install_updates_from_the_portable_zip_when_that_is_all_there_is()
+    {
+        using var doc = JsonDocument.Parse("""
+            [ { "tag_name": "v1.4.2", "draft": false, "prerelease": false, "assets": [
+                { "name": "PdfEditSetup-1.4.2.exe", "size": 1, "browser_download_url": "https://example/setup.exe" },
+                { "name": "PdfEdit-1.4.2-win-x64-portable.zip", "size": 2, "browser_download_url": "https://example/p.zip" },
+                { "name": "PdfEdit-Desktop-1.4.2-linux-x64.tar.gz", "size": 3, "browser_download_url": "https://example/l.tgz" } ] } ]
+            """);
+        var release = UpdateService.ParseReleases(doc.RootElement, false).Single();
+        Assert.Equal("PdfEdit-1.4.2-win-x64-portable.zip", UpdateService.PickAsset(release, InstallKind.PortableFrameworkDependent)?.Name);
+        Assert.Null(UpdateService.PickAsset(release, InstallKind.Msix));
+        Assert.Null(UpdateService.PickDesktopAsset(release, windows: true, mac: false, arm64: false));
+    }
+
     [Theory]
     [InlineData(true, false, false, "PdfEdit-Desktop-Setup-1.2.0.exe")]
     [InlineData(false, true, true, "PdfEdit-Desktop-1.2.0-mac-arm64.dmg")]
     [InlineData(false, true, false, "PdfEdit-Desktop-1.2.0-mac-x64.dmg")]
-    [InlineData(false, false, false, null)]
+    [InlineData(false, false, false, "PdfEdit-Desktop-1.2.0-linux-x64.AppImage")]
+    [InlineData(false, false, true, null)]
     public void The_desktop_download_matches_the_computer(bool windows, bool mac, bool arm64, string? expected) =>
         Assert.Equal(expected, UpdateService.PickDesktopAsset(Parse(false)[0], windows, mac, arm64)?.Name);
 

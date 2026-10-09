@@ -54,3 +54,4 @@ PdfEdit.Blazor/pdfedit.db*
 # PdfEdit Desktop installer builds
 publish_desktop/
 obj-desktop-mac/
+obj-desktop-linux/

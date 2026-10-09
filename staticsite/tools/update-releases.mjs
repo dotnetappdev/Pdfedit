@@ -27,7 +27,9 @@ function classify(name) {
   const rules = [
     [/^pdfedit-desktop-.*-mac-arm64\.dmg$/, 'desktop', 'mac', 'Apple silicon (M1 and later)', 'arm64'],
     [/^pdfedit-desktop-.*-mac-x64\.dmg$/, 'desktop', 'mac', 'Intel Mac', 'x64'],
-    [/^pdfedit-desktop-/, null], // the desktop app's Windows builds aren't listed: Windows has PdfEdit for Windows
+    [/^pdfedit-desktop-.*-linux-x64\.appimage$/, 'linux', 'linux', 'AppImage (one file, runs on most distributions)', 'appimage'],
+    [/^pdfedit-desktop-.*-linux-x64\.tar\.gz$/, 'linux', 'linux', 'Tarball (unpack and run)', 'tar'],
+    [/^pdfedit-desktop-/, null], // the desktop app's Windows builds (up to 1.4.1) aren't listed: Windows has PdfEdit for Windows
     [/^pdfeditsetup-.*\.exe$/, 'windows', 'windows', 'Installer', 'installer'],
     [/^pdfedit-.*-win-x64-portable\.zip$/, 'windows', 'windows', 'Portable ZIP (no install)', 'portable'],
     [/^pdfedit-.*-win-x64\.zip$/, 'windows', 'windows', 'ZIP (needs .NET 10 Desktop Runtime)', 'zip'],

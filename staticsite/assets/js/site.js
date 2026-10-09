@@ -51,6 +51,8 @@
   const RULES = [
     [/^pdfedit-desktop-.*-mac-arm64\.dmg$/i, 'desktop', 'mac', 'Apple silicon (M1 and later)', 'arm64'],
     [/^pdfedit-desktop-.*-mac-x64\.dmg$/i, 'desktop', 'mac', 'Intel Mac', 'x64'],
+    [/^pdfedit-desktop-.*-linux-x64\.appimage$/i, 'linux', 'linux', 'AppImage (one file, runs on most distributions)', 'appimage'],
+    [/^pdfedit-desktop-.*-linux-x64\.tar\.gz$/i, 'linux', 'linux', 'Tarball (unpack and run)', 'tar'],
     [/^pdfedit-desktop-/i, null], // the desktop app's Windows builds aren't listed
     [/^pdfeditsetup-.*\.exe$/i, 'windows', 'windows', 'Installer', 'installer'],
     [/^pdfedit-.*-win-x64-portable\.zip$/i, 'windows', 'windows', 'Portable ZIP (no install)', 'portable'],
@@ -74,7 +76,6 @@
       const r = await fetch(ROOT + 'data/releases.json', { cache: 'no-cache' });
       if (r.ok) {
         const data = await r.json();
-        data.releases.forEach(x => x.assets = x.assets.filter(a => !(a.product === 'desktop' && a.platform !== 'mac')));
         return data;
       }
     } catch { /* fall through to GitHub */ }
@@ -96,18 +97,20 @@
     const ua = navigator.userAgent;
     const isMac = /Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua);
     const isWin = /Windows/.test(ua);
+    const isLinux = /Linux/.test(ua) && !/Android/.test(ua);
     const pick = (product, kind) => release.assets.find(a => a.product === product && a.kind === kind);
     if (isMac) return pick('desktop', 'arm64') && { asset: pick('desktop', 'arm64'), text: `Mac, version ${release.version}` };
+    if (isLinux) return pick('linux', 'appimage') && { asset: pick('linux', 'appimage'), text: `Linux, version ${release.version}` };
     if (isWin) return pick('windows', 'installer') && { asset: pick('windows', 'installer'), text: `Windows, version ${release.version} (${fmtSize(pick('windows', 'installer').size)})` };
     return null;
   }
 
   function table(assets, repoUrl) {
     if (!assets.length) return `<p class="muted">No files for this yet. See <a href="${esc(repoUrl)}">the release on GitHub</a>.</p>`;
-    const order = ['installer', 'arm64', 'x64', 'portable', 'zip', 'msix', 'cert'];
+    const order = ['installer', 'arm64', 'x64', 'appimage', 'tar', 'portable', 'zip', 'msix', 'cert'];
     const rows = [...assets].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)).map(a => `
       <tr>
-        <td><strong>${a.platform === 'mac' ? 'Mac: ' : 'Windows: '}${esc(a.label)}</strong><span class="file">${esc(a.name)}</span></td>
+        <td><strong>${{ mac: 'Mac: ', linux: 'Linux: ' }[a.platform] ?? 'Windows: '}${esc(a.label)}</strong><span class="file">${esc(a.name)}</span></td>
         <td class="size">${fmtSize(a.size)}</td>
         <td class="go"><a class="btn ${a.kind === 'cert' ? 'small' : 'go small'}" href="${esc(a.url)}">Download</a></td>
       </tr>`).join('');

@@ -16,9 +16,9 @@ Right-click PdfEdit in Applications and choose **Open**. On macOS 15 and later, 
 
 PdfEdit for Mac shows its interface in the system's web view (WebKit). Make sure macOS is up to date, then quit and open it again. If it still stays blank, report it with your macOS version.
 
-### PdfEdit Desktop on Windows needs WebView2
+### PdfEdit for Linux shows a blank window or doesn't start
 
-The desktop app shows its interface with Microsoft Edge WebView2, which is part of Windows 10 and 11. If it's been removed, install the [WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) from Microsoft.
+PdfEdit for Linux shows its interface with WebKitGTK. Install it with `sudo apt install libwebkit2gtk-4.1-0` (Ubuntu, Debian, Mint) or `sudo dnf install webkit2gtk4.1` (Fedora), then start PdfEdit again. If the AppImage won't open at all, make sure it's executable (`chmod +x`); on systems without FUSE, run it with `--appimage-extract-and-run`.
 
 ## Forms
 

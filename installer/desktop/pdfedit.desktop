@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PdfEdit
+GenericName=PDF Editor
+Comment=Fill, sign, edit and design PDFs
+Exec=PdfEdit %F
+Icon=pdfedit
+Terminal=false
+Categories=Office;Viewer;
+MimeType=application/pdf;
+StartupWMClass=PdfEdit

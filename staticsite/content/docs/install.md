@@ -1,12 +1,12 @@
 # Installing PdfEdit
 
-PdfEdit is free and comes three ways. They share the same tools and templates, so pick the one that suits your computer. You can [download them all](../../download.html) from the download page.
+PdfEdit is free and comes four ways. They share the same tools and templates, so pick the one that suits your computer. You can [download them all](../../download.html) from the download page.
 
-| | PdfEdit for Windows | PdfEdit for Mac | PdfEdit for the web |
-|---|---|---|---|
-| Runs on | Windows 10 (version 2004) or 11, 64-bit | macOS 12 Monterey or later, Apple silicon or Intel | Any modern browser, on a server you run |
-| Best for | Everyday use on a PC, scanners, everything | Everyday use on a Mac | A team, phones and tablets |
-| Files stay | On your PC | On your Mac | On your server |
+| | PdfEdit for Windows | PdfEdit for Mac | PdfEdit for Linux | PdfEdit for the web |
+|---|---|---|---|---|
+| Runs on | Windows 10 (version 2004) or 11, 64-bit | macOS 12 Monterey or later, Apple silicon or Intel | 64-bit Linux with WebKitGTK | Any modern browser, on a server you run |
+| Best for | Everyday use on a PC, scanners, everything | Everyday use on a Mac | Everyday use on a Linux PC | A team, phones and tablets |
+| Files stay | On your PC | On your Mac | On your PC | On your server |
 
 > **Tip:** on Windows, choose **PdfEdit for Windows**. It's the full app, with scanner support, Windows voices and every tool.
 
@@ -16,11 +16,9 @@ PdfEdit is free and comes three ways. They share the same tools and templates, s
 2. Open it. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**. (The installer isn't signed with a paid certificate yet.)
 3. Follow the steps. PdfEdit is added to the Start menu and can open PDFs when you double-click them.
 
-Other downloads for Windows:
+No install? Download the **Portable ZIP** instead: unzip it anywhere, even a USB stick, and run `PdfEdit.exe`. Everything it needs is inside.
 
-- **Portable ZIP (no install)**: unzip anywhere, even a USB stick, and run `PdfEdit.exe`. Everything it needs is inside.
-- **ZIP (needs .NET 10 Desktop Runtime)**: a much smaller download if the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) is already installed.
-- **MSIX package**: for people who prefer Windows' own installer. Install the test certificate first (double-click the `.cer`, choose **Install Certificate > Local Machine > Trusted People**), then open the `.msix`.
+(Up to version 1.4.1 there was also a smaller ZIP that needed the .NET runtime, an MSIX package and a separate Windows build of PdfEdit Desktop. If you used one of those, Check for Updates moves the small ZIP to the portable one; for the others, install **PdfEditSetup** once and use that from then on.)
 
 ### Updating
 
@@ -40,7 +38,24 @@ After that it opens like any other app, and you can choose it under **Open With*
 
 > **Mac:** PdfEdit for Mac uses the same interface as the web version, inside its own window. It works without an internet connection, saves with the normal Mac Save dialog and keeps your files on your Mac.
 
-**Updating:** **Help > Check for Updates** (or **About PdfEdit**) says whether a newer version is out and downloads the disk image for your Mac; open it and drag PdfEdit into Applications again. PdfEdit Desktop on Windows works the same way with its installer. It also checks quietly when it starts; turn that off in **Settings**.
+**Updating:** **Help > Check for Updates** (or **About PdfEdit**) says whether a newer version is out and downloads the disk image for your Mac; open it and drag PdfEdit into Applications again. It also checks quietly when it starts; turn that off in **Settings**.
+
+## Linux
+
+1. Download the **AppImage** from the [download page](../../download.html#linux).
+2. Make it executable: right-click it, choose **Properties** and tick **Allow executing file as program** (or run `chmod +x PdfEdit-Desktop-*.AppImage`).
+3. Double-click it to start PdfEdit.
+
+PdfEdit shows its pages with **WebKitGTK**, which most Linux desktops already have. If the window stays blank, install it:
+
+```bash
+sudo apt install libwebkit2gtk-4.1-0     # Ubuntu, Debian, Mint
+sudo dnf install webkit2gtk4.1           # Fedora
+```
+
+Prefer a plain folder? Download the **tarball** instead, unpack it anywhere and run `./PdfEdit` inside. It contains a `pdfedit.desktop` file and icon if you want to add it to your menu.
+
+**Updating:** **Help > Check for Updates** downloads the new AppImage. Make it executable and use it in place of the old one; your settings and signatures are kept.
 
 ## The web version
 
