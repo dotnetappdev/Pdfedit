@@ -216,6 +216,9 @@
                         <RibbonButton Icon="bi-collection" Label="Stamps…" Title="Choose the stamp; create, edit or delete your own" OnClick="() => ShowDialog(DialogKind.Stamps)" />
                         <RibbonButton Icon="bi-plus-square" Label="New Stamp…" Title="Create a stamp with your own text and colour" OnClick="NewCustomStamp" />
                     </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-droplet-half" Label="Watermark…" Title="Watermark &amp; background — text or a picture, behind or over the page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Watermark)" />
+                    </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Fields">
                     <RibbonButton Large Icon="bi-ui-checks" Label="Highlight Fields" Title="Show a coloured highlight over all fillable form fields" Active="HighlightFields" OnClick="() => HighlightFields = !HighlightFields" />
@@ -526,6 +529,9 @@
                         <RibbonButton Icon="bi-collection" Label="Stamps…" Title="Choose the stamp; create, edit or delete your own" OnClick="() => ShowDialog(DialogKind.Stamps)" />
                         <RibbonButton Icon="bi-plus-square" Label="New Stamp" Title="Create a custom stamp with your own text and colour" OnClick="NewCustomStamp" />
                         <RibbonButton Icon="bi-dash-square" Label="Remove Custom" Title="Remove the chosen custom stamp" Disabled="@(SelectedCustomStamp == null)" OnClick="RemoveSelectedCustomStampAsync" />
+                    </div>
+                    <div class="pe-stack">
+                        <RibbonButton Icon="bi-droplet-half" Label="Watermark…" Title="Watermark &amp; background — text or a picture, behind or over the page" Disabled="NoDoc" OnClick="() => ShowDialog(DialogKind.Watermark)" />
                     </div>
                 </RibbonGroup>
                 <RibbonGroup Title="Marks">
