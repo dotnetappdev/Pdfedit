@@ -82,7 +82,7 @@ secrets `MACOS_CERT_P12` (base64 of the .p12), `MACOS_CERT_PASSWORD`, `MACOS_SIG
 
 GitHub Actions builds and publishes every release. There's nothing to do by hand.
 
-- **From `devmain`**: when the `<Version>` in `PdfEdit/PdfEdit.csproj` hasn't been released yet, the next push builds it and publishes it as a release. To ship a new version, bump that number.
+- **From `devmain`**: when the `<Version>` in `Directory.Build.props` hasn't been released yet, the next push builds it and publishes it as a release. To ship a new version, bump that one number: every project and every file in the release (Windows, Mac and Linux) gets it.
 - **From `main`**: every push releases the next patch version automatically (for example 1.0.4 after 1.0.3).
 - **From a tag**: pushing `v1.2.3` releases exactly that version.
 

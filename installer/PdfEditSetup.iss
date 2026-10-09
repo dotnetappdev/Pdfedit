@@ -14,8 +14,9 @@
 
 #define MyAppName      "PdfEdit"
 ; Overridden by CI with /DMyAppVersion=x.y.z (a plain #define would win over the command line)
+; The build scripts pass the real version (from Directory.Build.props) with /DMyAppVersion.
 #ifndef MyAppVersion
-  #define MyAppVersion "1.4.2"
+  #define MyAppVersion "0.0.0"
 #endif
 #define MyAppPublisher "PdfEdit"
 #define MyAppURL       "https://github.com/dotnetappdev/pdfedit"

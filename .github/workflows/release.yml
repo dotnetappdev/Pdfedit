@@ -2,9 +2,10 @@ name: Build & Release
 
 on:
   # Every push to main (e.g. merging devmain) builds and publishes a release automatically:
-  # the version is the next patch after the latest v* tag (or the csproj <Version> if higher).
-  # devmain (where development happens): a release is published whenever the csproj <Version>
-  # has not been released yet — bump <Version> in PdfEdit/PdfEdit.csproj to ship the next one.
+  # the version is the next patch after the latest v* tag (or the <Version> if higher).
+  # devmain (where development happens): a release is published whenever the <Version> in
+  # Directory.Build.props has not been released yet. Bump it there to ship the next one; every
+  # project and every file in the release gets that same number.
   push:
     branches: [main, devmain]
     paths-ignore:
@@ -17,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.2.3). Leave blank to read from csproj.'
+        description: 'Version to release (e.g. 1.2.3). Leave blank to read from Directory.Build.props.'
         required: false
         default: ''
       prerelease:
@@ -65,7 +66,7 @@ jobs:
         id: ver
         shell: bash
         run: |
-          # Priority: tag > workflow_dispatch input > csproj
+          # Priority: tag > workflow_dispatch input > Directory.Build.props
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
             VERSION="${TAG#v}"
@@ -76,24 +77,24 @@ jobs:
             TAG="v${VERSION}"
             PRE="${{ github.event.inputs.prerelease }}"
           elif [[ "$GITHUB_REF" == refs/heads/devmain ]]; then
-            # devmain: release the csproj version once (skip if that tag already exists).
-            VERSION=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            # devmain: release the Directory.Build.props version once (skip if that tag already exists).
+            VERSION=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -1)
             TAG="v${VERSION}"
             PRE=false
             if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
               echo "release=false" >> "$GITHUB_OUTPUT"
-              echo "$TAG is already released — bump <Version> in PdfEdit/PdfEdit.csproj to publish a new release."
+              echo "$TAG is already released — bump <Version> in Directory.Build.props to publish a new release."
             fi
           else
-            # main: next patch after the latest release tag, or the csproj version if newer.
-            CSPROJ=$(grep -oP '(?<=<Version>)[^<]+' PdfEdit/PdfEdit.csproj | head -1)
+            # main: next patch after the latest release tag, or the Directory.Build.props version if newer.
+            CSPROJ=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -1)
             LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -vE -- '-' | sed 's/^v//' | sort -V | tail -1)
             if [[ -z "$LATEST" ]]; then
               VERSION="$CSPROJ"
             else
               IFS=. read -r MA MI PA <<< "$LATEST"
               NEXT="$MA.$MI.$((PA + 1))"
-              # csproj wins when someone bumped it past the last release (e.g. 1.1.0)
+              # Directory.Build.props wins when someone bumped it past the last release (e.g. 1.1.0)
               if [[ "$(printf '%s\n%s\n' "$NEXT" "$CSPROJ" | sort -V | tail -1)" == "$CSPROJ" && "$CSPROJ" != "$LATEST" ]]; then
                 VERSION="$CSPROJ"
               else

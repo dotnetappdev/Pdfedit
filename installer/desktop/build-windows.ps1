@@ -22,7 +22,7 @@ $publish = "$root\publish_desktop"
 $dist    = "$root\dist"
 
 if (-not $Version) {
-    [xml]$proj = Get-Content $csproj
+    [xml]$proj = Get-Content "$root\Directory.Build.props"   # the one version number
     $Version = @($proj.Project.PropertyGroup.Version | Where-Object { $_ })[0]
     if (-not $Version) { $Version = "1.0.0" }
 }

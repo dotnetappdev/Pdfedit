@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    The one version number for everything PdfEdit ships: the Windows app, PdfEdit for Mac and Linux,
+    the web version and their libraries. Bump it here to release the next version (a push to devmain
+    with a version that hasn't been released yet publishes it). Assembly and file versions follow
+    from it (1.4.2 becomes 1.4.2.0).
+  -->
+  <PropertyGroup>
+    <Version>1.4.2</Version>
+  </PropertyGroup>
+</Project>

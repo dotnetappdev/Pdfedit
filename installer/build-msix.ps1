@@ -14,7 +14,7 @@
     Build configuration (default: Release)
 
 .PARAMETER Version
-    Package version, e.g. "1.0.1.0" (default: reads from csproj)
+    Package version, e.g. "1.0.1.0" (default: from Directory.Build.props)
 
 .PARAMETER CertThumbprint
     SHA-1 thumbprint of a code-signing certificate already in the certificate store.
@@ -74,7 +74,7 @@ $stageDir  = "$root\_msix_stage"
 $distDir   = "$root\$OutputDir"
 
 if (-not $Version) {
-    [xml]$proj = Get-Content $csproj
+    [xml]$proj = Get-Content "$root\Directory.Build.props"   # the one version number
     $Version = ($proj.Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1) + ".0"
     if ($Version -eq ".0") { $Version = "1.0.0.0" }
 }

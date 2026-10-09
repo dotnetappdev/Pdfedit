@@ -12,7 +12,7 @@
     Any step can be skipped with the -Skip* switches.
 
 .PARAMETER Version
-    Override the version string (e.g. "1.2.0").  Reads from csproj if omitted.
+    Override the version string (e.g. "1.2.0").  Reads from Directory.Build.props if omitted.
 
 .PARAMETER SkipPublish
     Skip dotnet publish (use existing .\publish\ folder).
@@ -56,9 +56,9 @@ $root    = Resolve-Path "$PSScriptRoot\.."
 $csproj  = "$root\PdfEdit\PdfEdit.csproj"
 $distDir = "$root\dist"
 
-# ── Read version from csproj if not provided ─────────────────────────────────
+# ── Read version from Directory.Build.props if not provided ──────────────────
 if (-not $Version) {
-    [xml]$proj = Get-Content $csproj
+    [xml]$proj = Get-Content "$root\Directory.Build.props"   # the one version number
     $Version = $proj.Project.PropertyGroup.Version |
                Where-Object { $_ } |
                Select-Object -First 1

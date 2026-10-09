@@ -4,14 +4,15 @@
 ;
 ; Build (from the repo root):
 ;   dotnet publish PdfEdit.Avalonia -c Release -r win-x64 --self-contained true -o publish_desktop
-;   iscc /DMyAppVersion=1.4.2 installer\desktop\PdfEditDesktopSetup.iss
+;   iscc /DMyAppVersion=1.2.3 installer\desktop\PdfEditDesktopSetup.iss
 ; or simply:  pwsh installer\desktop\build-windows.ps1
 ;
 ; Needs Inno Setup 6.3+ (https://jrsoftware.org/isinfo.php).
 
 #define MyAppName      "PdfEdit Desktop"
+; The build scripts pass the real version (from Directory.Build.props) with /DMyAppVersion.
 #ifndef MyAppVersion
-  #define MyAppVersion "1.4.2"
+  #define MyAppVersion "0.0.0"
 #endif
 #define MyAppPublisher "PdfEdit"
 #define MyAppURL       "https://github.com/dotnetappdev/pdfedit"

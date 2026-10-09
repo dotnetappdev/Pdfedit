@@ -2,7 +2,7 @@
 # Builds PdfEdit Desktop (the Avalonia app) for macOS: dist/PdfEdit-Desktop-<version>-mac-<arch>.dmg
 # holding PdfEdit.app, for Apple silicon (arm64) and Intel (x64).
 #
-#   installer/desktop/build-mac.sh                 # both chips, version from the csproj
+#   installer/desktop/build-mac.sh                 # both chips, version from Directory.Build.props
 #   installer/desktop/build-mac.sh 1.3.1 arm64     # one chip, a given version
 #
 # Signing (optional — set these to sign and notarize; otherwise the app is signed ad hoc, which runs
@@ -19,7 +19,7 @@ CSPROJ="$ROOT/PdfEdit.Avalonia/PdfEdit.Avalonia.csproj"
 VERSION="${1:-}"
 ARCHES="${2:-arm64 x64}"
 if [[ -z "$VERSION" ]]; then
-  VERSION="$(grep -m1 -o '<Version>[^<]*' "$CSPROJ" | sed 's/<Version>//')"
+  VERSION="$(grep -m1 -o '<Version>[^<]*' "$ROOT/Directory.Build.props" | sed 's/<Version>//')"
   VERSION="${VERSION:-1.0.0}"
 fi
 DIST="$ROOT/dist"

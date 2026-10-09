@@ -3,7 +3,7 @@
 #   dist/PdfEdit-Desktop-<version>-linux-x64.AppImage   one file: make it executable and run it
 #   dist/PdfEdit-Desktop-<version>-linux-x64.tar.gz     unpack anywhere and run ./PdfEdit
 #
-#   installer/desktop/build-linux.sh           # version from the csproj
+#   installer/desktop/build-linux.sh           # version from Directory.Build.props
 #   installer/desktop/build-linux.sh 1.4.2
 #
 # .NET is included. The page is shown with the system's WebKitGTK (webkit2gtk 4.1 or 4.0), which
@@ -16,7 +16,7 @@ HERE="$ROOT/installer/desktop"
 CSPROJ="$ROOT/PdfEdit.Avalonia/PdfEdit.Avalonia.csproj"
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
-  VERSION="$(grep -m1 -o '<Version>[^<]*' "$CSPROJ" | sed 's/<Version>//')"
+  VERSION="$(grep -m1 -o '<Version>[^<]*' "$ROOT/Directory.Build.props" | sed 's/<Version>//')"
   VERSION="${VERSION:-1.0.0}"
 fi
 DIST="$ROOT/dist"
