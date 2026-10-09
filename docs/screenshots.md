@@ -2,7 +2,23 @@
 
 [Back to README](../README.md)
 
-These are rendered mock-ups of the interface rather than captures of the running app, so small details may differ. The ribbon and form-filling images are drawn from the real ribbon layout and can be regenerated with `node docs/screenshots/src/render.mjs`.
+The Windows pictures below are rendered mock-ups of the interface rather than captures of the running app, so small details may differ. The ribbon and form-filling images are drawn from the real ribbon layout and can be regenerated with `node docs/screenshots/src/render.mjs`.
+
+## PdfEdit for Mac and Linux
+
+These are captures of the real app. PdfEdit for Mac and Linux shows the same screens as the web version, in its own window.
+
+**Mac**
+
+![PdfEdit for Mac: the start page](screenshots/desktop/mac-start.png)
+
+![PdfEdit for Mac: filling in a form](screenshots/desktop/mac-form.png)
+
+**Linux**
+
+![PdfEdit for Linux: the start page](screenshots/desktop/linux-start.png)
+
+![PdfEdit for Linux: filling in a form](screenshots/desktop/linux-form.png)
 
 ## The ribbon
 

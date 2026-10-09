@@ -4,12 +4,12 @@
 
 <h1 align="center">PdfEdit</h1>
 
-<p align="center">A free PDF editor for Windows, built to rival Adobe Acrobat. No ads, no subscriptions, no paywalls.</p>
+<p align="center">A free PDF editor for Windows, Mac and Linux, built to rival Adobe Acrobat. No ads, no subscriptions, no paywalls.</p>
 
 <p align="center">
   <a href="https://github.com/dotnetappdev/Pdfedit/releases/latest"><img src="https://img.shields.io/github/v/release/dotnetappdev/Pdfedit?display_name=tag&label=release" alt="Latest release"></a>
   <a href="https://github.com/dotnetappdev/Pdfedit/actions/workflows/ci.yml?query=branch%3Adevmain"><img src="https://img.shields.io/github/actions/workflow/status/dotnetappdev/Pdfedit/ci.yml?branch=devmain&label=build" alt="Build status"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Mac%20%7C%20web-0078D6" alt="Windows, Mac and web">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Mac%20%7C%20Linux%20%7C%20web-0078D6" alt="Windows, Mac, Linux and web">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licence"></a>
   <a href="https://dotnetappdev.github.io/Pdfedit/docs/index.html"><img src="https://img.shields.io/badge/docs-user%20guide-1565D8" alt="User guide"></a>
 </p>
@@ -36,9 +36,35 @@ Open Word, Excel, PowerPoint, text, Markdown and HTML files as PDFs, and save PD
 
 <p align="center"><a href="docs/tour.md"><img src="docs/tour/tour-poster.png" width="640" alt="Watch the PdfEdit tour"></a></p>
 
-**[Download](https://github.com/dotnetappdev/Pdfedit/releases/latest)** for Windows 10 (2004+) and 11, 64-bit: installer or portable zip.
-
 **[Features](docs/features.md)** | [Video tour](docs/tour.md) | [Screenshots](docs/screenshots.md) | [Documentation](docs/) | [Themes](docs/themes.md) | [Web version (Blazor)](#blazor-web-version) | [Accessibility](docs/accessibility.md) | [Keyboard shortcuts](docs/keyboard-shortcuts.md) | [Building](docs/building.md)
+
+## Install
+
+Get the latest version from the **[download page](https://dotnetappdev.github.io/Pdfedit/download.html)** (or [GitHub Releases](https://github.com/dotnetappdev/Pdfedit/releases/latest)). Everything it needs is included. The [installation guide](https://dotnetappdev.github.io/Pdfedit/docs/install.html) has more detail and help.
+
+**Windows** (10 version 2004 or later, or 11, 64-bit)
+1. Download `PdfEditSetup-<version>.exe` and run it. If SmartScreen appears, click **More info** > **Run anyway**.
+2. Follow the steps. PdfEdit is added to the Start menu and opens PDFs when you double-click them.
+
+No install? Download `PdfEdit-<version>-win-x64-portable.zip`, unzip it anywhere and run `PdfEdit.exe`.
+
+**Mac** (macOS 12 or later)
+1. Download the disk image for your Mac: `-mac-arm64.dmg` for Apple silicon (M1 and later), `-mac-x64.dmg` for Intel. (Apple menu > **About This Mac** tells you which.)
+2. Open it and drag **PdfEdit** into **Applications**.
+3. The first time, right-click PdfEdit in Applications and choose **Open**, then **Open** again. On macOS 15 and later, use **System Settings > Privacy & Security > Open Anyway** instead.
+
+**Linux** (64-bit)
+1. Download `PdfEdit-Desktop-<version>-linux-x64.AppImage`.
+2. Make it executable and run it:
+   ```bash
+   chmod +x PdfEdit-Desktop-*-linux-x64.AppImage
+   ./PdfEdit-Desktop-*-linux-x64.AppImage
+   ```
+3. If the window stays blank, install WebKitGTK: `sudo apt install libwebkit2gtk-4.1-0` (Ubuntu, Debian, Mint) or `sudo dnf install webkit2gtk4.1` (Fedora).
+
+Prefer a folder? `PdfEdit-Desktop-<version>-linux-x64.tar.gz` unpacks to a folder you run `./PdfEdit` from. The guide shows how to [add PdfEdit to your applications menu](https://dotnetappdev.github.io/Pdfedit/docs/install.html#linux).
+
+All three check for updates themselves: **Help > Check for Updates**.
 
 ## Screenshots
 
@@ -219,7 +245,14 @@ How to run it and what it needs on the server: [PdfEdit.Blazor/README.md](PdfEdi
 
 ![Translate PDF: after, with the layout and colours kept](docs/screenshots/blazor/translate-after.png)
 
-### Cross-platform desktop (Avalonia)
+### PdfEdit for Mac and Linux
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/desktop/mac-form.png" alt="PdfEdit for Mac with a form open"><br><sub>Mac</sub></td>
+    <td width="50%"><img src="docs/screenshots/desktop/linux-form.png" alt="PdfEdit for Linux with a form open"><br><sub>Linux</sub></td>
+  </tr>
+</table>
 
 **PdfEdit.Avalonia** runs the web version inside a desktop window on Windows, macOS and Linux, with the same ribbon,
 tools and drafts, with the system's Save dialog, your PDF viewer for printing, and PDFs opened from the

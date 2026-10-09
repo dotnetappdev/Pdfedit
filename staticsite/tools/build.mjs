@@ -1,7 +1,8 @@
 // Builds the website into staticsite/_site:
 //  - the top-level pages, with the shared head, header and footer put in (<!-- @include name --> ->
 //    partials/name.html) and the screenshots they use (img/shots/x.png <- docs/screenshots/blazor/x.png,
-//    img/shots/win-x.png <- docs/screenshots/x.png);
+//    img/shots/win-x.png <- docs/screenshots/x.png, img/shots/mac-x.png and linux-x.png <-
+//    docs/screenshots/desktop/);
 //  - the user guide (docs/...), from the Markdown in the repository's docs folder plus the site's own
 //    pages in content/docs, with a contents list, page outline, previous/next and search;
 //  - the tutorials (tutorials/...), from content/tutorials;
@@ -44,8 +45,8 @@ for (const f of (await readdir(site)).filter(f => f.endsWith('.html'))) {
   pageCount++;
 }
 for (const name of shots) {
-  const src = name.startsWith('win-')
-    ? join(repo, 'docs/screenshots', name.slice(4))
+  const src = name.startsWith('win-') ? join(repo, 'docs/screenshots', name.slice(4))
+    : /^(mac|linux)-/.test(name) ? join(repo, 'docs/screenshots/desktop', name)
     : join(repo, 'docs/screenshots/blazor', name);
   if (!existsSync(src)) throw new Error(`screenshot not found: ${src}`);
   await cp(src, join(out, 'img/shots', name));

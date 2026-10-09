@@ -36,6 +36,10 @@ No install? Download the **Portable ZIP** instead: unzip it anywhere, even a USB
 
 After that it opens like any other app, and you can choose it under **Open With** for PDFs in Finder.
 
+![PdfEdit for Mac with a form open](../../../docs/screenshots/desktop/mac-form.png)
+
+To keep it in the Dock, right-click its icon while it's open and choose **Options > Keep in Dock**. To make it the app for every PDF, select a PDF in Finder, choose **File > Get Info**, pick PdfEdit under **Open with** and click **Change All...**.
+
 > **Mac:** PdfEdit for Mac uses the same interface as the web version, inside its own window. It works without an internet connection, saves with the normal Mac Save dialog and keeps your files on your Mac.
 
 **Updating:** **Help > Check for Updates** (or **About PdfEdit**) says whether a newer version is out and downloads the disk image for your Mac; open it and drag PdfEdit into Applications again. It also checks quietly when it starts; turn that off in **Settings**.
@@ -45,6 +49,31 @@ After that it opens like any other app, and you can choose it under **Open With*
 1. Download the **AppImage** from the [download page](../../download.html#linux).
 2. Make it executable: right-click it, choose **Properties** and tick **Allow executing file as program** (or run `chmod +x PdfEdit-Desktop-*.AppImage`).
 3. Double-click it to start PdfEdit.
+
+![PdfEdit for Linux with a form open](../../../docs/screenshots/desktop/linux-form.png)
+
+Or from a terminal, which also puts PdfEdit in your applications menu and makes it an **Open With** choice for PDFs:
+
+```bash
+mkdir -p ~/Applications ~/.local/share/applications ~/.local/share/icons/hicolor/256x256/apps
+mv ~/Downloads/PdfEdit-Desktop-*-linux-x64.AppImage ~/Applications/PdfEdit.AppImage
+chmod +x ~/Applications/PdfEdit.AppImage
+cd /tmp && ~/Applications/PdfEdit.AppImage --appimage-extract pdfedit.png >/dev/null
+cp /tmp/squashfs-root/pdfedit.png ~/.local/share/icons/hicolor/256x256/apps/pdfedit.png
+cat > ~/.local/share/applications/pdfedit.desktop <<EOF
+[Desktop Entry]
+Type=Application
+Name=PdfEdit
+Comment=Fill, sign, edit and design PDFs
+Exec=$HOME/Applications/PdfEdit.AppImage %F
+Icon=pdfedit
+Categories=Office;Viewer;
+MimeType=application/pdf;
+EOF
+update-desktop-database ~/.local/share/applications 2>/dev/null || true
+```
+
+If the AppImage doesn't start at all and says something about **FUSE**, either install it (`sudo apt install libfuse2`, called `libfuse2t64` on Ubuntu 24.04 and later) or start PdfEdit with `--appimage-extract-and-run`.
 
 PdfEdit shows its pages with **WebKitGTK**, which most Linux desktops already have. If the window stays blank, install it:
 
@@ -75,5 +104,6 @@ Then open the address it prints. [Hosting PdfEdit for the web](web-version.md) c
 
 - **Windows**: Settings > Apps > Installed apps > PdfEdit > Uninstall. For the portable ZIP, delete the folder.
 - **Mac**: drag PdfEdit from Applications to the Bin.
+- **Linux**: delete the AppImage (or the unpacked folder), and `~/.local/share/applications/pdfedit.desktop` if you added it to the menu.
 
-Your settings live in `%AppData%\PdfEdit` on Windows and in your user Application Support folder on a Mac, if you want to remove those too.
+Your settings live in `%AppData%\PdfEdit` on Windows, in your user Application Support folder on a Mac and in `~/.local/share/PdfEdit` on Linux, if you want to remove those too.
