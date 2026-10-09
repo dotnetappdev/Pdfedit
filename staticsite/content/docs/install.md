@@ -40,6 +40,8 @@ After that it opens like any other app, and you can choose it under **Open With*
 
 > **Mac:** PdfEdit for Mac uses the same interface as the web version, inside its own window. It works without an internet connection, saves with the normal Mac Save dialog and keeps your files on your Mac.
 
+**Updating:** **Help > Check for Updates** (or **About PdfEdit**) says whether a newer version is out and downloads the disk image for your Mac; open it and drag PdfEdit into Applications again. PdfEdit Desktop on Windows works the same way with its installer. It also checks quietly when it starts; turn that off in **Settings**.
+
 ## The web version
 
 PdfEdit for the web runs on a server you look after: your own computer, a server at work or a cloud machine. Everyone then uses it in their browser, including on phones and tablets, and it can be installed as an app from the browser.

@@ -106,6 +106,7 @@ public partial class Editor
             await UserCultureAsync();
             await RestoreDraftsAsync();
             await StartFromLinkAsync();
+            _ = CheckForUpdatesAtStartupAsync();
             StateHasChanged();
         }
         _draftDirty = true;

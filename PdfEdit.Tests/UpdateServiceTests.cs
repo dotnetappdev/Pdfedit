@@ -17,6 +17,10 @@ public class UpdateServiceTests
             "body": "### What's new\n- Updater\n\n---\n### Installation",
             "published_at": "2026-10-01T10:00:00Z",
             "assets": [
+              { "name": "PdfEdit-Desktop-1.2.0-win-x64.zip", "size": 50, "browser_download_url": "https://example/d.zip" },
+              { "name": "PdfEdit-Desktop-Setup-1.2.0.exe", "size": 60, "browser_download_url": "https://example/d.exe" },
+              { "name": "PdfEdit-Desktop-1.2.0-mac-arm64.dmg", "size": 70, "browser_download_url": "https://example/arm.dmg" },
+              { "name": "PdfEdit-Desktop-1.2.0-mac-x64.dmg", "size": 80, "browser_download_url": "https://example/x64.dmg" },
               { "name": "PdfEdit-1.2.0-win-x64.zip", "size": 100, "browser_download_url": "https://example/fd.zip" },
               { "name": "PdfEdit-1.2.0-win-x64-portable.zip", "size": 200, "browser_download_url": "https://example/p.zip",
                 "digest": "sha256:ABCDEF" },
@@ -40,7 +44,7 @@ public class UpdateServiceTests
         var stable = Parse(pre: false);
         Assert.Single(stable);
         Assert.Equal(new Version(1, 2, 0), stable[0].Version);
-        Assert.Equal(4, stable[0].Assets.Count);
+        Assert.Equal(8, stable[0].Assets.Count);
         Assert.Equal("ABCDEF", stable[0].Assets[1].Sha256);
 
         Assert.Equal(2, Parse(pre: true).Count);
@@ -76,6 +80,14 @@ public class UpdateServiceTests
     [InlineData(InstallKind.Msix, "PdfEdit-1.2.0.0.msix")]
     public void The_package_matches_the_install(InstallKind kind, string expected) =>
         Assert.Equal(expected, UpdateService.PickAsset(Parse(false)[0], kind)?.Name);
+
+    [Theory]
+    [InlineData(true, false, false, "PdfEdit-Desktop-Setup-1.2.0.exe")]
+    [InlineData(false, true, true, "PdfEdit-Desktop-1.2.0-mac-arm64.dmg")]
+    [InlineData(false, true, false, "PdfEdit-Desktop-1.2.0-mac-x64.dmg")]
+    [InlineData(false, false, false, null)]
+    public void The_desktop_download_matches_the_computer(bool windows, bool mac, bool arm64, string? expected) =>
+        Assert.Equal(expected, UpdateService.PickDesktopAsset(Parse(false)[0], windows, mac, arm64)?.Name);
 
     [Fact]
     public void Install_kind_is_detected_from_the_app_folder()

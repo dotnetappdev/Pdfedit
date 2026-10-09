@@ -91,4 +91,6 @@ public sealed class WebSettings
     public bool NotifyWhenDone { get; set; }
     /// <summary>No sliding or fading, and jumps instead of smooth scrolling (the system's own setting is followed too).</summary>
     public bool ReduceMotion { get; set; }
+    /// <summary>The desktop app looks for a newer version when it starts.</summary>
+    public bool CheckForUpdatesAtStartup { get; set; } = true;
 }

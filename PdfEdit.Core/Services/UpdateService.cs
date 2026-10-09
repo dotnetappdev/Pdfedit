@@ -138,8 +138,10 @@ public static class UpdateService
     /// <summary>The release file that updates an install of the given kind (null when the release lacks one).</summary>
     public static ReleaseAsset? PickAsset(UpdateInfo release, InstallKind kind)
     {
+        // PdfEdit Desktop's files (PdfEdit-Desktop-…-win-x64.zip) are for the other app.
         bool Is(ReleaseAsset a, string prefix, string suffix) =>
             a.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
+            !a.Name.StartsWith("PdfEdit-Desktop-", StringComparison.OrdinalIgnoreCase) &&
             a.Name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase);
 
         return kind switch
@@ -150,6 +152,21 @@ public static class UpdateService
             InstallKind.Msix => release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-", ".msix")),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// The PdfEdit Desktop (Avalonia) download for this computer: the Windows installer, or the Mac
+    /// disk image for Apple silicon or Intel. Null elsewhere (Linux) or when the release lacks one.
+    /// </summary>
+    public static ReleaseAsset? PickDesktopAsset(UpdateInfo release, bool windows, bool mac, bool arm64)
+    {
+        bool Is(ReleaseAsset a, string prefix, string suffix) =>
+            a.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
+            a.Name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase);
+
+        if (windows) return release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-Desktop-Setup-", ".exe"));
+        if (mac) return release.Assets.FirstOrDefault(a => Is(a, "PdfEdit-Desktop-", arm64 ? "-mac-arm64.dmg" : "-mac-x64.dmg"));
+        return null;
     }
 
     /// <summary>

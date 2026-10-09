@@ -885,6 +885,10 @@
 
             case RibbonTab.Help:
                 <RibbonGroup Title="Updates">
+                    @if (IsDesktop)
+                    {
+                        <RibbonButton Large Icon="bi-arrow-repeat" Label="Check for Updates" Title="See whether a newer PdfEdit is out, and download it" Disabled="CheckingForUpdates" OnClick="ShowCheckForUpdates" />
+                    }
                     <RibbonButton Large Icon="bi-stars" Label="What's New" Title="Release notes for every version, on GitHub" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases"))" />
                     <RibbonButton Large Icon="bi-windows" Label="Windows App" Title="Download the full Windows app" OnClick="@(() => OpenUrlAsync(GitHubUrl + "/releases/latest"))" />
                 </RibbonGroup>
