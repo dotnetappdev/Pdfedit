@@ -35,28 +35,39 @@ jobs:
         run: |
           APP="$PWD/obj-desktop-mac/arm64/PdfEdit.app"
           OUT="$PWD/shots"; mkdir -p "$OUT"
-          cat > winid.swift <<'SWIFT'
+          # Prints the PdfEdit window's position and size in screen pixels: x y w h
+          cat > winbox.swift <<'SWIFT'
           import CoreGraphics
+          let display = CGMainDisplayID()
+          let scale = Double(CGDisplayPixelsWide(display)) / Double(CGDisplayBounds(display).width)
+          let mode = CGDisplayCopyDisplayMode(display)
+          let px = Double(mode?.pixelWidth ?? Int(CGDisplayPixelsWide(display))) / Double(CGDisplayBounds(display).width)
+          let s = max(scale, px)
           let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
           for w in list where (w["kCGWindowOwnerName"] as? String) == "PdfEdit" && (w["kCGWindowLayer"] as? Int) == 0 {
-            if let b = w["kCGWindowBounds"] as? [String: Any], let h = b["Height"] as? Double, h > 200 {
-              print(w["kCGWindowNumber"]!); break
+            if let b = w["kCGWindowBounds"] as? [String: Any], let x = b["X"] as? Double, let y = b["Y"] as? Double,
+               let ww = b["Width"] as? Double, let h = b["Height"] as? Double, h > 200 {
+              print(Int(x * s), Int(y * s), Int(ww * s), Int(h * s)); break
             }
           }
           SWIFT
-          swiftc -O winid.swift -o winid
-          system_profiler SPDisplaysDataType | grep -i resolution || true
+          swiftc -O winbox.swift -o winbox
+          system_profiler SPDisplaysDataType | grep -i -E "resolution|retina" || true
 
           shoot() {   # shoot <name> [pdf]
             if [[ -n "${2:-}" ]]; then open -n "$APP" --args "$2"; else open -n "$APP"; fi
-            for i in $(seq 1 60); do ID=$(./winid); [[ -n "$ID" ]] && break; sleep 2; done
-            [[ -n "$ID" ]] || { echo "no PdfEdit window"; screencapture -x "$OUT/debug-$1.png"; return 1; }
+            BOX=""
+            for i in $(seq 1 60); do BOX=$(./winbox); [[ -n "$BOX" ]] && break; sleep 2; done
             sleep 40   # the web app starts and the page draws
-            ID=$(./winid)
-            screencapture -x -o -l "$ID" "$OUT/mac-$1.png"
-            screencapture -x "$OUT/debug-$1-screen.png"
+            BOX=$(./winbox); echo "window: $BOX"
+            screencapture -x "$OUT/screen-$1.png"
+            if [[ -n "$BOX" ]]; then
+              read -r X Y W H <<< "$BOX"
+              cp "$OUT/screen-$1.png" "$OUT/mac-$1.png"
+              sips -c "$H" "$W" --cropOffset "$Y" "$X" "$OUT/mac-$1.png" >/dev/null
+            fi
             osascript -e 'quit app "PdfEdit"' || true
-            sleep 5; pkill -f "PdfEdit.app/Contents/MacOS/PdfEdit" || true; sleep 3
+            sleep 5; pkill -x PdfEdit || true; sleep 3
           }
           shoot start
           shoot form "$PWD/Samples/car-rental-fillable.pdf"
