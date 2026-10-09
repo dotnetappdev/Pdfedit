@@ -10,7 +10,7 @@ order: 2
 
 ## Add a watermark
 
-1. Click **Watermark** (Home tab, Pages group).
+1. Click **Watermark** (Home tab, Pages group; also next to the stamps on Fill & Sign and Tools).
 2. Type the text, such as **DRAFT**, **CONFIDENTIAL** or **COPY**. On Windows you can also pick these from a list, or use a picture such as a logo.
 3. Set the font, size, colour and **opacity**. Around 20 to 30% is light enough to read through.
 4. Choose the **layout** (diagonal or horizontal) and **position** (centre, top, bottom, or **tiled** across the page).
@@ -18,7 +18,7 @@ order: 2
 6. Choose **All pages**, **This page** or a range such as `1-3, 5`.
 7. Click **Add watermark**.
 
-**Remove Watermark** takes it off again, and Ctrl+Z undoes it.
+To change it (a bigger size, other text or colour), add the watermark again: the new one replaces the old one. **Remove Watermark** takes it off again, and Ctrl+Z undoes it.
 
 > **Tip:** a stamp you've made can also be used as a page background, under **Stamps...**.
 

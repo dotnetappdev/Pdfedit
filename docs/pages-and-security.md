@@ -25,7 +25,7 @@ Most of these are on the **Home** ribbon, in **All tools > Organize pages**, and
 - **Layer**: behind the text and form fields as a background, or on top of everything
 - **Pages**: all, the current page, or a range such as `1-3, 5, 8-`
 
-**Remove Watermark** takes it out again. Both actions can be undone with Ctrl+Z.
+To change a watermark, open **Watermark** again and apply the new settings: the new one replaces the old one on those pages. **Remove Watermark** takes it out again. Both actions can be undone with Ctrl+Z.
 
 ## Headers, footers and numbering
 
