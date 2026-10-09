@@ -35,6 +35,9 @@ public static class WatermarkService
         foreach (int p in pages)
         {
             var page = pdf.GetPage(p);
+            // A new watermark replaces the one PdfEdit put there before (changing the size, text or
+            // colour would otherwise stack a second one over the first).
+            RemoveFrom(page.GetPdfObject());
             var box = page.GetCropBox();
             int rot = ((page.GetRotation() % 360) + 360) % 360;
             bool swap = rot is 90 or 270;
@@ -139,24 +142,28 @@ public static class WatermarkService
         int pagesTouched = 0;
         using var pdf = new PdfDocument(new PdfReader(inputPath), new PdfWriter(outputPath));
         for (int p = 1; p <= pdf.GetNumberOfPages(); p++)
-        {
-            var dict = pdf.GetPage(p).GetPdfObject();
-            var contents = dict.Get(PdfName.Contents);
-            bool removed = false;
-            if (contents is PdfArray arr)
-            {
-                for (int i = arr.Size() - 1; i >= 0; i--)
-                    if (arr.GetAsStream(i) is { } st && st.ContainsKey(Marker)) { arr.Remove(i); removed = true; }
-                if (removed) arr.SetModified();
-            }
-            else if (contents is PdfStream single && single.ContainsKey(Marker))
-            {
-                dict.Put(PdfName.Contents, new PdfStream());
-                removed = true;
-            }
-            if (removed) { pagesTouched++; dict.SetModified(); }
-        }
+            if (RemoveFrom(pdf.GetPage(p).GetPdfObject())) pagesTouched++;
         return pagesTouched;
+    }
+
+    // Takes PdfEdit's watermark content streams off one page. True when there was one.
+    private static bool RemoveFrom(PdfDictionary dict)
+    {
+        var contents = dict.Get(PdfName.Contents);
+        bool removed = false;
+        if (contents is PdfArray arr)
+        {
+            for (int i = arr.Size() - 1; i >= 0; i--)
+                if (arr.GetAsStream(i) is { } st && st.ContainsKey(Marker)) { arr.Remove(i); removed = true; }
+            if (removed) arr.SetModified();
+        }
+        else if (contents is PdfStream single && single.ContainsKey(Marker))
+        {
+            dict.Put(PdfName.Contents, new PdfStream());
+            removed = true;
+        }
+        if (removed) dict.SetModified();
+        return removed;
     }
 
     /// <summary>True when the PDF has a watermark added by PdfEdit.</summary>
