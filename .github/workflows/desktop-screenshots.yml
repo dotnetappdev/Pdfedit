@@ -86,7 +86,8 @@ jobs:
           git config user.email "41898732+github-actions[bot]@users.noreply.github.com"
           git checkout -B desktop-screenshots
           mkdir -p docs/screenshots/desktop
-          cp shots/mac-*.png docs/screenshots/desktop/
-          git add docs/screenshots/desktop/mac-*.png
+          cp shots/mac-*.png docs/screenshots/desktop/ || true
+          mkdir -p raw && cp shots/screen-*.png raw/ || true   # the whole screen, to check the crop
+          git add -f docs/screenshots/desktop raw
           git commit -m "Mac screenshots of PdfEdit (from the Desktop screenshots workflow)"
           git push --force origin desktop-screenshots
