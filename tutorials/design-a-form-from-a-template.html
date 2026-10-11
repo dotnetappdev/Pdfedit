@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Design a document from a template | PdfEdit</title>
+<meta name="description" content="Start from one of 70 templates, make it your own on the Design canvas and export it as a fillable PDF.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html" aria-current="page">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Forms and signing</p>
+      <h1>Design a document from a template</h1>
+      <p class="lead">Start from one of 70 templates, make it your own on the Design canvas and export it as a fillable PDF.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Beginner</span>
+        <span><b>Time</b> 10 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Windows</span><span class="app-badge">Mac</span><span class="app-badge">Web</span></span>
+      </div>
+      <p>The Design canvas is a blank page for laying out invoices, forms, letters, certificates and more. The templates give you a head start.</p>
+<p><img loading="lazy" src="../img/repo/docs/screenshots/blazor/templates-gallery.png" alt="The template gallery"></p>
+<h2 id="open-the-template-gallery">Open the template gallery<a class="anchor" href="#open-the-template-gallery" aria-label="Link to this section">#</a></h2>
+<p>Choose <strong>File &gt; New from Template</strong> on Windows, or <strong>New</strong> on the start page (Mac and web). You can also use <strong>All Templates</strong> on the Design tab.</p>
+<p>Browse by category (Business, Forms, Agreements, Letters &amp; office, Resumes, Marketing &amp; events, Certificates &amp; cards, Education, Planning &amp; personal) or search. Click a template to see a large preview.</p>
+<h2 id="choose-how-to-start">Choose how to start<a class="anchor" href="#choose-how-to-start" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Customise in Design</strong> puts the template on the canvas so you can change it.</li>
+<li><strong>Open as PDF</strong> makes it a PDF straight away.</li>
+</ul>
+<p>Templates marked <strong>Fillable</strong> have real form fields, so the PDF is ready to fill in, sign and send.</p>
+<p>For this tutorial, choose <strong>Customise in Design</strong>.</p>
+<h2 id="change-the-text">Change the text<a class="anchor" href="#change-the-text" aria-label="Link to this section">#</a></h2>
+<p>Double-click any text to edit it in place: your company name, address, headings. Use the <strong>Text Format</strong> group for font, size, bold, colour and alignment.</p>
+<h2 id="add-your-logo-and-other-things">Add your logo and other things<a class="anchor" href="#add-your-logo-and-other-things" aria-label="Link to this section">#</a></h2>
+<p>From the Design tab&#39;s tools:</p>
+<ul>
+<li><strong>Image</strong> for your logo or a photo</li>
+<li><strong>Text</strong>, <strong>Rectangle</strong>, <strong>Ellipse</strong>, <strong>Line</strong> and <strong>Arrow</strong></li>
+<li><strong>Table</strong> for rows and columns, with a styled header row</li>
+<li>form fields (text box, check box, drop-down, signature and more) that become real PDF fields</li>
+</ul>
+<h2 id="arrange-it">Arrange it<a class="anchor" href="#arrange-it" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Drag to move, and drag the handles to resize. Hold <strong>Shift</strong> to keep the proportions.</li>
+<li>Turn on <strong>Grid</strong> and <strong>Snap</strong> to line things up.</li>
+<li>Select several items, then use <strong>Align</strong>, <strong>Space Across / Down</strong> and <strong>Same Size</strong>.</li>
+<li><strong>Lock</strong> anything you don&#39;t want to move by accident.</li>
+<li><strong>Ctrl+D</strong> duplicates and <strong>Ctrl+Z</strong> undoes.</li>
+</ul>
+<h2 id="save-the-design">Save the design<a class="anchor" href="#save-the-design" aria-label="Link to this section">#</a></h2>
+<p><strong>Save Design</strong> keeps a design file you can open and change later with <strong>Load Design</strong>. On the web, your canvas is also kept in your browser&#39;s draft as you work.</p>
+<h2 id="export-a-pdf">Export a PDF<a class="anchor" href="#export-a-pdf" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Export PDF</strong> saves it as a PDF.</li>
+<li><strong>Open as PDF</strong> opens the result in Live View, where you can fill it in, sign it or send it.</li>
+</ul>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Not quite what you need? Try <strong>Design Form with AI</strong> on the Design tab: describe the form and PdfEdit lays it out. See <a href="../docs/design-canvas.html">Design canvas</a>.</li>
+<li><a href="../tutorials/fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/design-a-form-from-a-template.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="make-a-form-fillable.html"><small>Previous</small>Make a form fillable</a>
+        <a class="next" href="merge-split-and-reorder.html"><small>Next</small>Merge, split and reorder pages</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#open-the-template-gallery">Open the template gallery</a></li><li class="l2"><a href="#choose-how-to-start">Choose how to start</a></li><li class="l2"><a href="#change-the-text">Change the text</a></li><li class="l2"><a href="#add-your-logo-and-other-things">Add your logo and other things</a></li><li class="l2"><a href="#arrange-it">Arrange it</a></li><li class="l2"><a href="#save-the-design">Save the design</a></li><li class="l2"><a href="#export-a-pdf">Export a PDF</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Merge, split and reorder pages | PdfEdit</title>
+<meta name="description" content="Combine several PDFs into one, put the pages in order, take out the ones you don&#39;t need and split a file into parts.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html" aria-current="page">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Pages and documents</p>
+      <h1>Merge, split and reorder pages</h1>
+      <p class="lead">Combine several PDFs into one, put the pages in order, take out the ones you don&#39;t need and split a file into parts.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Beginner</span>
+        <span><b>Time</b> 5 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Windows</span><span class="app-badge">Mac</span><span class="app-badge">Web</span></span>
+      </div>
+      <h2 id="open-the-first-pdf">Open the first PDF<a class="anchor" href="#open-the-first-pdf" aria-label="Link to this section">#</a></h2>
+<p>Open the document you want to start with. Its pages appear as <strong>thumbnails</strong> down the left side. If you can&#39;t see them, click <strong>Thumbnails</strong> on the View tab.</p>
+<h2 id="merge-other-pdfs-in">Merge other PDFs in<a class="anchor" href="#merge-other-pdfs-in" aria-label="Link to this section">#</a></h2>
+<p>Click <strong>Merge PDFs</strong> (Home tab, Pages group) and pick the other files. They&#39;re added after the last page, in the order you choose them.</p>
+<p>To put a file somewhere else, use <strong>Insert PDF</strong> and choose where it goes.</p>
+<h2 id="put-the-pages-in-order">Put the pages in order<a class="anchor" href="#put-the-pages-in-order" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Drag</strong> a thumbnail up or down to move the page.</li>
+<li>Or select a page and use <strong>Move Up</strong> / <strong>Move Down</strong>.</li>
+<li>Right-click a thumbnail to rotate, duplicate or delete it.</li>
+</ul>
+<h2 id="remove-pages-you-don-t-need">Remove pages you don&#39;t need<a class="anchor" href="#remove-pages-you-don-t-need" aria-label="Link to this section">#</a></h2>
+<p>Select the page and click <strong>Delete Page</strong>, or use <strong>Delete Range</strong> for several, for example <code>3-5, 9</code>.</p>
+<p><strong>Ctrl+Z</strong> brings back anything you deleted by mistake.</p>
+<h2 id="rotate-sideways-pages">Rotate sideways pages<a class="anchor" href="#rotate-sideways-pages" aria-label="Link to this section">#</a></h2>
+<p>Right-click the thumbnail and rotate it, or use the <strong>View</strong> tab: <strong>Rotate CW</strong> / <strong>Rotate CCW</strong>, or <strong>All Pages</strong> to turn the whole document.</p>
+<h2 id="take-pages-out-or-split-the-file">Take pages out, or split the file<a class="anchor" href="#take-pages-out-or-split-the-file" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Extract Page</strong> or <strong>Extract Range</strong> saves the chosen pages as a new PDF and leaves the original alone.</li>
+<li><strong>Split PDF</strong> saves every page as its own file.</li>
+</ul>
+<h2 id="save">Save<a class="anchor" href="#save" aria-label="Link to this section">#</a></h2>
+<p><strong>Save</strong> (<strong>Ctrl+S</strong>), or <strong>Save As</strong> to keep the original as it was.</p>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../tutorials/watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li>
+<li><a href="../docs/pages-and-security.html">Pages, watermarks and security</a> in the user guide</li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/merge-split-and-reorder.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="design-a-form-from-a-template.html"><small>Previous</small>Design a document from a template</a>
+        <a class="next" href="watermark-and-number-pages.html"><small>Next</small>Add a watermark, page numbers and Bates numbers</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#open-the-first-pdf">Open the first PDF</a></li><li class="l2"><a href="#merge-other-pdfs-in">Merge other PDFs in</a></li><li class="l2"><a href="#put-the-pages-in-order">Put the pages in order</a></li><li class="l2"><a href="#remove-pages-you-don-t-need">Remove pages you don&#39;t need</a></li><li class="l2"><a href="#rotate-sideways-pages">Rotate sideways pages</a></li><li class="l2"><a href="#take-pages-out-or-split-the-file">Take pages out, or split the file</a></li><li class="l2"><a href="#save">Save</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>

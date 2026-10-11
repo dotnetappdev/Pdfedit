@@ -1,0 +1,1264 @@
+{
+ "repo": "dotnetappdev/Pdfedit",
+ "updated": "2026-10-11T06:46:33.752Z",
+ "releases": [
+  {
+   "version": "1.4.3",
+   "tag": "v1.4.3",
+   "date": "2026-10-09T10:21:40Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.4.3",
+   "changes": [
+    {
+     "text": "Release workflow: remove the empty with: left on the Windows checkout",
+     "commit": "9043575"
+    },
+    {
+     "text": "Release workflow: build Windows, Mac and Linux side by side, then publish once",
+     "commit": "c7f37e0"
+    },
+    {
+     "text": "One version number for everything, in Directory.Build.props",
+     "commit": "5918884"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.4.3-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEdit-1.4.3-win-x64-portable.zip",
+     "size": 105724467,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.3-linux-x64.AppImage",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEdit-Desktop-1.4.3-linux-x64.AppImage",
+     "size": 71481848,
+     "downloads": 0,
+     "product": "linux",
+     "platform": "linux",
+     "label": "AppImage (one file, runs on most distributions)",
+     "kind": "appimage"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.3-linux-x64.tar.gz",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEdit-Desktop-1.4.3-linux-x64.tar.gz",
+     "size": 76822272,
+     "downloads": 0,
+     "product": "linux",
+     "platform": "linux",
+     "label": "Tarball (unpack and run)",
+     "kind": "tar"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.3-mac-arm64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEdit-Desktop-1.4.3-mac-arm64.dmg",
+     "size": 87483408,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Apple silicon (M1 and later)",
+     "kind": "arm64"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.3-mac-x64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEdit-Desktop-1.4.3-mac-x64.dmg",
+     "size": 89766036,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Intel Mac",
+     "kind": "x64"
+    },
+    {
+     "name": "PdfEditSetup-1.4.3.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.3/PdfEditSetup-1.4.3.exe",
+     "size": 73084522,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.4.2",
+   "tag": "v1.4.2",
+   "date": "2026-10-09T10:11:04Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.4.2",
+   "changes": [
+    {
+     "text": "Fewer downloads: Windows installer and portable ZIP, Mac disk images, and PdfEdit for Linux",
+     "commit": "2b30030"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.4.2-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.2/PdfEdit-1.4.2-win-x64-portable.zip",
+     "size": 105724451,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEditSetup-1.4.2.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.2/PdfEditSetup-1.4.2.exe",
+     "size": 73069891,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.4.1",
+   "tag": "v1.4.1",
+   "date": "2026-10-09T08:30:51Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.4.1",
+   "changes": [
+    {
+     "text": "PdfEdit Desktop: Check for Updates in Help and About, and a quiet check at start",
+     "commit": "405ba88"
+    },
+    {
+     "text": "Applying a watermark again replaces PdfEdit's earlier one instead of stacking a second",
+     "commit": "c70cf83"
+    },
+    {
+     "text": "Watermark button next to the stamps on Fill & Sign and Tools",
+     "commit": "022b013"
+    },
+    {
+     "text": "Website and docs: plain characters throughout",
+     "commit": "a63e4af"
+    },
+    {
+     "text": "Website and docs: plain punctuation and wording",
+     "commit": "8941096"
+    },
+    {
+     "text": "Website: Docs links everywhere; skip waiting for the in-browser AI",
+     "commit": "88b16d5"
+    },
+    {
+     "text": "Website: own concurrency group, so GitHub's Pages publish doesn't cancel it",
+     "commit": "7011ca0"
+    },
+    {
+     "text": "Website: build and deploy as separate jobs",
+     "commit": "fc4d115"
+    },
+    {
+     "text": "Website: fix the Pages setting check when Pages was off",
+     "commit": "ed9370f"
+    },
+    {
+     "text": "Ask the guide: a free AI that runs in the visitor's browser",
+     "commit": "7e4e6fa"
+    },
+    {
+     "text": "Website: publish the way Pages is set up; docs links in the README",
+     "commit": "61b19ab"
+    },
+    {
+     "text": "Website: Ask the guide, an AI chat that answers from the user guide",
+     "commit": "9efec81"
+    },
+    {
+     "text": "Website user guide and tutorials, opened from Help in every app",
+     "commit": "7d44f5b"
+    },
+    {
+     "text": "Website: list the desktop app as PdfEdit for Mac only",
+     "commit": "f790b36"
+    },
+    {
+     "text": "Website: publish to GitHub Pages, or to a gh-pages branch if Pages via Actions isn't on",
+     "commit": "09cfa4e"
+    },
+    {
+     "text": "Website: a download site for PdfEdit (staticsite/)",
+     "commit": "87c06ea"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.4.1-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-1.4.1-win-x64-portable.zip",
+     "size": 105724356,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.4.1-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-1.4.1-win-x64.zip",
+     "size": 29766710,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.4.1.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-1.4.1.0.msix",
+     "size": 104671313,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.1-mac-arm64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-Desktop-1.4.1-mac-arm64.dmg",
+     "size": 87482976,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Apple silicon (M1 and later)",
+     "kind": "arm64"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.1-mac-x64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-Desktop-1.4.1-mac-x64.dmg",
+     "size": 89765886,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Intel Mac",
+     "kind": "x64"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.4.1.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.1/PdfEditSetup-1.4.1.exe",
+     "size": 73062120,
+     "downloads": 1,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.4.0",
+   "tag": "v1.4.0",
+   "date": "2026-10-08T20:44:38Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.4.0",
+   "changes": [
+    {
+     "text": "Mac installer: sign every file in the app bundle",
+     "commit": "5c963c1"
+    },
+    {
+     "text": "Installers for PdfEdit Desktop (Avalonia) on Windows and Mac",
+     "commit": "c800fdf"
+    },
+    {
+     "text": "Fixes found checking every feature in the Avalonia desktop app",
+     "commit": "85b70e6"
+    },
+    {
+     "text": "PdfEdit.Avalonia: the web version in a cross-platform desktop window",
+     "commit": "9586f63"
+    },
+    {
+     "text": "Quick wins for the web version and the Windows app",
+     "commit": "d037d02"
+    },
+    {
+     "text": "Blazor: Share, Dictate, and location on dynamic stamps",
+     "commit": "9e1b348"
+    },
+    {
+     "text": "Blazor: fix opening a recent file; stamps in All tools",
+     "commit": "57c7f32"
+    },
+    {
+     "text": "Blazor: drafts keep your work through a reload",
+     "commit": "24ebd28"
+    },
+    {
+     "text": "Docs: screenshot of a signature still editable after saving",
+     "commit": "a0db058"
+    },
+    {
+     "text": "Blazor: signatures and pictures stay editable after saving",
+     "commit": "2442a09"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.4.0-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-1.4.0-win-x64-portable.zip",
+     "size": 105723505,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.4.0-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-1.4.0-win-x64.zip",
+     "size": 29765859,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.4.0.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-1.4.0.0.msix",
+     "size": 104670043,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.0-mac-arm64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-Desktop-1.4.0-mac-arm64.dmg",
+     "size": 86397159,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Apple silicon (M1 and later)",
+     "kind": "arm64"
+    },
+    {
+     "name": "PdfEdit-Desktop-1.4.0-mac-x64.dmg",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-Desktop-1.4.0-mac-x64.dmg",
+     "size": 89422550,
+     "downloads": 0,
+     "product": "desktop",
+     "platform": "mac",
+     "label": "Intel Mac",
+     "kind": "x64"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.4.0.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.4.0/PdfEditSetup-1.4.0.exe",
+     "size": 73065989,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.3.0",
+   "tag": "v1.3.0",
+   "date": "2026-10-08T10:35:28Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.3.0",
+   "changes": [
+    {
+     "text": "Blazor: follow, edit, copy and remove the PDF's own links",
+     "commit": "44cb16c"
+    },
+    {
+     "text": "Blazor: right-click menu for form fields in Edit Fields",
+     "commit": "c65eb77"
+    },
+    {
+     "text": "Blazor: Comments panel with review threads, like the Windows app",
+     "commit": "aa3fb1d"
+    },
+    {
+     "text": "Blazor: Properties for the selected item, and Lock",
+     "commit": "2d4dd13"
+    },
+    {
+     "text": "Templates: 70 shared templates and a template chooser on desktop and web",
+     "commit": "c53f034"
+    },
+    {
+     "text": "Blazor: more items stay editable, recent files, document switching keys",
+     "commit": "8466f4f"
+    },
+    {
+     "text": "Blazor: keep added items editable after saving, right-click menus, nudge keys",
+     "commit": "a00f5dc"
+    },
+    {
+     "text": "Blazor: All tools docked left, drag fix and date format editor",
+     "commit": "e85a9fd"
+    },
+    {
+     "text": "Blazor: floating item toolbar, edge resizing and thumbnail page tools",
+     "commit": "0e20a80"
+    },
+    {
+     "text": "Use a dark sidebar for the File menu in dark themes",
+     "commit": "d6b889d"
+    },
+    {
+     "text": "Docs: new screenshots of the Tools tab and the floating toolbox",
+     "commit": "e75f348"
+    },
+    {
+     "text": "Web: ribbon fixes, screenshots and docs; patched SQLite",
+     "commit": "20181d7"
+    },
+    {
+     "text": "Web: ribbon matches the Windows app, with its missing commands",
+     "commit": "8edf5de"
+    },
+    {
+     "text": "Web: floating toolbox with flyouts, its tools, and saved signatures",
+     "commit": "d71246a"
+    },
+    {
+     "text": "README: screenshots split into Blazor web and Desktop sections, every web screenshot shown full width",
+     "commit": "1028ed6"
+    },
+    {
+     "text": "README: move the Blazor version and its screenshots near the top",
+     "commit": "3df4aa9"
+    },
+    {
+     "text": "README: link to the Blazor version's screenshots; add them to the gallery",
+     "commit": "2e726cf"
+    },
+    {
+     "text": "Web version: Light, Dark and High Contrast themes; screenshots; translation keeps colours",
+     "commit": "466f60b"
+    },
+    {
+     "text": "PdfEdit.Blazor: several documents open at once",
+     "commit": "77bd386"
+    },
+    {
+     "text": "PdfEdit.Blazor: Office files to PDF",
+     "commit": "bf709e5"
+    },
+    {
+     "text": "PdfEdit.Blazor: Translate PDF",
+     "commit": "bc70611"
+    },
+    {
+     "text": "PdfEdit.Blazor: batch processing and bulk fill",
+     "commit": "abcefab"
+    },
+    {
+     "text": "PdfEdit.Blazor: Google Drive and OneDrive",
+     "commit": "56f991b"
+    },
+    {
+     "text": "Add text, stamps, signatures and drawings on rotated pages; drawn text appearance",
+     "commit": "060c0f3"
+    },
+    {
+     "text": "PdfEdit.Blazor: move and resize anything placed on a page",
+     "commit": "cc49018"
+    },
+    {
+     "text": "PdfEdit.Blazor: stamps, freehand drawing, lines and arrows, and measuring",
+     "commit": "ff24bff"
+    },
+    {
+     "text": "PdfEdit.Blazor: sign with a certificate and check signatures",
+     "commit": "50cf6e9"
+    },
+    {
+     "text": "Compare and Read Aloud in the web version; visual diff shared in Core",
+     "commit": "741b606"
+    },
+    {
+     "text": "PdfEdit.Blazor: Scan & OCR, searchable scans with Tesseract, scan with camera",
+     "commit": "d2687a5"
+    },
+    {
+     "text": "Design canvas in the web version; shared .pdfdesign format and PDF export in Core",
+     "commit": "8921562"
+    },
+    {
+     "text": "PdfEdit.Blazor: Prepare Form, add, detect, move, resize, edit and delete form fields",
+     "commit": "3085ed5"
+    },
+    {
+     "text": "PdfEdit.Blazor: AI Assistant tab and panel",
+     "commit": "9b1602a"
+    },
+    {
+     "text": "PdfEdit.Blazor: Windows-style editor with ribbon, panels and most document features",
+     "commit": "e12f683"
+    },
+    {
+     "text": "PdfEdit.Blazor: Fill a Form page using PdfEdit.Core and PdfEdit.Render",
+     "commit": "4352d5f"
+    },
+    {
+     "text": "PdfEdit.Blazor references PdfEdit.Core and PdfEdit.Render",
+     "commit": "c397bf8"
+    },
+    {
+     "text": "Add PdfEdit.Blazor: the .NET 10 Blazor Web App sample",
+     "commit": "d958110"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.3.0-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.3.0/PdfEdit-1.3.0-win-x64-portable.zip",
+     "size": 105715110,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.3.0-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.3.0/PdfEdit-1.3.0-win-x64.zip",
+     "size": 29757466,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.3.0.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.3.0/PdfEdit-1.3.0.0.msix",
+     "size": 104659727,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.3.0/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.3.0.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.3.0/PdfEditSetup-1.3.0.exe",
+     "size": 73068621,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.2.2",
+   "tag": "v1.2.2",
+   "date": "2026-10-07T20:45:34Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.2.2",
+   "changes": [
+    {
+     "text": "File menu: Help item with Check for Updates, What's New, tips, tour, support and About",
+     "commit": "16bd2d8"
+    },
+    {
+     "text": "Help tab: Check for Updates, What's New, tour and tips, support links, About",
+     "commit": "491aa8d"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.2.2-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.2/PdfEdit-1.2.2-win-x64-portable.zip",
+     "size": 105646401,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.2.2-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.2/PdfEdit-1.2.2-win-x64.zip",
+     "size": 29688751,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.2.2.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.2/PdfEdit-1.2.2.0.msix",
+     "size": 104594911,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.2/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.2.2.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.2/PdfEditSetup-1.2.2.exe",
+     "size": 73019154,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.2.1",
+   "tag": "v1.2.1",
+   "date": "2026-10-07T20:28:00Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.2.1",
+   "changes": [
+    {
+     "text": "Setup detects a previous PdfEdit and uninstalls it before installing",
+     "commit": "bbe5c4d"
+    },
+    {
+     "text": "Updates: option to uninstall the current version before installing the new one",
+     "commit": "6193a3f"
+    },
+    {
+     "text": "Updates: ask at launch (Yes, update / No / Cancel), Check for Updates in About",
+     "commit": "980533f"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.2.1-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.1/PdfEdit-1.2.1-win-x64-portable.zip",
+     "size": 105644367,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.2.1-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.1/PdfEdit-1.2.1-win-x64.zip",
+     "size": 29686720,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.2.1.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.1/PdfEdit-1.2.1.0.msix",
+     "size": 104592176,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.1/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.2.1.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.1/PdfEditSetup-1.2.1.exe",
+     "size": 73022743,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.2.0",
+   "tag": "v1.2.0",
+   "date": "2026-10-07T19:51:01Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.2.0",
+   "changes": [
+    {
+     "text": "Software updater: check GitHub releases, download with progress, install",
+     "commit": "c55aa86"
+    },
+    {
+     "text": "Watermark: Automatic colour, separate Bold / Italic, and never covers text",
+     "commit": "24307f2"
+    },
+    {
+     "text": "Watermark layouts like Word: diagonal either way, horizontal, vertical up or down, custom angle",
+     "commit": "3375d0d"
+    },
+    {
+     "text": "Stamps dialog: Watermark... button opens Watermark & Background",
+     "commit": "58131c8"
+    },
+    {
+     "text": "Remove Python wheel files committed by mistake",
+     "commit": "da82a1c"
+    },
+    {
+     "text": "New Windows 11 style app icon; own look and names for All tools; stamp colours editable",
+     "commit": "167c49a"
+    },
+    {
+     "text": "Fix crash opening the Stamps dialog",
+     "commit": "5caee78"
+    },
+    {
+     "text": "docs: update README summary and features.md for the new tools",
+     "commit": "9cec604"
+    },
+    {
+     "text": "docs: list the new tools in features.md",
+     "commit": "e93f3ab"
+    },
+    {
+     "text": "Add Edit Images: move, resize, replace, save, copy and delete pictures in the PDF",
+     "commit": "152c639"
+    },
+    {
+     "text": "Add PDF > HTML / Markdown / ePub and text / Markdown / HTML > PDF",
+     "commit": "8e0bd70"
+    },
+    {
+     "text": "Add Auto Scroll: hands-free reading with adjustable speed",
+     "commit": "8e3aaa5"
+    },
+    {
+     "text": "Add Snapshot: copy or save any area of a page as a picture",
+     "commit": "198750f"
+    },
+    {
+     "text": "Add Resize Pages, Pages per Sheet / Booklet and Convert to Greyscale",
+     "commit": "e4da711"
+    },
+    {
+     "text": "Fix build: rename UI accessibility service (clashed with the PDF AccessibilityService)",
+     "commit": "b7658cd"
+    },
+    {
+     "text": "Add Squiggly underline markup tool (ribbon, rail popup, save as /Squiggly, XFDF)",
+     "commit": "66cc30d"
+    },
+    {
+     "text": "Accessibility: focus ring, reduce motion, notification/tooltip timing, single-key toggle, read tour aloud; preferences backup/restore/reset",
+     "commit": "05691e6"
+    },
+    {
+     "text": "Stamps: manager dialog with create/edit/delete, default stamp, page background; fix Comment popup",
+     "commit": "2a93804"
+    },
+    {
+     "text": "Tour: always label the button Next and keep Back visible (disabled on step 1)",
+     "commit": "32f6a95"
+    },
+    {
+     "text": "Tour: fix clipped Next/Back buttons, add Close and Read aloud, larger card",
+     "commit": "77af733"
+    },
+    {
+     "text": "refactor: rendering in PdfEdit.Render, WPF drawing in PdfEdit.Drawing.Wpf",
+     "commit": "dcebf24"
+    },
+    {
+     "text": "refactor: move the app's logic into a UI-free PdfEdit.Core library",
+     "commit": "b2e5cbc"
+    },
+    {
+     "text": "feat: Design Form with AI",
+     "commit": "af7bfab"
+    },
+    {
+     "text": "feat: GitHub Copilot in the AI assistant, and current Claude models",
+     "commit": "9c3ae9c"
+    },
+    {
+     "text": "docs: screenshots back on the README, with one for each main theme",
+     "commit": "d587d8e"
+    },
+    {
+     "text": "docs: a 70-second video tour",
+     "commit": "5287d0a"
+    },
+    {
+     "text": "docs: README says why PdfEdit exists and what it can do",
+     "commit": "abe8152"
+    },
+    {
+     "text": "docs: cut the root README down to one screen",
+     "commit": "8e14c86"
+    },
+    {
+     "text": "docs: move the feature list out of the README",
+     "commit": "b2566ac"
+    },
+    {
+     "text": "docs: screenshots of the themes and the Accessibility settings",
+     "commit": "9a99eb5"
+    },
+    {
+     "text": "feat: every size setting lives in Settings > Accessibility",
+     "commit": "58cc1b0"
+    },
+    {
+     "text": "feat: icon and menu text sizes, screen reader announcements and narration",
+     "commit": "847c59e"
+    },
+    {
+     "text": "feat: Ctrl+mouse wheel zooms the page; Ctrl+Plus/Minus/0 scale the whole window",
+     "commit": "6836bad"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.2.0-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.0/PdfEdit-1.2.0-win-x64-portable.zip",
+     "size": 105642498,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.2.0-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.0/PdfEdit-1.2.0-win-x64.zip",
+     "size": 29684853,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.2.0.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.0/PdfEdit-1.2.0.0.msix",
+     "size": 104590371,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.0/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.2.0.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.2.0/PdfEditSetup-1.2.0.exe",
+     "size": 73013719,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.1.0",
+   "tag": "v1.1.0",
+   "date": "2026-10-05T03:24:27Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.1.0",
+   "changes": [
+    {
+     "text": "release: 1.1.0, and the README and docs cover themes",
+     "commit": "45c17a6"
+    },
+    {
+     "text": "feat: follow the Windows theme until the user picks their own",
+     "commit": "65dc783"
+    },
+    {
+     "text": "feat: Dracula, Office, Nord, One Dark, Monokai, Solarized and GitHub themes",
+     "commit": "39b3ba4"
+    },
+    {
+     "text": "feat: follow the Windows 11 theme, contrast themes and accent colour",
+     "commit": "75003d3"
+    },
+    {
+     "text": "feat: custom keyboard shortcuts (Settings > Keyboard)",
+     "commit": "ae09eda"
+    },
+    {
+     "text": "docs: README and docs for the new features",
+     "commit": "69d1731"
+    },
+    {
+     "text": "refactor: cloud storage is for saving and importing only",
+     "commit": "df4c0b7"
+    },
+    {
+     "text": "feat: imported Word documents and Google Forms come in as fillable PDF forms",
+     "commit": "3b16d3c"
+    },
+    {
+     "text": "feat: import Word documents and Google Docs",
+     "commit": "0901561"
+    },
+    {
+     "text": "fix: StandardFonts namespace in TranslateService; drop the ProtectedData package (built into .NET 10)",
+     "commit": "885a845"
+    },
+    {
+     "text": "feat: translate PDF keeping layout, ask across PDFs, mind map, scan clean-up",
+     "commit": "2a3222d"
+    },
+    {
+     "text": "feat: slide show, two-page view, night mode, export to PowerPoint, extract images",
+     "commit": "86764ee"
+    },
+    {
+     "text": "feat: AI on selected text and page areas, outline panel, writing presets, app commands, voice",
+     "commit": "6ff97f7"
+    },
+    {
+     "text": "feat: Google Drive and OneDrive, with your own app credentials",
+     "commit": "0372fb7"
+    },
+    {
+     "text": "feat: document tabs and export to Excel",
+     "commit": "a9e3e1e"
+    },
+    {
+     "text": "feat: accessibility checker with fixes, and create PDF from Office files",
+     "commit": "76ce1a7"
+    },
+    {
+     "text": "feat: welcome tour on first launch and a Tip of the Day dialog",
+     "commit": "d1ce276"
+    },
+    {
+     "text": "feat: AI chat with formatted replies, page links and one-click actions",
+     "commit": "e51d434"
+    },
+    {
+     "text": "feat: spell check, read aloud, search a folder of PDFs, visual compare",
+     "commit": "d08fe36"
+    },
+    {
+     "text": "feat: certificate digital signatures and a Signatures panel",
+     "commit": "168673f"
+    },
+    {
+     "text": "feat: form field formats and calculations (Acrobat Format / Calculate tabs)",
+     "commit": "5aa8c8e"
+    },
+    {
+     "text": "feat: detect form fields on flat PDFs (Prepare Form auto-detect)",
+     "commit": "06f055a"
+    },
+    {
+     "text": "feat: bulk fill a form from a CSV or Excel file",
+     "commit": "847d6b0"
+    },
+    {
+     "text": "feat: batch processing (Action Wizard) and Remove Hidden Information",
+     "commit": "2eb45f7"
+    },
+    {
+     "text": "docs: add a fill & sign GIF in Live View",
+     "commit": "bdc23bf"
+    },
+    {
+     "text": "fix: Properties panel shows clearly which values can be edited",
+     "commit": "5eca9b3"
+    },
+    {
+     "text": "docs: README in the style of other open-source PDF editors",
+     "commit": "d38ca7e"
+    },
+    {
+     "text": "docs: say what PdfEdit is for in the README",
+     "commit": "345a55f"
+    },
+    {
+     "text": "docs: drop the feature list from the README",
+     "commit": "b11d778"
+    },
+    {
+     "text": "docs: shorten the README",
+     "commit": "74e0071"
+    },
+    {
+     "text": "docs: redo the ribbon screenshots and add form-filling tool screenshots",
+     "commit": "d27e97f"
+    },
+    {
+     "text": "docs: fix the CI badge and add platform / .NET badges",
+     "commit": "94b1b2d"
+    },
+    {
+     "text": "docs: rewrite the README and split the details into short topic pages",
+     "commit": "dbaf825"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.1.0-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.1.0/PdfEdit-1.1.0-win-x64-portable.zip",
+     "size": 102331598,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.1.0-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.1.0/PdfEdit-1.1.0-win-x64.zip",
+     "size": 26373968,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.1.0.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.1.0/PdfEdit-1.1.0.0.msix",
+     "size": 101239550,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.1.0/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 1,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.1.0.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.1.0/PdfEditSetup-1.1.0.exe",
+     "size": 71204917,
+     "downloads": 1,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  },
+  {
+   "version": "1.0.0",
+   "tag": "v1.0.0",
+   "date": "2026-10-04T14:43:12Z",
+   "prerelease": false,
+   "url": "https://github.com/dotnetappdev/Pdfedit/releases/tag/v1.0.0",
+   "changes": [
+    {
+     "text": "ci(release): changelog step works when there are no earlier tags",
+     "commit": "ab160a9"
+    },
+    {
+     "text": "ci(release): valid MSIX manifest; an MSIX failure no longer blocks the release",
+     "commit": "f823cee"
+    },
+    {
+     "text": "ci(release): patch only the MSIX Identity version",
+     "commit": "8c6ab99"
+    },
+    {
+     "text": "ci(release): use the runner's Inno Setup instead of forcing an older version",
+     "commit": "9a6e55d"
+    },
+    {
+     "text": "ci: publish a release from devmain whenever the csproj version is new",
+     "commit": "2485096"
+    },
+    {
+     "text": "feat: watermarks & backgrounds, diagonal behind text and fields, image, tiled, removable",
+     "commit": "3c20497"
+    },
+    {
+     "text": "feat: Acrobat-style stamps, full catalogue, drawn stamps, add / remove",
+     "commit": "3197987"
+    },
+    {
+     "text": "feat: fuller Fill & Sign ribbon, the toolbox's tools on the ribbon too",
+     "commit": "75a21ce"
+    },
+    {
+     "text": "ci: automatic GitHub Releases on every push to main, EXE, MSIX and ZIP",
+     "commit": "9b78bce"
+    },
+    {
+     "text": "feat: text boxes never cut off big text, Fit menu (auto-size / wrap & grow / fixed)",
+     "commit": "aa44e54"
+    },
+    {
+     "text": "feat: hyperlinks, follow, add, edit and remove links in the PDF",
+     "commit": "4ef058e"
+    },
+    {
+     "text": "feat: edit dates in Properties, Windows-style format list and day / month / year",
+     "commit": "9a97a97"
+    },
+    {
+     "text": "fix: resizing a ✓ ✕ mark no longer shows a second mark on top",
+     "commit": "50c0945"
+    },
+    {
+     "text": "fix: dialog buttons and title bars follow the dark theme",
+     "commit": "a2665d6"
+    },
+    {
+     "text": "feat: Scan lists scanners like Windows Scan, with per-scanner file types, crop and save to image",
+     "commit": "f4b5d5c"
+    },
+    {
+     "text": "feat: OCR works without a Windows OCR language, bundled Tesseract + Settings > OCR",
+     "commit": "f372c41"
+    },
+    {
+     "text": "feat: Scan from TWAIN / WIA scanners with preview, page tools and OCR",
+     "commit": "7fb634a"
+    },
+    {
+     "text": "feat: Local AI provider, free, private, offline AI form filling (Ollama, LM Studio, llama.cpp...)",
+     "commit": "20e21cb"
+    },
+    {
+     "text": "feat: Design additions carry into Live View (and back); colours editable in Properties",
+     "commit": "c64f268"
+    },
+    {
+     "text": "feat: Acrobat-style Comments panel, Insert/Replace text, and annotations that survive save + reopen",
+     "commit": "a39eb92"
+    }
+   ],
+   "assets": [
+    {
+     "name": "PdfEdit-1.0.0-win-x64-portable.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.0.0/PdfEdit-1.0.0-win-x64-portable.zip",
+     "size": 102071578,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Portable ZIP (no install)",
+     "kind": "portable"
+    },
+    {
+     "name": "PdfEdit-1.0.0-win-x64.zip",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.0.0/PdfEdit-1.0.0-win-x64.zip",
+     "size": 26113944,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "ZIP (needs .NET 10 Desktop Runtime)",
+     "kind": "zip"
+    },
+    {
+     "name": "PdfEdit-1.0.0.0.msix",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.0.0/PdfEdit-1.0.0.0.msix",
+     "size": 100974423,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "MSIX package",
+     "kind": "msix"
+    },
+    {
+     "name": "PdfEdit-TestCert.cer",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.0.0/PdfEdit-TestCert.cer",
+     "size": 760,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Test certificate for the MSIX",
+     "kind": "cert"
+    },
+    {
+     "name": "PdfEditSetup-1.0.0.exe",
+     "url": "https://github.com/dotnetappdev/Pdfedit/releases/download/v1.0.0/PdfEditSetup-1.0.0.exe",
+     "size": 71014812,
+     "downloads": 0,
+     "product": "windows",
+     "platform": "windows",
+     "label": "Installer",
+     "kind": "installer"
+    }
+   ]
+  }
+ ]
+}

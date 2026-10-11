@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Scan paper into a searchable PDF | PdfEdit</title>
+<meta name="description" content="Scan pages from a scanner or your phone&#39;s camera, tidy them up, and add OCR so you can search and copy the text.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html" aria-current="page">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Scanning and converting</p>
+      <h1>Scan paper into a searchable PDF</h1>
+      <p class="lead">Scan pages from a scanner or your phone&#39;s camera, tidy them up, and add OCR so you can search and copy the text.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Beginner</span>
+        <span><b>Time</b> 10 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Windows</span><span class="app-badge">Mac</span><span class="app-badge">Web</span></span>
+      </div>
+      <h2 id="what-you-ll-need" class="plain">What you&#39;ll need<a class="anchor" href="#what-you-ll-need" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Windows</strong>: a scanner that Windows&#39; own Scan app can see, including network all-in-ones from HP, Canon, Epson and others.</li>
+<li><strong>Mac and web</strong>: your phone or tablet&#39;s camera, or photos of the pages. Browsers can&#39;t talk to scanners directly.</li>
+</ul>
+<h2 id="scan-the-pages">Scan the pages<a class="anchor" href="#scan-the-pages" aria-label="Link to this section">#</a></h2>
+<p><strong>On Windows:</strong></p>
+<ol>
+<li>Click <strong>Scan</strong> (Home tab) and pick your scanner.</li>
+<li>Choose the <strong>source</strong> (flatbed, document feeder, or both sides), <strong>colour mode</strong> and <strong>resolution</strong>. Use 300 dpi if you&#39;ll run OCR.</li>
+<li>Click <strong>Preview</strong> for a quick look. You can drag on the preview to scan just part of the glass.</li>
+<li>Click <strong>Scan</strong>. The pages appear in a strip on the right. Scan more, or rotate, reorder, crop or delete pages.</li>
+<li>Tick <strong>Recognise text</strong> to make it searchable straight away, then click <strong>Done</strong>.</li>
+</ol>
+<p><strong>On Mac and the web:</strong></p>
+<ol>
+<li>Click <strong>Scan</strong> (Home tab).</li>
+<li>On a phone or tablet the camera opens: take a photo of each page. On a computer, choose pictures of the pages.</li>
+<li>Tick <strong>Make it searchable (OCR)</strong> and pick the language.</li>
+<li>Click <strong>Make PDF</strong>.</li>
+</ol>
+<blockquote class="callout tip"><p><strong class="callout-title">Tip</strong>Take photos in good, even light, with the page flat and filling the frame.</p>
+</blockquote>
+<h2 id="clean-up-the-scans">Clean up the scans<a class="anchor" href="#clean-up-the-scans" aria-label="Link to this section">#</a></h2>
+<p><strong>Clean Up Scans</strong> (Home tab) removes blank pages, straightens pages scanned at an angle and splits two-page spreads into separate pages. <strong>Ctrl+Z</strong> undoes it.</p>
+<h2 id="add-ocr-to-a-pdf-you-already-have">Add OCR to a PDF you already have<a class="anchor" href="#add-ocr-to-a-pdf-you-already-have" aria-label="Link to this section">#</a></h2>
+<p>If you skipped OCR, or have an old scanned PDF:</p>
+<ul>
+<li><strong>Windows</strong>: All tools &gt; <strong>Scan &amp; OCR &gt; Recognise text</strong>.</li>
+<li><strong>Mac and web</strong>: Tools tab &gt; <strong>OCR</strong>.</li>
+</ul>
+<p>Pick the language and click <strong>Recognise text</strong>. PdfEdit adds an invisible layer of text. The pages look the same, but now you can search, select and copy.</p>
+<h2 id="check-it-worked">Check it worked<a class="anchor" href="#check-it-worked" aria-label="Link to this section">#</a></h2>
+<p>Search for a word you can see on the page. If it&#39;s found, the OCR worked.</p>
+<h2 id="if-something-goes-wrong" class="plain">If something goes wrong<a class="anchor" href="#if-something-goes-wrong" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Scanner not listed (Windows)</strong>: check that it works in the Windows Scan app, and install the maker&#39;s driver.</li>
+<li><strong>OCR says it isn&#39;t set up (Mac)</strong>: PdfEdit uses the free Tesseract engine. Install it with <a href="https://brew.sh">Homebrew</a>: <code>brew install tesseract tesseract-lang</code>, then open PdfEdit again.</li>
+<li><strong>Other languages (Windows)</strong>: download them in <strong>Settings &gt; OCR</strong>.</li>
+<li><strong>Wrong text</strong>: scan at 300 dpi in greyscale and straighten pages first.</li>
+</ul>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../docs/scan-and-ocr.html">Scanning and OCR</a> in the user guide</li>
+<li><a href="../tutorials/convert-pdf-to-word-and-excel.html">Convert a PDF to Word or Excel</a></li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/scan-to-a-searchable-pdf.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="review-a-document.html"><small>Previous</small>Review a document with highlights, notes and stamps</a>
+        <a class="next" href="convert-pdf-to-word-and-excel.html"><small>Next</small>Convert PDFs to and from Word, Excel and PowerPoint</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#what-you-ll-need">What you&#39;ll need</a></li><li class="l2"><a href="#scan-the-pages">Scan the pages</a></li><li class="l2"><a href="#clean-up-the-scans">Clean up the scans</a></li><li class="l2"><a href="#add-ocr-to-a-pdf-you-already-have">Add OCR to a PDF you already have</a></li><li class="l2"><a href="#check-it-worked">Check it worked</a></li><li class="l2"><a href="#if-something-goes-wrong">If something goes wrong</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>
