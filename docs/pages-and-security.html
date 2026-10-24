@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Pages, watermarks and security | PdfEdit</title>
+<meta name="description" content="Most of these are on the Home ribbon, in All tools &gt; Organize pages, and on the right-click menu of the page thumbnails:">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="docs">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="User guide">
+      <details open>
+        <summary>Contents</summary>
+        <a class="docs-home" href="../docs/index.html">User guide home</a>
+        
+      <h3>Getting started</h3>
+      <ul><li><a href="../docs/install.html">Installing PdfEdit</a></li><li><a href="../docs/getting-started.html">Getting started</a></li><li><a href="../docs/features.html">Everything PdfEdit does</a></li><li><a href="../docs/tour.html">Video tour</a></li></ul>
+      <h3>Using PdfEdit</h3>
+      <ul><li><a href="../docs/filling-and-signing.html">Filling and signing</a></li><li><a href="../docs/forms.html">Preparing forms</a></li><li><a href="../docs/comments-and-markup.html">Comments, stamps and links</a></li><li><a href="../docs/pages-and-security.html" aria-current="page">Pages, watermarks and security</a></li><li><a href="../docs/scan-and-ocr.html">Scanning and OCR</a></li><li><a href="../docs/design-canvas.html">Design canvas</a></li><li><a href="../docs/import-export-and-cloud.html">Import, export and cloud</a></li><li><a href="../docs/automation.html">Automation and tools</a></li><li><a href="../docs/ai-assistant.html">AI assistant</a></li></ul>
+      <h3>Make it yours</h3>
+      <ul><li><a href="../docs/themes.html">Themes</a></li><li><a href="../docs/accessibility.html">Accessibility</a></li><li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li></ul>
+      <h3>Help</h3>
+      <ul><li><a href="../docs/troubleshooting.html">Troubleshooting and FAQ</a></li></ul>
+      <h3>Hosting and building</h3>
+      <ul><li><a href="../docs/web-version.html">Hosting PdfEdit for the web</a></li><li><a href="../docs/building.html">Building from source and releases</a></li><li><a href="../docs/architecture.html">How the code is organised</a></li></ul>
+        <h3>Learn by doing</h3>
+        <ul><li><a href="../tutorials/index.html">All tutorials</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose" data-search-scope>
+      <p class="crumbs"><a href="index.html">User guide</a> > Using PdfEdit</p>
+      <h1>Pages, watermarks and security</h1>
+      <h2 id="organising-pages">Organising pages<a class="anchor" href="#organising-pages" aria-label="Link to this section">#</a></h2>
+<p>Most of these are on the <strong>Home</strong> ribbon, in <strong>All tools &gt; Organize pages</strong>, and on the right-click menu of the page thumbnails:</p>
+<ul>
+<li>rotate one page or all of them</li>
+<li>move pages up and down, or drag thumbnails into a new order</li>
+<li>insert blank pages, duplicate, delete a page or a range</li>
+<li>extract a page or a range as a new PDF</li>
+<li>merge other PDFs in, insert one at a chosen position, or split every page into its own file</li>
+<li>crop pages by setting a margin for each edge</li>
+</ul>
+<p><strong>Compare PDFs</strong> shows the text that was added or removed between two files, page by page.</p>
+<h2 id="watermarks-and-backgrounds">Watermarks and backgrounds<a class="anchor" href="#watermarks-and-backgrounds" aria-label="Link to this section">#</a></h2>
+<p><strong>Watermark</strong> opens a dialog with a live preview of the current page. You can set:</p>
+<ul>
+<li><strong>Text or image</strong>: preset words such as DRAFT, CONFIDENTIAL or COPY, or your own text with a font, size, colour and opacity, or a logo or scanned image</li>
+<li><strong>Angle</strong>: diagonal from corner to corner (the default) or any angle you like</li>
+<li><strong>Position</strong>: centred, at the top, at the bottom, or tiled across the whole page</li>
+<li><strong>Layer</strong>: behind the text and form fields as a background, or on top of everything</li>
+<li><strong>Pages</strong>: all, the current page, or a range such as <code>1-3, 5, 8-</code></li>
+</ul>
+<p>To change a watermark, open <strong>Watermark</strong> again and apply the new settings: the new one replaces the old one on those pages. <strong>Remove Watermark</strong> takes it out again. Both actions can be undone with Ctrl+Z.</p>
+<h2 id="headers-footers-and-numbering">Headers, footers and numbering<a class="anchor" href="#headers-footers-and-numbering" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Header / Footer</strong>: a line of text at the top or bottom of every page</li>
+<li><strong>Page Numbers</strong>: &quot;Page N of M&quot; in the footer, left, centre or right</li>
+<li><strong>Bates Numbers</strong>: sequential numbers with a prefix, suffix and padding, used for legal work</li>
+</ul>
+<h2 id="exporting">Exporting<a class="anchor" href="#exporting" aria-label="Link to this section">#</a></h2>
+<p>You can export pages as PNG images, all the text as a <code>.txt</code> file, a basic Word document (text only, no layout), or a PDF/A copy for archiving. <strong>Compress</strong> saves a smaller copy and tells you how much it saved.</p>
+<h2 id="passwords-and-redaction">Passwords and redaction<a class="anchor" href="#passwords-and-redaction" aria-label="Link to this section">#</a></h2>
+<p><strong>Password Protect</strong> encrypts the file with AES-256. You can set a password to open it and a separate one for permissions such as printing and copying. <strong>Remove Password</strong> strips the encryption from a file you&#39;ve already unlocked. PdfEdit never stores the passwords you type.</p>
+<p><strong>Redact</strong> lets you draw black boxes over anything sensitive. Nothing is removed until you choose <strong>Apply Redactions</strong>, which deletes the content underneath for good.</p>
+<h2 id="document-details">Document details<a class="anchor" href="#document-details" aria-label="Link to this section">#</a></h2>
+<p><strong>Document Properties</strong> edits the title, author, subject and keywords. The side panels show the bookmarks (outline) and any attached files, which you can extract, add or remove.</p>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/docs/pages-and-security.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="comments-and-markup.html"><small>Previous</small>Comments, stamps and links</a>
+        <a class="next" href="scan-and-ocr.html"><small>Next</small>Scanning and OCR</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#organising-pages">Organising pages</a></li><li class="l2"><a href="#watermarks-and-backgrounds">Watermarks and backgrounds</a></li><li class="l2"><a href="#headers-footers-and-numbering">Headers, footers and numbering</a></li><li class="l2"><a href="#exporting">Exporting</a></li><li class="l2"><a href="#passwords-and-redaction">Passwords and redaction</a></li><li class="l2"><a href="#document-details">Document details</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>

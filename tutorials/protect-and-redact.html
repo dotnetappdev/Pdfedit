@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Redact private details and password-protect a PDF | PdfEdit</title>
+<meta name="description" content="Black out names, numbers and other private details for good, strip hidden information, and lock the file with a password.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html" aria-current="page">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Pages and documents</p>
+      <h1>Redact private details and password-protect a PDF</h1>
+      <p class="lead">Black out names, numbers and other private details for good, strip hidden information, and lock the file with a password.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Intermediate</span>
+        <span><b>Time</b> 10 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Windows</span><span class="app-badge">Mac</span><span class="app-badge">Web</span></span>
+      </div>
+      <p>Before you send a document outside your organisation, take out what the other side shouldn&#39;t see. A black box drawn on top isn&#39;t enough, because the text is still underneath. Redaction removes it.</p>
+<h2 id="mark-what-to-remove">Mark what to remove<a class="anchor" href="#mark-what-to-remove" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>On the <strong>Tools</strong> tab, choose <strong>Redact</strong>.</li>
+<li>Drag over each name, number, signature or picture you want gone. Each area is marked but nothing is removed yet.</li>
+</ol>
+<blockquote class="callout tip"><p><strong class="callout-title">Tip</strong>The AI assistant&#39;s <strong>Find PII</strong> (AI Assistant tab) lists names, addresses, phone numbers and other personal details in the document so you don&#39;t miss any. You&#39;ll need an AI provider set up.</p>
+</blockquote>
+<h2 id="apply-the-redactions">Apply the redactions<a class="anchor" href="#apply-the-redactions" aria-label="Link to this section">#</a></h2>
+<p>Click <strong>Apply Redactions</strong>. The text and pictures under the marked areas are deleted and replaced with black boxes. This can&#39;t be undone once you save, so check the pages first.</p>
+<p>Search the document (<strong>Search</strong> on the Home tab) for a redacted word to be sure it&#39;s gone.</p>
+<h2 id="remove-hidden-information">Remove hidden information<a class="anchor" href="#remove-hidden-information" aria-label="Link to this section">#</a></h2>
+<p>PDFs can carry an author name, editing history, comments, attachments and scripts. Click <strong>Remove Hidden Info</strong> (Home tab, Security group) and choose what to strip: document metadata, JavaScript and automatic actions, attached files, comments and marks, and bookmarks.</p>
+<h2 id="add-a-password">Add a password<a class="anchor" href="#add-a-password" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Click <strong>Password Protect</strong> (Home tab, Security group).</li>
+<li>Type a <strong>password to open</strong> the file, and type it again to confirm.</li>
+<li>Optionally, set a separate <strong>permissions password</strong> and untick <strong>Allow printing</strong> or <strong>Allow copying text</strong>.</li>
+<li>Click OK. On Mac and the web, PdfEdit saves a protected copy and leaves the copy you&#39;re working on unlocked.</li>
+</ol>
+<p>The file is encrypted with AES-256. PdfEdit never keeps the passwords you type, so make sure you remember them.</p>
+<blockquote class="callout warning"><p><strong class="callout-title">Warning</strong>There&#39;s no way to get into the file if the password is lost.</p>
+</blockquote>
+<h2 id="send-it">Send it<a class="anchor" href="#send-it" aria-label="Link to this section">#</a></h2>
+<p>Send the protected file, and send the password a different way, for example by phone or text message.</p>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../docs/pages-and-security.html#passwords-and-redaction">Remove a password</a> from a file you&#39;ve unlocked</li>
+<li><a href="../docs/pages-and-security.html">Pages, watermarks and security</a> in the user guide</li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/protect-and-redact.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="watermark-and-number-pages.html"><small>Previous</small>Add a watermark, page numbers and Bates numbers</a>
+        <a class="next" href="review-a-document.html"><small>Next</small>Review a document with highlights, notes and stamps</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#mark-what-to-remove">Mark what to remove</a></li><li class="l2"><a href="#apply-the-redactions">Apply the redactions</a></li><li class="l2"><a href="#remove-hidden-information">Remove hidden information</a></li><li class="l2"><a href="#add-a-password">Add a password</a></li><li class="l2"><a href="#send-it">Send it</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>
