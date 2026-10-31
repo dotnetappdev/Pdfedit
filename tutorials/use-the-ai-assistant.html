@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Summarise, ask and translate with the AI assistant | PdfEdit</title>
+<meta name="description" content="Connect an AI provider, then ask questions about a document, get a summary, explain a passage and translate a whole PDF keeping its layout.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html" aria-current="page">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Working faster</p>
+      <h1>Summarise, ask and translate with the AI assistant</h1>
+      <p class="lead">Connect an AI provider, then ask questions about a document, get a summary, explain a passage and translate a whole PDF keeping its layout.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Beginner</span>
+        <span><b>Time</b> 10 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Windows</span><span class="app-badge">Mac</span><span class="app-badge">Web</span></span>
+      </div>
+      <p>The AI assistant is optional. Nothing is sent anywhere until you connect a provider, and then only to the provider you choose.</p>
+<h2 id="choose-a-provider">Choose a provider<a class="anchor" href="#choose-a-provider" aria-label="Link to this section">#</a></h2>
+<p>You can use:</p>
+<ul>
+<li><strong>Claude</strong> (Anthropic) with your own API key from console.anthropic.com</li>
+<li><strong>OpenAI</strong> (ChatGPT) with your own API key</li>
+<li><strong>GitHub Copilot</strong> models, with a GitHub token that has the <em>Models: Read-only</em> permission. It&#39;s free to try.</li>
+<li><strong>A local model</strong> through Ollama or LM Studio. It&#39;s free, and the document never leaves your computer.</li>
+</ul>
+<h2 id="add-your-key">Add your key<a class="anchor" href="#add-your-key" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Windows</strong>: <strong>Settings &gt; AI</strong>.</li>
+<li><strong>Mac and web</strong>: <strong>AI Assistant</strong> tab &gt; <strong>API Keys</strong>.</li>
+</ul>
+<p>Pick the provider, paste the key (or the local server&#39;s address), and save.</p>
+<h2 id="ask-about-the-document">Ask about the document<a class="anchor" href="#ask-about-the-document" aria-label="Link to this section">#</a></h2>
+<p>Open a PDF and click <strong>Open Chat</strong> (AI Assistant tab). Ask anything, for example:</p>
+<ul>
+<li><em>What&#39;s the notice period in this contract?</em></li>
+<li><em>List every date and deadline.</em></li>
+<li><em>Which pages talk about refunds?</em></li>
+</ul>
+<p>Answers cite the pages they came from. Click a page reference to jump there.</p>
+<h2 id="summarise-it">Summarise it<a class="anchor" href="#summarise-it" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Summarize</strong> writes a short summary of the whole document.</li>
+<li><strong>Outline</strong> gives the key points of each section with links to the pages.</li>
+<li><strong>Write</strong> turns it into an email, study notes, flashcards, a quiz, an FAQ or a list of actions.</li>
+</ul>
+<h2 id="explain-a-passage">Explain a passage<a class="anchor" href="#explain-a-passage" aria-label="Link to this section">#</a></h2>
+<p>Press <strong>Shift+S</strong> (Select Text) and drag over a paragraph. Choose <strong>Explain</strong>, <strong>Summarise</strong>, <strong>Rewrite</strong>, <strong>Translate</strong> or <strong>Ask</strong>. Drag over a chart or table and choose <strong>Ask about this area</strong> to send a picture of it.</p>
+<h2 id="translate-a-whole-pdf">Translate a whole PDF<a class="anchor" href="#translate-a-whole-pdf" aria-label="Link to this section">#</a></h2>
+<p>Click <strong>Translate PDF</strong>, pick the language, and PdfEdit makes a translated copy that keeps the layout, colours and pictures.</p>
+<p><img loading="lazy" src="../img/repo/docs/screenshots/blazor/translate-after.png" alt="A PDF translated with its layout kept"></p>
+<h2 id="let-it-do-the-work">Let it do the work<a class="anchor" href="#let-it-do-the-work" aria-label="Link to this section">#</a></h2>
+<p>Ask the assistant to <strong>fill fields</strong>, <strong>highlight</strong> text, add notes, or run commands like <em>compress this</em> or <em>export to Word</em>. Each change appears as a card you <strong>Apply</strong> or <strong>Undo</strong>, so nothing happens without you.</p>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Smart Fill</strong>, <strong>Extract Data</strong>, <strong>Contract</strong> analysis and <strong>Find PII</strong> each run in one click.</li>
+<li><a href="../docs/ai-assistant.html">AI assistant</a> in the user guide</li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/use-the-ai-assistant.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="batch-process-a-folder.html"><small>Previous</small>Process a folder of PDFs in one go</a>
+        <a class="next" href="host-the-web-version.html"><small>Next</small>Host PdfEdit for the web for your team</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#choose-a-provider">Choose a provider</a></li><li class="l2"><a href="#add-your-key">Add your key</a></li><li class="l2"><a href="#ask-about-the-document">Ask about the document</a></li><li class="l2"><a href="#summarise-it">Summarise it</a></li><li class="l2"><a href="#explain-a-passage">Explain a passage</a></li><li class="l2"><a href="#translate-a-whole-pdf">Translate a whole PDF</a></li><li class="l2"><a href="#let-it-do-the-work">Let it do the work</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>
