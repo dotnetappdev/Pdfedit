@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Building from source and releases | PdfEdit</title>
+<meta name="description" content="You&#39;ll need Windows 10 or 11 and the .NET 10 SDK, or Visual Studio 2022 17.12 or later.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="docs">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="User guide">
+      <details open>
+        <summary>Contents</summary>
+        <a class="docs-home" href="../docs/index.html">User guide home</a>
+        
+      <h3>Getting started</h3>
+      <ul><li><a href="../docs/install.html">Installing PdfEdit</a></li><li><a href="../docs/getting-started.html">Getting started</a></li><li><a href="../docs/features.html">Everything PdfEdit does</a></li><li><a href="../docs/tour.html">Video tour</a></li></ul>
+      <h3>Using PdfEdit</h3>
+      <ul><li><a href="../docs/filling-and-signing.html">Filling and signing</a></li><li><a href="../docs/forms.html">Preparing forms</a></li><li><a href="../docs/comments-and-markup.html">Comments, stamps and links</a></li><li><a href="../docs/pages-and-security.html">Pages, watermarks and security</a></li><li><a href="../docs/scan-and-ocr.html">Scanning and OCR</a></li><li><a href="../docs/design-canvas.html">Design canvas</a></li><li><a href="../docs/import-export-and-cloud.html">Import, export and cloud</a></li><li><a href="../docs/automation.html">Automation and tools</a></li><li><a href="../docs/ai-assistant.html">AI assistant</a></li></ul>
+      <h3>Make it yours</h3>
+      <ul><li><a href="../docs/themes.html">Themes</a></li><li><a href="../docs/accessibility.html">Accessibility</a></li><li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li></ul>
+      <h3>Help</h3>
+      <ul><li><a href="../docs/troubleshooting.html">Troubleshooting and FAQ</a></li></ul>
+      <h3>Hosting and building</h3>
+      <ul><li><a href="../docs/web-version.html">Hosting PdfEdit for the web</a></li><li><a href="../docs/building.html" aria-current="page">Building from source and releases</a></li><li><a href="../docs/architecture.html">How the code is organised</a></li></ul>
+        <h3>Learn by doing</h3>
+        <ul><li><a href="../tutorials/index.html">All tutorials</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose" data-search-scope>
+      <p class="crumbs"><a href="index.html">User guide</a> > Hosting and building</p>
+      <h1>Building from source and releases</h1>
+      <h2 id="running-from-source">Running from source<a class="anchor" href="#running-from-source" aria-label="Link to this section">#</a></h2>
+<p>You&#39;ll need Windows 10 or 11 and the <a href="https://dotnet.microsoft.com/download/dotnet/10.0">.NET 10 SDK</a>, or Visual Studio 2022 17.12 or later.</p>
+<pre><code class="language-powershell">git clone https://github.com/dotnetappdev/Pdfedit.git
+cd Pdfedit
+dotnet build PdfEdit.sln -c Release
+dotnet run --project PdfEdit
+</code></pre>
+<h3 id="the-cross-platform-desktop-app-windows-macos-linux">The cross-platform desktop app (Windows, macOS, Linux)<a class="anchor" href="#the-cross-platform-desktop-app-windows-macos-linux" aria-label="Link to this section">#</a></h3>
+<p><code>PdfEdit.Avalonia</code> is PdfEdit in an <a href="https://avaloniaui.net">Avalonia</a> window: it runs the web
+version (PdfEdit.Blazor) inside its own process, on a private address on <code>127.0.0.1</code> that only its
+window can use, and shows it in the system&#39;s own web view: WebView2 on Windows, WebKit on macOS,
+WebKitGTK on Linux. The program is called <strong>PdfEdit</strong>, like the WPF app. It builds on any of the three:</p>
+<pre><code class="language-bash">dotnet run --project PdfEdit.Avalonia                 # run from source
+dotnet run --project PdfEdit.Avalonia -- form.pdf     # and open a PDF
+dotnet publish PdfEdit.Avalonia -c Release -r win-x64     # or osx-arm64, osx-x64, linux-x64
+</code></pre>
+<p>Publishing puts the web app&#39;s page files (<code>wwwroot</code>) next to the program. What it needs on each
+system: on Windows, the WebView2 runtime (part of Windows 10 and 11); on macOS, nothing extra; on Linux,
+WebKitGTK (<code>sudo apt install libwebkit2gtk-4.1-0</code> on Ubuntu and Debian). Save and Save As use the
+system&#39;s Save dialog, Print opens the PDF in your PDF viewer, and links open in your browser.
+Signatures, stamps and settings are kept in your app data folder (<code>PdfEdit/pdfedit-desktop.db</code>).</p>
+<p>A few things depend on what the system&#39;s web view offers: Share opens the system share sheet with
+WebView2 and WebKit (Windows, macOS) and falls back to the Save dialog where there&#39;s none (Linux);
+Dictate needs speech recognition (WebView2 and WebKit on macOS; not WebKitGTK); On Phone needs
+PdfEdit on a server your phone can reach, so it isn&#39;t for the desktop app.</p>
+<p>To run the tests:</p>
+<pre><code class="language-powershell">dotnet test PdfEdit.Tests
+</code></pre>
+<h2 id="building-the-installers-locally">Building the installers locally<a class="anchor" href="#building-the-installers-locally" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-powershell">pwsh installer\build-installer.ps1 -SkipMsix    # EXE installer
+</code></pre>
+<p>The EXE needs <a href="https://jrsoftware.org/isinfo.php">Inno Setup 6</a>. (The script can still make an MSIX with the Windows SDK&#39;s <code>makeappx.exe</code>, but releases no longer include one.)</p>
+<h3 id="pdfedit-desktop-packages-mac-and-linux">PdfEdit Desktop packages (Mac and Linux)<a class="anchor" href="#pdfedit-desktop-packages-mac-and-linux" aria-label="Link to this section">#</a></h3>
+<p>The cross-platform app is released for Mac and Linux (Windows has the Windows app):</p>
+<pre><code class="language-bash">installer/desktop/build-mac.sh               # dist/PdfEdit-Desktop-&lt;version&gt;-mac-arm64.dmg and -mac-x64.dmg
+installer/desktop/build-linux.sh             # dist/PdfEdit-Desktop-&lt;version&gt;-linux-x64.AppImage and .tar.gz
+</code></pre>
+<ul>
+<li><strong>Linux</strong> runs on any Linux machine with the .NET 10 SDK and <code>desktop-file-validate</code>
+(<code>desktop-file-utils</code>); it downloads <code>appimagetool</code> when it isn&#39;t installed. Both files include
+.NET; the app needs WebKitGTK 4.1 or 4.0 on the computer it runs on.</li>
+<li><strong>Windows</strong> (<code>installer/desktop/build-windows.ps1</code>, Inno Setup 6.3+) still builds a PdfEdit
+Desktop installer and portable ZIP for trying the app on Windows, but releases don&#39;t include them.</li>
+<li><strong>Mac</strong> needs a Mac with the .NET 10 SDK (the script builds <code>PdfEdit.app</code> for Apple silicon and
+Intel and packs each in a disk image; elsewhere it makes a <code>.tar.gz</code> of the app to check). It&#39;s
+signed ad hoc unless <code>MACOS_SIGN_IDENTITY</code> names a Developer ID certificate; with <code>APPLE_ID</code>,
+<code>APPLE_TEAM_ID</code> and <code>APPLE_APP_PASSWORD</code> set too it&#39;s notarized, so it opens without a warning.
+Signed ad hoc, the first launch needs right-click &gt; <strong>Open</strong> (or System Settings &gt; Privacy &amp;
+Security &gt; Open Anyway).</li>
+</ul>
+<p>GitHub Actions builds both on every release (the <code>linux</code> and <code>mac</code> jobs in <code>release.yml</code>, next to the
+<code>windows</code> job; a final <code>publish</code> job makes the release with all their files at once), and the <strong>PdfEdit Desktop installers</strong> workflow builds them on demand or whenever the
+desktop app changes, as downloads on the run&#39;s page. For signed Mac builds, add the repository
+secrets <code>MACOS_CERT_P12</code> (base64 of the .p12), <code>MACOS_CERT_PASSWORD</code>, <code>MACOS_SIGN_IDENTITY</code>,
+<code>APPLE_ID</code>, <code>APPLE_TEAM_ID</code> and <code>APPLE_APP_PASSWORD</code>.</p>
+<h2 id="how-releases-are-published">How releases are published<a class="anchor" href="#how-releases-are-published" aria-label="Link to this section">#</a></h2>
+<p>GitHub Actions builds and publishes every release. There&#39;s nothing to do by hand.</p>
+<ul>
+<li><strong>From <code>devmain</code></strong>: when the <code>&lt;Version&gt;</code> in <code>Directory.Build.props</code> hasn&#39;t been released yet, the next push builds it and publishes it as a release. To ship a new version, bump that one number: every project and every file in the release (Windows, Mac and Linux) gets it.</li>
+<li><strong>From <code>main</code></strong>: every push releases the next patch version automatically (for example 1.0.4 after 1.0.3).</li>
+<li><strong>From a tag</strong>: pushing <code>v1.2.3</code> releases exactly that version.</li>
+</ul>
+<p>Each release includes:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PdfEditSetup-x.y.z.exe</code></td>
+<td>Windows installer, self-contained (.NET included)</td>
+</tr>
+<tr>
+<td><code>PdfEdit-x.y.z-win-x64-portable.zip</code></td>
+<td>Windows, self-contained: unzip and run</td>
+</tr>
+<tr>
+<td><code>PdfEdit-Desktop-x.y.z-mac-arm64.dmg</code> / <code>-mac-x64.dmg</code></td>
+<td>Mac, Apple silicon / Intel</td>
+</tr>
+<tr>
+<td><code>PdfEdit-Desktop-x.y.z-linux-x64.AppImage</code></td>
+<td>Linux, one file: make it executable and run</td>
+</tr>
+<tr>
+<td><code>PdfEdit-Desktop-x.y.z-linux-x64.tar.gz</code></td>
+<td>Linux, the same app in a folder</td>
+</tr>
+</tbody></table></div>
+<p>The workflows live in <code>.github/workflows</code>. <code>ci.yml</code> builds every push and pull request, and <code>release.yml</code> does the packaging.</p>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/docs/building.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="web-version.html"><small>Previous</small>Hosting PdfEdit for the web</a>
+        <a class="next" href="architecture.html"><small>Next</small>How the code is organised</a>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#running-from-source">Running from source</a></li><li class="l3"><a href="#the-cross-platform-desktop-app-windows-macos-linux">The cross-platform desktop app (Windows, macOS, Linux)</a></li><li class="l2"><a href="#building-the-installers-locally">Building the installers locally</a></li><li class="l3"><a href="#pdfedit-desktop-packages-mac-and-linux">PdfEdit Desktop packages (Mac and Linux)</a></li><li class="l2"><a href="#how-releases-are-published">How releases are published</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>
