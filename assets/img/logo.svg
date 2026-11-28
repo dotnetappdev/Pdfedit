@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E3E9F7"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#B8D2F5"/>
+      <stop offset="1" stop-color="#E4EAFB"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1D6FE0"/>
+      <stop offset="1" stop-color="#0EA5A4"/>
+    </linearGradient>
+    <linearGradient id="pen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1758C2"/>
+      <stop offset="0.55" stop-color="#3D8BF0"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="nib" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD58A"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- soft shadow -->
+  <path d="M60 36h88l52 52v128a20 20 0 0 1-20 20H60a20 20 0 0 1-20-20V56a20 20 0 0 1 20-20z" fill="#0B1533" opacity="0.18" transform="translate(4 7)"/>
+  <!-- page -->
+  <path d="M60 28h88l52 52v128a20 20 0 0 1-20 20H60a20 20 0 0 1-20-20V48a20 20 0 0 1 20-20z" fill="url(#page)" stroke="#AFBBD8" stroke-width="3"/>
+  <path d="M148 28v36a16 16 0 0 0 16 16h36z" fill="url(#fold)" stroke="#AFBBD8" stroke-width="3" stroke-linejoin="round"/>
+  <!-- heading and text lines -->
+  <rect x="64" y="68" width="64" height="18" rx="9" fill="url(#brand)"/>
+  <rect x="64" y="104" width="104" height="11" rx="5.5" fill="#BACDE6"/>
+  <rect x="64" y="128" width="88" height="11" rx="5.5" fill="#BACDE6"/>
+  <rect x="64" y="152" width="60" height="11" rx="5.5" fill="#BACDE6"/>
+  <!-- pen -->
+  <g transform="translate(176 176) rotate(45)">
+    <path d="M-20 -86h40a6 6 0 0 1 6 6v86h-52v-86a6 6 0 0 1 6-6z" fill="#0B1533" opacity="0.2" transform="translate(6 2)"/>
+    <path d="M-20 -86h40a6 6 0 0 1 6 6v84h-52v-84a6 6 0 0 1 6-6z" fill="url(#pen)"/>
+    <rect x="-26" y="-60" width="52" height="7" fill="#FFFFFF" opacity="0.35"/>
+    <path d="M-26 4h52l-22 42a4.5 4.5 0 0 1-8 0z" fill="url(#nib)"/>
+    <path d="M-7 33h14l-5 10a2.2 2.2 0 0 1-4 0z" fill="#1E293B"/>
+  </g>
+</svg>

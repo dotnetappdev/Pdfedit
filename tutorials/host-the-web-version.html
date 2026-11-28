@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Host PdfEdit for the web for your team | PdfEdit</title>
+<meta name="description" content="Run PdfEdit on a server so everyone can use it in their browser, with OCR, Office conversion and shared AI keys.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B1A2B">
+<meta name="site-root" content="../">
+<link rel="icon" type="image/svg+xml" href="../assets/img/logo.svg">
+<link rel="stylesheet" href="../assets/css/site.css">
+<!-- The chosen theme before anything is drawn, so there's no flash of the other one. -->
+<script>try{var t=localStorage.getItem('pdfedit-site-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script src="../assets/js/site.js" defer></script>
+<script src="../assets/js/ask.js" defer></script>
+
+</head>
+<body data-page="tutorials">
+<a class="skip" href="#main">Skip to content</a>
+<div class="strip" role="note">
+  <div class="wrap">
+    <span class="new">New</span>
+    <span data-strip>PdfEdit: fill, sign, edit and design PDFs on Windows, Mac, Linux and the web.</span>
+    <span class="strip-links"><a href="../docs/index.html">Docs</a> | <a href="../tutorials/index.html">Tutorials</a> | <a href="../whats-new.html">What's new</a></span>
+  </div>
+</div>
+<header class="band">
+  <div class="wrap">
+    <a class="brand" href="../index.html">
+      <img src="../assets/img/logo.svg" alt="" width="56" height="56">
+      <span><b>PdfEdit</b><small>Free PDF editor for Windows, Mac, Linux and the web</small></span>
+    </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Colour theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span data-theme-label>Auto</span>
+    </button>
+    <a class="btn-download" href="../download.html" data-download-best>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span><b>Download PdfEdit</b><span data-download-best-label>Free for Windows, Mac and Linux</span></span>
+    </a>
+  </div>
+</header>
+<nav class="tabs" aria-label="Site">
+  <div class="wrap">
+    <ul>
+      <li><a href="../index.html" data-tab="index">Home</a></li>
+      <li><a href="../download.html" data-tab="download">Download</a></li>
+      <li><a href="../whats-new.html" data-tab="whats-new">What's new</a></li>
+      <li><a href="../screenshots.html" data-tab="screenshots">Screenshots</a></li>
+      <li><a href="../docs/index.html" data-tab="docs">Docs</a></li>
+      <li><a href="../tutorials/index.html" data-tab="tutorials">Tutorials</a></li>
+      <li><a href="../docs/troubleshooting.html" data-tab="support">Support</a></li>
+      <li><a href="https://github.com/dotnetappdev/pdfedit">Source code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="wrap docs">
+    
+    <nav class="docs-nav" aria-label="Tutorials">
+      <details open>
+        <summary>Tutorials</summary>
+        <a class="docs-home" href="index.html">All tutorials</a>
+        
+        <h3>Forms and signing</h3>
+        <ul><li><a href="fill-and-sign-a-form.html">Fill in and sign a PDF form</a></li><li><a href="fill-a-form-without-fields.html">Fill in a form that has no fields</a></li><li><a href="make-a-form-fillable.html">Make a form fillable</a></li><li><a href="design-a-form-from-a-template.html">Design a document from a template</a></li></ul>
+        <h3>Pages and documents</h3>
+        <ul><li><a href="merge-split-and-reorder.html">Merge, split and reorder pages</a></li><li><a href="watermark-and-number-pages.html">Add a watermark, page numbers and Bates numbers</a></li><li><a href="protect-and-redact.html">Redact private details and password-protect a PDF</a></li></ul>
+        <h3>Review and markup</h3>
+        <ul><li><a href="review-a-document.html">Review a document with highlights, notes and stamps</a></li></ul>
+        <h3>Scanning and converting</h3>
+        <ul><li><a href="scan-to-a-searchable-pdf.html">Scan paper into a searchable PDF</a></li><li><a href="convert-pdf-to-word-and-excel.html">Convert PDFs to and from Word, Excel and PowerPoint</a></li></ul>
+        <h3>Working faster</h3>
+        <ul><li><a href="bulk-fill-from-a-spreadsheet.html">Fill a form for every row of a spreadsheet</a></li><li><a href="batch-process-a-folder.html">Process a folder of PDFs in one go</a></li><li><a href="use-the-ai-assistant.html">Summarise, ask and translate with the AI assistant</a></li></ul>
+        <h3>Setting up</h3>
+        <ul><li><a href="host-the-web-version.html" aria-current="page">Host PdfEdit for the web for your team</a></li></ul>
+        <h3>Reference</h3>
+        <ul><li><a href="../docs/index.html">User guide</a></li></ul>
+      </details>
+    </nav>
+    <article class="prose tutorial" data-search-scope>
+      <p class="crumbs"><a href="index.html">Tutorials</a> > Setting up</p>
+      <h1>Host PdfEdit for the web for your team</h1>
+      <p class="lead">Run PdfEdit on a server so everyone can use it in their browser, with OCR, Office conversion and shared AI keys.</p>
+      <div class="tut-meta">
+        <span><b>Level</b> Advanced</span>
+        <span><b>Time</b> 30 minutes</span>
+        <span><b>Works in</b> <span class="app-badge">Web</span></span>
+      </div>
+      <p>PdfEdit for the web is a .NET 10 app that you run on your own server. The PDFs people work on stay on that server, in temporary folders that are cleared after two hours.</p>
+<h2 id="what-you-ll-need" class="plain">What you&#39;ll need<a class="anchor" href="#what-you-ll-need" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A computer or server running Linux, Windows or macOS</li>
+<li>The <a href="https://dotnet.microsoft.com/download/dotnet/10.0">.NET 10 SDK</a> to build (or just the ASP.NET Core 10 runtime to run a published copy)</li>
+<li>Optional: Tesseract for OCR and LibreOffice for Office files</li>
+</ul>
+<h2 id="try-it">Try it<a class="anchor" href="#try-it" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-bash">git clone https://github.com/dotnetappdev/pdfedit.git
+cd pdfedit
+dotnet run --project PdfEdit.Blazor
+</code></pre>
+<p>Open the address it prints. With the repository checked out, the sample forms appear on the start page.</p>
+<h2 id="publish-a-release-copy">Publish a release copy<a class="anchor" href="#publish-a-release-copy" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-bash">dotnet publish PdfEdit.Blazor -c Release -o /opt/pdfedit
+cd /opt/pdfedit
+ASPNETCORE_URLS=http://0.0.0.0:5080 dotnet PdfEdit.Blazor.dll
+</code></pre>
+<p>Run it as a service (systemd on Linux, a Windows service or IIS on Windows) so it starts with the server.</p>
+<h2 id="put-it-behind-https">Put it behind HTTPS<a class="anchor" href="#put-it-behind-https" aria-label="Link to this section">#</a></h2>
+<p>Put a reverse proxy such as nginx, Caddy or IIS in front, with an HTTPS certificate. PdfEdit for the web uses <strong>WebSockets</strong> (it&#39;s a Blazor Server app), so make sure the proxy passes them through. With nginx, that means:</p>
+<pre><code class="language-nginx">location / {
+    proxy_pass http://127.0.0.1:5080;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection &quot;upgrade&quot;;
+    proxy_set_header Host $host;
+    client_max_body_size 200m;
+}
+</code></pre>
+<p>HTTPS is also needed for installing PdfEdit as an app, Share, Dictate and location on stamps.</p>
+<blockquote class="callout important"><p><strong class="callout-title">Important</strong> PdfEdit for the web has no sign-in of its own. If it&#39;s on the internet, put it behind your organisation&#39;s sign-in (for example your proxy&#39;s or your cloud&#39;s authentication), or keep it on your internal network.</p>
+</blockquote>
+<h2 id="add-ocr-and-office-conversion">Add OCR and Office conversion<a class="anchor" href="#add-ocr-and-office-conversion" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>OCR</strong>: install Tesseract, for example <code>sudo apt install tesseract-ocr</code> plus <code>tesseract-ocr-deu</code>, <code>tesseract-ocr-fra</code> and so on for more languages.</li>
+<li><strong>Office files</strong>: install LibreOffice (<code>sudo apt install libreoffice-core libreoffice-writer libreoffice-calc libreoffice-impress</code>). Without it, Word files are still converted by PdfEdit&#39;s own converter.</li>
+</ul>
+<h2 id="share-an-ai-key-optional">Share an AI key (optional)<a class="anchor" href="#share-an-ai-key-optional" aria-label="Link to this section">#</a></h2>
+<p>Each person can paste their own key in <strong>AI Assistant &gt; API Keys</strong>. To give everyone one, set it in the server&#39;s environment, never in a committed file:</p>
+<pre><code class="language-bash">export PdfEdit__Ai__Provider=Claude          # Claude, OpenAI, Copilot or Local
+export PdfEdit__Ai__ClaudeApiKey=...
+</code></pre>
+<p>Google Drive and OneDrive need an OAuth app each. The <a href="../docs/web-version.html">hosting guide</a> has the details.</p>
+<h2 id="tell-people-about-it">Tell people about it<a class="anchor" href="#tell-people-about-it" aria-label="Link to this section">#</a></h2>
+<p>Send the address round. In Chrome or Edge people can <strong>install</strong> PdfEdit as an app from the address bar, and it then opens PDFs from their computer&#39;s <strong>Open with</strong> menu. On a phone, <strong>Add to Home Screen</strong> does the same.</p>
+<h2 id="what-s-next" class="plain">What&#39;s next<a class="anchor" href="#what-s-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../docs/web-version.html">Hosting PdfEdit for the web</a>: every setting</li>
+<li><a href="../docs/building.html">Building from source</a></li>
+</ul>
+
+      <p class="edit"><a href="https://github.com/dotnetappdev/Pdfedit/edit/devmain/staticsite/content/tutorials/host-the-web-version.md">Improve this page on GitHub</a> | <a href="https://github.com/dotnetappdev/Pdfedit/issues/new">Report a problem</a></p>
+      
+      <nav class="pager" aria-label="More pages">
+        <a class="prev" href="use-the-ai-assistant.html"><small>Previous</small>Summarise, ask and translate with the AI assistant</a>
+        <span></span>
+      </nav>
+    </article>
+    
+    <aside class="docs-toc" aria-label="On this page">
+      <h3>On this page</h3>
+      <ul><li class="l2"><a href="#what-you-ll-need">What you&#39;ll need</a></li><li class="l2"><a href="#try-it">Try it</a></li><li class="l2"><a href="#publish-a-release-copy">Publish a release copy</a></li><li class="l2"><a href="#put-it-behind-https">Put it behind HTTPS</a></li><li class="l2"><a href="#add-ocr-and-office-conversion">Add OCR and Office conversion</a></li><li class="l2"><a href="#share-an-ai-key-optional">Share an AI key (optional)</a></li><li class="l2"><a href="#tell-people-about-it">Tell people about it</a></li><li class="l2"><a href="#what-s-next">What&#39;s next</a></li></ul>
+    </aside>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h3>PdfEdit</h3>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../download.html">Download</a></li>
+          <li><a href="../whats-new.html">What's new</a></li>
+          <li><a href="../screenshots.html">Screenshots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul>
+          <li><a href="../download.html#windows">PdfEdit for Windows</a></li>
+          <li><a href="../download.html#mac">PdfEdit for Mac</a></li>
+          <li><a href="../download.html#web">PdfEdit for the web</a></li>
+          <li><a href="../download.html#older">Older versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="../docs/index.html">Docs (user guide)</a></li>
+          <li><a href="../tutorials/index.html">Tutorials</a></li>
+          <li><a href="../docs/keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          <li><a href="../docs/troubleshooting.html">Troubleshooting</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/issues/new">Report a problem</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Project</h3>
+        <ul>
+          <li><a href="https://github.com/dotnetappdev/pdfedit">Source code on GitHub</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/releases">All releases</a></li>
+          <li><a href="https://github.com/dotnetappdev/pdfedit/blob/devmain/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 PdfEdit contributors | Free and open source under the MIT licence</span>
+      <span data-updated></span>
+    </div>
+  </div>
+</footer>
+<dialog class="lightbox" data-lightbox aria-label="Screenshot">
+  <form method="dialog"><button aria-label="Close">Close</button></form>
+  <img alt="" data-lightbox-img>
+  <p data-lightbox-caption></p>
+</dialog>
+
+</body>
+</html>
